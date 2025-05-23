@@ -4,5 +4,5 @@
 
 import opengeode
 
-from opengeode_mymodule_py_mylib import *
-MyModuleMyLibLibrary.initialize()
+from opengeode_stochastic_py_mylib import *
+StochasticMyLibLibrary.initialize()

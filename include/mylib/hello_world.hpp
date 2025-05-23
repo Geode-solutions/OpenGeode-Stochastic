@@ -25,7 +25,8 @@
 
 #include <mylib/common.hpp>
 
-namespace mymodule
+namespace stochastic
 {
-    bool opengeode_mymodule_mylib_api hello_world();
-} // namespace mymodule
+    bool opengeode_stochastic_mylib_api hello_world();
+} // namespace stochastic
+

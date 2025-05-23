@@ -25,11 +25,11 @@
 
 #include <mylib/hello_world.hpp>
 
-PYBIND11_MODULE( opengeode_mymodule_py_mylib, module )
+PYBIND11_MODULE( opengeode_stochastic_py_mylib, module )
 {
-    module.doc() = "OpenGeode-ModuleTemplate Python binding for mylib";
-    pybind11::class_< mymodule::MyModuleMyLibLibrary >(
-        module, "MyModuleMyLibLibrary" )
-        .def( "initialize", &mymodule::MyModuleMyLibLibrary::initialize );
-    module.def( "hello_world", &mymodule::hello_world );
+    module.doc() = "OpenGeode-Stochastic Python binding for mylib";
+    pybind11::class_< stochastic::StochasticMyLibLibrary >(
+        module, "StochasticMyLibLibrary" )
+        .def( "initialize", &stochastic::StochasticMyLibLibrary::initialize );
+    module.def( "hello_world", &stochastic::hello_world );
 }

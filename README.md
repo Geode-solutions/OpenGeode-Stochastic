@@ -1,12 +1,12 @@
-<h1 align="center">OpenGeode-ModuleTemplate<sup><i>by Geode-solutions</i></sup></h1>
-<h3 align="center">Template for creating your own OpenGeode modules</h3>
+<h1 align="center">OpenGeode-OpenGeode-Stochatic<sup><i>by Geode-solutions</i></sup></h1>
+<h3 align="center">A module of the OpenGeode framework for stochastic modeling, simulation and bayesian inference.</h3>
 
 
 <p align="center">
-  <img src="https://github.com/Geode-solutions/OpenGeode-ModuleTemplate/workflows/CI/badge.svg" alt="Build Status">
-  <img src="https://github.com/Geode-solutions/OpenGeode-ModuleTemplate/workflows/CD/badge.svg" alt="Deploy Status">
-  <img src="https://codecov.io/gh/Geode-solutions/OpenGeode-ModuleTemplate/branch/master/graph/badge.svg" alt="Coverage Status">
-  <img src="https://img.shields.io/github/release/Geode-solutions/OpenGeode-ModuleTemplate.svg" alt="Version">
+  <img src="https://github.com/Geode-solutions/OpenGeode-Stochatic/workflows/CI/badge.svg" alt="Build Status">
+  <img src="https://github.com/Geode-solutions/OpenGeode-Stochatic/workflows/CD/badge.svg" alt="Deploy Status">
+  <img src="https://codecov.io/gh/Geode-solutions/OpenGeode-Stochatic/branch/master/graph/badge.svg" alt="Coverage Status">
+  <img src="https://img.shields.io/github/release/Geode-solutions/OpenGeode-Stochatic.svg" alt="Version">
 </p>
 
 <p align="center">
@@ -31,15 +31,9 @@
 
 ## Introduction
 
-OpenGeode-ModuleTemplate provides a template for creating an [OpenGeode] module.
-
-[OpenGeode]: https://github.com/Geode-solutions/OpenGeode
 
 ## Documentation
 
-To know how to use this template, please have a look at this page: https://help.github.com/en/articles/creating-a-repository-from-a-template
-
-Have also a look at this [OpenGeode] documentation: https://docs.geode-solutions.com/opengeode then click on "How to create your own OpenGeode module"
 
 ## Questions
 For questions and support please use the official [slack](https://slackin-opengeode.herokuapp.com) and go to the channel #module_template. The issue list of this repo is exclusively for bug reports and feature requests. 

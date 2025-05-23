@@ -25,13 +25,13 @@
 
 #include <geode/basic/library.hpp>
 
-namespace mymodule
+namespace stochastic
 {
-    OPENGEODE_LIBRARY_IMPLEMENTATION( MyModuleMyLib )
+    OPENGEODE_LIBRARY_IMPLEMENTATION( StochasticMyLib )
     {
         /* Here the functions to call when initializing the library
          * For exemple: registers, ...
          */
         geode::OpenGeodeBasicLibrary::initialize();
     }
-} // namespace mymodule
+} // namespace stochastic

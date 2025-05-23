@@ -25,11 +25,11 @@
 
 #include <geode/basic/logger.hpp>
 
-namespace mymodule
+namespace stochastic
 {
     bool hello_world()
     {
         geode::Logger::info( "Hello Geode World!" );
         return true;
     }
-} // namespace mymodule
+} // namespace stochastic

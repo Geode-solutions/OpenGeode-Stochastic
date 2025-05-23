@@ -30,9 +30,9 @@ int main()
 {
     try
     {
-        mymodule::MyModuleMyLibLibrary::initialize();
+        stochastic::StochasticMyLibLibrary::initialize();
         OPENGEODE_EXCEPTION(
-            mymodule::hello_world(), "[Test] Hello World is not correct" );
+            stochastic::hello_world(), "[Test] Hello Stochastic World is not correct" );
 
         geode::Logger::info( "TEST SUCCESS" );
         return 0;

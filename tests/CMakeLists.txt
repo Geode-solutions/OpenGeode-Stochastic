@@ -20,10 +20,10 @@
 
 cmake_minimum_required(VERSION 3.15)
     
-if(NOT TARGET OpenGeode-MyModule::mylib)
-    project(OpenGeode-MyModule CXX)
+if(NOT TARGET OpenGeode-Stochastic::mylib)
+    project(OpenGeode-Stochastic CXX)
     find_package(OpenGeode REQUIRED CONFIG)
-    find_package(OpenGeode-MyModule REQUIRED CONFIG)
+    find_package(OpenGeode-Stochastic REQUIRED CONFIG)
     enable_testing()
 endif()
 

@@ -23,10 +23,10 @@ cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
 
 # Define the project
-project(OpenGeode-MyModule CXX)
+project(OpenGeode-Stochastic CXX)
 
-option(OPENGEODE_MYMODULE_WITH_TESTS "Compile test projects" ON)
-option(OPENGEODE_MYMODULE_WITH_PYTHON "Compile Python bindings" OFF)
+option(OPENGEODE_STOCHASTIC_WITH_TESTS "Compile test projects" ON)
+option(OPENGEODE_STOCHASTIC_WITH_PYTHON "Compile Python bindings" OFF)
 
 # Get MyModule dependencies
 find_package(OpenGeode REQUIRED CONFIG)
@@ -48,14 +48,14 @@ add_geode_library(
 
 #------------------------------------------------------------------------------------------------
 # Optional modules configuration
-if(OPENGEODE_MYMODULE_WITH_TESTS)
+if(OPENGEODE_STOCHASTIC_WITH_TESTS)
     # Enable testing with CTest
     enable_testing()
     message(STATUS "Configuring with tests")
     add_subdirectory(tests)
 endif()
 
-if(OPENGEODE_MYMODULE_WITH_PYTHON)
+if(OPENGEODE_STOCHASTIC_WITH_PYTHON)
     message(STATUS "Configuring with Python bindings")
     add_subdirectory(bindings/python)
 endif()

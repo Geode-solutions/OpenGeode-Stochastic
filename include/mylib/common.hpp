@@ -6,9 +6,9 @@
 
 #include <geode/basic/common.hpp>
 #include <geode/basic/library.hpp>
-#include <mylib/opengeode_mymodule_mylib_export.hpp>
+#include <mylib/opengeode_stochastic_mylib_export.hpp>
 
-namespace mymodule
+namespace stochastic
 {
-    OPENGEODE_LIBRARY( opengeode_mymodule_mylib_api, MyModuleMyLib );
-} // namespace mymodule
+    OPENGEODE_LIBRARY( opengeode_stochastic_mylib_api, StochasticMyLib );
+} // namespace stochastic
