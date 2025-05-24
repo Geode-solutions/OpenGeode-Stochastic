@@ -1,4 +1,4 @@
-<h1 align="center">OpenGeode-OpenGeode-Stochatic<sup><i>by Geode-solutions</i></sup></h1>
+<h1 align="center">OpenGeode-Stochatic<sup><i>by Geode-solutions</i></sup></h1>
 <h3 align="center">A module of the OpenGeode framework for stochastic modeling, simulation and bayesian inference.</h3>
 
 
