@@ -31,8 +31,8 @@ int main()
     try
     {
         stochastic::StochasticMyLibLibrary::initialize();
-        OPENGEODE_EXCEPTION(
-            stochastic::hello_world(), "[Test] Hello Stochastic World is not correct" );
+        OPENGEODE_EXCEPTION( stochastic::hello_world(),
+            "[Test] Hello Stochastic World is not correct" );
 
         geode::Logger::info( "TEST SUCCESS" );
         return 0;
