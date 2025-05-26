@@ -29,7 +29,7 @@ namespace stochastic
 {
     bool hello_world()
     {
-        geode::Logger::info( "Hello Geode World!" );
+        geode::Logger::info( "Hello Geode Stochastic World!" );
         return true;
     }
 } // namespace stochastic

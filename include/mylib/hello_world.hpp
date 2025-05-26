@@ -29,4 +29,3 @@ namespace stochastic
 {
     bool opengeode_stochastic_mylib_api hello_world();
 } // namespace stochastic
-

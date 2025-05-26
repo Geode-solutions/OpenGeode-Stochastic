@@ -4,10 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
-jobs:  
+jobs:
   test:
     uses: Geode-solutions/actions/.github/workflows/cpp-test-pr.yml@master
     with:
-      name: OPENGEODE_MYMODULE
+      name: OPENGEODE_STOCHASTIC
       repos: ${{ vars.REPOS }}
     secrets: inherit

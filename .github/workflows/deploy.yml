@@ -7,6 +7,6 @@ jobs:
   deploy:
     uses: Geode-solutions/actions/.github/workflows/cpp-deploy.yml@master
     with:
-      name: OPENGEODE_MYMODULE
+      name: OPENGEODE_STOCHASTIC
       repos: ${{ vars.REPOS }}
     secrets: inherit
