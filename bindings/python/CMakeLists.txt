@@ -29,7 +29,7 @@ add_geode_python_wheel(
     DESCRIPTION 
         "A module of the OpenGeode framework for stochastic modeling, simulation and bayesian inference"
     MODULES
-        "mylib.py"
+        "geometry.py"
     LICENSE "MIT"
 )
 

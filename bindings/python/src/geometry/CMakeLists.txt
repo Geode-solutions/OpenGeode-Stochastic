@@ -18,8 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-add_geode_python_test(
-    SOURCE "test-py-hello-world.py"
+add_geode_python_binding(
+    NAME "py_geometry"
+    SOURCES
+        "geometry.cpp"
     DEPENDENCIES
-        ${PROJECT_NAME}::py_mylib
+        ${PROJECT_NAME}::geometry
 )

@@ -20,12 +20,12 @@
 
 cmake_minimum_required(VERSION 3.15)
     
-if(NOT TARGET OpenGeode-Stochastic::mylib)
+if(NOT TARGET OpenGeode-Stochastic::geometry)
     project(OpenGeode-Stochastic CXX)
     find_package(OpenGeode REQUIRED CONFIG)
     find_package(OpenGeode-Stochastic REQUIRED CONFIG)
     enable_testing()
 endif()
 
-add_subdirectory(mylib)
+add_subdirectory(geometry)
 

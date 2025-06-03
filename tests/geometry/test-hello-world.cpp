@@ -21,15 +21,24 @@
  *
  */
 
-#include <pybind11/pybind11.h>
+#include <geode/basic/assert.hpp>
+#include <geode/basic/logger.hpp>
 
-#include <mylib/hello_world.hpp>
+#include <geode/stochastic/geometry/hello_world.hpp>
 
-PYBIND11_MODULE( opengeode_stochastic_py_mylib, module )
+int main()
 {
-    module.doc() = "OpenGeode-Stochastic Python binding for mylib";
-    pybind11::class_< stochastic::StochasticMyLibLibrary >(
-        module, "StochasticMyLibLibrary" )
-        .def( "initialize", &stochastic::StochasticMyLibLibrary::initialize );
-    module.def( "hello_world", &stochastic::hello_world );
+    try
+    {
+        geode::StochasticGeometryLibrary::initialize();
+        OPENGEODE_EXCEPTION( geode::hello_world(),
+            "[Test] Hello Stochastic World is not correct" );
+
+        geode::Logger::info( "TEST SUCCESS" );
+        return 0;
+    }
+    catch( ... )
+    {
+        return geode::geode_lippincott();
+    }
 }

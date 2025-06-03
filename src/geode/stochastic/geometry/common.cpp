@@ -21,11 +21,19 @@
  *
  */
 
-#pragma once
+#include <geode/stochastic/geometry/common.hpp>
 
-#include <mylib/common.hpp>
+#include <geode/basic/library.hpp>
+#include <geode/geometry/common.hpp>
 
-namespace stochastic
+namespace geode
 {
-    bool opengeode_stochastic_mylib_api hello_world();
-} // namespace stochastic
+    OPENGEODE_LIBRARY_IMPLEMENTATION( StochasticGeometry )
+    {
+        /* Here the functions to call when initializing the library
+         * For exemple: registers, ...
+         */
+        geode::OpenGeodeBasicLibrary::initialize();
+        geode::OpenGeodeGeometryLibrary::initialize();
+    }
+} // namespace geode
