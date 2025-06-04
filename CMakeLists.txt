@@ -31,20 +31,9 @@ option(OPENGEODE_STOCHASTIC_WITH_PYTHON "Compile Python bindings" OFF)
 # Get MyModule dependencies
 find_package(OpenGeode REQUIRED CONFIG)
 
-#------------------------------------------------------------------------------------------------
-# Configure the MyModule libraries
-add_geode_library(
-    NAME mylib
-    FOLDER "mylib"
-    SOURCES
-        "common.cpp"
-        "hello_world.cpp"
-    PUBLIC_HEADERS
-        "common.hpp"
-        "hello_world.hpp"
-    PRIVATE_DEPENDENCIES
-        OpenGeode::basic
-)
+# ------------------------------------------------------------------------------------------------
+# Configure the OpenGeode-Stochastic libraries
+add_subdirectory(src/geode/stochastic)
 
 #------------------------------------------------------------------------------------------------
 # Optional modules configuration

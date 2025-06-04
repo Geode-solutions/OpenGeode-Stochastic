@@ -4,5 +4,6 @@
 
 import opengeode
 
-from opengeode_stochastic_py_mylib import *
-StochasticMyLibLibrary.initialize()
+from opengeode_stochastic_py_geometry import *
+
+StochasticGeometryLibrary.initialize()

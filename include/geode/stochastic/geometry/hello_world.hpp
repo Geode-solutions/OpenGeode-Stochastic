@@ -21,15 +21,11 @@
  *
  */
 
-#include <mylib/hello_world.hpp>
+#pragma once
 
-#include <geode/basic/logger.hpp>
+#include <geode/stochastic/geometry/common.hpp>
 
-namespace stochastic
+namespace geode
 {
-    bool hello_world()
-    {
-        geode::Logger::info( "Hello Geode Stochastic World!" );
-        return true;
-    }
-} // namespace stochastic
+    bool opengeode_stochastic_geometry_api hello_world();
+} // namespace geode

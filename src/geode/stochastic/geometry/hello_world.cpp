@@ -21,17 +21,15 @@
  *
  */
 
-#include <mylib/common.hpp>
+#include <geode/stochastic/geometry/hello_world.hpp>
 
-#include <geode/basic/library.hpp>
+#include <geode/basic/logger.hpp>
 
-namespace stochastic
+namespace geode
 {
-    OPENGEODE_LIBRARY_IMPLEMENTATION( StochasticMyLib )
+    bool hello_world()
     {
-        /* Here the functions to call when initializing the library
-         * For exemple: registers, ...
-         */
-        geode::OpenGeodeBasicLibrary::initialize();
+        geode::Logger::info( "Hello Geode Stochastic World!" );
+        return true;
     }
-} // namespace stochastic
+} // namespace geode
