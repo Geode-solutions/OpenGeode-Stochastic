@@ -20,13 +20,30 @@
  * SOFTWARE.
  *
  */
+
 #pragma once
 
-#include <geode/basic/common.hpp>
-#include <geode/basic/library.hpp>
-#include <geode/stochastic/geometry/opengeode_stochastic_geometry_export.hpp>
+#include <geode/stochastic/geometry/common.hpp>
 
+#include <geode/stochastic/geometry/random_sample_spec.hpp>
+
+#include <geode/basic/pimpl.hpp>
 namespace geode
 {
-    OPENGEODE_LIBRARY( opengeode_stochastic_geometry_api, StochasticGeometry );
+    class opengeode_stochastic_geometry_api RandomEngine
+    {
+        OPENGEODE_DISABLE_COPY_AND_MOVE( RandomEngine );
+
+    public:
+        explicit RandomEngine( uint64_t seed );
+        ~RandomEngine();
+
+        double sample( const RandomDoubleSpec& double_spec );
+
+        template < typename RANDSPEC >
+        auto sample( const RANDSPEC& spec );
+
+    private:
+        IMPLEMENTATION_MEMBER( impl_ );
+    };
 } // namespace geode

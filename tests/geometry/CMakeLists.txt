@@ -24,3 +24,10 @@ add_geode_test(
         OpenGeode::basic
         ${PROJECT_NAME}::geometry
 )
+
+add_geode_test(
+    SOURCE "test-random-engine.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        ${PROJECT_NAME}::geometry
+)

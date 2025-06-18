@@ -20,13 +20,16 @@
  * SOFTWARE.
  *
  */
-#pragma once
+#include <variant>
 
-#include <geode/basic/common.hpp>
-#include <geode/basic/library.hpp>
-#include <geode/stochastic/geometry/opengeode_stochastic_geometry_export.hpp>
+#include <geode/stochastic/geometry/random_sample_spec.hpp>
 
 namespace geode
 {
-    OPENGEODE_LIBRARY( opengeode_stochastic_geometry_api, StochasticGeometry );
+
+    //    using RandomSampleSpec = std::variant< UniformInt,
+    //        UniformDouble,
+    //        Gaussian,
+    //        PointInDisk,
+    //        PointInBox2D >;
 } // namespace geode
