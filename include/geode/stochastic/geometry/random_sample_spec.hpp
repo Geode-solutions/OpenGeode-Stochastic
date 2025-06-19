@@ -31,14 +31,22 @@
 
 namespace geode
 {
-    /*!
-     * Spec to draw a int value in a Uniform Distribution. Describe a
-     * closed interval [min,max]
-     */
-    struct UniformInt
+    template < typename Type >
+    struct IntervalLimit
     {
-        int min;
-        int max;
+        IntervalLimit() = default;
+
+        Type value{ 0 };
+        bool is_included{ true };
+    };
+
+    template < typename Type >
+    struct Uniform
+    {
+        Uniform() = default;
+
+        IntervalLimit< Type > min;
+        IntervalLimit< Type > max;
     };
 
     /*!

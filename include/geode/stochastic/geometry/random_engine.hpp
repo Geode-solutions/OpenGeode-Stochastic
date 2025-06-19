@@ -30,7 +30,7 @@
 #include <geode/basic/pimpl.hpp>
 namespace geode
 {
-    class opengeode_stochastic_geometry_api RandomEngine
+    class RandomEngine
     {
         OPENGEODE_DISABLE_COPY_AND_MOVE( RandomEngine );
 
@@ -42,6 +42,9 @@ namespace geode
 
         template < typename RANDSPEC >
         auto sample( const RANDSPEC& spec );
+
+        template < typename Type >
+        Type sample_uniform( const Uniform< Type >& law );
 
     private:
         IMPLEMENTATION_MEMBER( impl_ );

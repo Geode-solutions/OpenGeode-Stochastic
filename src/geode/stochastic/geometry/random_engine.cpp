@@ -60,6 +60,29 @@ namespace geode
             return do_sample_impl( spec );
         }
 
+        template < typename Type >
+        Type sample_uniform( const Uniform< Type >& law )
+        {
+            // check interval values correctness
+            if( law.min.is_included )
+            {
+                if( law.max.is_included )
+                {
+                    return absl::Uniform(
+                        absl::IntervalClosed, rand_gen_, law.min, law.max );
+                }
+                return absl::Uniform(
+                    absl::IntervalClosedOpen, rand_gen_, law.min, law.max );
+            }
+            if( law.max.is_included )
+            {
+                return absl::Uniform(
+                    absl::IntervalOpenClosed, rand_gen_, law.min, law.max );
+            }
+            return absl::Uniform(
+                absl::IntervalOpen, rand_gen_, law.min, law.max );
+        }
+
     private:
         int do_sample_impl( const UniformInt& spec )
         {
@@ -103,9 +126,30 @@ namespace geode
         return impl_->do_sample( spec );
     }
 
-    template auto RandomEngine::sample( const UniformInt& );
-    template auto RandomEngine::sample( const UniformDouble& );
-    template auto RandomEngine::sample( const Gaussian& );
-    template auto RandomEngine::sample( const Bernoulli& );
+    template < typename Type >
+    Type RandomEngine::sample_uniform( const Uniform< Type >& law )
+    {
+        return impl_->sample_uniform( law );
+    }
+
+    template index_t opengeode_stochastic_geometry_api
+        RandomEngine::sample_uniform( const Uniform< index_t >& );
+    template local_index_t opengeode_stochastic_geometry_api
+        RandomEngine::sample_uniform( const Uniform< local_index_t >& );
+    template signed_index_t opengeode_stochastic_geometry_api
+        RandomEngine::sample_uniform( const Uniform< signed_index_t >& );
+    template float opengeode_stochastic_geometry_api
+        RandomEngine::sample_uniform( const Uniform< float >& );
+    template double opengeode_stochastic_geometry_api
+        RandomEngine::sample_uniform( const Uniform< double >& );
+
+
+
+    template auto opengeode_stochastic_geometry_api RandomEngine::sample(
+        const UniformDouble& );
+    template auto opengeode_stochastic_geometry_api RandomEngine::sample(
+        const Gaussian& );
+    template auto opengeode_stochastic_geometry_api RandomEngine::sample(
+        const Bernoulli& );
 
 } // namespace geode
