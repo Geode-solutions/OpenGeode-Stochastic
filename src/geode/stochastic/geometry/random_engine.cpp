@@ -23,7 +23,7 @@
 
 #include <geode/stochastic/geometry/random_engine.hpp>
 
-#include <geode/stochastic/geometry/random_sample_spec.hpp>
+#include <geode/stochastic/geometry/distributions.hpp>
 
 #include <geode/basic/pimpl_impl.hpp>
 
@@ -33,15 +33,17 @@
 #include "absl/random/uniform_int_distribution.h"
 #include "absl/random/uniform_real_distribution.h"
 
-#include <variant>
+#include "absl/hash/hash.h"
+#include <limits>
 
 namespace
 {
-    std::seed_seq create_seed_seq( uint64_t seed )
+    std::seed_seq create_seed_seq( std::string_view word )
     {
+        uint64_t seed = absl::Hash< std::string_view >{}( word );
         std::vector< uint32_t > seed_data = { static_cast< uint32_t >(
-                                                  seed & 0xFFFFFFFF ),
-            static_cast< uint32_t >( seed >> 32 ) };
+                                                  seed >> 32 ),
+            static_cast< uint32_t >( seed & 0xFFFFFFFF ) };
         return std::seed_seq( seed_data.begin(), seed_data.end() );
     }
 } // namespace
@@ -51,56 +53,82 @@ namespace geode
     class RandomEngine::Impl
     {
     public:
-        explicit Impl( uint64_t seed ) : rand_gen_{ create_seed_seq( seed ) } {}
+        explicit Impl() = default;
         ~Impl() = default;
 
-        template < typename RANDSPEC >
-        auto do_sample( const RANDSPEC& spec )
+        void set_seed( std::string_view word )
         {
-            return do_sample_impl( spec );
+            rand_gen_ = absl::BitGen{ create_seed_seq( word ) };
         }
 
         template < typename Type >
         Type sample_uniform( const Uniform< Type >& law )
         {
-            // check interval values correctness
+            OPENGEODE_DATA_EXCEPTION( law.min.value < law.max.value,
+                "Uniform sampling cannot be done since ", law.min.value,
+                " is not < than ", law.max.value, "." );
             if( law.min.is_included )
             {
                 if( law.max.is_included )
                 {
-                    return absl::Uniform(
-                        absl::IntervalClosed, rand_gen_, law.min, law.max );
+                    return absl::Uniform( absl::IntervalClosed, rand_gen_,
+                        law.min.value, law.max.value );
                 }
-                return absl::Uniform(
-                    absl::IntervalClosedOpen, rand_gen_, law.min, law.max );
+                return absl::Uniform( absl::IntervalClosedOpen, rand_gen_,
+                    law.min.value, law.max.value );
             }
             if( law.max.is_included )
             {
-                return absl::Uniform(
-                    absl::IntervalOpenClosed, rand_gen_, law.min, law.max );
+                return absl::Uniform( absl::IntervalOpenClosed, rand_gen_,
+                    law.min.value, law.max.value );
             }
             return absl::Uniform(
-                absl::IntervalOpen, rand_gen_, law.min, law.max );
+                absl::IntervalOpen, rand_gen_, law.min.value, law.max.value );
         }
 
-    private:
-        int do_sample_impl( const UniformInt& spec )
+        double sample_gaussian( const Gaussian& law )
         {
-            return absl::Uniform(
-                absl::IntervalClosed, rand_gen_, spec.min, spec.max );
+            OPENGEODE_DATA_EXCEPTION(
+                law.standard_deviation > 0
+                    && std::isfinite( law.standard_deviation )
+                    && std::isfinite( law.mean ),
+                "Gaussian sampling cannot be done, please check the mean (",
+                law.mean, ") and the standard deviation (",
+                law.standard_deviation, ")." );
+            if( !law.min.has_value() || !law.max.has_value() )
+            {
+                return absl::gaussian_distribution< double >(
+                    law.mean, law.standard_deviation )( rand_gen_ );
+            };
+            const auto max =
+                law.max.value_or( std::numeric_limits< double >::infinity() );
+            const auto min =
+                law.min.value_or( -std::numeric_limits< double >::infinity() );
+
+            OPENGEODE_DATA_EXCEPTION( min < max,
+                "Gaussian sampling cannot be done since ", min,
+                " is not < than ", max, "." );
+
+            OPENGEODE_DATA_EXCEPTION( law.mean > min && law.mean < max,
+                "Gaussian sampling cannot be done since please the mean value "
+                "(",
+                law.mean, ") is not in [", min, ",", max, "]." );
+            double value;
+            do
+            {
+                value = absl::gaussian_distribution< double >(
+                    law.mean, law.standard_deviation )( rand_gen_ );
+            } while( value < min || value > max );
+            return value;
         }
-        double do_sample_impl( const UniformDouble& spec )
+
+        bool sample_bernoulli( double probability_of_success )
         {
-            return absl::Uniform( rand_gen_, spec.min, spec.max );
-        }
-        double do_sample_impl( const Gaussian& spec )
-        {
-            return absl::gaussian_distribution< double >(
-                spec.mean, spec.stddev )( rand_gen_ );
-        }
-        bool do_sample_impl( const Bernoulli& spec )
-        {
-            return absl::bernoulli_distribution( spec.probability )(
+            OPENGEODE_DATA_EXCEPTION(
+                probability_of_success >= 0. && probability_of_success <= 1.0,
+                "Bernoulli sampling cannot be done since ",
+                probability_of_success, " is not in [0.,1.]." );
+            return absl::bernoulli_distribution( probability_of_success )(
                 rand_gen_ );
         }
 
@@ -108,22 +136,13 @@ namespace geode
         absl::BitGen rand_gen_;
     };
 
-    RandomEngine::RandomEngine( uint64_t seed ) : impl_{ seed } {}
+    RandomEngine::RandomEngine() = default;
+
     RandomEngine::~RandomEngine() = default;
 
-    double RandomEngine::sample( const RandomDoubleSpec& random_double_spec )
+    void RandomEngine::set_seed( std::string_view word )
     {
-        return std::visit(
-            [this]( const auto& s ) {
-                return impl_->do_sample( s );
-            },
-            random_double_spec );
-    }
-
-    template < typename RANDSPEC >
-    auto RandomEngine::sample( const RANDSPEC& spec )
-    {
-        return impl_->do_sample( spec );
+        impl_->set_seed( word );
     }
 
     template < typename Type >
@@ -143,11 +162,14 @@ namespace geode
     template double opengeode_stochastic_geometry_api
         RandomEngine::sample_uniform( const Uniform< double >& );
 
-    template auto opengeode_stochastic_geometry_api RandomEngine::sample(
-        const UniformDouble& );
-    template auto opengeode_stochastic_geometry_api RandomEngine::sample(
-        const Gaussian& );
-    template auto opengeode_stochastic_geometry_api RandomEngine::sample(
-        const Bernoulli& );
+    double RandomEngine::sample_gaussian( const Gaussian& law )
+    {
+        return impl_->sample_gaussian( law );
+    }
+
+    bool RandomEngine::sample_bernoulli( double probability_of_success )
+    {
+        return impl_->sample_bernoulli( probability_of_success );
+    }
 
 } // namespace geode

@@ -25,7 +25,7 @@
 
 #include <geode/stochastic/geometry/common.hpp>
 
-#include <geode/stochastic/geometry/random_sample_spec.hpp>
+#include <geode/stochastic/geometry/distributions.hpp>
 
 #include <geode/basic/pimpl.hpp>
 namespace geode
@@ -35,16 +35,17 @@ namespace geode
         OPENGEODE_DISABLE_COPY_AND_MOVE( RandomEngine );
 
     public:
-        explicit RandomEngine( uint64_t seed );
+        explicit RandomEngine();
         ~RandomEngine();
 
-        double sample( const RandomDoubleSpec& double_spec );
-
-        template < typename RANDSPEC >
-        auto sample( const RANDSPEC& spec );
+        void set_seed( std::string_view word );
 
         template < typename Type >
         Type sample_uniform( const Uniform< Type >& law );
+
+        double sample_gaussian( const Gaussian& law );
+
+        bool sample_bernoulli( double probability_of_success );
 
     private:
         IMPLEMENTATION_MEMBER( impl_ );

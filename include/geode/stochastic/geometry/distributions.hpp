@@ -24,10 +24,7 @@
 #pragma once
 
 #include <geode/stochastic/geometry/common.hpp>
-
-#include <geode/basic/pimpl.hpp>
-
-#include <variant>
+#include <optional>
 
 namespace geode
 {
@@ -44,51 +41,38 @@ namespace geode
     struct Uniform
     {
         Uniform() = default;
-
+        Uniform( Type min_val, Type max_val )
+            : min{ IntervalLimit< Type >{ min_val, true } },
+              max{ IntervalLimit< Type >{ max_val, true } }
+        {
+        }
         IntervalLimit< Type > min;
         IntervalLimit< Type > max;
     };
 
-    /*!
-     * Spec to draw a double value in a Uniform Distribution. Describe a
-     * semi closed interval [min,max[
-     */
-    struct UniformDouble
-    {
-        double min;
-        double max;
-    };
-
-    /*!
-     * Spec to draw a double value in a Gaussian Distribution defined by its
-     * mean and standard deviation.
-     */
     struct Gaussian
     {
-        double mean;
-        double stddev;
+        Gaussian() = default;
+        Gaussian( double mean_val, double standard_deviation_val )
+            : mean{ mean_val }, standard_deviation{ standard_deviation_val }
+        {
+        }
+        Gaussian( double mean_val,
+            double standard_deviation_val,
+            double min_val,
+            double max_val )
+            : mean{ mean_val },
+              standard_deviation{ standard_deviation_val },
+              min{ min_val },
+              max{ max_val }
+        {
+        }
+
+        double mean{ 0. };
+        double standard_deviation{ 1. };
+
+        std::optional< double > min;
+        std::optional< double > max;
     };
 
-    /*!
-     * Spec to draw a sucess/fail of an experiement. the experiment is defined
-     * by its probability of success.
-     */
-    struct Bernoulli
-    {
-        double probability;
-    };
-
-    //    struct PointInDisk
-    //    {
-    //        double radius;
-    //    };
-    //
-    //    struct PointInBox2D
-    //    {
-    //        geode::BoundingBox2D box;
-    //    };
-
-    using RandomDoubleSpec = std::variant< UniformDouble, Gaussian >;
-    //        PointInDisk,
-    //        PointInBox2D >;
 } // namespace geode

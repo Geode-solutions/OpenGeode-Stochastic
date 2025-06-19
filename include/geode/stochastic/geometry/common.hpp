@@ -24,6 +24,7 @@
 
 #include <geode/basic/common.hpp>
 #include <geode/basic/library.hpp>
+#include <geode/basic/logger.hpp>
 #include <geode/stochastic/geometry/opengeode_stochastic_geometry_export.hpp>
 
 namespace geode
