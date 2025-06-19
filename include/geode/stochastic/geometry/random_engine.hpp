@@ -30,7 +30,7 @@
 #include <geode/basic/pimpl.hpp>
 namespace geode
 {
-    class RandomEngine
+    class opengeode_stochastic_geometry_api RandomEngine
     {
         OPENGEODE_DISABLE_COPY_AND_MOVE( RandomEngine );
 
