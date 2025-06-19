@@ -143,8 +143,6 @@ namespace geode
     template double opengeode_stochastic_geometry_api
         RandomEngine::sample_uniform( const Uniform< double >& );
 
-
-
     template auto opengeode_stochastic_geometry_api RandomEngine::sample(
         const UniformDouble& );
     template auto opengeode_stochastic_geometry_api RandomEngine::sample(
