@@ -25,6 +25,7 @@
 
 #include <geode/stochastic/geometry/common.hpp>
 #include <optional>
+#include <variant>
 
 namespace geode
 {
@@ -74,5 +75,6 @@ namespace geode
         std::optional< double > min;
         std::optional< double > max;
     };
+    using Distribution = std::variant< Uniform< double >, Gaussian >;
 
 } // namespace geode

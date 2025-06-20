@@ -27,24 +27,30 @@
 
 #include <geode/basic/pimpl_impl.hpp>
 
-#include "absl/random/bernoulli_distribution.h"
-#include "absl/random/gaussian_distribution.h"
-#include "absl/random/random.h"
-#include "absl/random/uniform_int_distribution.h"
-#include "absl/random/uniform_real_distribution.h"
+#include <absl/random/bernoulli_distribution.h>
+#include <absl/random/gaussian_distribution.h>
+#include <absl/random/random.h>
+#include <absl/random/uniform_int_distribution.h>
+#include <absl/random/uniform_real_distribution.h>
 
-#include "absl/hash/hash.h"
+#include <absl/hash/hash.h>
 #include <limits>
+#include <variant>
 
 namespace
 {
-    std::seed_seq create_seed_seq( std::string_view word )
+    std::seed_seq create_seed_seq( uint64_t seed )
     {
-        uint64_t seed = absl::Hash< std::string_view >{}( word );
         std::vector< uint32_t > seed_data = { static_cast< uint32_t >(
                                                   seed >> 32 ),
             static_cast< uint32_t >( seed & 0xFFFFFFFF ) };
         return std::seed_seq( seed_data.begin(), seed_data.end() );
+    }
+
+    std::seed_seq create_seed_seq( std::string_view word )
+    {
+        uint64_t seed = absl::Hash< std::string_view >{}( word );
+        return create_seed_seq( seed );
     }
 } // namespace
 
@@ -53,14 +59,33 @@ namespace geode
     class RandomEngine::Impl
     {
     public:
-        explicit Impl() = default;
-        ~Impl() = default;
+        void set_seed( uint64_t number )
+        {
+            rand_gen_ = absl::BitGen{ create_seed_seq( number ) };
+        }
 
         void set_seed( std::string_view word )
         {
             rand_gen_ = absl::BitGen{ create_seed_seq( word ) };
         }
 
+        double sample( const Distribution& dist )
+        {
+            return std::visit(
+                [this]( auto&& d ) {
+                    return sample_distribution( d );
+                },
+                dist );
+        }
+        double sample_distribution( const Uniform< double >& law )
+        {
+            return absl::Uniform( absl::IntervalClosedOpen, rand_gen_,
+                law.min.value, law.max.value );
+        }
+        double sample_distribution( const Gaussian& law )
+        {
+            return sample_gaussian( law );
+        }
         template < typename Type >
         Type sample_uniform( const Uniform< Type >& law )
         {
@@ -140,9 +165,19 @@ namespace geode
 
     RandomEngine::~RandomEngine() = default;
 
+    void RandomEngine::set_seed( uint64_t number )
+    {
+        impl_->set_seed( number );
+    }
+
     void RandomEngine::set_seed( std::string_view word )
     {
         impl_->set_seed( word );
+    }
+
+    double RandomEngine::sample( const Distribution& dist )
+    {
+        return impl_->sample( dist );
     }
 
     template < typename Type >

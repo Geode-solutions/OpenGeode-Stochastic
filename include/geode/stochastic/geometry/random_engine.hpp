@@ -28,6 +28,7 @@
 #include <geode/stochastic/geometry/distributions.hpp>
 
 #include <geode/basic/pimpl.hpp>
+
 namespace geode
 {
     class opengeode_stochastic_geometry_api RandomEngine
@@ -38,7 +39,10 @@ namespace geode
         explicit RandomEngine();
         ~RandomEngine();
 
+        void set_seed( uint64_t number );
         void set_seed( std::string_view word );
+
+        double sample( const Distribution& dist );
 
         template < typename Type >
         Type sample_uniform( const Uniform< Type >& law );
