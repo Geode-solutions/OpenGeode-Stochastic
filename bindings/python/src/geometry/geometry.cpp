@@ -24,6 +24,7 @@
 #include <pybind11/pybind11.h>
 
 #include <geode/stochastic/geometry/hello_world.hpp>
+#include <geode/stochastic/geometry/random_engine.hpp>
 
 PYBIND11_MODULE( opengeode_stochastic_py_geometry, module )
 {
@@ -32,4 +33,5 @@ PYBIND11_MODULE( opengeode_stochastic_py_geometry, module )
         module, "StochasticGeometryLibrary" )
         .def( "initialize", &geode::StochasticGeometryLibrary::initialize );
     module.def( "hello_world", &geode::hello_world );
+    //    geode::define_random_engine( module );
 }
