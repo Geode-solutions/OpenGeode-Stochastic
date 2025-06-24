@@ -24,10 +24,12 @@ add_geode_library(
     SOURCES
         "common.cpp"
         "random_engine.cpp"
+        "random_sampler.cpp"
         "hello_world.cpp"
     PUBLIC_HEADERS
         "common.hpp"
         "random_engine.hpp"
+        "random_sampler.hpp"
         "distributions.hpp"
         "hello_world.hpp"
     PRIVATE_DEPENDENCIES

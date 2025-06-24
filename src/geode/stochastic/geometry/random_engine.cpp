@@ -69,14 +69,14 @@ namespace geode
             rand_gen_ = absl::BitGen{ create_seed_seq( word ) };
         }
 
-        double sample( const Distribution& dist )
-        {
-            return std::visit(
-                [this]( auto&& d ) {
-                    return sample_distribution( d );
-                },
-                dist );
-        }
+        //        double sample( const Distribution& dist )
+        //        {
+        //            return std::visit(
+        //                [this]( auto&& d ) {
+        //                    return sample_distribution( d );
+        //                },
+        //                dist );
+        //        }
         double sample_distribution( const Uniform< double >& law )
         {
             return absl::Uniform( absl::IntervalClosedOpen, rand_gen_,
@@ -175,10 +175,10 @@ namespace geode
         impl_->set_seed( word );
     }
 
-    double RandomEngine::sample( const Distribution& dist )
-    {
-        return impl_->sample( dist );
-    }
+    //    double RandomEngine::sample( const Distribution& dist )
+    //    {
+    //        return impl_->sample( dist );
+    //    }
 
     template < typename Type >
     Type RandomEngine::sample_uniform( const Uniform< Type >& law )

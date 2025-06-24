@@ -23,9 +23,10 @@
 
 #pragma once
 
+#include <geode/geometry/bounding_box.hpp>
 #include <geode/stochastic/geometry/common.hpp>
+
 #include <optional>
-#include <variant>
 
 namespace geode
 {
@@ -42,6 +43,7 @@ namespace geode
     struct Uniform
     {
         Uniform() = default;
+        // toremove
         Uniform( Type min_val, Type max_val )
             : min{ IntervalLimit< Type >{ min_val, true } },
               max{ IntervalLimit< Type >{ max_val, true } }
@@ -54,6 +56,7 @@ namespace geode
     struct Gaussian
     {
         Gaussian() = default;
+        // to remove
         Gaussian( double mean_val, double standard_deviation_val )
             : mean{ mean_val }, standard_deviation{ standard_deviation_val }
         {
@@ -75,6 +78,10 @@ namespace geode
         std::optional< double > min;
         std::optional< double > max;
     };
-    using Distribution = std::variant< Uniform< double >, Gaussian >;
+
+    struct UniformBox3D
+    {
+        geode::BoundingBox3D box;
+    };
 
 } // namespace geode
