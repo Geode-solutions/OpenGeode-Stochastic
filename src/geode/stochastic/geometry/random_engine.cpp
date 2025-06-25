@@ -23,8 +23,6 @@
 
 #include <geode/stochastic/geometry/random_engine.hpp>
 
-#include <geode/stochastic/geometry/distributions.hpp>
-
 #include <geode/basic/pimpl_impl.hpp>
 
 #include <absl/random/bernoulli_distribution.h>
@@ -35,7 +33,6 @@
 
 #include <absl/hash/hash.h>
 #include <limits>
-#include <variant>
 
 namespace
 {
@@ -69,75 +66,54 @@ namespace geode
             rand_gen_ = absl::BitGen{ create_seed_seq( word ) };
         }
 
-        //        double sample( const Distribution& dist )
-        //        {
-        //            return std::visit(
-        //                [this]( auto&& d ) {
-        //                    return sample_distribution( d );
-        //                },
-        //                dist );
-        //        }
-        double sample_distribution( const Uniform< double >& law )
-        {
-            return absl::Uniform( absl::IntervalClosedOpen, rand_gen_,
-                law.min.value, law.max.value );
-        }
-        double sample_distribution( const Gaussian& law )
-        {
-            return sample_gaussian( law );
-        }
         template < typename Type >
-        Type sample_uniform( const Uniform< Type >& law )
+        Type sample_uniform( const UniformClosed< Type >& law )
         {
-            OPENGEODE_DATA_EXCEPTION( law.min.value < law.max.value,
-                "Uniform sampling cannot be done since ", law.min.value,
-                " is not < than ", law.max.value, "." );
-            if( law.min.is_included )
-            {
-                if( law.max.is_included )
-                {
-                    return absl::Uniform( absl::IntervalClosed, rand_gen_,
-                        law.min.value, law.max.value );
-                }
-                return absl::Uniform( absl::IntervalClosedOpen, rand_gen_,
-                    law.min.value, law.max.value );
-            }
-            if( law.max.is_included )
-            {
-                return absl::Uniform( absl::IntervalOpenClosed, rand_gen_,
-                    law.min.value, law.max.value );
-            }
+            OPENGEODE_ASSERT( law.min_value <= law.max_value,
+                "Uniform sampling cannot be done since ", law.min_value,
+                " is not <= than ", law.max_value, "." );
             return absl::Uniform(
-                absl::IntervalOpen, rand_gen_, law.min.value, law.max.value );
+                absl::IntervalClosed, rand_gen_, law.min_value, law.max_value );
+        }
+
+        template < typename Type >
+        Type sample_uniform( const UniformClosedOpen< Type >& law )
+        {
+            OPENGEODE_ASSERT( law.min_value < law.max_value,
+                "Uniform sampling cannot be done since ", law.min_value,
+                " is not < than ", law.max_value, "." );
+            return absl::Uniform( absl::IntervalClosedOpen, rand_gen_,
+                law.min_value, law.max_value );
         }
 
         double sample_gaussian( const Gaussian& law )
         {
-            OPENGEODE_DATA_EXCEPTION(
-                law.standard_deviation > 0
-                    && std::isfinite( law.standard_deviation )
-                    && std::isfinite( law.mean ),
+            OPENGEODE_ASSERT( law.standard_deviation > 0
+                                  && std::isfinite( law.standard_deviation )
+                                  && std::isfinite( law.mean ),
                 "Gaussian sampling cannot be done, please check the mean (",
                 law.mean, ") and the standard deviation (",
                 law.standard_deviation, ")." );
-            if( !law.min.has_value() || !law.max.has_value() )
-            {
-                return absl::gaussian_distribution< double >(
-                    law.mean, law.standard_deviation )( rand_gen_ );
-            };
-            const auto max =
-                law.max.value_or( std::numeric_limits< double >::infinity() );
-            const auto min =
-                law.min.value_or( -std::numeric_limits< double >::infinity() );
+            return absl::gaussian_distribution< double >(
+                law.mean, law.standard_deviation )( rand_gen_ );
+        }
 
-            OPENGEODE_DATA_EXCEPTION( min < max,
+        double sample_truncated_gaussian( const TruncatedGaussian& law )
+        {
+            OPENGEODE_ASSERT( law.standard_deviation > 0
+                                  && std::isfinite( law.standard_deviation )
+                                  && std::isfinite( law.mean ),
+                "Gaussian sampling cannot be done, please check the mean (",
+                law.mean, ") and the standard deviation (",
+                law.standard_deviation, ")." );
+            const auto max = law.max_value.value_or(
+                std::numeric_limits< double >::infinity() );
+            const auto min = law.min_value.value_or(
+                -std::numeric_limits< double >::infinity() );
+
+            OPENGEODE_ASSERT( min < max,
                 "Gaussian sampling cannot be done since ", min,
                 " is not < than ", max, "." );
-
-            OPENGEODE_DATA_EXCEPTION( law.mean > min && law.mean < max,
-                "Gaussian sampling cannot be done since please the mean value "
-                "(",
-                law.mean, ") is not in [", min, ",", max, "]." );
             double value;
             do
             {
@@ -149,7 +125,7 @@ namespace geode
 
         bool sample_bernoulli( double probability_of_success )
         {
-            OPENGEODE_DATA_EXCEPTION(
+            OPENGEODE_ASSERT(
                 probability_of_success >= 0. && probability_of_success <= 1.0,
                 "Bernoulli sampling cannot be done since ",
                 probability_of_success, " is not in [0.,1.]." );
@@ -175,33 +151,50 @@ namespace geode
         impl_->set_seed( word );
     }
 
-    //    double RandomEngine::sample( const Distribution& dist )
-    //    {
-    //        return impl_->sample( dist );
-    //    }
-
     template < typename Type >
-    Type RandomEngine::sample_uniform( const Uniform< Type >& law )
+    Type RandomEngine::sample_uniform( const UniformClosed< Type >& law )
     {
         return impl_->sample_uniform( law );
     }
 
     template index_t opengeode_stochastic_geometry_api
-        RandomEngine::sample_uniform( const Uniform< index_t >& );
+        RandomEngine::sample_uniform( const UniformClosed< index_t >& );
     template local_index_t opengeode_stochastic_geometry_api
-        RandomEngine::sample_uniform( const Uniform< local_index_t >& );
+        RandomEngine::sample_uniform( const UniformClosed< local_index_t >& );
     template signed_index_t opengeode_stochastic_geometry_api
-        RandomEngine::sample_uniform( const Uniform< signed_index_t >& );
+        RandomEngine::sample_uniform( const UniformClosed< signed_index_t >& );
     template float opengeode_stochastic_geometry_api
-        RandomEngine::sample_uniform( const Uniform< float >& );
+        RandomEngine::sample_uniform( const UniformClosed< float >& );
     template double opengeode_stochastic_geometry_api
-        RandomEngine::sample_uniform( const Uniform< double >& );
+        RandomEngine::sample_uniform( const UniformClosed< double >& );
+
+    template < typename Type >
+    Type RandomEngine::sample_uniform( const UniformClosedOpen< Type >& law )
+    {
+        return impl_->sample_uniform( law );
+    }
+    template index_t opengeode_stochastic_geometry_api
+        RandomEngine::sample_uniform( const UniformClosedOpen< index_t >& );
+    template local_index_t opengeode_stochastic_geometry_api
+        RandomEngine::sample_uniform(
+            const UniformClosedOpen< local_index_t >& );
+    template signed_index_t opengeode_stochastic_geometry_api
+        RandomEngine::sample_uniform(
+            const UniformClosedOpen< signed_index_t >& );
+    template float opengeode_stochastic_geometry_api
+        RandomEngine::sample_uniform( const UniformClosedOpen< float >& );
+    template double opengeode_stochastic_geometry_api
+        RandomEngine::sample_uniform( const UniformClosedOpen< double >& );
 
     double RandomEngine::sample_gaussian( const Gaussian& law )
     {
         return impl_->sample_gaussian( law );
     }
-
+    double RandomEngine::sample_truncated_gaussian(
+        const TruncatedGaussian& law )
+    {
+        return impl_->sample_truncated_gaussian( law );
+    }
     bool RandomEngine::sample_bernoulli( double probability_of_success )
     {
         return impl_->sample_bernoulli( probability_of_success );

@@ -29,6 +29,8 @@
 #include <geode/stochastic/geometry/distributions.hpp>
 #include <geode/stochastic/geometry/random_engine.hpp>
 
+const int NUMBER_OF_SAMPLES = 10000;
+
 void test_reproducibility()
 {
     std::vector< std::string > seeds = { "same-seed", "geode-solutions",
@@ -43,7 +45,9 @@ void test_reproducibility()
         engine2.set_seed( seed );
 
         // Define a uniform distribution
-        geode::Uniform< int > dist{ 1, 100 };
+        geode::UniformClosed< int > dist;
+        dist.min_value = 1;
+        dist.min_value = 100;
 
         // Sample more values to check sequence reproducibility
         for( const auto value : geode::Range{ 100 } )
@@ -79,14 +83,16 @@ template < typename Type >
 void test_uniform(
     const Type min_value, const Type max_value, geode::RandomEngine& engine )
 {
-    const int number_of_samples = 10000;
     std::vector< Type > samples;
-    samples.reserve( number_of_samples );
+    samples.reserve( NUMBER_OF_SAMPLES );
 
-    for( const auto i : geode::Range{ number_of_samples } )
+    for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
     {
-        Type value = engine.sample_uniform(
-            geode::Uniform< Type >{ min_value, max_value } );
+        geode::UniformClosed< Type > dist_closed;
+        dist_closed.min_value = min_value;
+        dist_closed.max_value = max_value;
+
+        Type value = engine.sample_uniform( dist_closed );
         samples.emplace_back( value );
         OPENGEODE_ASSERT( value >= min_value && value <= max_value,
             "[Uniform] -  value out of range." );
@@ -108,7 +114,37 @@ void test_uniform(
         " variance / expected variance = ", variance, "/", expected_var );
 }
 
-void test_gaussian( double mean_value,
+void test_gaussian(
+    double mean_value, double std_value, geode::RandomEngine& engine )
+{
+    std::vector< double > samples;
+    samples.reserve( NUMBER_OF_SAMPLES );
+    geode::Gaussian spec;
+    spec.mean = mean_value;
+    spec.standard_deviation = std_value;
+
+    for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
+    {
+        double value = engine.sample_gaussian( spec );
+        samples.emplace_back( value );
+    }
+    double mean = compute_mean( samples );
+    double variance = compute_variance( samples, mean );
+
+    double expected_mean = mean_value;
+    double expected_var = std_value * std_value;
+
+    OPENGEODE_ASSERT( mean > expected_mean - 0.1 && mean < expected_mean + 0.1,
+        "[Gaussian] - Wrong expected mean." );
+    OPENGEODE_ASSERT(
+        variance > expected_var - 0.1 && variance < expected_var + 0.1,
+        "[Gaussian] - Wrong expected std." );
+    geode::Logger::info( "Test Gaussian ",
+        ": SUCCESS - mean / expected mean = ", mean, "/", expected_mean,
+        " variance / expected variance = ", variance, "/", expected_var );
+}
+
+void test_truncated_gaussian( double mean_value,
     double std_value,
     std::optional< double > min_value,
     std::optional< double > max_value,
@@ -118,23 +154,29 @@ void test_gaussian( double mean_value,
         max_value.value_or( std::numeric_limits< double >::infinity() );
     const auto min =
         min_value.value_or( -std::numeric_limits< double >::infinity() );
-    OPENGEODE_ASSERT( 2 * mean_value - min - max < geode::GLOBAL_EPSILON,
-        "[Gaussian] -  Test not relevant min an max are not symetric "
-        "compare to mean value." );
 
-    const int number_of_samples = 10000;
     std::vector< double > samples;
-    samples.reserve( number_of_samples );
-    geode::Gaussian spec{ mean_value, std_value };
-    spec.min = min_value;
-    spec.max = max_value;
+    samples.reserve( NUMBER_OF_SAMPLES );
 
-    for( const auto i : geode::Range{ number_of_samples } )
+    geode::TruncatedGaussian spec;
+    spec.mean = mean_value;
+    spec.standard_deviation = std_value;
+    spec.min_value = min_value;
+    spec.max_value = max_value;
+
+    for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
     {
-        double value = engine.sample_gaussian( spec );
+        double value = engine.sample_truncated_gaussian( spec );
         samples.emplace_back( value );
         OPENGEODE_ASSERT(
             value >= min && value <= max, "[Gaussian] -  value out of range." );
+    }
+
+    if( 2 * mean_value - min - max < geode::GLOBAL_EPSILON )
+    {
+        geode::Logger::info( "Truncated Gaussian Distribution not symetric "
+                             "cannot compute theoretic parameters. " );
+        return;
     }
     double mean = compute_mean( samples );
     double variance = compute_variance( samples, mean );
@@ -155,10 +197,9 @@ void test_gaussian( double mean_value,
 void test_bernoulli(
     double probability_of_success, geode::RandomEngine& engine )
 {
-    const int number_of_samples = 10000;
     int success_count = 0;
 
-    for( const auto i : geode::Range{ number_of_samples } )
+    for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
     {
         if( engine.sample_bernoulli( probability_of_success ) )
         {
@@ -167,7 +208,7 @@ void test_bernoulli(
     }
 
     const double empirical_probability =
-        static_cast< double >( success_count ) / number_of_samples;
+        static_cast< double >( success_count ) / NUMBER_OF_SAMPLES;
 
     OPENGEODE_ASSERT(
         abs( empirical_probability - probability_of_success ) < 0.05,
@@ -192,8 +233,14 @@ int main()
         test_uniform< float >( 15.545, 18.9524, random_engine );
         test_uniform< double >( -100.54, 100.6, random_engine );
 
-        test_gaussian( 0., 1., std::nullopt, std::nullopt, random_engine );
-        test_gaussian( 10., 1., 5., 15., random_engine );
+        test_gaussian( 0., 1., random_engine );
+        test_gaussian( -100., 1., random_engine );
+
+        test_truncated_gaussian(
+            0., 1., std::nullopt, std::nullopt, random_engine );
+        test_truncated_gaussian( 0., 1., std::nullopt, 1., random_engine );
+        test_truncated_gaussian( 0., 1., -1., std::nullopt, random_engine );
+        test_truncated_gaussian( 10., 1., 5., 15., random_engine );
 
         test_bernoulli( 0.5, random_engine );
         test_bernoulli( 0.1, random_engine );

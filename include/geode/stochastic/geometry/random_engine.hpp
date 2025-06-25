@@ -28,7 +28,7 @@
 #include <geode/stochastic/geometry/distributions.hpp>
 
 #include <geode/basic/pimpl.hpp>
-#include <geode/geometry/point.hpp>
+
 namespace geode
 {
     class opengeode_stochastic_geometry_api RandomEngine
@@ -42,20 +42,16 @@ namespace geode
         void set_seed( uint64_t number );
         void set_seed( std::string_view word );
 
-        //        double sample( const Distribution& dist );
+        template < typename Type >
+        Type sample_uniform( const UniformClosed< Type >& law );
 
         template < typename Type >
-        Type sample_uniform( const Uniform< Type >& law );
+        Type sample_uniform( const UniformClosedOpen< Type >& law );
 
         double sample_gaussian( const Gaussian& law );
+        double sample_truncated_gaussian( const TruncatedGaussian& law );
 
         bool sample_bernoulli( double probability_of_success );
-
-        geode::Point3D sample_box_uniform( const UniformBox3D& box_law )
-        {
-            geode_unused( box_law );
-            return geode::Point3D{};
-        }
 
     private:
         IMPLEMENTATION_MEMBER( impl_ );

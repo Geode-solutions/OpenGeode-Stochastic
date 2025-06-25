@@ -23,14 +23,16 @@ add_geode_library(
     FOLDER "geode/stochastic/geometry"
     SOURCES
         "common.cpp"
+        "distributions.cpp"
         "random_engine.cpp"
         "random_sampler.cpp"
         "hello_world.cpp"
     PUBLIC_HEADERS
         "common.hpp"
+        "distributions.hpp"
         "random_engine.hpp"
         "random_sampler.hpp"
-        "distributions.hpp"
+        "spatial_distributions.hpp"
         "hello_world.hpp"
     PRIVATE_DEPENDENCIES
         OpenGeode::basic

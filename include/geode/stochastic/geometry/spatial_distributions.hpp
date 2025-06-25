@@ -23,52 +23,37 @@
 
 #pragma once
 
+#include <geode/geometry/bounding_box.hpp>
 #include <geode/stochastic/geometry/common.hpp>
-
-#include <optional>
+#include <geode/stochastic/geometry/distributions.hpp>
 
 namespace geode
 {
-    template < typename Type >
-    struct UniformClosed
+    template < index_t dimension >
+    struct UniformBox
     {
-        UniformClosed() = default;
-        bool is_valid() const;
+        UniformBox( const geode::BoundingBox< dimension >& box )
+        {
+            for( const auto i : geode::Range( dimension ) )
+            {
+                dist_coordinates[i].min_value = box.min().value( i );
+                dist_coordinates[i].max_value = box.max().value( i );
+            }
+        };
 
-        Type min_value{ 0 };
-        Type max_value{ 1 };
+        std::array< UniformClosed< double >, dimension > dist_coordinates;
     };
 
-    template < typename Type >
-    struct UniformClosedOpen
+    template < index_t dimension >
+    struct UniformBall
     {
-        UniformClosedOpen() = default;
-        bool is_valid() const;
+        UniformBall( const Point< dimension >& center_val, double radius_val )
+            : center{ center_val }, radius{ radius_val }
+        {
+        }
 
-        Type min_value{ 0 };
-        Type max_value{ 1 };
-    };
-
-    struct opengeode_stochastic_geometry_api Gaussian
-    {
-        Gaussian() = default;
-        bool is_valid() const;
-
-        double mean{ 0. };
-        double standard_deviation{ 1. };
-    };
-
-    struct opengeode_stochastic_geometry_api TruncatedGaussian
-    {
-        TruncatedGaussian() = default;
-
-        bool is_valid() const;
-
-        double mean{ 0. };
-        double standard_deviation{ 1. };
-
-        std::optional< double > min_value;
-        std::optional< double > max_value;
+        const Point< dimension >& center;
+        double radius;
     };
 
 } // namespace geode

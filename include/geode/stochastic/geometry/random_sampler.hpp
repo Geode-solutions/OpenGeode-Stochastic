@@ -1,57 +1,73 @@
-#include <geode/stochastic/geometry/common.hpp>
+
+/*
+ * Copyright (c) 2019 - 2025 Geode-solutions
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
 
 #include <geode/stochastic/geometry/distributions.hpp>
-#include <geode/stochastic/geometry/random_engine.hpp>
 
-#include <geode/geometry/point.hpp>
+#include <geode/stochastic/geometry/spatial_distributions.hpp>
+
 #include <variant>
 
 namespace geode
 {
-    using DoubleDistribution = std::variant< Uniform< double >, Gaussian >;
-    using Domain = std::variant< UniformBox3D >;
+    class RandomEngine;
+    FORWARD_DECLARATION_DIMENSION_CLASS( Point );
+    ALIAS_2D_AND_3D( Point );
+} // namespace geode
 
-    // Interface générique
+namespace geode
+{
     template < typename T >
-    struct Sampler;
+    struct RandomSampler;
+
+    using DoubleDistribution = std::variant< UniformClosed< double >,
+        UniformClosedOpen< double >,
+        Gaussian,
+        TruncatedGaussian >;
 
     template <>
-    struct Sampler< double >
+    struct RandomSampler< double >
     {
         static double sample(
-            RandomEngine& engine, const DoubleDistribution& dist )
-        {
-            return std::visit(
-                [&engine]( auto&& d ) -> double {
-                    using D = std::decay_t< decltype( d ) >;
-                    if constexpr( std::is_same_v< D, Uniform< double > > )
-                        return engine.sample_uniform< double >( d );
-                    else if constexpr( std::is_same_v< D, Gaussian > )
-                        return engine.sample_gaussian( d );
-                    else
-                        throw std::runtime_error(
-                            "Unsupported distribution for double" );
-                },
-                dist );
-        }
+            RandomEngine& engine, const DoubleDistribution& dist );
     };
 
-    // Spécialisation pour `Point2D`
+    using SpatialDistribution2D =
+        std::variant< UniformBox< 2 >, UniformBall< 2 > >;
     template <>
-    struct Sampler< geode::Point3D >
+    struct RandomSampler< Point2D >
     {
-        static geode::Point3D sample( RandomEngine& engine, const Domain& dist )
-        {
-            return std::visit(
-                [&engine]( auto&& d ) -> geode::Point3D {
-                    using D = std::decay_t< decltype( d ) >;
-                    if constexpr( std::is_same_v< D, UniformBox3D > )
-                        return engine.sample_box_uniform( d );
-                    else
-                        throw std::runtime_error(
-                            "Unsupported distribution for Point2D" );
-                },
-                dist );
-        }
+        static Point2D sample(
+            RandomEngine& engine, const SpatialDistribution2D& dist );
     };
+
+    using SpatialDistribution3D =
+        std::variant< UniformBox< 3 >, UniformBall< 3 > >;
+    template <>
+    struct RandomSampler< Point3D >
+    {
+        static Point3D sample(
+            RandomEngine& engine, const SpatialDistribution3D& dist );
+    };
+
 } // namespace geode

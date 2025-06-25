@@ -31,3 +31,11 @@ add_geode_test(
         OpenGeode::basic
         ${PROJECT_NAME}::geometry
 )
+
+add_geode_test(
+    SOURCE "test-random-sampler.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::geometry
+)
