@@ -24,6 +24,7 @@
 #include <geode/stochastic/geometry/random_engine.hpp>
 
 #include <geode/basic/pimpl_impl.hpp>
+#include <geode/basic/range.hpp>
 
 #include <absl/random/bernoulli_distribution.h>
 #include <absl/random/gaussian_distribution.h>
@@ -70,7 +71,7 @@ namespace geode
         Type sample_uniform( const UniformClosed< Type >& law )
         {
             OPENGEODE_ASSERT( law.min_value <= law.max_value,
-                "Uniform sampling cannot be done since ", law.min_value,
+                "[Uniform sampling] - Wrong range ", law.min_value,
                 " is not <= than ", law.max_value, "." );
             return absl::Uniform(
                 absl::IntervalClosed, rand_gen_, law.min_value, law.max_value );
@@ -80,7 +81,7 @@ namespace geode
         Type sample_uniform( const UniformClosedOpen< Type >& law )
         {
             OPENGEODE_ASSERT( law.min_value < law.max_value,
-                "Uniform sampling cannot be done since ", law.min_value,
+                "[Uniform sampling] - Wrong range ", law.min_value,
                 " is not < than ", law.max_value, "." );
             return absl::Uniform( absl::IntervalClosedOpen, rand_gen_,
                 law.min_value, law.max_value );
@@ -91,9 +92,9 @@ namespace geode
             OPENGEODE_ASSERT( law.standard_deviation > 0
                                   && std::isfinite( law.standard_deviation )
                                   && std::isfinite( law.mean ),
-                "Gaussian sampling cannot be done, please check the mean (",
-                law.mean, ") and the standard deviation (",
-                law.standard_deviation, ")." );
+                "[Gaussian sampling] - Infinite "
+                "parameters or negative standard deviation N(",
+                law.mean, law.standard_deviation, ")." );
             return absl::gaussian_distribution< double >(
                 law.mean, law.standard_deviation )( rand_gen_ );
         }
@@ -103,24 +104,38 @@ namespace geode
             OPENGEODE_ASSERT( law.standard_deviation > 0
                                   && std::isfinite( law.standard_deviation )
                                   && std::isfinite( law.mean ),
-                "Gaussian sampling cannot be done, please check the mean (",
-                law.mean, ") and the standard deviation (",
-                law.standard_deviation, ")." );
+                "[Truncated Gaussian sampling] - Infinite "
+                "parameters or negative standard deviation N(",
+                law.mean, law.standard_deviation, ")." );
             const auto max = law.max_value.value_or(
                 std::numeric_limits< double >::infinity() );
             const auto min = law.min_value.value_or(
                 -std::numeric_limits< double >::infinity() );
 
             OPENGEODE_ASSERT( min < max,
-                "Gaussian sampling cannot be done since ", min,
+                "[Truncated Gaussian sampling] - Wrong truncation range ", min,
                 " is not < than ", max, "." );
-            double value;
-            do
+            OPENGEODE_ASSERT(
+                min < law.mean + 6.0 * law.standard_deviation
+                    && max > law.mean - 6.0 * law.standard_deviation,
+                "[Truncated Gaussian sampling] - Truncation range is too far "
+                "from mean." );
+
+            constexpr index_t MAX_ATTEMPTS = 10000;
+            for( const auto attempt : geode::Range( MAX_ATTEMPTS ) )
             {
-                value = absl::gaussian_distribution< double >(
+                geode_unused( attempt );
+                auto value = absl::gaussian_distribution< double >(
                     law.mean, law.standard_deviation )( rand_gen_ );
-            } while( value < min || value > max );
-            return value;
+                if( value >= min && value <= max )
+                {
+                    return value;
+                }
+            }
+            OPENGEODE_ASSERT_NOT_REACHED(
+                "[Truncated Gaussian sampling] - number of attemps > ",
+                MAX_ATTEMPTS );
+            return 0.;
         }
 
         bool sample_bernoulli( double probability_of_success )

@@ -38,13 +38,13 @@ namespace geode
         if( min_value == max_value )
         {
             geode::Logger::warn(
-                "[UniformClosed] - check boundaries definintion [", min_value,
-                ",", max_value, "]." );
+                "[Uniform Closed] - check range boundaries definintion [",
+                min_value, ",", max_value, "]." );
             return true;
         }
         geode::Logger::error(
-            "[UniformClosed] - check boundaries definintion [", min_value, ",",
-            max_value, "]." );
+            "[Uniform Closed] - check range boundaries definintion [",
+            min_value, ",", max_value, "]." );
         return false;
     }
     template opengeode_stochastic_geometry_api struct UniformClosed< index_t >;
@@ -63,8 +63,8 @@ namespace geode
             return true;
         }
         geode::Logger::error(
-            "[UniformClosedOpen] - check boundaries definintion [", min_value,
-            ",", max_value, "]." );
+            "[Uniform ClosedOpen] - check range boundaries definintion [",
+            min_value, ",", max_value, "]." );
         return false;
     }
     template opengeode_stochastic_geometry_api struct UniformClosedOpen<
@@ -97,8 +97,8 @@ namespace geode
             || std::isfinite( mean ) )
         {
             geode::Logger::error(
-                "[Gaussian] - check mean and standard deviation N(", mean, ",",
-                standard_deviation, ")." );
+                "[Truncated Gaussian] - check mean and standard deviation N(",
+                mean, ",", standard_deviation, ")." );
             return false;
         }
         const auto max =
@@ -108,29 +108,20 @@ namespace geode
 
         if( min >= max )
         {
-            geode::Logger::error( "[TruncatedGaussian] - check "
-                                  "boundaries definintion [",
+            geode::Logger::error( "[Truncated Gaussian] - check "
+                                  "range boundaries definintion [",
                 min, ",", max, "]." );
             return false;
         }
 
-        auto mean_out_of_bounds = ( mean < min ) || ( mean > max );
-        if( mean_out_of_bounds )
+        if( min < mean + 6.0 * standard_deviation
+            && max > mean - 6.0 * standard_deviation )
         {
-            geode::Logger::warn( "[TruncatedGaussian] - the mean (", mean,
-                ") is defined out [", min, ",", max, "]." );
-        }
-        bool range_finite = std::isfinite( min ) && std::isfinite( max );
-        bool small_range = false;
-        if( range_finite )
-        {
-            small_range = ( std::abs( max - min ) < 0.9 * standard_deviation );
-        }
-        if( small_range )
-        {
-            geode::Logger::warn(
-                "[TruncatedGaussian] - boundary range defined in [", min, ",",
-                max, "] may be too narrow." );
+            geode::Logger::error( "[Truncated Gaussian] - Truncation "
+                                  "range is too far from mean. N(",
+                mean, ",", standard_deviation, ") is defined in [", min, ",",
+                max, "]." );
+            return false;
         }
         return true;
     }
