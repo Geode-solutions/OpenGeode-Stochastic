@@ -30,9 +30,9 @@
 
 namespace geode
 {
-    class RandomEngine;
     FORWARD_DECLARATION_DIMENSION_CLASS( Point );
     ALIAS_2D_AND_3D( Point );
+    class RandomEngine;
 } // namespace geode
 
 namespace geode
