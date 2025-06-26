@@ -32,9 +32,9 @@ namespace geode
     template < index_t dimension >
     struct UniformBox
     {
-        UniformBox( const geode::BoundingBox< dimension >& box )
+        UniformBox( const BoundingBox< dimension >& box )
         {
-            for( const auto i : geode::Range( dimension ) )
+            for( const auto i : Range( dimension ) )
             {
                 dist_coordinates[i].min_value = box.min().value( i );
                 dist_coordinates[i].max_value = box.max().value( i );
