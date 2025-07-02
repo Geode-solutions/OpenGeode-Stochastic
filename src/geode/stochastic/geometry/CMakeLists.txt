@@ -22,12 +22,15 @@ add_geode_library(
     NAME geometry
     FOLDER "geode/stochastic/geometry"
     SOURCES
+        "sampler/double_distribution_sampler.cpp"
         "common.cpp"
         "distributions.cpp"
         "random_engine.cpp"
         "random_sampler.cpp"
         "hello_world.cpp"
     PUBLIC_HEADERS
+        "sampler/basic_sampler.hpp"
+        "sampler/double_distribution_sampler.hpp"
         "common.hpp"
         "distributions.hpp"
         "random_engine.hpp"
