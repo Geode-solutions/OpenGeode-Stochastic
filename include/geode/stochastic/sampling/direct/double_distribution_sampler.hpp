@@ -41,7 +41,7 @@ namespace geode
         Gaussian,
         TruncatedGaussian >;
 
-    struct DoubleDistributionSampler
+    struct opengeode_stochastic_stochastic_api DoubleDistributionSampler
     {
         static double sample(
             RandomEngine& engine, const DoubleDistribution& dist );

@@ -38,10 +38,10 @@ namespace geode
     public:
         Impl( const BoundingBox< dimension >& box )
         {
-            for( const auto i : Range( dimension ) )
+            for( const auto dim : Range( dimension ) )
             {
-                dist_coordinates[i].min_value = box.min().value( i );
-                dist_coordinates[i].max_value = box.max().value( i );
+                dist_coordinates[dim].min_value = box.min().value( dim );
+                dist_coordinates[dim].max_value = box.max().value( dim );
             }
         }
         Point< dimension > sample_uniform( RandomEngine& engine )
