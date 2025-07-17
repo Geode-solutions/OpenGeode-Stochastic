@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2019 - 2025 Geode-solutions
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -18,31 +19,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-add_geode_library(
-    NAME stochastic
-    FOLDER "geode/stochastic"
-    SOURCES
-        "sampling/direct/ball_sampler.cpp"
-        "sampling/direct/bounding_box_sampler.cpp"
-        "sampling/direct/double_distribution_sampler.cpp"
-        "sampling/direct/point_uniform_sampler.cpp"
-        "sampling/distributions.cpp"
-        "sampling/random_engine.cpp"
-        "common.cpp"
-        "hello_world.cpp"
-    PUBLIC_HEADERS
-        "sampling/direct/ball_sampler.hpp"
-        "sampling/direct/bounding_box_sampler.hpp"
-        "sampling/direct/double_distribution_sampler.hpp"
-        "sampling/direct/point_uniform_sampler.hpp"
-        "sampling/distributions.hpp"
-        "sampling/random_engine.hpp"
-        "common.hpp"
-        "hello_world.hpp"
-    PRIVATE_DEPENDENCIES
-        OpenGeode::basic
-        OpenGeode::geometry
-        absl::random_random
-        absl::random_distributions
+import os
+import sys
+import platform
 
-)
+if sys.version_info >= (3, 8, 0) and platform.system() == "Windows":
+    for path in [x.strip() for x in os.environ["PATH"].split(";") if x]:
+        os.add_dll_directory(path)
+
+import opengeode
+import opengeode_stochastic_py_stochastic as stochastic
+
+if __name__ == "__main__":
+    stochastic.hello_world()

@@ -18,31 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-add_geode_library(
-    NAME stochastic
-    FOLDER "geode/stochastic"
-    SOURCES
-        "sampling/direct/ball_sampler.cpp"
-        "sampling/direct/bounding_box_sampler.cpp"
-        "sampling/direct/double_distribution_sampler.cpp"
-        "sampling/direct/point_uniform_sampler.cpp"
-        "sampling/distributions.cpp"
-        "sampling/random_engine.cpp"
-        "common.cpp"
-        "hello_world.cpp"
-    PUBLIC_HEADERS
-        "sampling/direct/ball_sampler.hpp"
-        "sampling/direct/bounding_box_sampler.hpp"
-        "sampling/direct/double_distribution_sampler.hpp"
-        "sampling/direct/point_uniform_sampler.hpp"
-        "sampling/distributions.hpp"
-        "sampling/random_engine.hpp"
-        "common.hpp"
-        "hello_world.hpp"
-    PRIVATE_DEPENDENCIES
-        OpenGeode::basic
-        OpenGeode::geometry
-        absl::random_random
-        absl::random_distributions
+import opengeode
 
-)
+from opengeode_stochastic_py_stochastic import *
+
+StochasticLibrary.initialize()
