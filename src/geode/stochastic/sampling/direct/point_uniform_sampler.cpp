@@ -58,10 +58,12 @@ namespace geode
             object );
     }
 
-    template Point< 2 > PointUniformSampler::sample< 2 >(
-        RandomEngine& engine, const BasicObject< 2 >& object );
+    template Point< 2 >
+        opengeode_stochastic_stochastic_api PointUniformSampler::sample< 2 >(
+            RandomEngine& engine, const BasicObject< 2 >& object );
 
-    template Point< 3 > PointUniformSampler::sample< 3 >(
-        RandomEngine& engine, const BasicObject< 3 >& object );
+    template Point< 3 >
+        opengeode_stochastic_stochastic_api PointUniformSampler::sample< 3 >(
+            RandomEngine& engine, const BasicObject< 3 >& object );
 
 } // namespace geode

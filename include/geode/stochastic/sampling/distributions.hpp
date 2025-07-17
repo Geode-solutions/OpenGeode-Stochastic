@@ -35,8 +35,8 @@ namespace geode
         UniformClosed() = default;
         bool is_valid() const;
 
-        Type min_value{ 0 };
-        Type max_value{ 1 };
+        Type min_value{ 0. };
+        Type max_value{ 1. };
     };
 
     template < typename Type >
@@ -45,8 +45,8 @@ namespace geode
         UniformClosedOpen() = default;
         bool is_valid() const;
 
-        Type min_value{ 0 };
-        Type max_value{ 1 };
+        Type min_value{ 0. };
+        Type max_value{ 1. };
     };
 
     struct opengeode_stochastic_stochastic_api Gaussian
