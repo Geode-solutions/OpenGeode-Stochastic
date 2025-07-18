@@ -21,15 +21,54 @@
  *
  */
 
-#include <geode/stochastic/geometry/hello_world.hpp>
+#pragma once
 
-#include <geode/basic/logger.hpp>
+#include <geode/stochastic/common.hpp>
+
+#include <optional>
 
 namespace geode
 {
-    bool hello_world()
+    template < typename Type >
+    struct UniformClosed
     {
-        geode::Logger::info( "Hello Geode Stochastic World!" );
-        return true;
-    }
+        UniformClosed() = default;
+        bool is_valid() const;
+
+        Type min_value{ static_cast< Type >( 0 ) };
+        Type max_value{ static_cast< Type >( 1 ) };
+    };
+
+    template < typename Type >
+    struct UniformClosedOpen
+    {
+        UniformClosedOpen() = default;
+        bool is_valid() const;
+
+        Type min_value{ static_cast< Type >( 0 ) };
+        Type max_value{ static_cast< Type >( 1 ) };
+    };
+
+    struct opengeode_stochastic_stochastic_api Gaussian
+    {
+        Gaussian() = default;
+        bool is_valid() const;
+
+        double mean{ 0. };
+        double standard_deviation{ 1. };
+    };
+
+    struct opengeode_stochastic_stochastic_api TruncatedGaussian
+    {
+        TruncatedGaussian() = default;
+
+        bool is_valid() const;
+
+        double mean{ 0. };
+        double standard_deviation{ 1. };
+
+        std::optional< double > min_value;
+        std::optional< double > max_value;
+    };
+
 } // namespace geode

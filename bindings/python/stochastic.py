@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-add_geode_python_test(
-    SOURCE "test-py-hello-world.py"
-    DEPENDENCIES
-        ${PROJECT_NAME}::py_geometry
-)
+import opengeode
+
+from opengeode_stochastic_py_stochastic import *
+
+StochasticLibrary.initialize()

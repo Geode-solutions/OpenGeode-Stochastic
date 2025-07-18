@@ -21,19 +21,31 @@
  *
  */
 
-#include <geode/stochastic/geometry/common.hpp>
+#include <geode/stochastic/sampling/direct/double_sampler.hpp>
 
-#include <geode/basic/library.hpp>
-#include <geode/geometry/common.hpp>
+#include <geode/stochastic/common.hpp>
+#include <geode/stochastic/sampling/random_engine.hpp>
 
 namespace geode
 {
-    OPENGEODE_LIBRARY_IMPLEMENTATION( StochasticGeometry )
+    double DoubleSampler::sample(
+        RandomEngine& engine, const Distribution& dist )
     {
-        /* Here the functions to call when initializing the library
-         * For exemple: registers, ...
-         */
-        geode::OpenGeodeBasicLibrary::initialize();
-        geode::OpenGeodeGeometryLibrary::initialize();
+        return std::visit(
+            [&engine]( auto&& d ) {
+                using D = std::decay_t< decltype( d ) >;
+                if constexpr( std::is_same_v< D, UniformClosed< double > > )
+                    return engine.sample_uniform< double >( d );
+                if constexpr( std::is_same_v< D, UniformClosedOpen< double > > )
+                    return engine.sample_uniform< double >( d );
+                if constexpr( std::is_same_v< D, Gaussian > )
+                    return engine.sample_gaussian( d );
+                if constexpr( std::is_same_v< D, TruncatedGaussian > )
+                    return engine.sample_truncated_gaussian( d );
+                OPENGEODE_EXCEPTION( "DoubleSampler - Unsupported "
+                                     "distribution for double" );
+            },
+            dist );
     }
+
 } // namespace geode

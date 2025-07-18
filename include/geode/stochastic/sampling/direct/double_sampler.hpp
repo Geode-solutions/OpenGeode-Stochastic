@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2019 - 2025 Geode-solutions
  *
@@ -23,9 +24,26 @@
 
 #pragma once
 
-#include <geode/stochastic/geometry/common.hpp>
+#include <geode/stochastic/sampling/distributions.hpp>
+
+#include <variant>
 
 namespace geode
 {
-    bool opengeode_stochastic_geometry_api hello_world();
+    class RandomEngine;
+} // namespace geode
+
+namespace geode
+{
+
+    struct opengeode_stochastic_stochastic_api DoubleSampler
+    {
+        using Distribution = std::variant< UniformClosed< double >,
+            UniformClosedOpen< double >,
+            Gaussian,
+            TruncatedGaussian >;
+
+        static double sample( RandomEngine& engine, const Distribution& dist );
+    };
+
 } // namespace geode

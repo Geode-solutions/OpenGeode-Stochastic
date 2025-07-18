@@ -21,15 +21,14 @@
  *
  */
 
-#include <pybind11/pybind11.h>
+#pragma once
 
-#include <geode/stochastic/geometry/hello_world.hpp>
+#include <geode/basic/common.hpp>
+#include <geode/basic/library.hpp>
+#include <geode/basic/logger.hpp>
+#include <geode/stochastic/opengeode_stochastic_stochastic_export.hpp>
 
-PYBIND11_MODULE( opengeode_stochastic_py_geometry, module )
+namespace geode
 {
-    module.doc() = "OpenGeode-Stochastic Python binding for geometry";
-    pybind11::class_< geode::StochasticGeometryLibrary >(
-        module, "StochasticGeometryLibrary" )
-        .def( "initialize", &geode::StochasticGeometryLibrary::initialize );
-    module.def( "hello_world", &geode::hello_world );
-}
+    OPENGEODE_LIBRARY( opengeode_stochastic_stochastic_api, Stochastic );
+} // namespace geode

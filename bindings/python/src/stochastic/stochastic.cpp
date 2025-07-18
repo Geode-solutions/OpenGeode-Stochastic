@@ -21,24 +21,16 @@
  *
  */
 
-#include <geode/basic/assert.hpp>
-#include <geode/basic/logger.hpp>
+#include <pybind11/pybind11.h>
 
-#include <geode/stochastic/geometry/hello_world.hpp>
+#include <geode/stochastic/hello_world.hpp>
+#include <geode/stochastic/sampling/random_engine.hpp>
 
-int main()
+PYBIND11_MODULE( opengeode_stochastic_py_stochastic, module )
 {
-    try
-    {
-        geode::StochasticGeometryLibrary::initialize();
-        OPENGEODE_EXCEPTION( geode::hello_world(),
-            "[Test] Hello Stochastic World is not correct" );
-
-        geode::Logger::info( "TEST SUCCESS" );
-        return 0;
-    }
-    catch( ... )
-    {
-        return geode::geode_lippincott();
-    }
+    module.doc() = "OpenGeode-Stochastic Python binding";
+    pybind11::class_< geode::StochasticLibrary >( module, "StochasticLibrary" )
+        .def( "initialize", &geode::StochasticLibrary::initialize );
+    module.def( "hello_world", &geode::hello_world );
+    //    geode::define_random_engine( module );
 }

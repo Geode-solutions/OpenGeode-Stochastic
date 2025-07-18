@@ -18,18 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-add_subdirectory(src)
-
-if(OPENGEODE_STOCHASTIC_WITH_TESTS)
-    add_subdirectory(tests)
-endif()
-
-add_geode_python_wheel(
-    NAME "OpenGeode-Stochastic"
-    DESCRIPTION 
-        "A module of the OpenGeode framework for stochastic modeling, simulation and bayesian inference"
-    MODULES
-        "stochastic.py"
-    LICENSE "MIT"
+add_geode_python_test(
+    SOURCE "test-py-hello-world.py"
+    DEPENDENCIES
+        ${PROJECT_NAME}::py_stochastic
 )
-
