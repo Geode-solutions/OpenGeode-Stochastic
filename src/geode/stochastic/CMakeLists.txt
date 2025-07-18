@@ -24,7 +24,7 @@ add_geode_library(
     SOURCES
         "sampling/direct/ball_sampler.cpp"
         "sampling/direct/bounding_box_sampler.cpp"
-        "sampling/direct/double_distribution_sampler.cpp"
+        "sampling/direct/double_sampler.cpp"
         "sampling/direct/point_uniform_sampler.cpp"
         "sampling/distributions.cpp"
         "sampling/random_engine.cpp"
@@ -33,7 +33,7 @@ add_geode_library(
     PUBLIC_HEADERS
         "sampling/direct/ball_sampler.hpp"
         "sampling/direct/bounding_box_sampler.hpp"
-        "sampling/direct/double_distribution_sampler.hpp"
+        "sampling/direct/double_sampler.hpp"
         "sampling/direct/point_uniform_sampler.hpp"
         "sampling/distributions.hpp"
         "sampling/random_engine.hpp"

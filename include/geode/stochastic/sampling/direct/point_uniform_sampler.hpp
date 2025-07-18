@@ -37,14 +37,14 @@ namespace geode
 namespace geode
 {
 
-    template < index_t dimension >
-    using BasicObject =
-        std::variant< BoundingBox< dimension >, Sphere< dimension > >;
-
     struct PointUniformSampler
     {
         template < index_t dimension >
+        using Object =
+            std::variant< BoundingBox< dimension >, Sphere< dimension > >;
+
+        template < index_t dimension >
         static Point< dimension > sample(
-            RandomEngine& engine, const BasicObject< dimension >& dist );
+            RandomEngine& engine, const Object< dimension >& dist );
     };
 } // namespace geode

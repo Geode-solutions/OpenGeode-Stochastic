@@ -36,15 +36,14 @@ namespace geode
 namespace geode
 {
 
-    using DoubleDistribution = std::variant< UniformClosed< double >,
-        UniformClosedOpen< double >,
-        Gaussian,
-        TruncatedGaussian >;
-
-    struct opengeode_stochastic_stochastic_api DoubleDistributionSampler
+    struct opengeode_stochastic_stochastic_api DoubleSampler
     {
-        static double sample(
-            RandomEngine& engine, const DoubleDistribution& dist );
+        using Distribution = std::variant< UniformClosed< double >,
+            UniformClosedOpen< double >,
+            Gaussian,
+            TruncatedGaussian >;
+
+        static double sample( RandomEngine& engine, const Distribution& dist );
     };
 
 } // namespace geode

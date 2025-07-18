@@ -37,7 +37,7 @@ namespace geode
 
     template < index_t dimension >
     Point< dimension > PointUniformSampler::sample(
-        RandomEngine& engine, const BasicObject< dimension >& object )
+        RandomEngine& engine, const Object< dimension >& object )
     {
         return std::visit(
             [&engine]( auto&& obj ) {
@@ -60,10 +60,9 @@ namespace geode
 
     template Point< 2 >
         opengeode_stochastic_stochastic_api PointUniformSampler::sample< 2 >(
-            RandomEngine& engine, const BasicObject< 2 >& object );
-
+            RandomEngine& engine, const Object< 2 >& object );
     template Point< 3 >
         opengeode_stochastic_stochastic_api PointUniformSampler::sample< 3 >(
-            RandomEngine& engine, const BasicObject< 3 >& object );
+            RandomEngine& engine, const Object< 3 >& object );
 
 } // namespace geode

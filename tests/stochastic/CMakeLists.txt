@@ -35,7 +35,7 @@ add_geode_test(
 )
 
 add_geode_test(
-    SOURCE "sampling/direct/test-double-distribution-sampler.cpp"
+    SOURCE "sampling/direct/test-double-sampler.cpp"
     DEPENDENCIES
         OpenGeode::basic
         ${PROJECT_NAME}::stochastic

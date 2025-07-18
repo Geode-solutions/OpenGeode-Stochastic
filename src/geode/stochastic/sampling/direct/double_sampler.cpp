@@ -21,15 +21,15 @@
  *
  */
 
-#include <geode/stochastic/sampling/direct/double_distribution_sampler.hpp>
+#include <geode/stochastic/sampling/direct/double_sampler.hpp>
 
 #include <geode/stochastic/common.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
 
 namespace geode
 {
-    double DoubleDistributionSampler::sample(
-        RandomEngine& engine, const DoubleDistribution& dist )
+    double DoubleSampler::sample(
+        RandomEngine& engine, const Distribution& dist )
     {
         return std::visit(
             [&engine]( auto&& d ) {
@@ -42,7 +42,7 @@ namespace geode
                     return engine.sample_gaussian( d );
                 if constexpr( std::is_same_v< D, TruncatedGaussian > )
                     return engine.sample_truncated_gaussian( d );
-                OPENGEODE_EXCEPTION( "DoubleDistributionSampler - Unsupported "
+                OPENGEODE_EXCEPTION( "DoubleSampler - Unsupported "
                                      "distribution for double" );
             },
             dist );
