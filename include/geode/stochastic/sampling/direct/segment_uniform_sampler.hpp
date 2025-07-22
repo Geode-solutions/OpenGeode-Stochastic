@@ -24,27 +24,25 @@
 
 #pragma once
 
-#include <variant>
+#include <geode/stochastic/sampling/direct/double_sampler.hpp>
+#include <geode/stochastic/sampling/direct/point_uniform_sampler.hpp>
 
 namespace geode
 {
-    FORWARD_DECLARATION_DIMENSION_CLASS( BoundingBox );
-    FORWARD_DECLARATION_DIMENSION_CLASS( Sphere );
-    FORWARD_DECLARATION_DIMENSION_CLASS( Point );
+    FORWARD_DECLARATION_DIMENSION_CLASS( OwnerSegment );
+    ALIAS_2D( OwnerSegment );
     class RandomEngine;
 } // namespace geode
 
 namespace geode
 {
 
-    struct PointUniformSampler
+    struct SegmentUniformSampler
     {
-        template < index_t dimension >
-        using Object =
-            std::variant< BoundingBox< dimension >, Sphere< dimension > >;
-
-        template < index_t dimension >
-        static Point< dimension > sample(
-            RandomEngine& engine, const Object< dimension >& object );
+        static OwnerSegment2D opengeode_stochastic_stochastic_api sample(
+            RandomEngine& engine,
+            const PointUniformSampler::Object< 2 >& object,
+            const DoubleSampler::Distribution& length,
+            const DoubleSampler::Distribution& azimuth );
     };
 } // namespace geode
