@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2019 - 2025 Geode-solutions
  *
@@ -22,29 +21,27 @@
  *
  */
 
-#pragma once
+#include <geode/stochastic/sampling/direct/segment_uniform_sampler.hpp>
 
-#include <variant>
+#include <geode/stochastic/common.hpp>
+#include <geode/stochastic/sampling/random_engine.hpp>
 
-namespace geode
-{
-    FORWARD_DECLARATION_DIMENSION_CLASS( BoundingBox );
-    FORWARD_DECLARATION_DIMENSION_CLASS( Sphere );
-    FORWARD_DECLARATION_DIMENSION_CLASS( Point );
-    class RandomEngine;
-} // namespace geode
+#include <geode/geometry/basic_objects/segment.hpp>
 
 namespace geode
 {
 
-    struct PointUniformSampler
+    OwnerSegment2D SegmentUniformSampler::sample( RandomEngine& engine,
+        const PointUniformSampler::Object< 2 >& object,
+        const DoubleSampler::Distribution& length,
+        const DoubleSampler::Distribution& azimuth )
     {
-        template < index_t dimension >
-        using Object =
-            std::variant< BoundingBox< dimension >, Sphere< dimension > >;
+        geode_unused( length );
+        geode_unused( azimuth );
+        auto point1 = PointUniformSampler::sample( engine, object );
+        auto point2 = PointUniformSampler::sample( engine, object );
 
-        template < index_t dimension >
-        static Point< dimension > sample(
-            RandomEngine& engine, const Object< dimension >& object );
-    };
+        return OwnerSegment2D{ point1, point2 };
+    }
+
 } // namespace geode
