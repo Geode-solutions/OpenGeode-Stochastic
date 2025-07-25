@@ -37,10 +37,9 @@ namespace geode
 namespace geode
 {
 
-    struct SegmentUniformSampler
+    struct opengeode_stochastic_stochastic_api SegmentUniformSampler
     {
-        static OwnerSegment2D opengeode_stochastic_stochastic_api sample(
-            RandomEngine& engine,
+        static OwnerSegment2D sample( RandomEngine& engine,
             const PointUniformSampler::Object< 2 >& object,
             const DoubleSampler::Distribution& length,
             const DoubleSampler::Distribution& azimuth );
