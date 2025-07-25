@@ -42,8 +42,8 @@ namespace geode
                     return engine.sample_gaussian( d );
                 if constexpr( std::is_same_v< D, TruncatedGaussian > )
                     return engine.sample_truncated_gaussian( d );
-                OPENGEODE_EXCEPTION( "DoubleSampler - Unsupported "
-                                     "distribution for double" );
+                throw OpenGeodeException( "DoubleSampler - Unsupported "
+                                          "distribution for double" );
             },
             dist );
     }
