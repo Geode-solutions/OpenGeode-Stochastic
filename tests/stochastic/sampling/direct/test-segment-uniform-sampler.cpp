@@ -33,6 +33,7 @@
 #include <geode/stochastic/sampling/random_engine.hpp>
 
 #include <geode/geometry/basic_objects/segment.hpp>
+#include <geode/geometry/basic_objects/sphere.hpp>
 #include <geode/geometry/bounding_box.hpp>
 
 const int NUMBER_OF_SAMPLES = 10000;
@@ -47,8 +48,8 @@ void test_sample_segment(
     {
         auto value =
             geode::SegmentUniformSampler::sample( engine, box, length, az );
-        // OPENGEODE_ASSERT( box.contains( value ),
-        //     "[SegmentUniformSampler] - segment out of box." );
+        OPENGEODE_ASSERT( box.contains( value ),
+            "[SegmentUniformSampler] - segment out of box." );
     }
 }
 void test_segment_sampling2D()
