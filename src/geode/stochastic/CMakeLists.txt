@@ -22,6 +22,8 @@ add_geode_library(
     NAME stochastic
     FOLDER "geode/stochastic"
     SOURCES
+        "configuration/configuration.cpp"
+        "configuration/marked_object.cpp"
         "sampling/direct/ball_sampler.cpp"
         "sampling/direct/bounding_box_sampler.cpp"
         "sampling/direct/double_sampler.cpp"
@@ -32,6 +34,8 @@ add_geode_library(
         "common.cpp"
         "hello_world.cpp"
     PUBLIC_HEADERS
+        "configuration/configuration.hpp"
+        "configuration/marked_object.hpp"
         "sampling/direct/ball_sampler.hpp"
         "sampling/direct/bounding_box_sampler.hpp"
         "sampling/direct/double_sampler.hpp"
