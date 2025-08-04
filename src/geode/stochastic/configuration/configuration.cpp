@@ -52,7 +52,7 @@ namespace geode
         result.reserve( objects_.size() );
         for( const auto idx : Range{ objects_.size() } )
         {
-            const auto obj = objects_[idx];
+            const auto& obj = objects_[idx];
             if( obj.has_mark() && obj.mark() == mark )
             {
                 result.emplace_back( idx );
