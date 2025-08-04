@@ -61,7 +61,6 @@ namespace geode
         return result;
     }
 
-    // Explicit instantiations
     template class opengeode_stochastic_stochastic_api Configuration< Point2D >;
     template class opengeode_stochastic_stochastic_api Configuration< Point3D >;
     template class opengeode_stochastic_stochastic_api
