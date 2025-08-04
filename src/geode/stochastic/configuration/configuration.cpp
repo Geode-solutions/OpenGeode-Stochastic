@@ -7,65 +7,55 @@
 namespace geode
 {
     template < typename Geometry >
-    void Configuration< Geometry >::add_object( MarkedObject< Geometry > obj )
+    void Configuration< Geometry >::add_object(
+        MarkedObject< Geometry >&& object )
     {
-        objects_.emplace_back( std::move( obj ) );
+        objects_.emplace_back( std::move( object ) );
     }
 
     template < typename Geometry >
-    void Configuration< Geometry >::remove_object( std::size_t idx )
+    void Configuration< Geometry >::change_object(
+        index_t idx, MarkedObject< Geometry >&& object )
     {
-        if( idx < objects_.size() )
-        {
-            objects_.erase( objects_.begin() + idx );
-        }
+        OPENGEODE_EXCEPTION( idx < objects_.size(),
+            "[Configuration]- index to change out of range;" );
+        objects_[idx] = std::move( object );
     }
 
     template < typename Geometry >
-    std::size_t Configuration< Geometry >::size() const
+    void Configuration< Geometry >::remove_object( index_t idx )
+    {
+        OPENGEODE_EXCEPTION( idx < objects_.size(),
+            "[Configuration]- index to remove out of range;" );
+        objects_[idx] = std::move( objects_.back() );
+        objects_.pop_back();
+    }
+
+    template < typename Geometry >
+    index_t Configuration< Geometry >::size() const
     {
         return objects_.size();
     }
 
     template < typename Geometry >
-    MarkedObject< Geometry >& Configuration< Geometry >::object(
-        std::size_t idx )
-    {
-        return objects_.at( idx );
-    }
-
-    template < typename Geometry >
     const MarkedObject< Geometry >& Configuration< Geometry >::object(
-        std::size_t idx ) const
+        index_t idx ) const
     {
         return objects_.at( idx );
     }
 
     template < typename Geometry >
-    std::vector< MarkedObject< Geometry >* >
-        Configuration< Geometry >::objects_with_mark( int label )
+    std::vector< index_t > Configuration< Geometry >::object_ids_with_mark(
+        const Mark& mark )
     {
-        std::vector< MarkedObject< Geometry >* > result;
-        for( auto& obj : objects_ )
+        std::vector< index_t > result;
+        result.reserve( objects_.size() );
+        for( const auto idx : Range{ objects_.size() } )
         {
-            if( obj.has_mark() && obj.mark()->label == label )
+            const auto obj = objects_[idx];
+            if( obj.has_mark() && obj.mark() == mark )
             {
-                result.push_back( &obj );
-            }
-        }
-        return result;
-    }
-
-    template < typename Geometry >
-    std::vector< MarkedObject< Geometry >* >
-        Configuration< Geometry >::objects_with_mark()
-    {
-        std::vector< MarkedObject< Geometry >* > result;
-        for( auto& obj : objects_ )
-        {
-            if( obj.has_mark() )
-            {
-                result.push_back( &obj );
+                result.emplace_back( idx );
             }
         }
         return result;

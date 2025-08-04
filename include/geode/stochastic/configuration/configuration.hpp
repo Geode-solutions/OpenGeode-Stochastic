@@ -15,23 +15,25 @@
 //
 
 #pragma once
-#include <geode/stochastic/configuration/marked_object.hpp>
+
 #include <vector>
+
+#include <geode/stochastic/configuration/marked_object.hpp>
+
 namespace geode
 {
     template < typename Geometry >
     class Configuration
     {
     public:
-        void add_object( MarkedObject< Geometry > obj );
-        void remove_object( std::size_t idx );
-        std::size_t size() const;
+        void add_object( MarkedObject< Geometry >&& object );
+        void change_object( index_t idx, MarkedObject< Geometry >&& object );
+        void remove_object( index_t idx );
+        index_t size() const;
 
-        MarkedObject< Geometry >& object( std::size_t idx );
-        const MarkedObject< Geometry >& object( std::size_t idx ) const;
+        const MarkedObject< Geometry >& object( index_t idx ) const;
 
-        std::vector< MarkedObject< Geometry >* > objects_with_mark( int label );
-        std::vector< MarkedObject< Geometry >* > objects_with_mark();
+        std::vector< index_t > object_ids_with_mark( const Mark& mark );
 
     private:
         std::vector< MarkedObject< Geometry > > objects_;

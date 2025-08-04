@@ -29,6 +29,7 @@
 #include <geode/geometry/basic_objects/segment.hpp>
 #include <geode/geometry/point.hpp>
 
+#include <geode/stochastic/configuration/configuration.hpp>
 #include <geode/stochastic/configuration/marked_object.hpp>
 
 const int NUMBER_OF_STEPS = 10000;
@@ -38,11 +39,20 @@ int main()
     try
     {
         geode::StochasticLibrary::initialize();
+        geode::Point2D point2d;
+        geode::MarkedObject< geode::Point2D > m_point2d{ std::move( point2d ) };
+        geode::Point3D point3d;
+        geode::MarkedObject< geode::Point3D > m_point3d{ std::move( point3d ) };
 
-        geode::MarkedObject< geode::Point2D > point2d;
-        geode::MarkedObject< geode::Point3D > point3d;
-        geode::MarkedObject< geode::OwnerSegment2D > pointsegment2d;
+        geode::Point2D seg_point2d_1;
+        geode::Point2D seg_point2d_2;
 
+        geode::OwnerSegment2D seg{ seg_point2d_1, seg_point2d_2 };
+        geode::MarkedObject< geode::OwnerSegment2D > pointsegment2d{ std::move(
+            seg ) };
+
+        geode::Configuration< geode::OwnerSegment2D > pattern;
+        pattern.add_object( std::move( pointsegment2d ) );
         geode::Logger::info( "TEST SUCCESS" );
         return 0;
     }

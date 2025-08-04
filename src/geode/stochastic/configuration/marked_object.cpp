@@ -44,13 +44,13 @@ namespace
 namespace geode
 {
     template < typename Geometry >
-    MarkedObject< Geometry >::MarkedObject( Geometry geometry )
+    MarkedObject< Geometry >::MarkedObject( Geometry&& geometry )
         : geometry_{ std::move( geometry ) }
     {
     }
 
     template < typename Geometry >
-    MarkedObject< Geometry >::MarkedObject( Geometry geometry, Mark mark )
+    MarkedObject< Geometry >::MarkedObject( Geometry&& geometry, Mark mark )
         : geometry_{ std::move( geometry ) }, mark_{ std::move( mark ) }
     {
     }

@@ -23,8 +23,9 @@
 
 #pragma once
 
-#include <geode/stochastic/common.hpp>
 #include <optional>
+
+#include <geode/stochastic/common.hpp>
 
 namespace geode
 {
@@ -35,16 +36,19 @@ namespace geode
     struct Mark
     {
         int label;
+
+        bool operator==( const Mark& other ) const
+        {
+            return label == other.label;
+        }
     };
 
     template < typename Geometry >
     class MarkedObject
     {
     public:
-        MarkedObject() = default;
-
-        MarkedObject( Geometry geometry );
-        MarkedObject( Geometry geometry, Mark mark );
+        MarkedObject( Geometry&& geometry );
+        MarkedObject( Geometry&& geometry, Mark mark );
 
         void set_geometry( const Geometry& geometry );
         void set_geometry( Geometry&& geometry );
