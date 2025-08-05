@@ -38,6 +38,9 @@
 ## Questions
 For questions and support please use the official [slack](https://slackin-opengeode.herokuapp.com) and go to the channel #module_template. The issue list of this repo is exclusively for bug reports and feature requests. 
 
+## Interesting other projects
+DRlib is a C++ library for modeling, simulation and inference of marked point processes: 
+https://gitlab.univ-lorraine.fr/labos/iecl/drlib
 
 ## License
 
