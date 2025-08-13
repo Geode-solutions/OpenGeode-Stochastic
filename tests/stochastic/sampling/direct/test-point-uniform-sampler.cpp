@@ -44,8 +44,8 @@ void test_sample_ball(
     {
         auto value =
             geode::PointUniformSampler::sample< dimension >( engine, ball );
-        OPENGEODE_ASSERT(
-            geode::point_point_distance( value, ball.center() ) <= ball.radius,
+        OPENGEODE_EXCEPTION( geode::point_point_distance( value, ball.origin() )
+                                 <= ball.radius() + geode::GLOBAL_EPSILON,
             "[PointUniformSampler] - point too far from ball center." );
     }
 }
@@ -58,7 +58,7 @@ void test_sample_bounding_box(
     {
         auto value =
             geode::PointUniformSampler::sample< dimension >( engine, box );
-        OPENGEODE_ASSERT( box.contains( value ),
+        OPENGEODE_EXCEPTION( box.contains( value ),
             "[PointUniformSampler] - point out of box." );
     }
 }

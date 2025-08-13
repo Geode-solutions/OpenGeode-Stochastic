@@ -48,7 +48,9 @@ void test_sample_segment(
     {
         auto value =
             geode::SegmentUniformSampler::sample( engine, box, length, az );
-        OPENGEODE_ASSERT( box.contains( value ),
+        OPENGEODE_EXCEPTION( box.contains( value.vertices()[0] ),
+            "[SegmentUniformSampler] - segment out of box." );
+        OPENGEODE_EXCEPTION( box.contains( value.vertices()[1] ),
             "[SegmentUniformSampler] - segment out of box." );
     }
 }

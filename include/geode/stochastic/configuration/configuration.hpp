@@ -39,6 +39,7 @@ namespace geode
         index_t size() const;
 
         const MarkedObject< Geometry >& object( index_t idx ) const;
+        const MarkedObject< Geometry >& operator[]( index_t idx ) const;
 
         std::vector< index_t > object_ids_with_mark( const Mark& mark );
 

@@ -45,6 +45,13 @@ namespace geode
     }
 
     template < typename Geometry >
+    const MarkedObject< Geometry >& Configuration< Geometry >::operator[](
+        index_t idx ) const
+    {
+        return objects_[idx];
+    }
+
+    template < typename Geometry >
     std::vector< index_t > Configuration< Geometry >::object_ids_with_mark(
         const Mark& mark )
     {

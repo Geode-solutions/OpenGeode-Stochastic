@@ -43,8 +43,8 @@ void test_sample_ball(
     for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
     {
         auto value = spec_ball.sample_uniform( engine );
-        OPENGEODE_ASSERT(
-            geode::point_point_distance( value, ball.center() ) <= ball.radius,
+        OPENGEODE_EXCEPTION( geode::point_point_distance( value, ball.origin() )
+                                 <= ball.radius() + geode::GLOBAL_EPSILON,
             "[Point Ball sampler] - point too far from center." );
     }
 }
