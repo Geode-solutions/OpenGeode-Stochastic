@@ -26,51 +26,48 @@
 
 #include <geode/stochastic/configuration/marked_object.hpp>
 #include <geode/stochastic/configuration/pairwise_interactions.hpp>
-
-namespace geode
+namespace
 {
-    void test_distance_cutoff_interaction()
+    void test_interaction()
     {
-        // Cutoff distance = 2.0
-        DistanceCutoffInteraction interaction( 2.0 );
+        geode::DistanceCutoffInteraction interaction( 2.0 );
 
-        // Case 1: Inside cutoff
-        {
-            geode::Point2D p1{ { 0., 0. } };
-            geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
-            geode::Point2D p2{ { 1., 1. } }; // distance = 1.44 < 2.0
-            geode::MarkedObject< geode::Point2D > mp2{ std::move( p2 ) };
+        geode::Point2D p1{ { 0., 0. } };
+        geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
+        geode::Point2D p2{ { 1., 1. } }; // distance = 1.44 < 2.0
+        geode::MarkedObject< geode::Point2D > mp2{ std::move( p2 ) };
 
-            double result = interaction( mp1, mp2 );
-            OPENGEODE_EXCEPTION( result == 1.0,
-                "[DistanceCutoffInteraction] Failed for inside cutoff case." );
-        }
-
-        // Case 2: Outside cutoff
-        {
-            geode::Point2D p1{ { 0., 0. } };
-            geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
-            geode::Point2D p2{ { 3., 0. } }; // distance = 3.0 > 2.0
-            geode::MarkedObject< geode::Point2D > mp2{ std::move( p2 ) };
-
-            double result = interaction( mp1, mp2 );
-            OPENGEODE_EXCEPTION( result == 0.0,
-                "[DistanceCutoffInteraction] Failed for outside cutoff case." );
-        }
-
-        // Case 3: Exactly at cutoff
-        {
-            geode::Point2D p1{ { 0., 0. } };
-            geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
-            geode::Point2D p2{ { 2., 0. } }; // distance = 2.0 == cutoff
-            geode::MarkedObject< geode::Point2D > mp2{ std::move( p2 ) };
-
-            double result = interaction( mp1, mp2 );
-            OPENGEODE_EXCEPTION( result == 1.0,
-                "[DistanceCutoffInteraction] Failed for exact cutoff case." );
-        }
+        double result = interaction( mp1, mp2 );
+        OPENGEODE_EXCEPTION( result == 1.0,
+            "[DistanceCutoffInteraction] Failed for inside cutoff case." );
     }
-} // namespace geode
+    void test_no_interaction()
+    {
+        geode::DistanceCutoffInteraction interaction( 2.0 );
+
+        geode::Point2D p1{ { 0., 0. } };
+        geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
+        geode::Point2D p2{ { 3., 0. } }; // distance = 3.0 > 2.0
+        geode::MarkedObject< geode::Point2D > mp2{ std::move( p2 ) };
+
+        double result = interaction( mp1, mp2 );
+        OPENGEODE_EXCEPTION( result == 0.0,
+            "[DistanceCutoffInteraction] Failed for outside cutoff case." );
+    }
+    void test_limit_interaction()
+    {
+        geode::DistanceCutoffInteraction interaction( 2.0 );
+
+        geode::Point2D p1{ { 0., 0. } };
+        geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
+        geode::Point2D p2{ { 2., 0. } }; // distance = 2.0 == cutoff
+        geode::MarkedObject< geode::Point2D > mp2{ std::move( p2 ) };
+
+        double result = interaction( mp1, mp2 );
+        OPENGEODE_EXCEPTION( result == 1.0,
+            "[DistanceCutoffInteraction] Failed for exact cutoff case." );
+    }
+} // namespace
 
 int main()
 {
@@ -78,7 +75,9 @@ int main()
     {
         geode::StochasticLibrary::initialize();
 
-        geode::test_distance_cutoff_interaction();
+        test_interaction();
+        test_no_interaction();
+        test_limit_interaction();
 
         geode::Logger::info( "TEST SUCCESS" );
         return 0;

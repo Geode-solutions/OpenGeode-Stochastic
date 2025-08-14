@@ -30,18 +30,15 @@ namespace
 {
     struct NegLogParam
     {
-        std::optional< double > value;
-
         explicit NegLogParam( double param )
         {
             OPENGEODE_EXCEPTION( param >= 0.,
                 "[Gibbs energy term] - The model parameter "
                 "cannot be smaller than 0." );
-            if( param < geode::GLOBAL_EPSILON )
+            if( param >= geode::GLOBAL_EPSILON )
             {
-                return;
+                value = -std::log( param );
             }
-            value = -std::log( param );
         }
 
         double scale( double multiplier ) const
@@ -63,6 +60,7 @@ namespace
             }
             return 0.;
         }
+        std::optional< double > value;
     };
 } // namespace
 

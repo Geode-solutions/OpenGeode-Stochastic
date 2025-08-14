@@ -28,7 +28,7 @@
 namespace geode
 {
     template < typename Geometry >
-    class opengeode_stochastic_stochastic_api GibbsEnergy
+    class GibbsEnergy
     {
         OPENGEODE_DISABLE_COPY_AND_MOVE( GibbsEnergy );
 

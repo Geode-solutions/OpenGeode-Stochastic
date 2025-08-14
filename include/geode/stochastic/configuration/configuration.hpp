@@ -38,7 +38,16 @@ namespace geode
         void remove_object( index_t idx );
         index_t size() const;
 
+        /**
+         *  @brief Bounds-checked access to the marked object at index @p idx.
+         *  Wrapper for std::vector::at().
+         *  @throws std::out_of_range if idx is out of range.
+         */
         const MarkedObject< Geometry >& object( index_t idx ) const;
+        /**
+         *  @brief Unchecked access to the marked object at index @p idx.
+         *  Wrapper for std::vector::operator[]().
+         */
         const MarkedObject< Geometry >& operator[]( index_t idx ) const;
 
         std::vector< index_t > object_ids_with_mark( const Mark& mark );

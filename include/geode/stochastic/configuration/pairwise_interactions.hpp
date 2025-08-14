@@ -32,7 +32,6 @@ namespace geode
 {
     struct DistanceCutoffInteraction
     {
-        double cutoff_distance;
         DistanceCutoffInteraction( double distance )
             : cutoff_distance( distance )
         {
@@ -42,9 +41,11 @@ namespace geode
         double operator()( const MarkedObject< Geometry >& object1,
             const MarkedObject< Geometry >& object2 ) const
         {
-            double dist = geode::point_point_distance(
+            auto dist = geode::point_point_distance(
                 object1.barycenter(), object2.barycenter() );
             return dist <= cutoff_distance ? 1.0 : 0.0;
         }
+
+        double cutoff_distance{ GLOBAL_EPSILON };
     };
 } // namespace geode

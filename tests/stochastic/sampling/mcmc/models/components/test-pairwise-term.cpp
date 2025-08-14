@@ -47,9 +47,9 @@ void test_normal_positive_pairwise(
     auto interaction_fn = []( const geode::MarkedObject< geode::Point2D >& a,
                               const geode::MarkedObject< geode::Point2D >& b ) {
         // Interaction if distance < sqrt(2.1) for example
-        double dx = a.geometry().value( 0 ) - b.geometry().value( 0 );
-        double dy = a.geometry().value( 1 ) - b.geometry().value( 1 );
-        double dist_sq = dx * dx + dy * dy;
+        auto dx = a.geometry().value( 0 ) - b.geometry().value( 0 );
+        auto dy = a.geometry().value( 1 ) - b.geometry().value( 1 );
+        auto dist_sq = dx * dx + dy * dy;
         return dist_sq < 2.1;
     };
 
@@ -58,7 +58,7 @@ void test_normal_positive_pairwise(
     auto neg_log_gamma = -std::log( gamma );
 
     // p1 and p2 interact → 1 pair
-    double total = term.log_total( pattern );
+    auto total = term.log_total( pattern );
     OPENGEODE_EXCEPTION( total == neg_log_gamma * 1.,
         "[test pairwise] - log_total wrong value." );
 
@@ -66,17 +66,17 @@ void test_normal_positive_pairwise(
     geode::Point2D p3{ { 0.5, 0.5 } };
     geode::MarkedObject< geode::Point2D > mp3{ std::move( p3 ) };
 
-    double delta_add = term.log_delta_add( pattern, mp3 );
+    auto delta_add = term.log_delta_add( pattern, mp3 );
     // p3 interacts with p1 and p2 → 2 new pairs
     OPENGEODE_EXCEPTION( delta_add == neg_log_gamma * 2.,
         "[test pairwise] - log_delta_add wrong value." );
 
-    double delta_remove = term.log_delta_remove( pattern, 0 );
+    auto delta_remove = term.log_delta_remove( pattern, 0 );
     // Removing p1 removes its interaction with p2 → 1 removed pair
     OPENGEODE_EXCEPTION( delta_remove == neg_log_gamma * -1.,
         "[test pairwise] - log_delta_remove wrong value." );
 
-    double delta_change = term.log_delta_change( pattern, 0, mp3 );
+    auto delta_change = term.log_delta_change( pattern, 0, mp3 );
     // Replacing p1 with p3 changes interactions: p3 interacts with p2 → 1 pair
     // Old p1 interacted with p2 → 1 pair → no net change
     OPENGEODE_EXCEPTION(
@@ -88,31 +88,31 @@ void test_zero_pairwise(
 {
     auto interaction_fn = []( const geode::MarkedObject< geode::Point2D >& a,
                               const geode::MarkedObject< geode::Point2D >& b ) {
-        double dx = a.geometry().value( 0 ) - b.geometry().value( 0 );
-        double dy = a.geometry().value( 1 ) - b.geometry().value( 1 );
-        double dist_sq = dx * dx + dy * dy;
+        auto dx = a.geometry().value( 0 ) - b.geometry().value( 0 );
+        auto dy = a.geometry().value( 1 ) - b.geometry().value( 1 );
+        auto dist_sq = dx * dx + dy * dy;
         return dist_sq < 2.1;
     };
 
     geode::PairwiseTerm< geode::Point2D, decltype( interaction_fn ) > term(
         gamma, interaction_fn );
 
-    double total = term.log_total( pattern );
+    auto total = term.log_total( pattern );
     OPENGEODE_EXCEPTION(
         std::isinf( total ), "[test zero pairwise] - log_total wrong value." );
 
     geode::Point2D p3{ { 0.5, 0.5 } };
     geode::MarkedObject< geode::Point2D > mp3{ std::move( p3 ) };
 
-    double delta_add = term.log_delta_add( pattern, mp3 );
+    auto delta_add = term.log_delta_add( pattern, mp3 );
     OPENGEODE_EXCEPTION( std::isinf( delta_add ),
         "[test zero pairwise] - log_delta_add wrong value." );
 
-    double delta_remove = term.log_delta_remove( pattern, 0 );
+    auto delta_remove = term.log_delta_remove( pattern, 0 );
     OPENGEODE_EXCEPTION( delta_remove == 0.,
         "[test zero pairwise] - log_delta_remove wrong value." );
 
-    double delta_change = term.log_delta_change( pattern, 0, mp3 );
+    auto delta_change = term.log_delta_change( pattern, 0, mp3 );
     OPENGEODE_EXCEPTION( delta_change == 0.,
         "[test zero pairwise] - log_delta_change wrong value." );
 }
