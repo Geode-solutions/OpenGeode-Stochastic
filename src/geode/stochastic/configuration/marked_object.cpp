@@ -25,22 +25,6 @@
 
 #include <geode/stochastic/common.hpp>
 
-#include <geode/geometry/basic_objects/segment.hpp>
-#include <geode/geometry/bounding_box.hpp>
-#include <geode/geometry/point.hpp>
-
-namespace
-{
-    template < geode::index_t dimension >
-    geode::BoundingBox< dimension > create_bounding_box(
-        const geode ::Point< dimension >& point )
-    {
-        geode::BoundingBox< dimension > box;
-        box.add_point( point );
-        return box;
-    }
-} // namespace
-
 namespace geode
 {
     template < typename Geometry >
@@ -95,41 +79,6 @@ namespace geode
     bool MarkedObject< Geometry >::has_mark() const
     {
         return mark_.has_value();
-    }
-
-    template < typename Geometry >
-    decltype( auto ) MarkedObject< Geometry >::bounding_box() const
-    {
-        if constexpr( std::is_same_v< Geometry, Point2D > )
-        {
-            return create_bounding_box( geometry_ );
-        }
-        else if constexpr( std::is_same_v< Geometry, Point3D > )
-        {
-            return create_bounding_box( geometry_ );
-        }
-        else
-        {
-            return geometry_.bounding_box();
-        }
-    }
-
-    template < typename Geometry >
-    decltype( auto ) MarkedObject< Geometry >::barycenter() const
-
-    {
-        if constexpr( std::is_same_v< Geometry, Point2D > )
-        {
-            return geometry_;
-        }
-        else if constexpr( std::is_same_v< Geometry, Point3D > )
-        {
-            return geometry_;
-        }
-        else
-        {
-            return geometry_.barycenter();
-        }
     }
 
     template class opengeode_stochastic_stochastic_api MarkedObject< Point2D >;

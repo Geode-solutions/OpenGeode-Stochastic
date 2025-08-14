@@ -19,6 +19,14 @@
 # SOFTWARE.
 
 add_geode_test(
+    SOURCE "configuration/test-pairwise-interactions.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
     SOURCE "sampling/direct/test-ball-sampler.cpp"
     DEPENDENCIES
         OpenGeode::basic
@@ -51,6 +59,30 @@ add_geode_test(
 
 add_geode_test(
     SOURCE "sampling/direct/test-segment-uniform-sampler.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
+    SOURCE "sampling/mcmc/models/components/test-intensity-term.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
+    SOURCE "sampling/mcmc/models/components/test-pairwise-term.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
+    SOURCE "sampling/mcmc/models/test-gibbs-energy.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry

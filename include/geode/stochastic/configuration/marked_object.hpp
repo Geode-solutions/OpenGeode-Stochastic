@@ -27,6 +27,10 @@
 
 #include <geode/stochastic/common.hpp>
 
+#include <geode/geometry/basic_objects/segment.hpp>
+#include <geode/geometry/bounding_box.hpp>
+#include <geode/geometry/point.hpp>
+
 namespace geode
 {
     FORWARD_DECLARATION_DIMENSION_CLASS( Point );
@@ -60,8 +64,38 @@ namespace geode
         const std::optional< Mark >& mark() const;
         bool has_mark() const;
 
-        decltype( auto ) bounding_box() const;
-        decltype( auto ) barycenter() const;
+        auto bounding_box() const
+        {
+            if constexpr( std::is_same_v< Geometry, Point2D > )
+            {
+                geode::BoundingBox< 2 > box;
+                box.add_point( geometry_ );
+                return box;
+            }
+            else if constexpr( std::is_same_v< Geometry, Point3D > )
+            {
+                geode::BoundingBox< 3 > box;
+                box.add_point( geometry_ );
+                return box;
+            }
+            else
+            {
+                return geometry_.bounding_box();
+            }
+        }
+
+        auto barycenter() const
+        {
+            if constexpr( std::is_same_v< Geometry, Point2D >
+                          || std::is_same_v< Geometry, Point3D > )
+            {
+                return geometry_;
+            }
+            else
+            {
+                return geometry_.barycenter();
+            }
+        }
 
     private:
         Geometry geometry_;

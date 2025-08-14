@@ -40,13 +40,13 @@ void test_double_sampler( geode::RandomEngine& engine )
     geode::UniformClosed< double > uniform_closed_double;
     double value = 1000.;
     value = geode::DoubleSampler::sample( engine, uniform_closed_double );
-    OPENGEODE_ASSERT(
+    OPENGEODE_EXCEPTION(
         value >= 0. && value <= 1., "[Uniform] -  value out of range." );
 
     geode::UniformClosedOpen< double > uniform_closedopen_double;
     value = 1000.;
     value = geode::DoubleSampler::sample( engine, uniform_closedopen_double );
-    OPENGEODE_ASSERT(
+    OPENGEODE_EXCEPTION(
         value >= 0. && value <= 1., "[Uniform] -  value out of range." );
 
     geode::TruncatedGaussian t_gaussian_double;
@@ -56,7 +56,7 @@ void test_double_sampler( geode::RandomEngine& engine )
     t_gaussian_double.min_value = -1.;
     value = 1000.;
     value = geode::DoubleSampler::sample( engine, t_gaussian_double );
-    OPENGEODE_ASSERT( value >= -1. && value <= 1.,
+    OPENGEODE_EXCEPTION( value >= -1. && value <= 1.,
         "[TruncatedGaussian] -  value out of range." );
 
     geode::Gaussian gaussian_double;
@@ -65,7 +65,8 @@ void test_double_sampler( geode::RandomEngine& engine )
 
     value = 1000.;
     value = geode::DoubleSampler::sample( engine, t_gaussian_double );
-    OPENGEODE_ASSERT( value != 1000., "[Gaussian] -  value did not changed." );
+    OPENGEODE_EXCEPTION(
+        value != 1000., "[Gaussian] -  value did not changed." );
 }
 
 int main()
