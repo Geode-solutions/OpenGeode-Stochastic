@@ -52,7 +52,7 @@ namespace geode
     {
     public:
         MarkedObject( Geometry&& geometry );
-        MarkedObject( Geometry&& geometry, Mark mark );
+        MarkedObject( Geometry&& geometry, std::optional< Mark > mark );
 
         void set_geometry( const Geometry& geometry );
         void set_geometry( Geometry&& geometry );
@@ -86,8 +86,8 @@ namespace geode
 
         auto barycenter() const
         {
-            if constexpr( std::is_same_v< Geometry, Point2D >
-                          || std::is_same_v< Geometry, Point3D > )
+            if constexpr( std::is_same_v< Geometry,
+                              Point2D > || std::is_same_v< Geometry, Point3D > )
             {
                 return geometry_;
             }
