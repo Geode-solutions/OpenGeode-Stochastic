@@ -25,7 +25,7 @@
 #pragma once
 
 #include <geode/stochastic/common.hpp>
-#include <geode/stochastic/sampling/direct/marked_object_sampler/marked_object_sampler.hpp>
+#include <geode/stochastic/sampling/mcmc/proposal/marked_object_sampler/marked_object_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/proposal_kernel.hpp>
 
 namespace geode
@@ -38,9 +38,9 @@ namespace geode
     {
         auto kernel = std::make_unique< ProposalKernel< Geometry > >();
         kernel->add_move(
-            std::make_unique< BirthMove< Geometry > >( birth_prob, sampler ) );
+            std::make_unique< BirthMove< Geometry > >( sampler, birth_prob ) );
         kernel->add_move(
-            std::make_unique< DeathMove< Geometry > >( death_prob ) );
+            std::make_unique< DeathMove< Geometry > >( sampler, death_prob ) );
         return kernel;
     }
 
@@ -54,11 +54,11 @@ namespace geode
     {
         auto kernel = std::make_unique< ProposalKernel< Geometry > >();
         kernel->add_move(
-            std::make_unique< BirthMove< Geometry > >( birth_prob, sampler ) );
+            std::make_unique< BirthMove< Geometry > >( sampler, birth_prob ) );
         kernel->add_move(
-            std::make_unique< DeathMove< Geometry > >( death_prob ) );
+            std::make_unique< DeathMove< Geometry > >( sampler, death_prob ) );
         kernel->add_move( std::make_unique< ChangeMove< Geometry > >(
-            change_prob, sampler ) );
+            sampler, change_prob ) );
         return kernel;
     }
 } // namespace geode

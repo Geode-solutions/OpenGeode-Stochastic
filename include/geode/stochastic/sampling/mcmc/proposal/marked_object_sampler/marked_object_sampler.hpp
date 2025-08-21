@@ -35,13 +35,25 @@ namespace geode
 
         virtual ~MarkedObjectSampler() = default;
 
-        // Sample a new MarkedObject given an optional RNG
         virtual MarkedObj sample( RandomEngine& engine ) const = 0;
-        virtual MarkedObject< Geometry > change(
-            const MarkedObject< Geometry >& obj,
-            RandomEngine& engine ) const = 0;
 
-        // Log-probability density of a given object under this sampler
+        std::optional< const index_t > sample_id(
+            const Configuration< Geometry >& config,
+            RandomEngine& engine ) const
+        {
+            if( config.size() == 0 )
+            {
+                return std::nullopt;
+            }
+            geode::UniformClosed< index_t > uniform_closed_index_t;
+            uniform_closed_index_t.min_value = 0;
+            uniform_closed_index_t.max_value = config.size() - 1;
+            return engine.sample_uniform( uniform_closed_index_t );
+        }
+
+        virtual MarkedObj change(
+            const MarkedObj& object, RandomEngine& engine ) const = 0;
+
         virtual double log_pdf( const MarkedObj& obj ) const = 0;
     };
 

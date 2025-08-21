@@ -26,8 +26,8 @@
 #include <geode/geometry/basic_objects/sphere.hpp>
 #include <geode/geometry/point.hpp>
 
-#include <geode/stochastic/sampling/direct/marked_object_sampler/marked_object_sampler.hpp>
 #include <geode/stochastic/sampling/direct/point_uniform_sampler.hpp>
+#include <geode/stochastic/sampling/mcmc/proposal/marked_object_sampler/marked_object_sampler.hpp>
 
 namespace geode
 {
@@ -65,6 +65,11 @@ namespace geode
 
             auto new_point =
                 PointUniformSampler::sample< dimension >( engine, ball );
+            while( !box_.contains( new_point ) )
+            {
+                new_point =
+                    PointUniformSampler::sample< dimension >( engine, ball );
+            }
             return MarkedPoint( std::move( new_point ), mark_ );
         }
 
