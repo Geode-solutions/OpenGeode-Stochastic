@@ -86,8 +86,8 @@ namespace geode
 
         auto barycenter() const
         {
-            if constexpr( std::is_same_v< Geometry,
-                              Point2D > || std::is_same_v< Geometry, Point3D > )
+            if constexpr( std::is_same_v< Geometry, Point2D >
+                          || std::is_same_v< Geometry, Point3D > )
             {
                 return geometry_;
             }
