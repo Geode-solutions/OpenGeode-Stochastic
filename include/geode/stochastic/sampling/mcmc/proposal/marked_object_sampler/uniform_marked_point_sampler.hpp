@@ -46,7 +46,9 @@ namespace geode
         {
             auto volume = box_.n_volume();
             if( volume != 0. )
+            {
                 log_pdf_ = -std::log( volume );
+            }
         }
 
         MarkedPoint sample( RandomEngine& engine ) const override
@@ -76,7 +78,9 @@ namespace geode
         double log_pdf( const MarkedPoint& obj ) const override
         {
             if( !box_.contains( obj.geometry() ) )
+            {
                 return -std::numeric_limits< double >::infinity();
+            }
             return log_pdf_;
         }
 

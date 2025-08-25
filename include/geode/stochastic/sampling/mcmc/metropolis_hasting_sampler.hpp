@@ -33,7 +33,7 @@ namespace geode
     {
         Accepted,
         Rejected,
-        UnDecided
+        Undecided
     };
 
     template < typename Geometry >
@@ -90,25 +90,29 @@ namespace geode
             OPENGEODE_EXCEPTION( b >= 0.0, "[MH] beta must be >= 0" );
             if( b == 0 )
             {
-                geode::Logger::info( "[MH] - beta == 0 all move will be "
-                                     "accepted - Uniform sampling." );
+                geode::Logger::info(
+                    "[Metropolis Hastings] - beta == 0 all move will be "
+                    "accepted - Uniform sampling." );
             }
             if( b < 1 )
             {
                 geode::Logger::info(
-                    "[MH] - beta < 1 moves that increase energy are "
+                    "[Metropolis Hastings] - beta < 1 moves that increase "
+                    "energy are "
                     "more likely to be accepted - Hot system introduce "
                     "randomness for exploration." );
             }
             if( b == 1 )
             {
-                geode::Logger::info( "[MH] - beta == 1 Standars choice "
+                geode::Logger::info( "[Metropolis Hastings] - beta == 1 "
+                                     "default choice no temperature "
                                      "- only consider energy." );
             }
             if( b > 1 )
             {
                 geode::Logger::info(
-                    "[MH] - beta > 1 moves that increase energy are "
+                    "[Metropolis Hastings] - beta > 1 moves that increase "
+                    "energy are "
                     "less likely to be accepted - Cold system to ensure "
                     "convergence but may find local minimum randomness." );
             }
@@ -132,8 +136,9 @@ namespace geode
         const double compute_log_accept(
             const double deltaU, const Proposal< Geometry >& proposal ) const
         {
-            OPENGEODE_ASSERT( std::isfinite( log_forward_prob )
-                                  && std::isfinite( log_backward_prob ),
+            OPENGEODE_ASSERT(
+                std::isfinite( proposal.log_forward_prob )
+                    && std::isfinite( proposal.log_backward_prob ),
                 "[MH] Non-finite proposal log-probabilities" );
             return -beta_ * deltaU + proposal.log_backward_prob
                    - proposal.log_forward_prob;
