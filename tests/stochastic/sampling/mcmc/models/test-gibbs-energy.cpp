@@ -72,25 +72,25 @@ void test_gibbs_energy()
     auto pattern = create_configuration();
 
     // Check total log-energy is finite
-    double total_energy = gibbs_energy.log_energy_total( pattern );
+    double total_energy = gibbs_energy.total_log_energy( pattern );
     OPENGEODE_EXCEPTION( std::isfinite( total_energy ),
         "[test gibbs] Total energy should be finite." );
 
     // Add new point to test delta_add
     geode::Point2D p3{ { 2., 2. } };
     geode::MarkedObject< geode::Point2D > mp3{ std::move( p3 ) };
-    double delta_add = gibbs_energy.log_energy_delta_add( pattern, mp3 );
+    double delta_add = gibbs_energy.delta_log_energy_add( pattern, mp3 );
     OPENGEODE_EXCEPTION( std::isfinite( delta_add ),
         "[test gibbs] Delta add should be finite." );
 
     // Remove point test
-    double delta_remove = gibbs_energy.log_energy_delta_remove( pattern, 0 );
+    double delta_remove = gibbs_energy.delta_log_energy_remove( pattern, 0 );
     OPENGEODE_EXCEPTION( std::isfinite( delta_remove ),
         "[test gibbs] Delta remove should be finite." );
 
     // Change point test
     double delta_change =
-        gibbs_energy.log_energy_delta_change( pattern, 0, mp3 );
+        gibbs_energy.delta_log_energy_change( pattern, 0, mp3 );
     OPENGEODE_EXCEPTION( std::isfinite( delta_change ),
         "[test gibbs] Delta change should be finite." );
 

@@ -22,7 +22,10 @@
  */
 
 #pragma once
+#include <geode/stochastic/configuration/configuration.hpp>
+#include <geode/stochastic/configuration/marked_object.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/marked_object_sampler/marked_object_sampler.hpp>
+
 namespace geode
 {
     template < typename Geometry >
@@ -30,13 +33,13 @@ namespace geode
     {
         enum class Type
         {
-            Undefined,
+            Invalid,
             Birth,
             Death,
             Change
         };
 
-        Type type{ Type::Undefined };
+        Type type{ Type::Invalid };
         std::optional< MarkedObject< Geometry > >
             new_object; // for birth/change
         std::optional< index_t > index; // for death/change
@@ -44,13 +47,14 @@ namespace geode
         double log_backward_prob{ 0. };
     };
 
+    // Move does not hold the sampler... should it?
     template < typename Geometry >
     class Move
     {
     public:
         Move(
             const MarkedObjectSampler< Geometry >& sampler, double probability )
-            : sampler_( sampler ), probability_{ probability }
+            : sampler_( sampler ), p_move_{ probability }
         {
         }
         virtual ~Move() = default;
@@ -61,51 +65,61 @@ namespace geode
 
         double probability() const
         {
-            return probability_;
+            return p_move_;
         }
 
     protected:
         const MarkedObjectSampler< Geometry >& sampler_;
-        double probability_{ 1.0 };
+        double p_move_{ 1.0 };
     };
 
     template < typename Geometry >
-    class BirthMove : public Move< Geometry >
+    class BirthDeathMove : public Move< Geometry >
     {
     public:
-        BirthMove(
-            const MarkedObjectSampler< Geometry >& sampler, double probability )
-            : Move< Geometry >( sampler, probability )
+        BirthDeathMove( const MarkedObjectSampler< Geometry >& sampler,
+            double probability,
+            double birth_ratio )
+            : Move< Geometry >( sampler, probability ),
+              birth_ratio_( birth_ratio )
         {
+            OPENGEODE_EXCEPTION( birth_ratio_ > 0. && birth_ratio_ < 1.,
+                "[BirthDeathMove]-the ratio of birth over mover should be in "
+                "]0,1[." );
+            log_p_birth_ = std::log( this->p_move_ * birth_ratio );
+            log_p_death_ = std::log( this->p_move_ * ( 1.0 - birth_ratio ) );
         }
 
         Proposal< Geometry > propose_move(
             const Configuration< Geometry >& current,
             RandomEngine& engine ) const override
+        {
+            if( engine.sample_bernoulli( birth_ratio_ ) )
+            {
+                return propose_birth_move( current, engine );
+            }
+            return propose_death_move( current, engine );
+        }
+
+    private:
+        Proposal< Geometry > propose_birth_move(
+            const Configuration< Geometry >& current,
+            RandomEngine& engine ) const
         {
             Proposal< Geometry > birth;
             birth.type = Proposal< Geometry >::Type::Birth;
             birth.new_object = this->sampler_.sample( engine );
             birth.log_forward_prob =
-                this->sampler_.log_pdf( birth.new_object.value() );
-            birth.log_backward_prob = -std::log( current.size() + 1.0 );
+                log_p_birth_
+                + this->sampler_.log_pdf( birth.new_object.value() );
+            birth.log_backward_prob =
+                log_p_death_ - std::log( current.size() + 1.0 );
             return birth;
         }
-    };
 
-    template < typename Geometry >
-    class DeathMove : public Move< Geometry >
-    {
-    public:
-        DeathMove(
-            const MarkedObjectSampler< Geometry >& sampler, double probability )
-            : Move< Geometry >( sampler, probability )
-        {
-        }
-
-        Proposal< Geometry > propose_move(
+        Proposal< Geometry > propose_death_move(
             const Configuration< Geometry >& current,
-            RandomEngine& engine ) const override
+            RandomEngine& engine ) const
         {
             Proposal< Geometry > death;
             death.index = this->sampler_.sample_id( current, engine );
@@ -114,11 +128,17 @@ namespace geode
                 return death;
             }
             death.type = Proposal< Geometry >::Type::Death;
-            death.log_forward_prob = -std::log( current.size() );
+            death.log_forward_prob = log_p_death_ - std::log( current.size() );
             death.log_backward_prob =
-                this->sampler_.log_pdf( current[death.index.value()] );
+                log_p_birth_
+                + this->sampler_.log_pdf( current[death.index.value()] );
             return death;
         }
+
+    private:
+        double birth_ratio_{ 0.5 };
+        double log_p_birth_{ 0. };
+        double log_p_death_{ 0. };
     };
 
     template < typename Geometry >

@@ -56,7 +56,6 @@ namespace geode
             return moves_.back()->propose_move( current, engine );
         }
 
-        // Register a new move
         void add_move( std::unique_ptr< Move< Geometry > > move )
         {
             moves_.push_back( std::move( move ) );
@@ -88,12 +87,17 @@ namespace geode
                     return p / total;
                 } );
             cumulative_probs_.back() = 1.0;
+            Logger::info( " PROPOSAL: " );
+            for( const auto proba : cumulative_probs_ )
+            {
+                Logger::info( proba );
+            }
         }
 
     private:
         std::vector< std::unique_ptr< Move< Geometry > > > moves_;
         std::vector< double > cumulative_probs_;
 
-        geode::UniformClosed< double > uniform_closed_double_{};
+        geode::UniformClosed< double > uniform_closed_double_;
     };
 } // namespace geode

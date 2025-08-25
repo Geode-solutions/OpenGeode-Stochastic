@@ -51,6 +51,7 @@ add_geode_library(
         "sampling/mcmc/proposal/classical_proposals.hpp"
         "sampling/mcmc/proposal/moves.hpp"
         "sampling/mcmc/proposal/proposal_kernel.hpp"
+        "sampling/mcmc/metropolis_hasting_sampler.hpp"
         "sampling/distributions.hpp"
         "sampling/random_engine.hpp"
         "common.hpp"

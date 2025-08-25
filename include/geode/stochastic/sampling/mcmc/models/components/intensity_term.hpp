@@ -37,25 +37,25 @@ namespace geode
         {
         }
 
-        double log_total( const Configuration< Geometry >& state ) const final
+        double total_log( const Configuration< Geometry >& state ) const final
         {
             const auto n = static_cast< double >( number_of_objects( state ) );
             return this->neg_log_parameter_.scale( n );
         }
 
-        double log_delta_add( const Configuration< Geometry >& state,
+        double delta_log_add( const Configuration< Geometry >& state,
             const MarkedObject< Geometry >& sample ) const final
         {
             return this->neg_log_parameter_.scale( 1. );
         }
 
-        double log_delta_remove( const Configuration< Geometry >& state,
+        double delta_log_remove( const Configuration< Geometry >& state,
             index_t sample_id ) const final
         {
             return this->neg_log_parameter_.scale( -1. );
         }
 
-        double log_delta_change( const Configuration< Geometry >& state,
+        double delta_log_change( const Configuration< Geometry >& state,
             index_t old_sample_id,
             const MarkedObject< Geometry >& new_sample ) const final
         {

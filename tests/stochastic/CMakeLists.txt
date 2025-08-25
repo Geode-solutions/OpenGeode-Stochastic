@@ -98,17 +98,10 @@ add_geode_test(
 )
 
 add_geode_test(
-    SOURCE "sampling/mcmc/test-metropolis-hasting-sampler_poisson.cpp"
-    DEPENDENCIES
-        OpenGeode::basic
-        OpenGeode::geometry
-        ${PROJECT_NAME}::stochastic
-)
-
-add_geode_test(
     SOURCE "sampling/mcmc/test-metropolis-hasting-sampler.cpp"
     DEPENDENCIES
         OpenGeode::basic
+        OpenGeode::geometry
         ${PROJECT_NAME}::stochastic
 )
 

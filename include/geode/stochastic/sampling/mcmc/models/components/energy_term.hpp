@@ -82,16 +82,16 @@ namespace geode
             return neg_log_parameter_.param();
         }
 
-        virtual double log_total(
+        virtual double total_log(
             const Configuration< Geometry >& state ) const = 0;
 
-        virtual double log_delta_add( const Configuration< Geometry >& state,
+        virtual double delta_log_add( const Configuration< Geometry >& state,
             const MarkedObject< Geometry >& sample ) const = 0;
 
-        virtual double log_delta_remove( const Configuration< Geometry >& state,
+        virtual double delta_log_remove( const Configuration< Geometry >& state,
             index_t sample_id ) const = 0;
 
-        virtual double log_delta_change( const Configuration< Geometry >& state,
+        virtual double delta_log_change( const Configuration< Geometry >& state,
             index_t old_sample_id,
             const MarkedObject< Geometry >& new_sample ) const = 0;
 

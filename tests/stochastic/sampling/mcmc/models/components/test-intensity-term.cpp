@@ -45,50 +45,50 @@ void test_normal_positive_intensity(
     geode::IntensityTerm< geode::Point2D > term( lambda );
     auto neg_log_lambda = -std::log( lambda );
 
-    double total = term.log_total( pattern );
+    double total = term.total_log( pattern );
     OPENGEODE_EXCEPTION( total == neg_log_lambda * 2.,
-        "[test intensity]- log_total wrong value." );
+        "[test intensity]- total_log wrong value." );
 
     geode::Point2D p3{ { 2., 2. } };
     geode::MarkedObject< geode::Point2D > mp3{ std::move( p3 ) };
 
-    double delta_add = term.log_delta_add( pattern, mp3 );
+    double delta_add = term.delta_log_add( pattern, mp3 );
     OPENGEODE_EXCEPTION( delta_add == neg_log_lambda * 1.,
-        "[test intensity]- log_delta_add wrong value." );
+        "[test intensity]- delta_log_add wrong value." );
 
-    double delta_remove = term.log_delta_remove( pattern, 0 );
+    double delta_remove = term.delta_log_remove( pattern, 0 );
 
     OPENGEODE_EXCEPTION( delta_remove == neg_log_lambda * -1.,
-        "[test intensity]- log_delta_remove wrong value." );
+        "[test intensity]- delta_log_remove wrong value." );
 
-    double delta_change = term.log_delta_change( pattern, 0, mp3 );
+    double delta_change = term.delta_log_change( pattern, 0, mp3 );
     OPENGEODE_EXCEPTION(
-        delta_change == 0., "[test intensity]- log_delta_change wrong value." );
+        delta_change == 0., "[test intensity]- delta_log_change wrong value." );
 }
 
 void test_normal_zero_intensity(
     double lambda, const geode::Configuration< geode::Point2D > &pattern )
 {
     geode::IntensityTerm< geode::Point2D > term( lambda );
-    double total = term.log_total( pattern );
+    double total = term.total_log( pattern );
 
     OPENGEODE_EXCEPTION(
-        std::isinf( total ), "[test zero intensity]- log_total wrong value." );
+        std::isinf( total ), "[test zero intensity]- total_log wrong value." );
 
     geode::Point2D p3{ { 2., 2. } };
     geode::MarkedObject< geode::Point2D > mp3{ std::move( p3 ) };
 
-    double delta_add = term.log_delta_add( pattern, mp3 );
+    double delta_add = term.delta_log_add( pattern, mp3 );
     OPENGEODE_EXCEPTION( std::isinf( delta_add ),
-        "[test zero intensity]- log_delta_add wrong value." );
+        "[test zero intensity]- delta_log_add wrong value." );
 
-    double delta_remove = term.log_delta_remove( pattern, 0 );
+    double delta_remove = term.delta_log_remove( pattern, 0 );
     OPENGEODE_EXCEPTION( delta_remove == 0.,
-        "[test zero intensity]- log_delta_remove wrong value." );
+        "[test zero intensity]- delta_log_remove wrong value." );
 
-    double delta_change = term.log_delta_change( pattern, 0, mp3 );
+    double delta_change = term.delta_log_change( pattern, 0, mp3 );
     OPENGEODE_EXCEPTION( delta_change == 0.,
-        "[test zero intensity]- log_delta_change wrong value." );
+        "[test zero intensity]- delta_log_change wrong value." );
 }
 
 int main()

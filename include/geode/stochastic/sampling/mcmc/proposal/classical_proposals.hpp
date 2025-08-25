@@ -37,10 +37,8 @@ namespace geode
         double death_prob = 0.5 )
     {
         auto kernel = std::make_unique< ProposalKernel< Geometry > >();
-        kernel->add_move(
-            std::make_unique< BirthMove< Geometry > >( sampler, birth_prob ) );
-        kernel->add_move(
-            std::make_unique< DeathMove< Geometry > >( sampler, death_prob ) );
+        kernel->add_move( std::make_unique< BirthDeathMove< Geometry > >(
+            sampler, 1., birth_prob ) );
         return kernel;
     }
 
@@ -53,10 +51,9 @@ namespace geode
             double change_prob = 0.34 )
     {
         auto kernel = std::make_unique< ProposalKernel< Geometry > >();
-        kernel->add_move(
-            std::make_unique< BirthMove< Geometry > >( sampler, birth_prob ) );
-        kernel->add_move(
-            std::make_unique< DeathMove< Geometry > >( sampler, death_prob ) );
+        auto birth_death_prob = birth_prob + death_prob;
+        kernel->add_move( std::make_unique< BirthDeathMove< Geometry > >(
+            sampler, birth_death_prob, birth_prob / birth_death_prob ) );
         kernel->add_move( std::make_unique< ChangeMove< Geometry > >(
             sampler, change_prob ) );
         return kernel;
