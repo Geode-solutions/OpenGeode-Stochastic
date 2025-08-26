@@ -62,7 +62,7 @@ namespace
 
         // Create classical birth-death-change kernel
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
-            sampler, 0.5 );
+            sampler, 0.4, 0.4 );
 
         geode::RandomEngine engine;
 
@@ -85,9 +85,11 @@ namespace
                     OPENGEODE_EXCEPTION( prop.log_forward_prob <= 0.0,
                         "[test proposal] Birth forward log-prob must be <= "
                         "0." );
+
                     OPENGEODE_EXCEPTION(
                         std::abs( prop.log_backward_prob
-                                  - ( -std::log( config.size() + 1.0 ) ) )
+                                  - ( std::log( 0.8 * 0.5 )
+                                      - std::log( config.size() + 1.0 ) ) )
                             < geode::GLOBAL_EPSILON,
                         "[test proposal] Birth backward log-prob mismatch." );
                     break;

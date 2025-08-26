@@ -32,9 +32,7 @@ namespace geode
 {
     template < typename Geometry >
     std::unique_ptr< ProposalKernel< Geometry > > create_birth_death_kernel(
-        const MarkedObjectSampler< Geometry >& sampler,
-        double birth_prob = 0.5,
-        double death_prob = 0.5 )
+        const MarkedObjectSampler< Geometry >& sampler, double birth_prob )
     {
         auto kernel = std::make_unique< ProposalKernel< Geometry > >();
         kernel->add_move( std::make_unique< BirthDeathMove< Geometry > >(
@@ -46,16 +44,17 @@ namespace geode
     std::unique_ptr< ProposalKernel< Geometry > >
         create_birth_death_change_kernel(
             const MarkedObjectSampler< Geometry >& sampler,
-            double birth_prob = 0.33,
-            double death_prob = 0.33,
-            double change_prob = 0.34 )
+            double birth_prob,
+            double death_prob )
     {
-        auto kernel = std::make_unique< ProposalKernel< Geometry > >();
         auto birth_death_prob = birth_prob + death_prob;
+        OPENGEODE_EXCEPTION( birth_death_prob < 1.,
+            "[Proposal Kernel] - changes should be allowed." );
+        auto kernel = std::make_unique< ProposalKernel< Geometry > >();
         kernel->add_move( std::make_unique< BirthDeathMove< Geometry > >(
             sampler, birth_death_prob, birth_prob / birth_death_prob ) );
         kernel->add_move( std::make_unique< ChangeMove< Geometry > >(
-            sampler, change_prob ) );
+            sampler, 1. - birth_death_prob ) );
         return kernel;
     }
 } // namespace geode

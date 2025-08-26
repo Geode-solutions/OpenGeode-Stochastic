@@ -177,7 +177,7 @@ int main()
 
         // Create classical birth-death-change kernel
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
-            sampler, 0.1, 0.1, 0.8 );
+            sampler, 0.1, 0.1 );
 
         geode::GibbsEnergy< geode::Point2D > poisson_energy;
 
