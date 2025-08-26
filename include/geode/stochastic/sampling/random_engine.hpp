@@ -51,6 +51,8 @@ namespace geode
         double sample_gaussian( const Gaussian& law );
         double sample_truncated_gaussian( const TruncatedGaussian& law );
 
+        double sample_log();
+
         bool sample_bernoulli( double probability_of_success );
 
     private:

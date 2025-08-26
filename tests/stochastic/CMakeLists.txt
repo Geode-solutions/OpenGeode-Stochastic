@@ -90,7 +90,7 @@ add_geode_test(
 )
 
 add_geode_test(
-    SOURCE "sampling/mcmc/test-metropolis-hasting-sampler_poisson.cpp"
+    SOURCE "sampling/mcmc/proposal/test-proposal-kernel.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry
@@ -101,6 +101,7 @@ add_geode_test(
     SOURCE "sampling/mcmc/test-metropolis-hasting-sampler.cpp"
     DEPENDENCIES
         OpenGeode::basic
+        OpenGeode::geometry
         ${PROJECT_NAME}::stochastic
 )
 

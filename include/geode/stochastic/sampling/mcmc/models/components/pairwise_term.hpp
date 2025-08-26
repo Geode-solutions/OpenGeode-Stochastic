@@ -39,7 +39,7 @@ namespace geode
         {
         }
 
-        double log_total( const Configuration< Geometry >& state ) const final
+        double total_log( const Configuration< Geometry >& state ) const final
         {
             double interaction_weight = 0.0;
             for( const auto obj_id : geode::Range{ state.size() } )
@@ -54,7 +54,7 @@ namespace geode
             return this->neg_log_parameter_.scale( interaction_weight );
         }
 
-        double log_delta_add( const Configuration< Geometry >& state,
+        double delta_log_add( const Configuration< Geometry >& state,
             const MarkedObject< Geometry >& new_object ) const final
         {
             double interaction_weight = 0.0;
@@ -66,7 +66,7 @@ namespace geode
             return this->neg_log_parameter_.scale( interaction_weight );
         }
 
-        double log_delta_remove( const Configuration< Geometry >& state,
+        double delta_log_remove( const Configuration< Geometry >& state,
             index_t object_id ) const final
         {
             const auto& removed = state[object_id];
@@ -83,7 +83,7 @@ namespace geode
             return this->neg_log_parameter_.scale( -interaction_weight );
         }
 
-        double log_delta_change( const Configuration< Geometry >& state,
+        double delta_log_change( const Configuration< Geometry >& state,
             index_t old_object_id,
             const MarkedObject< Geometry >& new_object ) const final
         {

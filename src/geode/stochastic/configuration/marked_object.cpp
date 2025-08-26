@@ -34,8 +34,9 @@ namespace geode
     }
 
     template < typename Geometry >
-    MarkedObject< Geometry >::MarkedObject( Geometry&& geometry, Mark mark )
-        : geometry_{ std::move( geometry ) }, mark_{ std::move( mark ) }
+    MarkedObject< Geometry >::MarkedObject(
+        Geometry&& geometry, std::optional< Mark > mark )
+        : geometry_{ std::move( geometry ) }, mark_{ mark }
     {
     }
 

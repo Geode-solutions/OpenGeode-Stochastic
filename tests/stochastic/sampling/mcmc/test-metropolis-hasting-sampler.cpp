@@ -20,111 +20,145 @@
  * SOFTWARE.
  *
  */
-#include <numeric>
-
-#include <geode/basic/assert.hpp>
-#include <geode/basic/logger.hpp>
-#include <geode/basic/range.hpp>
-
-#include <geode/stochastic/sampling/direct/ball_sampler.hpp>
-#include <geode/stochastic/sampling/random_engine.hpp>
-
-#include <geode/geometry/basic_objects/sphere.hpp>
-#include <geode/geometry/distance.hpp>
-
-const int NUMBER_OF_STEPS = 10000;
-
-// ------------------------- MCMCMove Interface -------------------------
-template < typename State >
-class MCMCMove
+#include <geode/geometry/point.hpp>
+#include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
+#include <geode/stochastic/sampling/mcmc/models/components/intensity_term.hpp>
+#include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
+#include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
+#include <geode/stochastic/sampling/mcmc/proposal/marked_object_sampler/uniform_marked_point_sampler.hpp>
+namespace
 {
-public:
-    virtual ~MCMCMove() = default;
-    virtual State propose(
-        const State& current, geode::RandomEngine& rng ) const = 0;
-    virtual double acceptance_log_ratio( const State&, const State& ) const = 0;
-};
-
-// ------------------------- Gaussian Perturbation Move
-// -------------------------
-class GaussianMove : public MCMCMove< std::vector< double > >
-{
-public:
-    explicit GaussianMove( double stddev ) : stddev_( stddev ) {}
-
-    std::vector< double > propose( const std::vector< double >& current,
-        geode::RandomEngine& rng ) const override
+    void test_acceptance_prob_helper()
     {
-        std::vector< double > next = current;
-        for( auto& x : next )
+        // log_accept >= 0 → prob = 1
+        OPENGEODE_EXCEPTION(
+            geode::MetropolisHastings< geode::Point2D >::acceptance_prob_helper(
+                0.5 )
+                == 1.0,
+            "[MH test] acceptance_prob_helper wrong for positive log_accept." );
+
+        // very negative → prob = 0
+        OPENGEODE_EXCEPTION(
+            geode::MetropolisHastings< geode::Point2D >::acceptance_prob_helper(
+                -800.0 )
+                == 0.0,
+            "[MH test] acceptance_prob_helper wrong for extreme negative." );
+
+        // moderate negative → exp(log_accept)
+        double val =
+            geode::MetropolisHastings< geode::Point2D >::acceptance_prob_helper(
+                -1.0 );
+        OPENGEODE_EXCEPTION( std::abs( val - std::exp( -1.0 ) ) < 1e-12,
+            "[MH test] acceptance_prob_helper wrong for -1.0." );
+    }
+
+    void test_beta_setter( geode::MetropolisHastings< geode::Point2D >& mh )
+    {
+        mh.set_beta( 0.5 );
+        OPENGEODE_EXCEPTION(
+            mh.beta() == 0.5, "[MH test] beta not set correctly." );
+
+        bool exception_thrown = false;
+        try
         {
-            geode::Gaussian dist{ 0.0, stddev_ };
-            x += rng.sample_gaussian( dist );
+            mh.set_beta( -1.0 );
         }
-        return next;
-    }
-
-    double acceptance_log_ratio( const std::vector< double >&,
-        const std::vector< double >& ) const override
-    {
-        return 0.0; // symmetric
-    }
-
-private:
-    double stddev_;
-};
-class MCMCSampler
-{
-public:
-    MCMCSampler( std::vector< double > initial,
-        std::function< double( const std::vector< double >& ) > log_prob,
-        geode::RandomEngine& rng )
-        : state_( std::move( initial ) ),
-          log_prob_( std::move( log_prob ) ),
-          rng_( rng )
-    {
-    }
-
-    void set_move( std::unique_ptr< MCMCMove< std::vector< double > > > move )
-    {
-        move_ = std::move( move );
-    }
-
-    void step()
-    {
-        auto proposed = move_->propose( state_, rng_ );
-        double log_accept_ratio =
-            log_prob_( proposed ) - log_prob_( state_ )
-            + move_->acceptance_log_ratio( state_, proposed );
-
-        if( rng_.sample_bernoulli(
-                std::min( 1.0, std::exp( log_accept_ratio ) ) ) )
+        catch( ... )
         {
-            state_ = std::move( proposed );
+            exception_thrown = true;
+        }
+        OPENGEODE_EXCEPTION(
+            exception_thrown, "[MH test] negative beta did not throw." );
+    }
+
+    geode::Configuration< geode::Point2D > create_configuration()
+    {
+        geode::Point2D p1{ { 0., 0. } };
+        geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
+        geode::Point2D p2{ { 1., 1. } };
+        geode::MarkedObject< geode::Point2D > mp2{ std::move( p2 ) };
+
+        geode::Configuration< geode::Point2D > pattern;
+        pattern.add_object( std::move( mp1 ) );
+        pattern.add_object( std::move( mp2 ) );
+
+        return pattern;
+    }
+
+    void test_steps( const geode::MetropolisHastings< geode::Point2D >& mh )
+    {
+        auto state = create_configuration();
+        geode::RandomEngine engine;
+
+        geode::index_t stat_sum{ 0 };
+        constexpr geode::index_t N{ 100000 };
+
+        geode::index_t accepted_birth{ 0 };
+        geode::index_t accepted_death{ 0 };
+        geode::index_t accepted_change{ 0 };
+        geode::index_t nb_accepted{ 0 };
+
+        for( const auto count : geode::Range{ N } )
+        {
+            auto result = mh.step( state, engine );
+            OPENGEODE_EXCEPTION(
+                result.decision == geode::MHDecision::Accepted
+                    || result.decision == geode::MHDecision::Rejected,
+                "[MH test] decision should be Accepted or Rejected." );
+
+            // Log each step (optional: comment out if too verbose)
+            //            geode::Logger::info( "Step: ", count,
+            //                " move_type= ", static_cast< int >(
+            //                result.move_type ), " decision= ", result.decision
+            //                == geode::MHDecision::Accepted ? "Accepted"
+            //                                                               :
+            //                                                               "Rejected",
+            //                " delta_log_energy = ", result.delta_log_energy,
+            //                " log_accept = ", result.log_accept,
+            //                " state_size = ", state.size() );
+
+            // Keep track of accepted moves by type
+            if( result.decision == geode::MHDecision::Accepted )
+            {
+                nb_accepted++;
+                switch( result.move_type )
+                {
+                    case geode::Proposal< geode::Point2D >::Type::Birth:
+                        accepted_birth++;
+                        break;
+                    case geode::Proposal< geode::Point2D >::Type::Death:
+                        accepted_death++;
+                        break;
+                    case geode::Proposal< geode::Point2D >::Type::Change:
+                        accepted_change++;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            stat_sum += state.size();
+
+            if( count % 1000 == 0 )
+            {
+                geode::Logger::info( "Progress: ", count, "  ", N,
+                    " Mean objects =  ",
+                    static_cast< double >( stat_sum )
+                        / static_cast< double >( count ),
+                    " nb accepted = ", nb_accepted, " Accepted(B/D/C) = ",
+                    static_cast< double >( accepted_birth )
+                        / static_cast< double >( nb_accepted ),
+                    "  ",
+                    static_cast< double >( accepted_death )
+                        / static_cast< double >( nb_accepted ),
+                    "  ",
+                    static_cast< double >( accepted_change )
+                        / static_cast< double >( nb_accepted ) );
+            }
         }
     }
 
-    const std::vector< double >& current() const
-    {
-        return state_;
-    }
-
-private:
-    std::vector< double > state_;
-    std::function< double( const std::vector< double >& ) > log_prob_;
-    std::unique_ptr< MCMCMove< std::vector< double > > > move_;
-    geode::RandomEngine& rng_;
-};
-
-double log_target( const std::vector< double >& x )
-{
-    double sum = 0.0;
-    for( double xi : x )
-    {
-        sum -= 0.5 * xi * xi; // standard normal log density (ignoring const)
-    }
-    return sum;
-}
+} // namespace
 
 int main()
 {
@@ -132,26 +166,33 @@ int main()
     {
         geode::StochasticLibrary::initialize();
 
-        constexpr int dim = 2;
-        std::vector< double > initial( dim, 0.0 );
-        geode::RandomEngine rng;
-        rng.set_seed( 42 );
+        geode::Point2D min_point{ { 0., 0. } };
+        geode::Point2D max_point{ { 10., 10. } };
 
-        MCMCSampler sampler( initial, log_target, rng );
-        sampler.set_move( std::make_unique< GaussianMove >( 0.5 ) );
+        geode::BoundingBox2D box;
+        box.add_point( min_point );
+        box.add_point( max_point );
 
-        for( int i = 0; i < NUMBER_OF_STEPS; ++i )
-        {
-            sampler.step();
-            const auto& state = sampler.current();
-            auto str = absl::StrCat( "Step ", i, ": (" );
-            for( auto v : state )
-                absl::StrAppend( &str, v, " " );
-            geode::Logger::info( str, ")" );
-        }
-        geode::Logger::info( "TEST SUCCESS" );
+        geode::UniformMarkedPointSampler< 2 > sampler( box, std::nullopt );
 
-        geode::Logger::info( "TEST SUCCESS" );
+        // Create classical birth-death-change kernel
+        auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
+            sampler, 0.1, 0.1 );
+
+        geode::GibbsEnergy< geode::Point2D > poisson_energy;
+
+        // Add intensity term
+        poisson_energy.add_energy_term(
+            std::make_unique< geode::IntensityTerm< geode::Point2D > >( 0.5 ) );
+
+        geode::MetropolisHastings< geode::Point2D > mh(
+            poisson_energy, std::move( kernel ) );
+
+        test_steps( mh );
+        test_beta_setter( mh );
+        test_acceptance_prob_helper();
+
+        geode::Logger::info( "MH TEST SUCCESS" );
         return 0;
     }
     catch( ... )

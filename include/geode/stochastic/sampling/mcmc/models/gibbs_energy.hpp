@@ -66,47 +66,47 @@ namespace geode
             return vector_string( values );
         }
 
-        double log_energy_total( const Configuration< Geometry > state )
+        double total_log_energy( const Configuration< Geometry > state ) const
         {
             double log_energy{ 0.0 };
             for( const auto& term : energy_terms_ )
             {
-                log_energy += term->log_total( state );
+                log_energy += term->total_log( state );
             }
             return log_energy;
         }
 
-        double log_energy_delta_add( const Configuration< Geometry > state,
-            const MarkedObject< Geometry >& sample )
+        double delta_log_energy_add( const Configuration< Geometry > state,
+            const MarkedObject< Geometry >& sample ) const
         {
             double log_energy{ 0.0 };
             for( const auto& term : energy_terms_ )
             {
-                log_energy += term->log_delta_add( state, sample );
+                log_energy += term->delta_log_add( state, sample );
             }
             return log_energy;
         }
 
-        double log_energy_delta_remove(
-            const Configuration< Geometry > state, index_t sample_id )
+        double delta_log_energy_remove(
+            const Configuration< Geometry > state, index_t sample_id ) const
         {
             double log_energy{ 0.0 };
             for( const auto& term : energy_terms_ )
             {
-                log_energy += term->log_delta_remove( state, sample_id );
+                log_energy += term->delta_log_remove( state, sample_id );
             }
             return log_energy;
         }
 
-        double log_energy_delta_change( const Configuration< Geometry > state,
+        double delta_log_energy_change( const Configuration< Geometry > state,
             index_t old_sample_id,
-            const MarkedObject< Geometry >& new_sample )
+            const MarkedObject< Geometry >& new_sample ) const
         {
             double log_energy{ 0.0 };
             for( const auto& term : energy_terms_ )
             {
                 log_energy +=
-                    term->log_delta_change( state, old_sample_id, new_sample );
+                    term->delta_log_change( state, old_sample_id, new_sample );
             }
             return log_energy;
         }

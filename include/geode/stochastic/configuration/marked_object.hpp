@@ -52,7 +52,7 @@ namespace geode
     {
     public:
         MarkedObject( Geometry&& geometry );
-        MarkedObject( Geometry&& geometry, Mark mark );
+        MarkedObject( Geometry&& geometry, std::optional< Mark > mark );
 
         void set_geometry( const Geometry& geometry );
         void set_geometry( Geometry&& geometry );

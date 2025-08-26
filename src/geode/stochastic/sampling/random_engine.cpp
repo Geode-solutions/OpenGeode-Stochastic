@@ -142,6 +142,12 @@ namespace geode
             return 0.;
         }
 
+        double sample_log()
+        {
+            return std::log(
+                absl::Uniform( absl::IntervalOpenClosed, rand_gen_, 0., 1.0 ) );
+        }
+
         bool sample_bernoulli( double probability_of_success )
         {
             OPENGEODE_ASSERT(
@@ -213,6 +219,10 @@ namespace geode
         const TruncatedGaussian& law )
     {
         return impl_->sample_truncated_gaussian( law );
+    }
+    double RandomEngine::sample_log()
+    {
+        return impl_->sample_log();
     }
     bool RandomEngine::sample_bernoulli( double probability_of_success )
     {
