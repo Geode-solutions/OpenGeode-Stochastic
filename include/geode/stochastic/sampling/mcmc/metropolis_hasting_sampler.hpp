@@ -39,7 +39,7 @@ namespace geode
     template < typename Geometry >
     struct StepResult
     {
-        MHDecision decision{ MHDecision::UnDecided };
+        MHDecision decision{ MHDecision::Undecided };
         typename Proposal< Geometry >::Type move_type{
             Proposal< Geometry >::Type::Invalid
         };
