@@ -85,7 +85,8 @@ namespace geode
         {
             OPENGEODE_EXCEPTION( birth_ratio_ > 0. && birth_ratio_ < 1.,
                 "[BirthDeathMove]-the ratio of birth over mover should be in "
-                "]0,1[." );
+                "]0,1[. (here = ",
+                birth_ratio_, ")" );
             log_p_birth_ = std::log( this->p_move_ * birth_ratio );
             log_p_death_ = std::log( this->p_move_ * ( 1.0 - birth_ratio ) );
         }

@@ -71,23 +71,9 @@ namespace
             exception_thrown, "[MH test] negative beta did not throw." );
     }
 
-    geode::Configuration< geode::Point2D > create_configuration()
-    {
-        geode::Point2D p1{ { 0., 0. } };
-        geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
-        geode::Point2D p2{ { 1., 1. } };
-        geode::MarkedObject< geode::Point2D > mp2{ std::move( p2 ) };
-
-        geode::Configuration< geode::Point2D > pattern;
-        pattern.add_object( std::move( mp1 ) );
-        pattern.add_object( std::move( mp2 ) );
-
-        return pattern;
-    }
-
     void test_steps( const geode::MetropolisHastings< geode::Point2D >& mh )
     {
-        auto state = create_configuration();
+        geode::Configuration< geode::Point2D > state;
         geode::RandomEngine engine;
 
         geode::index_t stat_sum{ 0 };
@@ -175,7 +161,6 @@ int main()
 
         geode::UniformMarkedPointSampler< 2 > sampler( box, std::nullopt );
 
-        // Create classical birth-death-change kernel
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
             sampler, 0.1, 0.1 );
 
@@ -187,7 +172,6 @@ int main()
 
         geode::MetropolisHastings< geode::Point2D > mh(
             poisson_energy, std::move( kernel ) );
-
         test_steps( mh );
         test_beta_setter( mh );
         test_acceptance_prob_helper();
