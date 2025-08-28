@@ -42,6 +42,10 @@ namespace geode
         {
             OPENGEODE_EXCEPTION( !moves_.empty(),
                 "[MCMC Proposal Kernel] - no move are defined in the Kernel." );
+            if( cumulative_probs_.size() == 1 )
+            {
+                return moves_[0]->propose_move( current, engine );
+            }
             auto rnd = engine.sample_uniform( uniform_closed_double_ );
             for( const auto proba_id : Range{ cumulative_probs_.size() } )
             {
@@ -87,11 +91,6 @@ namespace geode
                     return p / total;
                 } );
             cumulative_probs_.back() = 1.0;
-            Logger::info( " PROPOSAL: " );
-            for( const auto proba : cumulative_probs_ )
-            {
-                Logger::info( proba );
-            }
         }
 
     private:
