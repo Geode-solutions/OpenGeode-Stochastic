@@ -74,6 +74,9 @@ namespace
     void test_steps( const geode::MetropolisHastings< geode::Point2D >& mh )
     {
         geode::Configuration< geode::Point2D > state;
+        geode::Point2D p1{ { 0., 0. } };
+        geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
+        state.add_object( std::move( mp1 ) );
         geode::RandomEngine engine;
 
         geode::index_t stat_sum{ 0 };
