@@ -91,7 +91,6 @@ namespace geode
                     return p / total;
                 } );
             cumulative_probs_.back() = 1.0;
-            Logger::info( " PROPOSAL: " );
         }
 
     private:

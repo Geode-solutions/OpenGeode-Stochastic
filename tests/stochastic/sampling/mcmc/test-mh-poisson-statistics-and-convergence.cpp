@@ -131,14 +131,12 @@ int main()
     {
         geode::StochasticLibrary::initialize();
 
-        geode::StochasticLibrary::initialize();
         double domain_length{ 10. };
         double poisson_density_lambda{ 0.5 };
         std::array< double, 7 > birth_ratio{ 0.1, 0.2, 0.3, 0.4, 0.5, 0.6,
             0.8 };
         for( const auto b : birth_ratio )
         {
-            geode::Logger::info( b );
             test_dynamic_independence(
                 domain_length, poisson_density_lambda, b );
         }
