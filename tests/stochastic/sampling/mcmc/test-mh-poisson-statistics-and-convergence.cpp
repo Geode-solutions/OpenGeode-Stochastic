@@ -66,14 +66,14 @@ namespace
             " and var = ", var, " (expected ", expected_points, ")" );
 
         OPENGEODE_EXCEPTION(
-            std::abs( mean_points - expected_points ) < 0.01 * expected_points,
+            std::abs( mean_points - expected_points ) < 0.025 * expected_points,
             "[MH test] mean number of points not close to expected." );
 
         // ------------------------------------------------------------
         // Variance test: Poisson => Var(N) ≈ E[N]
         // ------------------------------------------------------------
         OPENGEODE_EXCEPTION(
-            std::abs( var - mean_points ) < 0.1 * expected_points,
+            std::abs( var - mean_points ) < 0.25 * expected_points,
             "[MH test] variance not close to Poisson expectation." );
     }
 

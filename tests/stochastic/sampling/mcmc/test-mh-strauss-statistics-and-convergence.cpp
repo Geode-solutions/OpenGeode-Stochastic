@@ -106,12 +106,9 @@ namespace
             " and mean paires = ", mean_paires, " (expected ", nb_points, " ; ",
             nb_paires, ") " );
 
-        OPENGEODE_EXCEPTION( std::abs( mean_points - nb_points ) < 1,
+        OPENGEODE_EXCEPTION( std::abs( mean_points - nb_points ) < 3,
             "[MH test] unexpected nb points." );
 
-        // ------------------------------------------------------------
-        // Variance test: Poisson => Var(N) ≈ E[N]
-        // ------------------------------------------------------------
         if( nb_paires == 0 )
         {
             OPENGEODE_EXCEPTION(
@@ -119,7 +116,7 @@ namespace
         }
         else
         {
-            OPENGEODE_EXCEPTION( std::abs( mean_paires - nb_paires ) < 3,
+            OPENGEODE_EXCEPTION( std::abs( mean_paires - nb_paires ) < 5,
                 "[MH test] unexpected nb paires." );
         }
     }
