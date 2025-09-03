@@ -23,8 +23,8 @@
 #pragma once
 
 #include <geode/stochastic/common.hpp>
-
 #include <geode/stochastic/configuration/configuration.hpp>
+#include <optional>
 
 namespace
 {
@@ -66,7 +66,7 @@ namespace
 
 namespace geode
 {
-    template < typename Geometry >
+    template < typename Object >
     class EnergyTerm
     {
     public:
@@ -83,20 +83,21 @@ namespace geode
         }
 
         virtual double total_log(
-            const Configuration< Geometry >& state ) const = 0;
+            const Configuration< Object >& state ) const = 0;
 
-        virtual double delta_log_add( const Configuration< Geometry >& state,
-            const MarkedObject< Geometry >& sample ) const = 0;
+        virtual double delta_log_add( const Configuration< Object >& state,
+            const Object& object,
+            const GroupId group_id ) const = 0;
 
-        virtual double delta_log_remove( const Configuration< Geometry >& state,
-            index_t sample_id ) const = 0;
+        virtual double delta_log_remove( const Configuration< Object >& state,
+            ObjectId object_id ) const = 0;
 
-        virtual double delta_log_change( const Configuration< Geometry >& state,
-            index_t old_sample_id,
-            const MarkedObject< Geometry >& new_sample ) const = 0;
+        virtual double delta_log_change( const Configuration< Object >& state,
+            ObjectId old_object_id,
+            const Object& new_object ) const = 0;
 
         virtual double statistic(
-            const Configuration< Geometry >& state ) const = 0;
+            const Configuration< Object >& state ) const = 0;
 
     protected:
         NegLogParam neg_log_parameter_;

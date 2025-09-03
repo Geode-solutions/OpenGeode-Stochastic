@@ -27,28 +27,28 @@
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/configuration/configuration.hpp>
 
-geode::Configuration< geode::Point2D > create_pairwise_configuration()
+geode::Configuration< geode::Point2D > create_pairwise_configuration(
+    geode::GroupId group_id )
 {
     geode::Point2D p1{ { 0., 0. } };
-    geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
     geode::Point2D p2{ { 1., 1. } };
-    geode::MarkedObject< geode::Point2D > mp2{ std::move( p2 ) };
 
     geode::Configuration< geode::Point2D > pattern;
-    pattern.add_object( std::move( mp1 ) );
-    pattern.add_object( std::move( mp2 ) );
+    pattern.add_object( std::move( p1 ), group_id );
+    pattern.add_object( std::move( p2 ), group_id );
 
     return pattern;
 }
 
-void test_normal_positive_pairwise(
-    double gamma, const geode::Configuration< geode::Point2D >& pattern )
+void test_normal_positive_pairwise( double gamma,
+    const geode::Configuration< geode::Point2D >& pattern,
+    geode::GroupId group_id )
 {
-    auto interaction_fn = []( const geode::MarkedObject< geode::Point2D >& a,
-                              const geode::MarkedObject< geode::Point2D >& b ) {
+    auto interaction_fn = []( const geode::Point2D& a,
+                              const geode::Point2D& b ) {
         // Interaction if distance < sqrt(2.1) for example
-        auto dx = a.geometry().value( 0 ) - b.geometry().value( 0 );
-        auto dy = a.geometry().value( 1 ) - b.geometry().value( 1 );
+        auto dx = a.value( 0 ) - b.value( 0 );
+        auto dy = a.value( 1 ) - b.value( 1 );
         auto dist_sq = dx * dx + dy * dy;
         return dist_sq < 2.1;
     };
@@ -59,37 +59,38 @@ void test_normal_positive_pairwise(
 
     // p1 and p2 interact → 1 pair
     auto total = term.total_log( pattern );
+
     OPENGEODE_EXCEPTION( total == neg_log_gamma * 1.,
         "[test pairwise] - total_log wrong value." );
 
     // Adding a third point close to p1 → expect new interactions
     geode::Point2D p3{ { 0.5, 0.5 } };
-    geode::MarkedObject< geode::Point2D > mp3{ std::move( p3 ) };
 
-    auto delta_add = term.delta_log_add( pattern, mp3 );
+    auto delta_add = term.delta_log_add( pattern, p3, group_id );
     // p3 interacts with p1 and p2 → 2 new pairs
     OPENGEODE_EXCEPTION( delta_add == neg_log_gamma * 2.,
         "[test pairwise] - delta_log_add wrong value." );
-
-    auto delta_remove = term.delta_log_remove( pattern, 0 );
+    geode::ObjectId obj_id{ 0, group_id };
+    auto delta_remove = term.delta_log_remove( pattern, obj_id );
     // Removing p1 removes its interaction with p2 → 1 removed pair
     OPENGEODE_EXCEPTION( delta_remove == neg_log_gamma * -1.,
         "[test pairwise] - delta_log_remove wrong value." );
 
-    auto delta_change = term.delta_log_change( pattern, 0, mp3 );
+    auto delta_change = term.delta_log_change( pattern, obj_id, p3 );
     // Replacing p1 with p3 changes interactions: p3 interacts with p2 → 1 pair
     // Old p1 interacted with p2 → 1 pair → no net change
     OPENGEODE_EXCEPTION(
         delta_change == 0., "[test pairwise] - delta_log_change wrong value." );
 }
 
-void test_zero_pairwise(
-    double gamma, const geode::Configuration< geode::Point2D >& pattern )
+void test_zero_pairwise( double gamma,
+    const geode::Configuration< geode::Point2D >& pattern,
+    geode::GroupId group_id )
 {
-    auto interaction_fn = []( const geode::MarkedObject< geode::Point2D >& a,
-                              const geode::MarkedObject< geode::Point2D >& b ) {
-        auto dx = a.geometry().value( 0 ) - b.geometry().value( 0 );
-        auto dy = a.geometry().value( 1 ) - b.geometry().value( 1 );
+    auto interaction_fn = []( const geode::Point2D& a,
+                              const geode::Point2D& b ) {
+        auto dx = a.value( 0 ) - b.value( 0 );
+        auto dy = a.value( 1 ) - b.value( 1 );
         auto dist_sq = dx * dx + dy * dy;
         return dist_sq < 2.1;
     };
@@ -102,17 +103,16 @@ void test_zero_pairwise(
         std::isinf( total ), "[test zero pairwise] - log_total wrong value." );
 
     geode::Point2D p3{ { 0.5, 0.5 } };
-    geode::MarkedObject< geode::Point2D > mp3{ std::move( p3 ) };
 
-    auto delta_add = term.delta_log_add( pattern, mp3 );
+    auto delta_add = term.delta_log_add( pattern, p3, group_id );
     OPENGEODE_EXCEPTION( std::isinf( delta_add ),
         "[test zero pairwise] - delta_log_add wrong value." );
-
-    auto delta_remove = term.delta_log_remove( pattern, 0 );
+    geode::ObjectId obj_id{ 0, group_id };
+    auto delta_remove = term.delta_log_remove( pattern, obj_id );
     OPENGEODE_EXCEPTION( delta_remove == 0.,
         "[test zero pairwise] - delta_log_remove wrong value." );
 
-    auto delta_change = term.delta_log_change( pattern, 0, mp3 );
+    auto delta_change = term.delta_log_change( pattern, obj_id, p3 );
     OPENGEODE_EXCEPTION( delta_change == 0.,
         "[test zero pairwise] - delta_log_change wrong value." );
 }
@@ -123,14 +123,16 @@ int main()
     {
         geode::StochasticLibrary::initialize();
 
-        auto pattern = create_pairwise_configuration();
+        geode::GroupId group_id{ 0 };
+        auto pattern = create_pairwise_configuration( group_id );
 
-        test_normal_positive_pairwise( 0.5, pattern );
-        test_normal_positive_pairwise( geode::GLOBAL_EPSILON, pattern );
-        test_normal_positive_pairwise( 2.0, pattern );
+        test_normal_positive_pairwise( 0.5, pattern, group_id );
+        test_normal_positive_pairwise(
+            geode::GLOBAL_EPSILON, pattern, group_id );
+        test_normal_positive_pairwise( 2.0, pattern, group_id );
 
-        test_zero_pairwise( 0., pattern );
-        test_zero_pairwise( 0.9999 * geode::GLOBAL_EPSILON, pattern );
+        test_zero_pairwise( 0., pattern, group_id );
+        test_zero_pairwise( 0.9999 * geode::GLOBAL_EPSILON, pattern, group_id );
         geode::Logger::info( "TEST SUCCESS" );
         return 0;
     }

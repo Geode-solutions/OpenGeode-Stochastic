@@ -28,50 +28,57 @@
 
 namespace geode
 {
-    template < typename Geometry >
-    class IntensityTerm : public EnergyTerm< Geometry >
+    template < typename Object >
+    class IntensityTerm : public EnergyTerm< Object >
     {
     public:
-        explicit IntensityTerm( double lambda )
-            : EnergyTerm< Geometry >( lambda )
+        explicit IntensityTerm( double lambda, GroupId group_id )
+            : EnergyTerm< Object >( lambda ), group_id_{ group_id }
         {
         }
 
-        double total_log( const Configuration< Geometry >& state ) const final
+        double total_log( const Configuration< Object >& state ) const final
         {
             const auto n = static_cast< double >( number_of_objects( state ) );
             return this->neg_log_parameter_.scale( n );
         }
 
-        double delta_log_add( const Configuration< Geometry >& state,
-            const MarkedObject< Geometry >& sample ) const final
+        double delta_log_add( const Configuration< Object >& state,
+            const Object& sample,
+            const GroupId target_group_id ) const final
         {
-            return this->neg_log_parameter_.scale( 1. );
+            return target_group_id == group_id_
+                       ? this->neg_log_parameter_.scale( 1. )
+                       : 0.;
         }
 
-        double delta_log_remove( const Configuration< Geometry >& state,
-            index_t sample_id ) const final
+        double delta_log_remove( const Configuration< Object >& state,
+            ObjectId object_id ) const final
         {
-            return this->neg_log_parameter_.scale( -1. );
+            return object_id.group == group_id_
+                       ? this->neg_log_parameter_.scale( -1. )
+                       : 0.;
         }
 
-        double delta_log_change( const Configuration< Geometry >& state,
-            index_t old_sample_id,
-            const MarkedObject< Geometry >& new_sample ) const final
+        double delta_log_change( const Configuration< Object >& state,
+            ObjectId old_object_id,
+            const Object& new_sample ) const final
         {
             return 0.0;
         }
 
-        double statistic( const Configuration< Geometry >& state ) const final
+        double statistic( const Configuration< Object >& state ) const final
         {
             return static_cast< double >( number_of_objects( state ) );
         }
 
     private:
-        index_t number_of_objects(
-            const Configuration< Geometry >& state ) const
+        index_t number_of_objects( const Configuration< Object >& state ) const
         {
-            return state.size();
+            return state.nb_objects_in_group( group_id_ );
         }
+
+    private:
+        GroupId group_id_;
     };
 } // namespace geode

@@ -22,29 +22,41 @@
  */
 
 #pragma once
-
-#include <geode/geometry/distance.hpp>
-#include <geode/geometry/point.hpp>
-
-#include <geode/stochastic/configuration/object_helpers.hpp>
+#include <geode/stochastic/configuration/r_tree.hpp>
 
 namespace geode
 {
-    struct DistanceCutoffInteraction
+    FORWARD_DECLARATION_DIMENSION_CLASS( BoundingBox );
+}
+
+namespace geode
+{
+
+    template < index_t dimension >
+    class ObjectIndexRTree
     {
-        DistanceCutoffInteraction( double distance )
-            : cutoff_distance( distance )
+        OPENGEODE_DISABLE_COPY_AND_MOVE( ObjectIndexRTree );
+
+    public:
+        ObjectIndexRTree();
+        ~ObjectIndexRTree() = default;
+
+        void add( const BoundingBox< dimension >& box, ObjectId id );
+
+        void remove( const BoundingBox< dimension >& box, ObjectId id );
+
+        void remove_all();
+
+        std::vector< ObjectId > get(
+            const BoundingBox< dimension >& box ) const;
+
+        int count()
         {
+            return tree_.Count();
         }
 
-        template < typename Object >
-        double operator()( const Object& object1, const Object& object2 ) const
-        {
-            auto dist = geode::point_point_distance(
-                object_barycenter( object1 ), object_barycenter( object2 ) );
-            return dist <= cutoff_distance ? 1.0 : 0.0;
-        }
-
-        double cutoff_distance{ GLOBAL_EPSILON };
+    private:
+        RTree< ObjectId, double, dimension > tree_;
     };
+
 } // namespace geode

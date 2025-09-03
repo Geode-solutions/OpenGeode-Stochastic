@@ -23,28 +23,53 @@
 
 #pragma once
 
-#include <geode/geometry/distance.hpp>
-#include <geode/geometry/point.hpp>
+#include <optional>
 
-#include <geode/stochastic/configuration/object_helpers.hpp>
+#include <geode/stochastic/common.hpp>
+
+#include <geode/geometry/basic_objects/segment.hpp>
+#include <geode/geometry/bounding_box.hpp>
+#include <geode/geometry/point.hpp>
 
 namespace geode
 {
-    struct DistanceCutoffInteraction
+    FORWARD_DECLARATION_DIMENSION_CLASS( Point );
+} // namespace geode
+namespace geode
+{
+
+    template < typename Object >
+    auto object_bounding_box( const Object& object )
     {
-        DistanceCutoffInteraction( double distance )
-            : cutoff_distance( distance )
+        if constexpr( std::is_same_v< Object, Point2D > )
         {
+            geode::BoundingBox< 2 > box;
+            box.add_point( object );
+            return box;
         }
-
-        template < typename Object >
-        double operator()( const Object& object1, const Object& object2 ) const
+        else if constexpr( std::is_same_v< Object, Point3D > )
         {
-            auto dist = geode::point_point_distance(
-                object_barycenter( object1 ), object_barycenter( object2 ) );
-            return dist <= cutoff_distance ? 1.0 : 0.0;
+            geode::BoundingBox< 3 > box;
+            box.add_point( object );
+            return box;
         }
+        else
+        {
+            return object.bounding_box();
+        }
+    }
+    template < typename Object >
+    auto object_barycenter( const Object& object )
+    {
+        if constexpr( std::is_same_v< Object, Point2D >
+                      || std::is_same_v< Object, Point3D > )
+        {
+            return object;
+        }
+        else
+        {
+            return object.barycenter();
+        }
+    }
 
-        double cutoff_distance{ GLOBAL_EPSILON };
-    };
 } // namespace geode

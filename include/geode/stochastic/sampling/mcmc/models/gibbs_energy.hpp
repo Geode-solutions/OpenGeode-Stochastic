@@ -27,7 +27,7 @@
 
 namespace geode
 {
-    template < typename Geometry >
+    template < typename Object >
     class GibbsEnergy
     {
         OPENGEODE_DISABLE_COPY_AND_MOVE( GibbsEnergy );
@@ -36,7 +36,7 @@ namespace geode
         GibbsEnergy() = default;
         ~GibbsEnergy() = default;
 
-        void add_energy_term( std::unique_ptr< EnergyTerm< Geometry > > term )
+        void add_energy_term( std::unique_ptr< EnergyTerm< Object > > term )
         {
             energy_terms_.push_back( std::move( term ) );
         }
@@ -66,7 +66,7 @@ namespace geode
             return vector_string( values );
         }
 
-        double total_log_energy( const Configuration< Geometry > state ) const
+        double total_log_energy( const Configuration< Object > state ) const
         {
             double log_energy{ 0.0 };
             for( const auto& term : energy_terms_ )
@@ -76,19 +76,20 @@ namespace geode
             return log_energy;
         }
 
-        double delta_log_energy_add( const Configuration< Geometry > state,
-            const MarkedObject< Geometry >& sample ) const
+        double delta_log_energy_add( const Configuration< Object > state,
+            const Object& sample,
+            GroupId group_id ) const
         {
             double log_energy{ 0.0 };
             for( const auto& term : energy_terms_ )
             {
-                log_energy += term->delta_log_add( state, sample );
+                log_energy += term->delta_log_add( state, sample, group_id );
             }
             return log_energy;
         }
 
         double delta_log_energy_remove(
-            const Configuration< Geometry > state, index_t sample_id ) const
+            const Configuration< Object > state, ObjectId sample_id ) const
         {
             double log_energy{ 0.0 };
             for( const auto& term : energy_terms_ )
@@ -98,9 +99,9 @@ namespace geode
             return log_energy;
         }
 
-        double delta_log_energy_change( const Configuration< Geometry > state,
-            index_t old_sample_id,
-            const MarkedObject< Geometry >& new_sample ) const
+        double delta_log_energy_change( const Configuration< Object > state,
+            ObjectId old_sample_id,
+            const Object& new_sample ) const
         {
             double log_energy{ 0.0 };
             for( const auto& term : energy_terms_ )
@@ -112,7 +113,7 @@ namespace geode
         }
 
         std::vector< double > ordered_energy_term_statistics(
-            const Configuration< Geometry > state ) const
+            const Configuration< Object > state ) const
         {
             std::vector< double > values;
             values.reserve( energy_terms_.size() );
@@ -125,7 +126,7 @@ namespace geode
         }
 
         std::string ordered_energy_term_statistics_string(
-            const Configuration< Geometry > state ) const
+            const Configuration< Object > state ) const
         {
             const auto stats = ordered_energy_term_statistics( state );
             return vector_string( stats );
@@ -144,7 +145,7 @@ namespace geode
         }
 
     private:
-        std::vector< std::unique_ptr< EnergyTerm< Geometry > > > energy_terms_;
+        std::vector< std::unique_ptr< EnergyTerm< Object > > > energy_terms_;
     };
 
 } // namespace geode

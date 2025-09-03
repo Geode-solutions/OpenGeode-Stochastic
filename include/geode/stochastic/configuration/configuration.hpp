@@ -25,63 +25,89 @@
 
 #include <vector>
 
-#include <geode/stochastic/configuration/marked_object.hpp>
+#include <geode/geometry/basic_objects/segment.hpp>
+#include <geode/geometry/bounding_box.hpp>
+#include <geode/geometry/point.hpp>
 
+// #include <geode/stochastic/configuration/neighbors_object_ids.hpp>
 namespace geode
 {
-    template < typename Geometry >
+    // can be a index_t used as a key in unordored map but maybe a "string is
+    // beter?"
+    struct GroupId
+    {
+        index_t value;
+        bool operator==( GroupId const& other ) const noexcept
+        {
+            {
+                return value == other.value;
+            }
+        }
+    };
+
+    struct ObjectId
+    {
+        index_t object;
+        GroupId group;
+        bool operator==( const ObjectId& other ) const noexcept
+        {
+            return object == other.object && group == other.group;
+        }
+    };
+} // namespace geode
+// Hash support for unordered_map
+namespace std
+{
+    template <>
+    struct hash< geode::GroupId >
+    {
+        std::size_t operator()( geode::GroupId const& g ) const noexcept
+        {
+            return std::hash< geode::index_t >()( g.value );
+        }
+    };
+
+    // template <>
+    // struct hash< geode::ObjectId >
+    //{
+    //     std::size_t operator()( geode::ObjectId const& id ) const noexcept
+    //     {
+    //         return ( std::hash< geode::index_t >()( id.group.value ) << 1 )
+    //                ^ std::hash< geode::index_t >()( id.object );
+    //     }
+    // };
+} // namespace std
+namespace geode
+{
+    template < typename Object >
     class Configuration
     {
     public:
-        void add_object( MarkedObject< Geometry >&& object );
-        void change_object( index_t idx, MarkedObject< Geometry >&& object );
-        void remove_object( index_t idx );
-        index_t size() const;
+        const Object& get_object( ObjectId object_id ) const;
+        const std::vector< Object >& get_group( const GroupId& group_id ) const;
+        std::vector< ObjectId > get_all_object() const;
 
-        /**
-         *  @brief Bounds-checked access to the marked object at index @p idx.
-         *  Wrapper for std::vector::at().
-         *  @throws std::out_of_range if idx is out of range.
-         */
-        const MarkedObject< Geometry >& object( index_t idx ) const;
-        /**
-         *  @brief Unchecked access to the marked object at index @p idx.
-         *  Wrapper for std::vector::operator[]().
-         */
-        const MarkedObject< Geometry >& operator[]( index_t idx ) const;
+        index_t nb_groups() const;
+        index_t nb_objects_in_group( const GroupId& group_id ) const;
+        index_t nb_objects() const;
 
-        std::vector< index_t > object_ids_with_mark( const Mark& mark );
+        ObjectId add_object( Object&& object, GroupId group_id );
+        void update_object( ObjectId object_id, Object&& object );
+        void remove_object( ObjectId object_id );
+
+        // Object neighbor search by ObjectId (always excludes self)
+        std::vector< ObjectId > neighbors(
+            const ObjectId object_id, double searching_distance ) const;
+        // Object neighbor search by arbitrary object (return self if in the
+        // configuration)
+        std::vector< ObjectId > neighbors(
+            const Object& object, double searching_distance ) const;
 
     private:
-        std::vector< MarkedObject< Geometry > > objects_;
+        std::vector< Object >& get_group( const GroupId& group_id );
+
+    private:
+        std::unordered_map< GroupId, std::vector< Object > > groups_;
+        // ObjectIndexRTree< 2 > tree_;
     };
 } // namespace geode
-
-// std::string sample_three( absl::BitGen& gen, double p1, double p2, double p3
-// )
-//{
-//     if( absl::Bernoulli( gen, p1 ) )
-//     {
-//         return "A";
-//     }
-//     if( absl::Bernoulli( gen, p2 / ( p2 + p3 ) ) )
-//     { // conditional probability
-//         return "B";
-//     }
-//     return "C";
-// }
-// A configuration is collection of spatialized objects:
-//  * Basic Object
-//  * parametric Object-->marked points
-//  * meshes
-//  a pattern is the superposition of several subcollection of object of
-//  différent type. ( fracture sets)
-
-// a pattern should be easy to modify...
-// each object can be added, removed or modified several times.
-// we also want to have access to neighbors( fist, second or third circle of
-// neighbors) rtree?
-//
-// a collections of helpers need to be done to evaluates "interactions" between
-// objects.
-//
