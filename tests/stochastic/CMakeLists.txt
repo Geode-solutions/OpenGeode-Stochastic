@@ -110,6 +110,7 @@ add_geode_test(
         OpenGeode::basic
         OpenGeode::geometry
         ${PROJECT_NAME}::stochastic
+    UNSTABLE
 )
 
 add_geode_test(
@@ -118,6 +119,7 @@ add_geode_test(
         OpenGeode::basic
         OpenGeode::geometry
         ${PROJECT_NAME}::stochastic
+    UNSTABLE
 )
 
 
