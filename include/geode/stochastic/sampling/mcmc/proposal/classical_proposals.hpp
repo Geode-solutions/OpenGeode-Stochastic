@@ -25,35 +25,35 @@
 #pragma once
 
 #include <geode/stochastic/common.hpp>
-#include <geode/stochastic/sampling/mcmc/proposal/marked_object_sampler/marked_object_sampler.hpp>
+#include <geode/stochastic/sampling/direct/configuration_sampler/configuration_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/proposal_kernel.hpp>
 
 namespace geode
 {
-    template < typename Geometry >
-    std::unique_ptr< ProposalKernel< Geometry > > create_birth_death_kernel(
-        const MarkedObjectSampler< Geometry >& sampler, double birth_prob )
+    template < typename Object >
+    std::unique_ptr< ProposalKernel< Object > > create_birth_death_kernel(
+        const ConfigurationSampler< Object >& sampler, double birth_prob )
     {
-        auto kernel = std::make_unique< ProposalKernel< Geometry > >();
-        kernel->add_move( std::make_unique< BirthDeathMove< Geometry > >(
+        auto kernel = std::make_unique< ProposalKernel< Object > >();
+        kernel->add_move( std::make_unique< BirthDeathMove< Object > >(
             sampler, 1., birth_prob ) );
         return kernel;
     }
 
-    template < typename Geometry >
-    std::unique_ptr< ProposalKernel< Geometry > >
+    template < typename Object >
+    std::unique_ptr< ProposalKernel< Object > >
         create_birth_death_change_kernel(
-            const MarkedObjectSampler< Geometry >& sampler,
+            const ConfigurationSampler< Object >& sampler,
             double birth_prob,
             double death_prob )
     {
         auto birth_death_prob = birth_prob + death_prob;
         OPENGEODE_EXCEPTION( birth_death_prob < 1.,
             "[Proposal Kernel] - changes should be allowed." );
-        auto kernel = std::make_unique< ProposalKernel< Geometry > >();
-        kernel->add_move( std::make_unique< BirthDeathMove< Geometry > >(
+        auto kernel = std::make_unique< ProposalKernel< Object > >();
+        kernel->add_move( std::make_unique< BirthDeathMove< Object > >(
             sampler, birth_death_prob, birth_prob / birth_death_prob ) );
-        kernel->add_move( std::make_unique< ChangeMove< Geometry > >(
+        kernel->add_move( std::make_unique< ChangeMove< Object > >(
             sampler, 1. - birth_death_prob ) );
         return kernel;
     }

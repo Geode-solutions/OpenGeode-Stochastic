@@ -83,21 +83,22 @@ namespace geode
     class Configuration
     {
     public:
-        const Object& get_object( ObjectId object_id ) const;
         const std::vector< Object >& get_group( const GroupId& group_id ) const;
+        const Object& get_object( const ObjectId& object_id ) const;
         std::vector< ObjectId > get_all_object() const;
 
         index_t nb_groups() const;
         index_t nb_objects_in_group( const GroupId& group_id ) const;
         index_t nb_objects() const;
 
-        ObjectId add_object( Object&& object, GroupId group_id );
-        void update_object( ObjectId object_id, Object&& object );
-        void remove_object( ObjectId object_id );
+        void add_group( const GroupId& group_id );
+        ObjectId add_object( Object&& object, const GroupId& group_id );
+        void update_object( const ObjectId& object_id, Object&& object );
+        void remove_object( const ObjectId& object_id );
 
         // Object neighbor search by ObjectId (always excludes self)
         std::vector< ObjectId > neighbors(
-            const ObjectId object_id, double searching_distance ) const;
+            const ObjectId& object_id, double searching_distance ) const;
         // Object neighbor search by arbitrary object (return self if in the
         // configuration)
         std::vector< ObjectId > neighbors(

@@ -21,11 +21,11 @@
  *
  */
 #include <geode/geometry/point.hpp>
+#include <geode/stochastic/sampling/direct/configuration_sampler/point_configuration_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/intensity_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
-#include <geode/stochastic/sampling/mcmc/proposal/marked_object_sampler/uniform_marked_point_sampler.hpp>
 namespace
 {
     void test_acceptance_prob_helper()
@@ -71,14 +71,16 @@ namespace
             exception_thrown, "[MH test] negative beta did not throw." );
     }
 
-    void test_steps( const geode::MetropolisHastings< geode::Point2D >& mh )
+    void test_steps( const geode::MetropolisHastings< geode::Point2D >& mh,
+        const geode::GroupId& group_id )
     {
-        geode::Configuration< geode::Point2D > state;
-        geode::Point2D p1{ { 0., 0. } };
-        geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
-        state.add_object( std::move( mp1 ) );
         geode::RandomEngine engine;
 
+        std::unordered_map< geode::GroupId, geode::index_t > targets = {
+            { group_id, 20 }
+        };
+        geode::Configuration< geode::Point2D > state =
+            mh.initialise_configuration_with_sampling( engine, targets );
         geode::index_t stat_sum{ 0 };
         constexpr geode::index_t N{ 100000 };
 
@@ -125,8 +127,9 @@ namespace
                         break;
                 }
             }
-
-            stat_sum += state.size();
+            // should be change... only pone group here
+            geode::GroupId groupe_id{ 0 };
+            stat_sum += state.nb_objects_in_group( groupe_id );
 
             if( count % 1000 == 0 )
             {
@@ -162,20 +165,24 @@ int main()
         box.add_point( min_point );
         box.add_point( max_point );
 
-        geode::UniformMarkedPointSampler< 2 > sampler( box, std::nullopt );
-
+        geode::GroupId group_id{ 0 };
+        geode::UniformPointConfigurationSampler< 2 > sampler( box, group_id );
+        double birth_prob = 0.3;
+        double death_prob = 0.1;
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
-            sampler, 0.1, 0.1 );
+            sampler, birth_prob, death_prob );
 
         geode::GibbsEnergy< geode::Point2D > poisson_energy;
 
         // Add intensity term
         poisson_energy.add_energy_term(
-            std::make_unique< geode::IntensityTerm< geode::Point2D > >( 0.5 ) );
+            std::make_unique< geode::IntensityTerm< geode::Point2D > >(
+                0.5, group_id ) );
 
         geode::MetropolisHastings< geode::Point2D > mh(
             poisson_energy, std::move( kernel ) );
-        test_steps( mh );
+
+        test_steps( mh, group_id );
         test_beta_setter( mh );
         test_acceptance_prob_helper();
 

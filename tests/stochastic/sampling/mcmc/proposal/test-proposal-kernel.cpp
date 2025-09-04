@@ -25,31 +25,32 @@
 #include <geode/basic/assert.hpp>
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/configuration/configuration.hpp>
+#include <geode/stochastic/sampling/direct/configuration_sampler/point_configuration_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
-#include <geode/stochastic/sampling/mcmc/proposal/marked_object_sampler/uniform_marked_point_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/moves.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/proposal_kernel.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
 
 namespace
 {
-    geode::Configuration< geode::Point2D > create_configuration()
+    geode::Configuration< geode::Point2D > create_configuration(
+        geode::GroupId group_id )
     {
         geode::Point2D p1{ { 0., 0. } };
-        geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
         geode::Point2D p2{ { 1., 1. } };
-        geode::MarkedObject< geode::Point2D > mp2{ std::move( p2 ) };
 
         geode::Configuration< geode::Point2D > pattern;
-        pattern.add_object( std::move( mp1 ) );
-        pattern.add_object( std::move( mp2 ) );
+        pattern.add_group( group_id );
+        pattern.add_object( std::move( p1 ), group_id );
+        pattern.add_object( std::move( p2 ), group_id );
 
         return pattern;
     }
 
     void test_proposal_kernel()
     {
-        auto config = create_configuration();
+        geode::GroupId group_id{ 0 };
+        auto config = create_configuration( group_id );
 
         geode::Point2D min_point{ { 0., 0. } };
         geode::Point2D max_point{ { 10., 100. } };
@@ -58,7 +59,7 @@ namespace
         box.add_point( min_point );
         box.add_point( max_point );
 
-        geode::UniformMarkedPointSampler< 2 > sampler( box, std::nullopt );
+        geode::UniformPointConfigurationSampler< 2 > sampler( box, group_id );
 
         // Create classical birth-death-change kernel
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
@@ -68,7 +69,7 @@ namespace
 
         bool saw_birth = false, saw_death = false, saw_change = false;
 
-        for( const auto i : geode::Range{ 200 } )
+        for( const auto i : geode::Range{ 400 } )
         {
             auto prop = kernel->propose( config, engine );
 
@@ -79,7 +80,7 @@ namespace
                     saw_birth = true;
                     OPENGEODE_EXCEPTION( prop.new_object.has_value(),
                         "[test proposal] Birth must provide new_object." );
-                    OPENGEODE_EXCEPTION( !prop.index.has_value(),
+                    OPENGEODE_EXCEPTION( !prop.old_object_id.has_value(),
                         "[test proposal] Birth should not provide index." );
                     // Probabilities
                     OPENGEODE_EXCEPTION( prop.log_forward_prob <= 0.0,
@@ -89,7 +90,9 @@ namespace
                     OPENGEODE_EXCEPTION(
                         std::abs( prop.log_backward_prob
                                   - ( std::log( 0.8 * 0.5 )
-                                      - std::log( config.size() + 1.0 ) ) )
+                                      - std::log(
+                                          config.nb_objects_in_group( group_id )
+                                          + 1.0 ) ) )
                             < geode::GLOBAL_EPSILON,
                         "[test proposal] Birth backward log-prob mismatch." );
                     break;
@@ -99,9 +102,11 @@ namespace
                     OPENGEODE_EXCEPTION( !prop.new_object.has_value(),
                         "[test proposal] Death should not provide "
                         "new_object." );
-                    OPENGEODE_EXCEPTION( prop.index.has_value(),
+                    OPENGEODE_EXCEPTION( prop.old_object_id.has_value(),
                         "[test proposal] Death must provide index." );
-                    OPENGEODE_EXCEPTION( prop.index.value() < config.size(),
+                    OPENGEODE_EXCEPTION(
+                        prop.old_object_id.value().object
+                            < config.nb_objects_in_group( group_id ),
                         "[test proposal] Death index out of bounds." );
                     // Probabilities
                     OPENGEODE_EXCEPTION( prop.log_forward_prob <= 0.0,
@@ -113,9 +118,11 @@ namespace
                     saw_change = true;
                     OPENGEODE_EXCEPTION( prop.new_object.has_value(),
                         "[test proposal] Change must provide new_object." );
-                    OPENGEODE_EXCEPTION( prop.index.has_value(),
+                    OPENGEODE_EXCEPTION( prop.old_object_id.has_value(),
                         "[test proposal] Change must provide index." );
-                    OPENGEODE_EXCEPTION( prop.index.value() < config.size(),
+                    OPENGEODE_EXCEPTION(
+                        prop.old_object_id.value().object
+                            < config.nb_objects_in_group( group_id ),
                         "[test proposal] Change index out of bounds." );
                     break;
 
@@ -139,6 +146,8 @@ namespace
 
         // --- Edge case: empty configuration ---
         geode::Configuration< geode::Point2D > empty_config;
+        empty_config.add_group( group_id );
+
         auto prop_empty = kernel->propose( empty_config, engine );
         OPENGEODE_EXCEPTION(
             prop_empty.type == geode::Proposal< geode::Point2D >::Type::Birth

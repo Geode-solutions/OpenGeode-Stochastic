@@ -26,8 +26,8 @@
 #include <geode/geometry/basic_objects/sphere.hpp>
 #include <geode/geometry/point.hpp>
 
+#include <geode/stochastic/sampling/direct/configuration_sampler/configuration_sampler.hpp>
 #include <geode/stochastic/sampling/direct/point_uniform_sampler.hpp>
-#include <geode/stochastic/sampling/mcmc/proposal/marked_object_sampler/marked_object_sampler.hpp>
 
 namespace geode
 {
@@ -48,12 +48,14 @@ namespace geode
             }
         }
 
-        Point< dimension > sample( RandomEngine& engine ) const override
+        std::pair< Point< dimension >, GroupId > sample(
+            RandomEngine& engine ) const override
         {
-            return PointUniformSampler::sample< dimension >( engine, box_ );
+            return { PointUniformSampler::sample< dimension >( engine, box_ ),
+                this->group_id_ };
         }
 
-        Point< dimension > change(
+        std::pair< Point< dimension >, GroupId > change(
             const Point< dimension >& obj, RandomEngine& engine ) const override
         {
             double ratio = 0.1;
@@ -67,7 +69,7 @@ namespace geode
                 new_point =
                     PointUniformSampler::sample< dimension >( engine, ball );
             }
-            return new_point;
+            return { new_point, this->group_id_ };
         }
 
         double log_pdf( const Point< dimension >& obj ) const override
@@ -82,7 +84,6 @@ namespace geode
     private:
         const BoundingBox< dimension >& box_;
         double log_pdf_{ -std::numeric_limits< double >::infinity() };
-        std::optional< Mark > mark_;
     };
 
 } // namespace geode

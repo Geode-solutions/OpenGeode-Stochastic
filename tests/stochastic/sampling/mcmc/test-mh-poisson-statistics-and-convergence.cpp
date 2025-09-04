@@ -21,42 +21,40 @@
  *
  */
 #include <geode/geometry/point.hpp>
+#include <geode/stochastic/configuration/configuration.hpp>
+#include <geode/stochastic/sampling/direct/configuration_sampler/point_configuration_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/intensity_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
-#include <geode/stochastic/sampling/mcmc/proposal/marked_object_sampler/uniform_marked_point_sampler.hpp>
 namespace
 {
 
     // ------------------------------------------------------------
     // Convergence test: mean number of points ≈ λ × area
     // ------------------------------------------------------------
-    void test_convergence( geode::MetropolisHastings< geode::Point2D >& mh,
+    void test_convergence_one_groupe(
+        geode::MetropolisHastings< geode::Point2D >& mh,
         double expected_points,
-        geode::RandomEngine& engine )
+        geode::RandomEngine& engine,
+        const geode::GibbsEnergy< geode::Point2D >& energy )
     {
         geode::Configuration< geode::Point2D > state;
-
-        constexpr geode::index_t burn_in{ 10000 };
+        geode::GroupId group_id{ 0 };
+        state.add_group( group_id );
+        mh.walk( state, engine, 1000 );
         constexpr geode::index_t N{ 1000000 };
 
-        // Burn-in
-        for( const auto i : geode::Range{ burn_in } )
-        {
-            geode_unused( i );
-            mh.step( state, engine );
-        }
-
         // Sampling
+
         double sum_points = 0.0;
         double sum_sq = 0.0;
         for( const auto i : geode::Range{ N } )
         {
             mh.step( state, engine );
-            auto n = static_cast< double >( state.size() );
-            sum_points += n;
-            sum_sq += n * n;
+            auto stats = energy.ordered_energy_term_statistics( state );
+            sum_points += stats[0];
+            sum_sq += stats[0] * stats[0];
         }
 
         double mean_points = sum_points / N;
@@ -94,13 +92,13 @@ namespace
         box.add_point( max_point );
 
         double area = domain_length * domain_length;
-
-        geode::UniformMarkedPointSampler< 2 > sampler( box, std::nullopt );
+        geode::GroupId group_id{ 0 };
+        geode::UniformPointConfigurationSampler< 2 > sampler( box, group_id );
 
         geode::GibbsEnergy< geode::Point2D > poisson_energy;
         poisson_energy.add_energy_term(
             std::make_unique< geode::IntensityTerm< geode::Point2D > >(
-                poisson_density ) );
+                poisson_density, group_id ) );
 
         // Kernel with only birth/death
         auto kernel1 = geode::create_birth_death_kernel< geode::Point2D >(
@@ -117,11 +115,13 @@ namespace
 
         geode::Logger::info(
             "[MH test] Testing kernel with birth/death only..." );
-        test_convergence( mh1, poisson_density * area, engine );
+        test_convergence_one_groupe(
+            mh1, poisson_density * area, engine, poisson_energy );
 
         geode::Logger::info(
             "[MH test] Testing kernel with birth/death/change..." );
-        test_convergence( mh2, poisson_density * area, engine );
+        test_convergence_one_groupe(
+            mh2, poisson_density * area, engine, poisson_energy );
     }
 } // namespace
 

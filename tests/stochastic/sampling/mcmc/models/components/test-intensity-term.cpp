@@ -32,6 +32,7 @@ geode::Configuration< geode::Point2D > create_configuration(
     geode::Point2D p2{ { 1., 1. } };
 
     geode::Configuration< geode::Point2D > pattern;
+    pattern.add_group( group_id );
     pattern.add_object( std::move( p1 ), group_id );
     pattern.add_object( std::move( p2 ), group_id );
 

@@ -39,31 +39,6 @@ namespace geode
         {
         }
 
-        double statistic( const Configuration< Object >& state ) const final
-        {
-            double sum = 0.0;
-            const auto all_object_ids = state.get_all_object();
-            for( const auto obj_id : geode::Range{ all_object_ids.size() } )
-            {
-                const auto& cur_objet =
-                    state.get_object( all_object_ids[obj_id] );
-                const auto neighbors =
-                    state.neighbors( all_object_ids[obj_id], 1.1 );
-                for( const auto neigh_obj_id :
-                    geode::Range{ neighbors.size() } )
-                {
-                    if( all_object_ids[obj_id].object
-                        > neighbors[neigh_obj_id].object )
-                    {
-                        sum +=
-                            static_cast< double >( interaction_func_( cur_objet,
-                                state.get_object( neighbors[neigh_obj_id] ) ) );
-                    }
-                }
-            }
-            return sum;
-        }
-
         double total_log( const Configuration< Object >& state ) const final
         {
             const auto interaction_weight = statistic( state );
@@ -128,6 +103,31 @@ namespace geode
 
             return this->neg_log_parameter_.scale(
                 interaction_weight_add - interaction_weight_remove );
+        }
+
+        double statistic( const Configuration< Object >& state ) const final
+        {
+            double sum = 0.0;
+            const auto all_object_ids = state.get_all_object();
+            for( const auto obj_id : geode::Range{ all_object_ids.size() } )
+            {
+                const auto& cur_objet =
+                    state.get_object( all_object_ids[obj_id] );
+                const auto neighbors =
+                    state.neighbors( all_object_ids[obj_id], 1.1 );
+                for( const auto neigh_obj_id :
+                    geode::Range{ neighbors.size() } )
+                {
+                    if( all_object_ids[obj_id].object
+                        > neighbors[neigh_obj_id].object )
+                    {
+                        sum +=
+                            static_cast< double >( interaction_func_( cur_objet,
+                                state.get_object( neighbors[neigh_obj_id] ) ) );
+                    }
+                }
+            }
+            return sum;
         }
 
     private:

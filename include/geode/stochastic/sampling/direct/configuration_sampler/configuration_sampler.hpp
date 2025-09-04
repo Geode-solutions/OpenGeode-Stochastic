@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <geode/stochastic/configuration/configuration.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
 
 namespace geode
@@ -34,12 +35,13 @@ namespace geode
         ConfigurationSampler( GroupId group_id ) : group_id_{ group_id } {}
         virtual ~ConfigurationSampler() = default;
 
-        virtual Object sample( RandomEngine& engine ) const = 0;
+        virtual std::pair< Object, GroupId > sample(
+            RandomEngine& engine ) const = 0;
 
         std::optional< ObjectId > sample_id(
             const Configuration< Object >& config, RandomEngine& engine ) const
         {
-            const auto max_obj_id = config.nb_objects( group_id_ );
+            const auto max_obj_id = config.nb_objects_in_group( group_id_ );
             if( max_obj_id == 0 )
             {
                 return std::nullopt;
@@ -47,16 +49,17 @@ namespace geode
             geode::UniformClosed< index_t > uniform_closed_index_t;
             uniform_closed_index_t.min_value = 0;
             uniform_closed_index_t.max_value = max_obj_id - 1;
-            return { engine.sample_uniform( uniform_closed_index_t ),
+            ObjectId result{ engine.sample_uniform( uniform_closed_index_t ),
                 group_id_ };
+            return result;
         }
 
-        virtual Object change(
+        virtual std::pair< Object, GroupId > change(
             const Object& object, RandomEngine& engine ) const = 0;
 
-        virtual double log_pdf( const MarkedObj& obj ) const = 0;
+        virtual double log_pdf( const Object& obj ) const = 0;
 
-    private:
+    protected:
         GroupId group_id_;
     };
 } // namespace geode

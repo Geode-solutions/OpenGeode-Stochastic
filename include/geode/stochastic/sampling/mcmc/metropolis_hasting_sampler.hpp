@@ -36,23 +36,23 @@ namespace geode
         Undecided
     };
 
-    template < typename Geometry >
+    template < typename Object >
     struct StepResult
     {
         MHDecision decision{ MHDecision::Undecided };
-        typename Proposal< Geometry >::Type move_type{
-            Proposal< Geometry >::Type::Invalid
+        typename Proposal< Object >::Type move_type{
+            Proposal< Object >::Type::Invalid
         };
         double log_accept{ -std::numeric_limits< double >::infinity() };
         double delta_log_energy{ 0.0 };
     };
 
-    template < typename Geometry >
+    template < typename Object >
     class MetropolisHastings
     {
     public:
-        MetropolisHastings( GibbsEnergy< Geometry >& energy,
-            std::unique_ptr< ProposalKernel< Geometry > > proposal_kernel )
+        MetropolisHastings( GibbsEnergy< Object >& energy,
+            std::unique_ptr< ProposalKernel< Object > > proposal_kernel )
             : energy_( energy ),
               proposal_kernel_( std::move( proposal_kernel ) )
         {
@@ -60,31 +60,96 @@ namespace geode
                 proposal_kernel_ != nullptr, "[MH] null proposal kernel" );
         }
 
-        StepResult< Geometry > step(
-            Configuration< Geometry >& state, RandomEngine& engine ) const
+        Configuration< Object > initialise_configuration_with_sampling(
+            RandomEngine& engine,
+            const std::unordered_map< GroupId, index_t >& group_targets ) const
         {
-            Proposal< Geometry > proposal =
+            Configuration< Object > config;
+            for( const auto& [gid, target] : group_targets )
+            {
+                config.add_group( gid );
+                while( config.nb_objects_in_group( gid ) < target )
+                {
+                    bool added = false;
+                    for( int attempt = 0; attempt < 100 && !added; ++attempt )
+                    {
+                        Proposal< Object > proposal =
+                            proposal_kernel_->propose( config, engine );
+
+                        if( proposal.type == Proposal< Object >::Type::Birth
+                            && proposal.new_object->second == gid )
+                        {
+                            config.add_object(
+                                std::move( proposal.new_object->first ),
+                                proposal.new_object->second );
+                            added = true;
+                        }
+                    }
+                    OPENGEODE_EXCEPTION( added,
+                        "[MH] Birth move need to be more probable for group: ",
+                        gid.value );
+                }
+            }
+            return config;
+        }
+
+        Configuration< Object > initialise_configuration_with_burnin(
+            RandomEngine& engine, index_t number_of_steps ) const
+        {
+            Configuration< Object > configuration;
+            for( const auto count : geode::Range{ number_of_steps } )
+            {
+                geode_unused( count );
+                step( configuration, engine );
+            }
+            return configuration;
+        }
+
+        StepResult< Object > step(
+            Configuration< Object >& state, RandomEngine& engine ) const
+        {
+            Proposal< Object > proposal =
                 proposal_kernel_->propose( state, engine );
 
-            if( proposal.type == Proposal< Geometry >::Type::Birth )
+            if( proposal.type == Proposal< Object >::Type::Birth )
             {
                 return birth_step( proposal, state, engine );
             }
-            if( proposal.type == Proposal< Geometry >::Type::Death )
+            if( proposal.type == Proposal< Object >::Type::Death )
             {
                 return death_step( proposal, state, engine );
             }
-            if( proposal.type == Proposal< Geometry >::Type::Change )
+            if( proposal.type == Proposal< Object >::Type::Change )
             {
                 return change_step( proposal, state, engine );
             }
-            return StepResult< Geometry >{};
+            return StepResult< Object >{};
+        }
+
+        void walk( Configuration< Object >& state,
+            RandomEngine& engine,
+            index_t nb_steps ) const
+        {
+            for( const auto count : geode::Range{ nb_steps } )
+            {
+                geode_unused( count );
+                step( state, engine );
+            }
+        }
+
+        Configuration< Object > walk_copy( Configuration< Object > initial,
+            RandomEngine& engine,
+            index_t nb_steps ) const
+        {
+            walk( initial, engine, nb_steps );
+            return initial;
         }
 
         double beta() const
         {
             return beta_;
         }
+
         void set_beta( double b )
         {
             OPENGEODE_EXCEPTION( b >= 0.0, "[MH] beta must be >= 0" );
@@ -134,7 +199,7 @@ namespace geode
 
     private:
         const double compute_log_accept(
-            const double deltaU, const Proposal< Geometry >& proposal ) const
+            const double deltaU, const Proposal< Object >& proposal ) const
         {
             OPENGEODE_ASSERT(
                 std::isfinite( proposal.log_forward_prob )
@@ -145,13 +210,13 @@ namespace geode
         }
 
         template < typename ApplyMove >
-        StepResult< Geometry > accept_or_reject( Proposal< Geometry >& proposal,
-            Configuration< Geometry >& state,
+        StepResult< Object > accept_or_reject( Proposal< Object >& proposal,
+            Configuration< Object >& state,
             RandomEngine& engine,
             const double delta_log_energy,
             ApplyMove&& apply_move ) const
         {
-            StepResult< Geometry > step_result;
+            StepResult< Object > step_result;
             step_result.move_type = proposal.type;
             step_result.delta_log_energy = delta_log_energy;
             step_result.log_accept =
@@ -167,54 +232,59 @@ namespace geode
             return step_result;
         }
 
-        StepResult< Geometry > birth_step( Proposal< Geometry >& proposal,
-            Configuration< Geometry >& state,
+        StepResult< Object > birth_step( Proposal< Object >& proposal,
+            Configuration< Object >& state,
             RandomEngine& engine ) const
         {
             OPENGEODE_ASSERT( proposal.new_object.has_value(),
                 "[MH] Birth proposal has no new_object" );
-            const auto delta_log_energy = energy_.delta_log_energy_add(
-                state, proposal.new_object.value() );
+            const auto delta_log_energy = energy_.delta_log_energy_add( state,
+                proposal.new_object.value().first,
+                proposal.new_object.value().second );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
                 []( auto& s, auto& p ) {
-                    s.add_object( std::move( p.new_object.value() ) );
+                    s.add_object( std::move( p.new_object.value().first ),
+                        p.new_object.value().second );
                 } );
         };
 
-        StepResult< Geometry > death_step( Proposal< Geometry >& proposal,
-            Configuration< Geometry >& state,
+        StepResult< Object > death_step( Proposal< Object >& proposal,
+            Configuration< Object >& state,
             RandomEngine& engine ) const
         {
-            OPENGEODE_ASSERT( proposal.index.has_value(),
+            OPENGEODE_ASSERT( proposal.old_object_id.has_value(),
                 "[MH] Death proposal has no index" );
             const auto delta_log_energy = energy_.delta_log_energy_remove(
-                state, proposal.index.value() );
+                state, proposal.old_object_id.value() );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
                 []( auto& s, auto& p ) {
-                    s.remove_object( p.index.value() );
+                    s.remove_object( p.old_object_id.value() );
                 } );
         };
 
-        StepResult< Geometry > change_step( Proposal< Geometry >& proposal,
-            Configuration< Geometry >& state,
+        StepResult< Object > change_step( Proposal< Object >& proposal,
+            Configuration< Object >& state,
             RandomEngine& engine ) const
         {
             OPENGEODE_ASSERT( proposal.new_object.has_value(),
                 "[MH] Change proposal has no new_object" );
-            OPENGEODE_ASSERT( proposal.index.has_value(),
+            OPENGEODE_ASSERT( proposal.old_object_id.has_value(),
                 "[MH] Change proposal has no index" );
             const auto delta_log_energy = energy_.delta_log_energy_change(
-                state, proposal.index.value(), proposal.new_object.value() );
+                state, proposal.old_object_id.value(),
+                proposal.new_object.value().first );
+            // should we test that objects are in the same group?
+            // should be ensured by the dynamic
             return accept_or_reject( proposal, state, engine, delta_log_energy,
                 []( auto& s, auto& p ) {
-                    s.change_object(
-                        p.index.value(), std::move( p.new_object.value() ) );
+                    s.update_object( p.old_object_id.value(),
+                        std::move( p.new_object.value().first ) );
                 } );
         };
 
     private:
-        const GibbsEnergy< Geometry >& energy_;
-        std::unique_ptr< ProposalKernel< Geometry > > proposal_kernel_;
+        const GibbsEnergy< Object >& energy_;
+        std::unique_ptr< ProposalKernel< Object > > proposal_kernel_;
         double beta_{ 1.0 };
     };
 } // namespace geode

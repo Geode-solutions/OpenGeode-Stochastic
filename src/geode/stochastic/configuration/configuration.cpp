@@ -8,15 +8,6 @@
 namespace geode
 {
     template < typename Object >
-    const Object& Configuration< Object >::get_object( ObjectId id ) const
-    {
-        const auto& group = get_group( id.group );
-        OPENGEODE_EXCEPTION( id.object < group.size(),
-            "[Configuration]- object index out of range." );
-        return group[id.object];
-    }
-
-    template < typename Object >
     const std::vector< Object >& Configuration< Object >::get_group(
         const GroupId& group_id ) const
     {
@@ -24,6 +15,16 @@ namespace geode
         OPENGEODE_EXCEPTION( it != groups_.end(), "[Configuration] - group (",
             group_id.value, ") is not defined." );
         return it->second;
+    }
+
+    template < typename Object >
+    const Object& Configuration< Object >::get_object(
+        const ObjectId& id ) const
+    {
+        auto& group = get_group( id.group );
+        OPENGEODE_EXCEPTION( id.object < group.size(),
+            "[Configuration]- object index out of range." );
+        return group[id.object];
     }
 
     template < typename Object >
@@ -67,10 +68,19 @@ namespace geode
     }
 
     template < typename Object >
-    ObjectId Configuration< Object >::add_object(
-        Object&& object, GroupId group_id )
+    void Configuration< Object >::add_group( const GroupId& group_id )
     {
-        auto& group = groups_[group_id]; // creates group if missing
+        auto [it, inserted] =
+            groups_.emplace( group_id, std::vector< Object >{} );
+        OPENGEODE_EXCEPTION( inserted, "[Configuration]- group (",
+            group_id.value, ") already exists." );
+    }
+
+    template < typename Object >
+    ObjectId Configuration< Object >::add_object(
+        Object&& object, const GroupId& group_id )
+    {
+        auto& group = get_group( group_id );
         ObjectId new_object_id{ static_cast< index_t >( group.size() ),
             group_id };
         group.push_back( std::move( object ) );
@@ -79,7 +89,8 @@ namespace geode
     }
 
     template < typename Object >
-    void Configuration< Object >::update_object( ObjectId id, Object&& object )
+    void Configuration< Object >::update_object(
+        const ObjectId& id, Object&& object )
     {
         auto& group = get_group( id.group );
         OPENGEODE_EXCEPTION( id.object < group.size(),
@@ -88,7 +99,7 @@ namespace geode
     }
 
     template < typename Object >
-    void Configuration< Object >::remove_object( ObjectId id )
+    void Configuration< Object >::remove_object( const ObjectId& id )
     {
         auto& group = get_group( id.group );
         OPENGEODE_EXCEPTION( id.object < group.size(),
@@ -98,7 +109,7 @@ namespace geode
     }
     template < typename Object >
     std::vector< ObjectId > Configuration< Object >::neighbors(
-        const ObjectId object_id, double searching_distance ) const
+        const ObjectId& object_id, double searching_distance ) const
     {
         geode_unused( searching_distance );
         std::vector< ObjectId > result;
