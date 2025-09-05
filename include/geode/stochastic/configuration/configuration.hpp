@@ -54,28 +54,7 @@ namespace geode
         }
     };
 } // namespace geode
-// Hash support for unordered_map
-namespace std
-{
-    // template <>
-    // struct hash< geode::uuid >
-    //{
-    //     std::size_t operator()( geode::uuid const& g ) const noexcept
-    //     {
-    //         return std::hash< geode::index_t >()( g.unique_id );
-    //     }
-    // };
 
-    // template <>
-    // struct hash< geode::ObjectId >
-    //{
-    //     std::size_t operator()( geode::ObjectId const& id ) const noexcept
-    //     {
-    //         return ( std::hash< geode::index_t >()( id.group.value ) << 1 )
-    //                ^ std::hash< geode::index_t >()( id.object );
-    //     }
-    // };
-} // namespace std
 namespace geode
 {
     template < typename Object >
