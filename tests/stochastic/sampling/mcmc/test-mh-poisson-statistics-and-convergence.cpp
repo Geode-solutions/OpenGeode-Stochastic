@@ -35,14 +35,13 @@ namespace
     // ------------------------------------------------------------
     void test_convergence_one_groupe(
         geode::MetropolisHastings< geode::Point2D >& mh,
-        double expected_points,
+        const std::unordered_map< geode::uuid, geode::index_t >& group_targets,
         geode::RandomEngine& engine,
         const geode::GibbsEnergy< geode::Point2D >& energy )
     {
-        geode::Configuration< geode::Point2D > state;
-        geode::GroupId group_id{ 0 };
-        state.add_group( group_id );
-        mh.walk( state, engine, 1000 );
+        geode::Configuration< geode::Point2D > state =
+            mh.initialise_configuration_with_sampling( engine, group_targets );
+
         constexpr geode::index_t N{ 1000000 };
 
         // Sampling
@@ -60,19 +59,23 @@ namespace
         double mean_points = sum_points / N;
         double var = ( sum_sq / N ) - ( mean_points * mean_points );
 
-        geode::Logger::info( "[MH test] mean points = ", mean_points,
-            " and var = ", var, " (expected ", expected_points, ")" );
+        for( const auto& [group_uuid, expected_points] : group_targets )
+        {
+            geode_unused( group_uuid );
+            geode::Logger::info( "[MH test] mean points = ", mean_points,
+                " and var = ", var, " (expected ", expected_points, ")" );
 
-        OPENGEODE_EXCEPTION(
-            std::abs( mean_points - expected_points ) < 0.01 * expected_points,
-            "[MH test] mean number of points not close to expected." );
+            OPENGEODE_EXCEPTION( std::abs( mean_points - expected_points )
+                                     < 0.01 * expected_points,
+                "[MH test] mean number of points not close to expected." );
 
-        // ------------------------------------------------------------
-        // Variance test: Poisson => Var(N) ≈ E[N]
-        // ------------------------------------------------------------
-        OPENGEODE_EXCEPTION(
-            std::abs( var - mean_points ) < 0.1 * expected_points,
-            "[MH test] variance not close to Poisson expectation." );
+            // ------------------------------------------------------------
+            // Variance test: Poisson => Var(N) ≈ E[N]
+            // ------------------------------------------------------------
+            OPENGEODE_EXCEPTION(
+                std::abs( var - mean_points ) < 0.1 * expected_points,
+                "[MH test] variance not close to Poisson expectation." );
+        }
     }
 
     // ------------------------------------------------------------
@@ -92,7 +95,7 @@ namespace
         box.add_point( max_point );
 
         double area = domain_length * domain_length;
-        geode::GroupId group_id{ 0 };
+        geode::uuid group_id;
         geode::UniformPointConfigurationSampler< 2 > sampler( box, group_id );
 
         geode::GibbsEnergy< geode::Point2D > poisson_energy;
@@ -100,6 +103,10 @@ namespace
             std::make_unique< geode::IntensityTerm< geode::Point2D > >(
                 poisson_density, group_id ) );
 
+        std::unordered_map< geode::uuid, geode::index_t > targets = {
+            { group_id,
+                static_cast< geode::index_t >( poisson_density * area ) }
+        };
         // Kernel with only birth/death
         auto kernel1 = geode::create_birth_death_kernel< geode::Point2D >(
             sampler, birth_ratio );
@@ -115,13 +122,11 @@ namespace
 
         geode::Logger::info(
             "[MH test] Testing kernel with birth/death only..." );
-        test_convergence_one_groupe(
-            mh1, poisson_density * area, engine, poisson_energy );
+        test_convergence_one_groupe( mh1, targets, engine, poisson_energy );
 
         geode::Logger::info(
             "[MH test] Testing kernel with birth/death/change..." );
-        test_convergence_one_groupe(
-            mh2, poisson_density * area, engine, poisson_energy );
+        test_convergence_one_groupe( mh2, targets, engine, poisson_energy );
     }
 } // namespace
 

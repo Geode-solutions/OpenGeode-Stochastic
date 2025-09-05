@@ -72,15 +72,16 @@ namespace
     }
 
     void test_steps( const geode::MetropolisHastings< geode::Point2D >& mh,
-        const geode::GroupId& group_id )
+        const geode::uuid& group_id )
     {
         geode::RandomEngine engine;
 
-        std::unordered_map< geode::GroupId, geode::index_t > targets = {
+        std::unordered_map< geode::uuid, geode::index_t > targets = {
             { group_id, 20 }
         };
         geode::Configuration< geode::Point2D > state =
             mh.initialise_configuration_with_sampling( engine, targets );
+
         geode::index_t stat_sum{ 0 };
         constexpr geode::index_t N{ 100000 };
 
@@ -128,8 +129,7 @@ namespace
                 }
             }
             // should be change... only pone group here
-            geode::GroupId groupe_id{ 0 };
-            stat_sum += state.nb_objects_in_group( groupe_id );
+            stat_sum += state.nb_objects_in_group( group_id );
 
             if( count % 1000 == 0 )
             {
@@ -165,7 +165,7 @@ int main()
         box.add_point( min_point );
         box.add_point( max_point );
 
-        geode::GroupId group_id{ 0 };
+        geode::uuid group_id;
         geode::UniformPointConfigurationSampler< 2 > sampler( box, group_id );
         double birth_prob = 0.3;
         double death_prob = 0.1;

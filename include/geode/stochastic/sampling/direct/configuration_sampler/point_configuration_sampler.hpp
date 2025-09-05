@@ -37,7 +37,7 @@ namespace geode
     {
     public:
         UniformPointConfigurationSampler(
-            const BoundingBox< dimension >& box, GroupId group_id )
+            const BoundingBox< dimension >& box, uuid group_id )
             : ConfigurationSampler< Point< dimension > >{ group_id },
               box_( box )
         {
@@ -48,14 +48,14 @@ namespace geode
             }
         }
 
-        std::pair< Point< dimension >, GroupId > sample(
+        std::pair< Point< dimension >, uuid > sample(
             RandomEngine& engine ) const override
         {
             return { PointUniformSampler::sample< dimension >( engine, box_ ),
                 this->group_id_ };
         }
 
-        std::pair< Point< dimension >, GroupId > change(
+        std::pair< Point< dimension >, uuid > change(
             const Point< dimension >& obj, RandomEngine& engine ) const override
         {
             double ratio = 0.1;

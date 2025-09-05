@@ -32,7 +32,7 @@ namespace geode
     class IntensityTerm : public EnergyTerm< Object >
     {
     public:
-        explicit IntensityTerm( double lambda, GroupId group_id )
+        explicit IntensityTerm( double lambda, uuid group_id )
             : EnergyTerm< Object >( lambda ), group_id_{ group_id }
         {
         }
@@ -45,7 +45,7 @@ namespace geode
 
         double delta_log_add( const Configuration< Object >& state,
             const Object& sample,
-            const GroupId target_group_id ) const final
+            const uuid target_group_id ) const final
         {
             return target_group_id == group_id_
                        ? this->neg_log_parameter_.scale( 1. )
@@ -79,6 +79,6 @@ namespace geode
         }
 
     private:
-        GroupId group_id_;
+        uuid group_id_;
     };
 } // namespace geode

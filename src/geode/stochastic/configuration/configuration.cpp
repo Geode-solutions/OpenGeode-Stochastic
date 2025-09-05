@@ -9,11 +9,11 @@ namespace geode
 {
     template < typename Object >
     const std::vector< Object >& Configuration< Object >::get_group(
-        const GroupId& group_id ) const
+        const uuid& group_id ) const
     {
         auto it = groups_.find( group_id );
         OPENGEODE_EXCEPTION( it != groups_.end(), "[Configuration] - group (",
-            group_id.value, ") is not defined." );
+            group_id.string(), ") is not defined." );
         return it->second;
     }
 
@@ -50,7 +50,7 @@ namespace geode
 
     template < typename Object >
     index_t Configuration< Object >::nb_objects_in_group(
-        const GroupId& group_id ) const
+        const uuid& group_id ) const
     {
         return get_group( group_id ).size();
     }
@@ -68,17 +68,17 @@ namespace geode
     }
 
     template < typename Object >
-    void Configuration< Object >::add_group( const GroupId& group_id )
+    void Configuration< Object >::add_group( const uuid& group_id )
     {
         auto [it, inserted] =
             groups_.emplace( group_id, std::vector< Object >{} );
         OPENGEODE_EXCEPTION( inserted, "[Configuration]- group (",
-            group_id.value, ") already exists." );
+            group_id.string(), ") already exists." );
     }
 
     template < typename Object >
     ObjectId Configuration< Object >::add_object(
-        Object&& object, const GroupId& group_id )
+        Object&& object, const uuid& group_id )
     {
         auto& group = get_group( group_id );
         ObjectId new_object_id{ static_cast< index_t >( group.size() ),
@@ -148,7 +148,7 @@ namespace geode
 
     template < typename Object >
     std::vector< Object >& Configuration< Object >::get_group(
-        const GroupId& group_id )
+        const uuid& group_id )
     {
         return const_cast< std::vector< Object >& >(
             static_cast< const Configuration* >( this )->get_group(

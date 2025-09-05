@@ -87,7 +87,7 @@ namespace geode
 
         virtual double delta_log_add( const Configuration< Object >& state,
             const Object& object,
-            const GroupId group_id ) const = 0;
+            const uuid group_id ) const = 0;
 
         virtual double delta_log_remove( const Configuration< Object >& state,
             ObjectId object_id ) const = 0;

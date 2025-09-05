@@ -62,7 +62,7 @@ namespace geode
 
         Configuration< Object > initialise_configuration_with_sampling(
             RandomEngine& engine,
-            const std::unordered_map< GroupId, index_t >& group_targets ) const
+            const std::unordered_map< uuid, index_t >& group_targets ) const
         {
             Configuration< Object > config;
             for( const auto& [gid, target] : group_targets )
@@ -87,23 +87,24 @@ namespace geode
                     }
                     OPENGEODE_EXCEPTION( added,
                         "[MH] Birth move need to be more probable for group: ",
-                        gid.value );
+                        gid.string() );
                 }
             }
             return config;
         }
 
-        Configuration< Object > initialise_configuration_with_burnin(
-            RandomEngine& engine, index_t number_of_steps ) const
-        {
-            Configuration< Object > configuration;
-            for( const auto count : geode::Range{ number_of_steps } )
-            {
-                geode_unused( count );
-                step( configuration, engine );
-            }
-            return configuration;
-        }
+        //       Configuration< Object > initialise_configuration_with_burnin(
+        //           RandomEngine& engine, index_t number_of_steps ) const
+        //       {
+        //           Configuration< Object > configuration;
+        //
+        //           for( const auto count : geode::Range{ number_of_steps } )
+        //           {
+        //               geode_unused( count );
+        //               step( configuration, engine );
+        //           }
+        //           return configuration;
+        //       }
 
         StepResult< Object > step(
             Configuration< Object >& state, RandomEngine& engine ) const

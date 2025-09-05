@@ -78,7 +78,7 @@ namespace geode
 
         double delta_log_energy_add( const Configuration< Object > state,
             const Object& sample,
-            GroupId group_id ) const
+            uuid group_id ) const
         {
             double log_energy{ 0.0 };
             for( const auto& term : energy_terms_ )

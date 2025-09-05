@@ -39,7 +39,7 @@ namespace geode
         };
 
         Type type{ Type::Invalid };
-        std::optional< std::pair< Object, GroupId > >
+        std::optional< std::pair< Object, uuid > >
             new_object; // for birth/change
         std::optional< ObjectId > old_object_id; // for death/change
         double log_forward_prob{ 0. };

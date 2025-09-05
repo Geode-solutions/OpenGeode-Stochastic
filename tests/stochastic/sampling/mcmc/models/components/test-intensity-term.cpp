@@ -26,7 +26,7 @@
 #include <geode/stochastic/configuration/configuration.hpp>
 
 geode::Configuration< geode::Point2D > create_configuration(
-    geode::GroupId group_id )
+    const geode::uuid &group_id )
 {
     geode::Point2D p1{ { 0., 0. } };
     geode::Point2D p2{ { 1., 1. } };
@@ -41,7 +41,7 @@ geode::Configuration< geode::Point2D > create_configuration(
 
 void test_normal_positive_intensity( double lambda,
     const geode::Configuration< geode::Point2D > &pattern,
-    const geode::GroupId &group_id )
+    const geode::uuid &group_id )
 {
     geode::IntensityTerm< geode::Point2D > term( lambda, group_id );
     auto neg_log_lambda = -std::log( lambda );
@@ -69,7 +69,7 @@ void test_normal_positive_intensity( double lambda,
 
 void test_normal_zero_intensity( double lambda,
     const geode::Configuration< geode::Point2D > &pattern,
-    const geode::GroupId &group_id )
+    const geode::uuid &group_id )
 {
     geode::IntensityTerm< geode::Point2D > term( lambda, group_id );
     double total = term.total_log( pattern );
@@ -99,8 +99,8 @@ int main()
     try
     {
         geode::StochasticLibrary::initialize();
+        geode::uuid group_id;
 
-        geode::GroupId group_id{ 0 };
         auto pattern = create_configuration( group_id );
 
         test_normal_positive_intensity( 0.5, pattern, group_id );
@@ -120,7 +120,7 @@ int main()
     try
     {
         geode::StochasticLibrary::initialize();
-        geode::GroupId group_id{ 0 };
+        geode::uuid group_id;
         geode::IntensityTerm< geode::Point2D > term(
             -geode::GLOBAL_EPSILON, group_id );
         geode::Logger::info( "TEST FAILED" );

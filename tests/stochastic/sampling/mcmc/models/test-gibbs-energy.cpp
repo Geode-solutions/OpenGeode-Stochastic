@@ -33,7 +33,7 @@
 namespace
 {
     geode::Configuration< geode::Point2D > create_configuration(
-        geode::GroupId group_id )
+        const geode::uuid& group_id )
     {
         geode::Point2D p1{ { 0., 0. } };
         geode::Point2D p2{ { 1., 1. } };
@@ -46,7 +46,7 @@ namespace
     }
 } // namespace
 
-void test_gibbs_energy( geode::GroupId group_id )
+void test_gibbs_energy( const geode::uuid& group_id )
 {
     geode::GibbsEnergy< geode::Point2D > gibbs_energy;
 
@@ -116,7 +116,7 @@ int main()
     try
     {
         geode::StochasticLibrary::initialize();
-        geode::GroupId group_id{ 0 };
+        geode::uuid group_id;
 
         // test_gibbs_energy( group_id );
     }

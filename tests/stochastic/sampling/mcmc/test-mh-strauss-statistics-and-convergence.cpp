@@ -45,7 +45,7 @@ namespace
 
         double area = domain_length * domain_length;
 
-        geode::GroupId group_id{ 0 };
+        geode::uuid group_id;
         geode::UniformPointConfigurationSampler< 2 > sampler( box, group_id );
 
         geode::GibbsEnergy< geode::Point2D > energy;
@@ -74,7 +74,7 @@ namespace
             energy, std::move( kernel1 ) );
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test@" );
-        std::unordered_map< geode::GroupId, geode::index_t > targets = {
+        std::unordered_map< geode::uuid, geode::index_t > targets = {
             { group_id, 0 }
         };
         geode::Configuration< geode::Point2D > state =

@@ -34,7 +34,7 @@
 namespace
 {
     geode::Configuration< geode::Point2D > create_configuration(
-        geode::GroupId group_id )
+        const geode::uuid& group_id )
     {
         geode::Point2D p1{ { 0., 0. } };
         geode::Point2D p2{ { 1., 1. } };
@@ -49,7 +49,7 @@ namespace
 
     void test_proposal_kernel()
     {
-        geode::GroupId group_id{ 0 };
+        geode::uuid group_id;
         auto config = create_configuration( group_id );
 
         geode::Point2D min_point{ { 0., 0. } };

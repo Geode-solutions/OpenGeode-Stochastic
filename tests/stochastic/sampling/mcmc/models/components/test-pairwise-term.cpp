@@ -28,7 +28,7 @@
 #include <geode/stochastic/configuration/configuration.hpp>
 
 geode::Configuration< geode::Point2D > create_pairwise_configuration(
-    geode::GroupId group_id )
+    const geode::uuid& group_id )
 {
     geode::Point2D p1{ { 0., 0. } };
     geode::Point2D p2{ { 1., 1. } };
@@ -43,7 +43,7 @@ geode::Configuration< geode::Point2D > create_pairwise_configuration(
 
 void test_normal_positive_pairwise( double gamma,
     const geode::Configuration< geode::Point2D >& pattern,
-    geode::GroupId group_id )
+    const geode::uuid& group_id )
 {
     auto interaction_fn = []( const geode::Point2D& a,
                               const geode::Point2D& b ) {
@@ -86,7 +86,7 @@ void test_normal_positive_pairwise( double gamma,
 
 void test_zero_pairwise( double gamma,
     const geode::Configuration< geode::Point2D >& pattern,
-    geode::GroupId group_id )
+    const geode::uuid& group_id )
 {
     auto interaction_fn = []( const geode::Point2D& a,
                               const geode::Point2D& b ) {
@@ -124,7 +124,7 @@ int main()
     {
         geode::StochasticLibrary::initialize();
 
-        geode::GroupId group_id{ 0 };
+        geode::uuid group_id;
         auto pattern = create_pairwise_configuration( group_id );
 
         test_normal_positive_pairwise( 0.5, pattern, group_id );

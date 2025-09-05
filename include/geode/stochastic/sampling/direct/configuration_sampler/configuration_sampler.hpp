@@ -32,10 +32,10 @@ namespace geode
     class ConfigurationSampler
     {
     public:
-        ConfigurationSampler( GroupId group_id ) : group_id_{ group_id } {}
+        ConfigurationSampler( uuid group_id ) : group_id_{ group_id } {}
         virtual ~ConfigurationSampler() = default;
 
-        virtual std::pair< Object, GroupId > sample(
+        virtual std::pair< Object, uuid > sample(
             RandomEngine& engine ) const = 0;
 
         std::optional< ObjectId > sample_id(
@@ -54,12 +54,12 @@ namespace geode
             return result;
         }
 
-        virtual std::pair< Object, GroupId > change(
+        virtual std::pair< Object, uuid > change(
             const Object& object, RandomEngine& engine ) const = 0;
 
         virtual double log_pdf( const Object& obj ) const = 0;
 
     protected:
-        GroupId group_id_;
+        uuid group_id_;
     };
 } // namespace geode

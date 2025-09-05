@@ -47,7 +47,7 @@ namespace geode
 
         double delta_log_add( const Configuration< Object >& state,
             const Object& new_object,
-            GroupId group_id ) const final
+            uuid group_id ) const final
         {
             geode_unused( group_id );
             const auto neighbors = state.neighbors( new_object, 1.1 );
