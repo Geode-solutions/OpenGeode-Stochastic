@@ -60,51 +60,23 @@ namespace geode
                 proposal_kernel_ != nullptr, "[MH] null proposal kernel" );
         }
 
-        Configuration< Object > initialise_configuration_with_sampling(
+        Configuration< Object > initialize_configuration_with_sampling(
             RandomEngine& engine,
             const std::unordered_map< uuid, index_t >& group_targets ) const
         {
             Configuration< Object > config;
-            for( const auto& [gid, target] : group_targets )
+            for( const auto& [group_id, target] : group_targets )
             {
-                config.add_group( gid );
-                while( config.nb_objects_in_group( gid ) < target )
+                config.add_group( group_id );
+                while( config.nb_objects_in_group( group_id ) < target )
                 {
-                    bool added = false;
-                    for( int attempt = 0; attempt < 100 && !added; ++attempt )
-                    {
-                        Proposal< Object > proposal =
-                            proposal_kernel_->propose( config, engine );
-
-                        if( proposal.type == Proposal< Object >::Type::Birth
-                            && proposal.new_object->second == gid )
-                        {
-                            config.add_object(
-                                std::move( proposal.new_object->first ),
-                                proposal.new_object->second );
-                            added = true;
-                        }
-                    }
-                    OPENGEODE_EXCEPTION( added,
+                    OPENGEODE_EXCEPTION( try_birth( config, group_id, engine ),
                         "[MH] Birth move need to be more probable for group: ",
-                        gid.string() );
+                        group_id.string() );
                 }
             }
             return config;
         }
-
-        //       Configuration< Object > initialise_configuration_with_burnin(
-        //           RandomEngine& engine, index_t number_of_steps ) const
-        //       {
-        //           Configuration< Object > configuration;
-        //
-        //           for( const auto count : geode::Range{ number_of_steps } )
-        //           {
-        //               geode_unused( count );
-        //               step( configuration, engine );
-        //           }
-        //           return configuration;
-        //       }
 
         StepResult< Object > step(
             Configuration< Object >& state, RandomEngine& engine ) const
@@ -199,6 +171,26 @@ namespace geode
         }
 
     private:
+        bool try_birth( Configuration< Object >& config,
+            const uuid& group_id,
+            RandomEngine& engine ) const
+        {
+            // pbirth_should be > 0.01
+            for( const auto attempt : geode::Range{ 100 } )
+            {
+                geode_unused( attempt );
+                auto proposal = proposal_kernel_->propose( config, engine );
+                if( proposal.type == Proposal< Object >::Type::Birth
+                    && proposal.new_object->second == group_id )
+                {
+                    config.add_object( std::move( proposal.new_object->first ),
+                        proposal.new_object->second );
+                    return true;
+                }
+            }
+            return false;
+        }
+
         const double compute_log_accept(
             const double deltaU, const Proposal< Object >& proposal ) const
         {

@@ -63,13 +63,13 @@ namespace geode
         double delta_log_remove( const Configuration< Object >& state,
             ObjectId object_id ) const final
         {
-            const auto& to_removed = state.get_object( object_id );
+            const auto& to_remove = state.get_object( object_id );
             const auto neighbors = state.neighbors( object_id, 1.1 );
             double interaction_weight = 0.0;
             for( const auto neigh_obj_id : neighbors )
             {
                 interaction_weight += static_cast< double >( interaction_func_(
-                    to_removed, state.get_object( neigh_obj_id ) ) );
+                    to_remove, state.get_object( neigh_obj_id ) ) );
             }
             return this->neg_log_parameter_.scale( -interaction_weight );
         }
@@ -91,14 +91,14 @@ namespace geode
                         state.get_object( neigh_obj_id ), new_object ) );
             }
 
-            const auto& to_removed = state.get_object( old_object_id );
+            const auto& to_remove = state.get_object( old_object_id );
             const auto old_neighbors = state.neighbors( old_object_id, 1.1 );
             double interaction_weight_remove = 0.0;
             for( const auto neigh_obj_id : old_neighbors )
             {
                 interaction_weight_remove +=
                     static_cast< double >( interaction_func_(
-                        to_removed, state.get_object( neigh_obj_id ) ) );
+                        to_remove, state.get_object( neigh_obj_id ) ) );
             }
 
             return this->neg_log_parameter_.scale(

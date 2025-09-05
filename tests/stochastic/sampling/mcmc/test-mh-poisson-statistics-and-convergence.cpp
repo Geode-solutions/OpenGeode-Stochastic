@@ -40,7 +40,7 @@ namespace
         const geode::GibbsEnergy< geode::Point2D >& energy )
     {
         geode::Configuration< geode::Point2D > state =
-            mh.initialise_configuration_with_sampling( engine, group_targets );
+            mh.initialize_configuration_with_sampling( engine, group_targets );
 
         constexpr geode::index_t N{ 1000000 };
 

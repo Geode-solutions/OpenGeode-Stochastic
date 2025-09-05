@@ -80,7 +80,7 @@ namespace
             { group_id, 20 }
         };
         geode::Configuration< geode::Point2D > state =
-            mh.initialise_configuration_with_sampling( engine, targets );
+            mh.initialize_configuration_with_sampling( engine, targets );
 
         geode::index_t stat_sum{ 0 };
         constexpr geode::index_t N{ 100000 };
