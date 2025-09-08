@@ -32,14 +32,13 @@
 namespace geode
 {
     template < index_t dimension >
-    class UniformPointConfigurationSampler
-        : public ConfigurationSampler< Point< dimension > >
+    class UniformPointObjectSetSampler
+        : public ObjectSetSampler< Point< dimension > >
     {
     public:
-        UniformPointConfigurationSampler(
-            const BoundingBox< dimension >& box, uuid group_id )
-            : ConfigurationSampler< Point< dimension > >{ group_id },
-              box_( box )
+        UniformPointObjectSetSampler(
+            const BoundingBox< dimension >& box, uuid subset_id )
+            : ObjectSetSampler< Point< dimension > >{ subset_id }, box_( box )
         {
             auto volume = box_.n_volume();
             if( volume != 0. )
@@ -52,7 +51,7 @@ namespace geode
             RandomEngine& engine ) const override
         {
             return { PointUniformSampler::sample< dimension >( engine, box_ ),
-                this->group_id_ };
+                this->subset_id_ };
         }
 
         std::pair< Point< dimension >, uuid > change(
@@ -69,7 +68,7 @@ namespace geode
                 new_point =
                     PointUniformSampler::sample< dimension >( engine, ball );
             }
-            return { new_point, this->group_id_ };
+            return { new_point, this->subset_id_ };
         }
 
         double log_pdf( const Point< dimension >& obj ) const override

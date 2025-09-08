@@ -37,8 +37,8 @@ namespace geode
         {
         }
 
-        template < typename Object >
-        double operator()( const Object& object1, const Object& object2 ) const
+        template < typename Type >
+        double operator()( const Type& object1, const Type& object2 ) const
         {
             auto dist = geode::point_point_distance(
                 object_barycenter( object1 ), object_barycenter( object2 ) );

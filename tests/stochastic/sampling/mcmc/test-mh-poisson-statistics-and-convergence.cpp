@@ -33,13 +33,13 @@ namespace
     // ------------------------------------------------------------
     // Convergence test: mean number of points ≈ λ × area
     // ------------------------------------------------------------
-    void test_convergence_one_groupe(
+    void test_convergence_one_subsete(
         geode::MetropolisHastings< geode::Point2D >& mh,
         const std::unordered_map< geode::uuid, geode::index_t >& group_targets,
         geode::RandomEngine& engine,
         const geode::GibbsEnergy< geode::Point2D >& energy )
     {
-        geode::Configuration< geode::Point2D > state =
+        geode::ObjectSet< geode::Point2D > state =
             mh.initialize_configuration_with_sampling( engine, group_targets );
 
         constexpr geode::index_t N{ 1000000 };
@@ -95,16 +95,16 @@ namespace
         box.add_point( max_point );
 
         double area = domain_length * domain_length;
-        geode::uuid group_id;
-        geode::UniformPointConfigurationSampler< 2 > sampler( box, group_id );
+        geode::uuid subset_id;
+        geode::UniformPointObjectSetSampler< 2 > sampler( box, subset_id );
 
         geode::GibbsEnergy< geode::Point2D > poisson_energy;
         poisson_energy.add_energy_term(
             std::make_unique< geode::IntensityTerm< geode::Point2D > >(
-                poisson_density, group_id ) );
+                poisson_density, subset_id ) );
 
         std::unordered_map< geode::uuid, geode::index_t > targets = {
-            { group_id,
+            { subset_id,
                 static_cast< geode::index_t >( poisson_density * area ) }
         };
         // Kernel with only birth/death
@@ -122,11 +122,11 @@ namespace
 
         geode::Logger::info(
             "[MH test] Testing kernel with birth/death only..." );
-        test_convergence_one_groupe( mh1, targets, engine, poisson_energy );
+        test_convergence_one_subsete( mh1, targets, engine, poisson_energy );
 
         geode::Logger::info(
             "[MH test] Testing kernel with birth/death/change..." );
-        test_convergence_one_groupe( mh2, targets, engine, poisson_energy );
+        test_convergence_one_subsete( mh2, targets, engine, poisson_energy );
     }
 } // namespace
 

@@ -66,7 +66,7 @@ namespace
 
 namespace geode
 {
-    template < typename Object >
+    template < typename Type >
     class EnergyTerm
     {
     public:
@@ -82,22 +82,20 @@ namespace geode
             return neg_log_parameter_.param();
         }
 
-        virtual double total_log(
-            const Configuration< Object >& state ) const = 0;
+        virtual double total_log( const ObjectSet< Type >& state ) const = 0;
 
-        virtual double delta_log_add( const Configuration< Object >& state,
-            const Object& object,
-            const uuid group_id ) const = 0;
+        virtual double delta_log_add( const ObjectSet< Type >& state,
+            const Type& object,
+            const uuid subset_id ) const = 0;
 
-        virtual double delta_log_remove( const Configuration< Object >& state,
-            ObjectId object_id ) const = 0;
+        virtual double delta_log_remove(
+            const ObjectSet< Type >& state, ObjectId object_id ) const = 0;
 
-        virtual double delta_log_change( const Configuration< Object >& state,
+        virtual double delta_log_change( const ObjectSet< Type >& state,
             ObjectId old_object_id,
-            const Object& new_object ) const = 0;
+            const Type& new_object ) const = 0;
 
-        virtual double statistic(
-            const Configuration< Object >& state ) const = 0;
+        virtual double statistic( const ObjectSet< Type >& state ) const = 0;
 
     protected:
         NegLogParam neg_log_parameter_;

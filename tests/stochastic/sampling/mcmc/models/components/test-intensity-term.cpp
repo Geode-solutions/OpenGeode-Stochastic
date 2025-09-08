@@ -25,25 +25,25 @@
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/configuration/configuration.hpp>
 
-geode::Configuration< geode::Point2D > create_configuration(
-    const geode::uuid &group_id )
+geode::ObjectSet< geode::Point2D > create_configuration(
+    const geode::uuid &subset_id )
 {
     geode::Point2D p1{ { 0., 0. } };
     geode::Point2D p2{ { 1., 1. } };
 
-    geode::Configuration< geode::Point2D > pattern;
-    pattern.add_group( group_id );
-    pattern.add_object( std::move( p1 ), group_id );
-    pattern.add_object( std::move( p2 ), group_id );
+    geode::ObjectSet< geode::Point2D > pattern;
+    pattern.add_subset( subset_id );
+    pattern.add_object( std::move( p1 ), subset_id );
+    pattern.add_object( std::move( p2 ), subset_id );
 
     return pattern;
 }
 
 void test_normal_positive_intensity( double lambda,
-    const geode::Configuration< geode::Point2D > &pattern,
-    const geode::uuid &group_id )
+    const geode::ObjectSet< geode::Point2D > &pattern,
+    const geode::uuid &subset_id )
 {
-    geode::IntensityTerm< geode::Point2D > term( lambda, group_id );
+    geode::IntensityTerm< geode::Point2D > term( lambda, subset_id );
     auto neg_log_lambda = -std::log( lambda );
 
     double total = term.total_log( pattern );
@@ -52,11 +52,11 @@ void test_normal_positive_intensity( double lambda,
 
     geode::Point2D p3{ { 2., 2. } };
 
-    double delta_add = term.delta_log_add( pattern, p3, group_id );
+    double delta_add = term.delta_log_add( pattern, p3, subset_id );
     OPENGEODE_EXCEPTION( delta_add == neg_log_lambda * 1.,
         "[test intensity]- delta_log_add wrong value." );
 
-    geode::ObjectId obj_id{ 0, group_id };
+    geode::ObjectId obj_id{ 0, subset_id };
     double delta_remove = term.delta_log_remove( pattern, obj_id );
 
     OPENGEODE_EXCEPTION( delta_remove == neg_log_lambda * -1.,
@@ -68,10 +68,10 @@ void test_normal_positive_intensity( double lambda,
 }
 
 void test_normal_zero_intensity( double lambda,
-    const geode::Configuration< geode::Point2D > &pattern,
-    const geode::uuid &group_id )
+    const geode::ObjectSet< geode::Point2D > &pattern,
+    const geode::uuid &subset_id )
 {
-    geode::IntensityTerm< geode::Point2D > term( lambda, group_id );
+    geode::IntensityTerm< geode::Point2D > term( lambda, subset_id );
     double total = term.total_log( pattern );
 
     OPENGEODE_EXCEPTION(
@@ -79,11 +79,11 @@ void test_normal_zero_intensity( double lambda,
 
     geode::Point2D p3{ { 2., 2. } };
 
-    double delta_add = term.delta_log_add( pattern, p3, group_id );
+    double delta_add = term.delta_log_add( pattern, p3, subset_id );
     OPENGEODE_EXCEPTION( std::isinf( delta_add ),
         "[test zero intensity]- delta_log_add wrong value." );
 
-    geode::ObjectId obj_id{ 0, group_id };
+    geode::ObjectId obj_id{ 0, subset_id };
 
     double delta_remove = term.delta_log_remove( pattern, obj_id );
     OPENGEODE_EXCEPTION( delta_remove == 0.,
@@ -99,18 +99,18 @@ int main()
     try
     {
         geode::StochasticLibrary::initialize();
-        geode::uuid group_id;
+        geode::uuid subset_id;
 
-        auto pattern = create_configuration( group_id );
+        auto pattern = create_configuration( subset_id );
 
-        test_normal_positive_intensity( 0.5, pattern, group_id );
+        test_normal_positive_intensity( 0.5, pattern, subset_id );
         test_normal_positive_intensity(
-            geode::GLOBAL_EPSILON, pattern, group_id );
-        test_normal_positive_intensity( 100.0021165, pattern, group_id );
+            geode::GLOBAL_EPSILON, pattern, subset_id );
+        test_normal_positive_intensity( 100.0021165, pattern, subset_id );
 
-        test_normal_zero_intensity( 0., pattern, group_id );
+        test_normal_zero_intensity( 0., pattern, subset_id );
         test_normal_zero_intensity(
-            0.9999 * geode::GLOBAL_EPSILON, pattern, group_id );
+            0.9999 * geode::GLOBAL_EPSILON, pattern, subset_id );
     }
     catch( ... )
     {
@@ -120,9 +120,9 @@ int main()
     try
     {
         geode::StochasticLibrary::initialize();
-        geode::uuid group_id;
+        geode::uuid subset_id;
         geode::IntensityTerm< geode::Point2D > term(
-            -geode::GLOBAL_EPSILON, group_id );
+            -geode::GLOBAL_EPSILON, subset_id );
         geode::Logger::info( "TEST FAILED" );
         return 1;
     }

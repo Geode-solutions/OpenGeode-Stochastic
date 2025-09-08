@@ -32,28 +32,28 @@
 
 namespace
 {
-    geode::Configuration< geode::Point2D > create_configuration(
-        const geode::uuid& group_id )
+    geode::ObjectSet< geode::Point2D > create_configuration(
+        const geode::uuid& subset_id )
     {
         geode::Point2D p1{ { 0., 0. } };
         geode::Point2D p2{ { 1., 1. } };
 
-        geode::Configuration< geode::Point2D > pattern;
-        pattern.add_object( std::move( p1 ), group_id );
-        pattern.add_object( std::move( p2 ), group_id );
+        geode::ObjectSet< geode::Point2D > pattern;
+        pattern.add_object( std::move( p1 ), subset_id );
+        pattern.add_object( std::move( p2 ), subset_id );
 
         return pattern;
     }
 } // namespace
 
-void test_gibbs_energy( const geode::uuid& group_id )
+void test_gibbs_energy( const geode::uuid& subset_id )
 {
     geode::GibbsEnergy< geode::Point2D > gibbs_energy;
 
     // Add intensity term
     gibbs_energy.add_energy_term(
         std::make_unique< geode::IntensityTerm< geode::Point2D > >(
-            0.5, group_id ) );
+            0.5, subset_id ) );
 
     // Add pairwise term with trivial interaction: always counts 1 for each pair
     auto interaction_fn = []( const geode::Point2D& a,
@@ -69,7 +69,7 @@ void test_gibbs_energy( const geode::uuid& group_id )
     OPENGEODE_EXCEPTION( gibbs_energy.number_of_energy_terms() == 2,
         "[test gibbs] Wrong number of components after adding terms." );
 
-    auto pattern = create_configuration( group_id );
+    auto pattern = create_configuration( subset_id );
 
     // Check total log-energy is finite
     double total_energy = gibbs_energy.total_log_energy( pattern );
@@ -79,11 +79,11 @@ void test_gibbs_energy( const geode::uuid& group_id )
     // Add new point to test delta_add
     geode::Point2D p3{ { 2., 2. } };
     double delta_add =
-        gibbs_energy.delta_log_energy_add( pattern, p3, group_id );
+        gibbs_energy.delta_log_energy_add( pattern, p3, subset_id );
     OPENGEODE_EXCEPTION( std::isfinite( delta_add ),
         "[test gibbs] Delta add should be finite." );
 
-    geode::ObjectId obj_id{ 0, group_id };
+    geode::ObjectId obj_id{ 0, subset_id };
     // Remove point test
     double delta_remove =
         gibbs_energy.delta_log_energy_remove( pattern, obj_id );
@@ -116,9 +116,9 @@ int main()
     try
     {
         geode::StochasticLibrary::initialize();
-        geode::uuid group_id;
+        geode::uuid subset_id;
 
-        // test_gibbs_energy( group_id );
+        // test_gibbs_energy( subset_id );
     }
     catch( ... )
     {

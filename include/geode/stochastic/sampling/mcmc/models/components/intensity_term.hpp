@@ -28,57 +28,57 @@
 
 namespace geode
 {
-    template < typename Object >
-    class IntensityTerm : public EnergyTerm< Object >
+    template < typename Type >
+    class IntensityTerm : public EnergyTerm< Type >
     {
     public:
-        explicit IntensityTerm( double lambda, uuid group_id )
-            : EnergyTerm< Object >( lambda ), group_id_{ group_id }
+        explicit IntensityTerm( double lambda, uuid subset_id )
+            : EnergyTerm< Type >( lambda ), subset_id_{ subset_id }
         {
         }
 
-        double total_log( const Configuration< Object >& state ) const final
+        double total_log( const ObjectSet< Type >& state ) const final
         {
             const auto n = static_cast< double >( number_of_objects( state ) );
             return this->neg_log_parameter_.scale( n );
         }
 
-        double delta_log_add( const Configuration< Object >& state,
-            const Object& sample,
-            const uuid target_group_id ) const final
+        double delta_log_add( const ObjectSet< Type >& state,
+            const Type& sample,
+            const uuid target_subset_id ) const final
         {
-            return target_group_id == group_id_
+            return target_subset_id == subset_id_
                        ? this->neg_log_parameter_.scale( 1. )
                        : 0.;
         }
 
-        double delta_log_remove( const Configuration< Object >& state,
-            ObjectId object_id ) const final
+        double delta_log_remove(
+            const ObjectSet< Type >& state, ObjectId object_id ) const final
         {
-            return object_id.group == group_id_
+            return object_id.subset == subset_id_
                        ? this->neg_log_parameter_.scale( -1. )
                        : 0.;
         }
 
-        double delta_log_change( const Configuration< Object >& state,
+        double delta_log_change( const ObjectSet< Type >& state,
             ObjectId old_object_id,
-            const Object& new_sample ) const final
+            const Type& new_sample ) const final
         {
             return 0.0;
         }
 
-        double statistic( const Configuration< Object >& state ) const final
+        double statistic( const ObjectSet< Type >& state ) const final
         {
             return static_cast< double >( number_of_objects( state ) );
         }
 
     private:
-        index_t number_of_objects( const Configuration< Object >& state ) const
+        index_t number_of_objects( const ObjectSet< Type >& state ) const
         {
-            return state.nb_objects_in_group( group_id_ );
+            return state.nb_objects_in_subset( subset_id_ );
         }
 
     private:
-        uuid group_id_;
+        uuid subset_id_;
     };
 } // namespace geode

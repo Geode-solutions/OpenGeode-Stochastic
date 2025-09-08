@@ -72,14 +72,14 @@ namespace
     }
 
     void test_steps( const geode::MetropolisHastings< geode::Point2D >& mh,
-        const geode::uuid& group_id )
+        const geode::uuid& subset_id )
     {
         geode::RandomEngine engine;
 
         std::unordered_map< geode::uuid, geode::index_t > targets = {
-            { group_id, 20 }
+            { subset_id, 20 }
         };
-        geode::Configuration< geode::Point2D > state =
+        geode::ObjectSet< geode::Point2D > state =
             mh.initialize_configuration_with_sampling( engine, targets );
 
         geode::index_t stat_sum{ 0 };
@@ -115,13 +115,13 @@ namespace
                 nb_accepted++;
                 switch( result.move_type )
                 {
-                    case geode::Proposal< geode::Point2D >::Type::Birth:
+                    case geode::Proposal< geode::Point2D >::Move::Birth:
                         accepted_birth++;
                         break;
-                    case geode::Proposal< geode::Point2D >::Type::Death:
+                    case geode::Proposal< geode::Point2D >::Move::Death:
                         accepted_death++;
                         break;
-                    case geode::Proposal< geode::Point2D >::Type::Change:
+                    case geode::Proposal< geode::Point2D >::Move::Change:
                         accepted_change++;
                         break;
                     default:
@@ -129,7 +129,7 @@ namespace
                 }
             }
             // should be change... only pone group here
-            stat_sum += state.nb_objects_in_group( group_id );
+            stat_sum += state.nb_objects_in_subset( subset_id );
 
             if( count % 1000 == 0 )
             {
@@ -165,8 +165,8 @@ int main()
         box.add_point( min_point );
         box.add_point( max_point );
 
-        geode::uuid group_id;
-        geode::UniformPointConfigurationSampler< 2 > sampler( box, group_id );
+        geode::uuid subset_id;
+        geode::UniformPointObjectSetSampler< 2 > sampler( box, subset_id );
         double birth_prob = 0.3;
         double death_prob = 0.1;
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
@@ -177,12 +177,12 @@ int main()
         // Add intensity term
         poisson_energy.add_energy_term(
             std::make_unique< geode::IntensityTerm< geode::Point2D > >(
-                0.5, group_id ) );
+                0.5, subset_id ) );
 
         geode::MetropolisHastings< geode::Point2D > mh(
             poisson_energy, std::move( kernel ) );
 
-        test_steps( mh, group_id );
+        test_steps( mh, subset_id );
         test_beta_setter( mh );
         test_acceptance_prob_helper();
 

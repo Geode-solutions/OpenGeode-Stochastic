@@ -33,10 +33,10 @@
 // #include <geode/stochastic/configuration/neighbors_object_ids.hpp>
 namespace geode
 {
-    struct GroupDescriptor
+    struct SubSetDescriptor
     {
         geode::uuid unique_id;
-        bool operator==( GroupDescriptor const& other ) const noexcept
+        bool operator==( SubSetDescriptor const& other ) const noexcept
         {
             {
                 return unique_id == other.unique_id;
@@ -46,32 +46,32 @@ namespace geode
 
     struct ObjectId
     {
-        index_t object;
-        uuid group;
+        index_t index;
+        uuid subset;
         bool operator==( const ObjectId& other ) const noexcept
         {
-            return object == other.object && group == other.group;
+            return index == other.index && subset == other.subset;
         }
     };
 } // namespace geode
 
 namespace geode
 {
-    template < typename Object >
-    class Configuration
+    template < typename Type >
+    class ObjectSet
     {
     public:
-        const std::vector< Object >& get_group( const uuid& group_id ) const;
-        const Object& get_object( const ObjectId& object_id ) const;
+        const std::vector< Type >& get_subset( const uuid& subset_id ) const;
+        const Type& get_object( const ObjectId& object_id ) const;
         std::vector< ObjectId > get_all_object() const;
 
-        index_t nb_groups() const;
-        index_t nb_objects_in_group( const uuid& group_id ) const;
+        index_t nb_subsets() const;
+        index_t nb_objects_in_subset( const uuid& subset_id ) const;
         index_t nb_objects() const;
 
-        void add_group( const uuid& group_id );
-        ObjectId add_object( Object&& object, const uuid& group_id );
-        void update_object( const ObjectId& object_id, Object&& object );
+        void add_subset( const uuid& subset_id );
+        ObjectId add_object( Type&& object, const uuid& subset_id );
+        void update_object( const ObjectId& object_id, Type&& object );
         void remove_object( const ObjectId& object_id );
 
         // Object neighbor search by ObjectId (always excludes self)
@@ -80,13 +80,13 @@ namespace geode
         // Object neighbor search by arbitrary object (return self if in the
         // configuration)
         std::vector< ObjectId > neighbors(
-            const Object& object, double searching_distance ) const;
+            const Type& object, double searching_distance ) const;
 
     private:
-        std::vector< Object >& get_group( const uuid& group_id );
+        std::vector< Type >& get_subset( const uuid& subset_id );
 
     private:
-        std::unordered_map< uuid, std::vector< Object > > groups_;
+        std::unordered_map< uuid, std::vector< Type > > groups_;
         // ObjectIndexRTree< 2 > tree_;
     };
 } // namespace geode

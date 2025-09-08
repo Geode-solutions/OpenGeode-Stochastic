@@ -36,23 +36,23 @@ namespace geode
         Undecided
     };
 
-    template < typename Object >
+    template < typename Type >
     struct StepResult
     {
         MHDecision decision{ MHDecision::Undecided };
-        typename Proposal< Object >::Type move_type{
-            Proposal< Object >::Type::Invalid
+        typename Proposal< Type >::Move move_type{
+            Proposal< Type >::Move::Invalid
         };
         double log_accept{ -std::numeric_limits< double >::infinity() };
         double delta_log_energy{ 0.0 };
     };
 
-    template < typename Object >
+    template < typename Type >
     class MetropolisHastings
     {
     public:
-        MetropolisHastings( GibbsEnergy< Object >& energy,
-            std::unique_ptr< ProposalKernel< Object > > proposal_kernel )
+        MetropolisHastings( GibbsEnergy< Type >& energy,
+            std::unique_ptr< ProposalKernel< Type > > proposal_kernel )
             : energy_( energy ),
               proposal_kernel_( std::move( proposal_kernel ) )
         {
@@ -60,46 +60,46 @@ namespace geode
                 proposal_kernel_ != nullptr, "[MH] null proposal kernel" );
         }
 
-        Configuration< Object > initialize_configuration_with_sampling(
+        ObjectSet< Type > initialize_configuration_with_sampling(
             RandomEngine& engine,
             const std::unordered_map< uuid, index_t >& group_targets ) const
         {
-            Configuration< Object > config;
-            for( const auto& [group_id, target] : group_targets )
+            ObjectSet< Type > config;
+            for( const auto& [subset_id, target] : group_targets )
             {
-                config.add_group( group_id );
-                while( config.nb_objects_in_group( group_id ) < target )
+                config.add_subset( subset_id );
+                while( config.nb_objects_in_subset( subset_id ) < target )
                 {
-                    OPENGEODE_EXCEPTION( try_birth( config, group_id, engine ),
+                    OPENGEODE_EXCEPTION( try_birth( config, subset_id, engine ),
                         "[MH] Birth move need to be more probable for group: ",
-                        group_id.string() );
+                        subset_id.string() );
                 }
             }
             return config;
         }
 
-        StepResult< Object > step(
-            Configuration< Object >& state, RandomEngine& engine ) const
+        StepResult< Type > step(
+            ObjectSet< Type >& state, RandomEngine& engine ) const
         {
-            Proposal< Object > proposal =
+            Proposal< Type > proposal =
                 proposal_kernel_->propose( state, engine );
 
-            if( proposal.type == Proposal< Object >::Type::Birth )
+            if( proposal.type == Proposal< Type >::Move::Birth )
             {
                 return birth_step( proposal, state, engine );
             }
-            if( proposal.type == Proposal< Object >::Type::Death )
+            if( proposal.type == Proposal< Type >::Move::Death )
             {
                 return death_step( proposal, state, engine );
             }
-            if( proposal.type == Proposal< Object >::Type::Change )
+            if( proposal.type == Proposal< Type >::Move::Change )
             {
                 return change_step( proposal, state, engine );
             }
-            return StepResult< Object >{};
+            return StepResult< Type >{};
         }
 
-        void walk( Configuration< Object >& state,
+        void walk( ObjectSet< Type >& state,
             RandomEngine& engine,
             index_t nb_steps ) const
         {
@@ -110,7 +110,7 @@ namespace geode
             }
         }
 
-        Configuration< Object > walk_copy( Configuration< Object > initial,
+        ObjectSet< Type > walk_copy( ObjectSet< Type > initial,
             RandomEngine& engine,
             index_t nb_steps ) const
         {
@@ -171,8 +171,8 @@ namespace geode
         }
 
     private:
-        bool try_birth( Configuration< Object >& config,
-            const uuid& group_id,
+        bool try_birth( ObjectSet< Type >& config,
+            const uuid& subset_id,
             RandomEngine& engine ) const
         {
             // pbirth_should be > 0.01
@@ -180,8 +180,8 @@ namespace geode
             {
                 geode_unused( attempt );
                 auto proposal = proposal_kernel_->propose( config, engine );
-                if( proposal.type == Proposal< Object >::Type::Birth
-                    && proposal.new_object->second == group_id )
+                if( proposal.type == Proposal< Type >::Move::Birth
+                    && proposal.new_object->second == subset_id )
                 {
                     config.add_object( std::move( proposal.new_object->first ),
                         proposal.new_object->second );
@@ -192,7 +192,7 @@ namespace geode
         }
 
         const double compute_log_accept(
-            const double deltaU, const Proposal< Object >& proposal ) const
+            const double deltaU, const Proposal< Type >& proposal ) const
         {
             OPENGEODE_ASSERT(
                 std::isfinite( proposal.log_forward_prob )
@@ -203,13 +203,13 @@ namespace geode
         }
 
         template < typename ApplyMove >
-        StepResult< Object > accept_or_reject( Proposal< Object >& proposal,
-            Configuration< Object >& state,
+        StepResult< Type > accept_or_reject( Proposal< Type >& proposal,
+            ObjectSet< Type >& state,
             RandomEngine& engine,
             const double delta_log_energy,
             ApplyMove&& apply_move ) const
         {
-            StepResult< Object > step_result;
+            StepResult< Type > step_result;
             step_result.move_type = proposal.type;
             step_result.delta_log_energy = delta_log_energy;
             step_result.log_accept =
@@ -225,8 +225,8 @@ namespace geode
             return step_result;
         }
 
-        StepResult< Object > birth_step( Proposal< Object >& proposal,
-            Configuration< Object >& state,
+        StepResult< Type > birth_step( Proposal< Type >& proposal,
+            ObjectSet< Type >& state,
             RandomEngine& engine ) const
         {
             OPENGEODE_ASSERT( proposal.new_object.has_value(),
@@ -241,8 +241,8 @@ namespace geode
                 } );
         };
 
-        StepResult< Object > death_step( Proposal< Object >& proposal,
-            Configuration< Object >& state,
+        StepResult< Type > death_step( Proposal< Type >& proposal,
+            ObjectSet< Type >& state,
             RandomEngine& engine ) const
         {
             OPENGEODE_ASSERT( proposal.old_object_id.has_value(),
@@ -255,8 +255,8 @@ namespace geode
                 } );
         };
 
-        StepResult< Object > change_step( Proposal< Object >& proposal,
-            Configuration< Object >& state,
+        StepResult< Type > change_step( Proposal< Type >& proposal,
+            ObjectSet< Type >& state,
             RandomEngine& engine ) const
         {
             OPENGEODE_ASSERT( proposal.new_object.has_value(),
@@ -276,8 +276,8 @@ namespace geode
         };
 
     private:
-        const GibbsEnergy< Object >& energy_;
-        std::unique_ptr< ProposalKernel< Object > > proposal_kernel_;
+        const GibbsEnergy< Type >& energy_;
+        std::unique_ptr< ProposalKernel< Type > > proposal_kernel_;
         double beta_{ 1.0 };
     };
 } // namespace geode

@@ -29,14 +29,14 @@
 namespace geode
 {
 
-    template < typename Object >
+    template < typename Type >
     class ProposalKernel
     {
     public:
         virtual ~ProposalKernel() = default;
 
-        Proposal< Object > propose(
-            const Configuration< Object >& current, RandomEngine& engine ) const
+        Proposal< Type > propose(
+            const ObjectSet< Type >& current, RandomEngine& engine ) const
         {
             OPENGEODE_EXCEPTION( !moves_.empty(),
                 "[MCMC Proposal Kernel] - no move are defined in the Kernel." );
@@ -58,7 +58,7 @@ namespace geode
             return moves_.back()->propose_move( current, engine );
         }
 
-        void add_move( std::unique_ptr< Move< Object > > move )
+        void add_move( std::unique_ptr< Move< Type > > move )
         {
             moves_.push_back( std::move( move ) );
             compute_cumulative_sum_probs();
@@ -92,7 +92,7 @@ namespace geode
         }
 
     private:
-        std::vector< std::unique_ptr< Move< Object > > > moves_;
+        std::vector< std::unique_ptr< Move< Type > > > moves_;
         std::vector< double > cumulative_probs_;
 
         geode::UniformClosed< double > uniform_closed_double_;

@@ -28,20 +28,20 @@
 
 namespace geode
 {
-    template < typename Object >
-    class ConfigurationSampler
+    template < typename Type >
+    class ObjectSetSampler
     {
     public:
-        ConfigurationSampler( uuid group_id ) : group_id_{ group_id } {}
-        virtual ~ConfigurationSampler() = default;
+        ObjectSetSampler( uuid subset_id ) : subset_id_{ subset_id } {}
+        virtual ~ObjectSetSampler() = default;
 
-        virtual std::pair< Object, uuid > sample(
+        virtual std::pair< Type, uuid > sample(
             RandomEngine& engine ) const = 0;
 
         std::optional< ObjectId > sample_id(
-            const Configuration< Object >& config, RandomEngine& engine ) const
+            const ObjectSet< Type >& config, RandomEngine& engine ) const
         {
-            const auto max_obj_id = config.nb_objects_in_group( group_id_ );
+            const auto max_obj_id = config.nb_objects_in_subset( subset_id_ );
             if( max_obj_id == 0 )
             {
                 return std::nullopt;
@@ -50,16 +50,16 @@ namespace geode
             uniform_closed_index_t.min_value = 0;
             uniform_closed_index_t.max_value = max_obj_id - 1;
             ObjectId result{ engine.sample_uniform( uniform_closed_index_t ),
-                group_id_ };
+                subset_id_ };
             return result;
         }
 
-        virtual std::pair< Object, uuid > change(
-            const Object& object, RandomEngine& engine ) const = 0;
+        virtual std::pair< Type, uuid > change(
+            const Type& object, RandomEngine& engine ) const = 0;
 
-        virtual double log_pdf( const Object& obj ) const = 0;
+        virtual double log_pdf( const Type& obj ) const = 0;
 
     protected:
-        uuid group_id_;
+        uuid subset_id_;
     };
 } // namespace geode

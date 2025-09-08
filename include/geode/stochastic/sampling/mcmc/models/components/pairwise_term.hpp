@@ -29,27 +29,27 @@
 
 namespace geode
 {
-    template < typename Object, typename InteractionFunc >
-    class PairwiseTerm : public EnergyTerm< Object >
+    template < typename Type, typename InteractionFunc >
+    class PairwiseTerm : public EnergyTerm< Type >
     {
     public:
         explicit PairwiseTerm( double gamma, InteractionFunc func )
-            : EnergyTerm< Object >( gamma ),
+            : EnergyTerm< Type >( gamma ),
               interaction_func_( std::move( func ) )
         {
         }
 
-        double total_log( const Configuration< Object >& state ) const final
+        double total_log( const ObjectSet< Type >& state ) const final
         {
             const auto interaction_weight = statistic( state );
             return this->neg_log_parameter_.scale( interaction_weight );
         }
 
-        double delta_log_add( const Configuration< Object >& state,
-            const Object& new_object,
-            uuid group_id ) const final
+        double delta_log_add( const ObjectSet< Type >& state,
+            const Type& new_object,
+            uuid subset_id ) const final
         {
-            geode_unused( group_id );
+            geode_unused( subset_id );
             const auto neighbors = state.neighbors( new_object, 1.1 );
             double interaction_weight = 0.0;
             for( const auto neigh_obj_id : neighbors )
@@ -60,8 +60,8 @@ namespace geode
             return this->neg_log_parameter_.scale( interaction_weight );
         }
 
-        double delta_log_remove( const Configuration< Object >& state,
-            ObjectId object_id ) const final
+        double delta_log_remove(
+            const ObjectSet< Type >& state, ObjectId object_id ) const final
         {
             const auto& to_remove = state.get_object( object_id );
             const auto neighbors = state.neighbors( object_id, 1.1 );
@@ -74,9 +74,9 @@ namespace geode
             return this->neg_log_parameter_.scale( -interaction_weight );
         }
 
-        double delta_log_change( const Configuration< Object >& state,
+        double delta_log_change( const ObjectSet< Type >& state,
             ObjectId old_object_id,
-            const Object& new_object ) const final
+            const Type& new_object ) const final
         {
             const auto new_neighbors = state.neighbors( new_object, 1.1 );
             double interaction_weight_add = 0.0;
@@ -105,7 +105,7 @@ namespace geode
                 interaction_weight_add - interaction_weight_remove );
         }
 
-        double statistic( const Configuration< Object >& state ) const final
+        double statistic( const ObjectSet< Type >& state ) const final
         {
             double sum = 0.0;
             const auto all_object_ids = state.get_all_object();
@@ -118,8 +118,8 @@ namespace geode
                 for( const auto neigh_obj_id :
                     geode::Range{ neighbors.size() } )
                 {
-                    if( all_object_ids[obj_id].object
-                        > neighbors[neigh_obj_id].object )
+                    if( all_object_ids[obj_id].index
+                        > neighbors[neigh_obj_id].index )
                     {
                         sum +=
                             static_cast< double >( interaction_func_( cur_objet,
