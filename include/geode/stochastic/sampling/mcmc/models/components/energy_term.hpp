@@ -23,7 +23,7 @@
 #pragma once
 
 #include <geode/stochastic/common.hpp>
-#include <geode/stochastic/configuration/configuration.hpp>
+#include <geode/stochastic/spatial/object_set.hpp>
 #include <optional>
 
 namespace
@@ -77,6 +77,16 @@ namespace geode
 
         virtual ~EnergyTerm() = default;
 
+        geode::uuid id() const
+        {
+            return id_;
+        }
+
+        const std::string& name() const
+        {
+            return name_;
+        }
+
         double parameter() const
         {
             return neg_log_parameter_.param();
@@ -99,5 +109,9 @@ namespace geode
 
     protected:
         NegLogParam neg_log_parameter_;
+
+    private:
+        geode::uuid id_;
+        std::string name_;
     };
 } // namespace geode

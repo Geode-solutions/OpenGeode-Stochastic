@@ -24,16 +24,16 @@
 
 #include <geode/basic/assert.hpp>
 #include <geode/geometry/point.hpp>
-#include <geode/stochastic/configuration/configuration.hpp>
-#include <geode/stochastic/sampling/direct/configuration_sampler/point_configuration_sampler.hpp>
+#include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/moves.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/proposal_kernel.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
+#include <geode/stochastic/spatial/object_set.hpp>
 
 namespace
 {
-    geode::ObjectSet< geode::Point2D > create_configuration(
+    geode::ObjectSet< geode::Point2D > create_object_set(
         const geode::uuid& subset_id )
     {
         geode::Point2D p1{ { 0., 0. } };
@@ -50,7 +50,7 @@ namespace
     void test_proposal_kernel()
     {
         geode::uuid subset_id;
-        auto config = create_configuration( subset_id );
+        auto config = create_object_set( subset_id );
 
         geode::Point2D min_point{ { 0., 0. } };
         geode::Point2D max_point{ { 10., 100. } };
@@ -144,7 +144,7 @@ namespace
         OPENGEODE_EXCEPTION( saw_birth && saw_death && saw_change,
             "[test proposal] Kernel did not produce all move types." );
 
-        // --- Edge case: empty configuration ---
+        // --- Edge case: empty object_set ---
         geode::ObjectSet< geode::Point2D > empty_config;
         empty_config.add_subset( subset_id );
 

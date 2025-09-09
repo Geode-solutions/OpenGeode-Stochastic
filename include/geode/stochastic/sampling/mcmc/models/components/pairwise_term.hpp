@@ -23,7 +23,7 @@
 #pragma once
 
 #include <geode/basic/range.hpp>
-#include <geode/stochastic/configuration/configuration.hpp>
+#include <geode/stochastic/spatial/object_set.hpp>
 
 #include <geode/stochastic/sampling/mcmc/models/components/energy_term.hpp>
 

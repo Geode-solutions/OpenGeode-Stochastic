@@ -25,7 +25,7 @@
 #pragma once
 
 #include <geode/stochastic/common.hpp>
-#include <geode/stochastic/sampling/direct/configuration_sampler/configuration_sampler.hpp>
+#include <geode/stochastic/sampling/direct/object_set_sampler/object_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/proposal_kernel.hpp>
 
 namespace geode

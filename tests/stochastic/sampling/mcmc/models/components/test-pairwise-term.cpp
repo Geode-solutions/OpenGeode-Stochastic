@@ -25,9 +25,9 @@
 #include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
 
 #include <geode/geometry/point.hpp>
-#include <geode/stochastic/configuration/configuration.hpp>
+#include <geode/stochastic/spatial/object_set.hpp>
 
-geode::ObjectSet< geode::Point2D > create_pairwise_configuration(
+geode::ObjectSet< geode::Point2D > create_pairwise_object_set(
     const geode::uuid& subset_id )
 {
     geode::Point2D p1{ { 0., 0. } };
@@ -125,7 +125,7 @@ int main()
         geode::StochasticLibrary::initialize();
 
         geode::uuid subset_id;
-        auto pattern = create_pairwise_configuration( subset_id );
+        auto pattern = create_pairwise_object_set( subset_id );
 
         test_normal_positive_pairwise( 0.5, pattern, subset_id );
         test_normal_positive_pairwise(

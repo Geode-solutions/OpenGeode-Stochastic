@@ -25,14 +25,14 @@
 
 #include <geode/geometry/point.hpp>
 
-#include <geode/stochastic/configuration/configuration.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/intensity_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
+#include <geode/stochastic/spatial/object_set.hpp>
 
 namespace
 {
-    geode::ObjectSet< geode::Point2D > create_configuration(
+    geode::ObjectSet< geode::Point2D > create_object_set(
         const geode::uuid& subset_id )
     {
         geode::Point2D p1{ { 0., 0. } };
@@ -69,7 +69,7 @@ void test_gibbs_energy( const geode::uuid& subset_id )
     OPENGEODE_EXCEPTION( gibbs_energy.number_of_energy_terms() == 2,
         "[test gibbs] Wrong number of components after adding terms." );
 
-    auto pattern = create_configuration( subset_id );
+    auto pattern = create_object_set( subset_id );
 
     // Check total log-energy is finite
     double total_energy = gibbs_energy.total_log_energy( pattern );

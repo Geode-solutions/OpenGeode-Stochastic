@@ -60,7 +60,7 @@ namespace geode
                 proposal_kernel_ != nullptr, "[MH] null proposal kernel" );
         }
 
-        ObjectSet< Type > initialize_configuration_with_sampling(
+        ObjectSet< Type > initialize_object_set_with_sampling(
             RandomEngine& engine,
             const std::unordered_map< uuid, index_t >& group_targets ) const
         {

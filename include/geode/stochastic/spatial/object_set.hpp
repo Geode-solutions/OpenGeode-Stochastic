@@ -30,7 +30,7 @@
 #include <geode/geometry/bounding_box.hpp>
 #include <geode/geometry/point.hpp>
 
-// #include <geode/stochastic/configuration/neighbors_object_ids.hpp>
+// #include <geode/stochastic/object_set/neighbors_object_ids.hpp>
 namespace geode
 {
     struct SubSetDescriptor
@@ -78,7 +78,7 @@ namespace geode
         std::vector< ObjectId > neighbors(
             const ObjectId& object_id, double searching_distance ) const;
         // Object neighbor search by arbitrary object (return self if in the
-        // configuration)
+        // object_set)
         std::vector< ObjectId > neighbors(
             const Type& object, double searching_distance ) const;
 

@@ -26,7 +26,7 @@
 #include <geode/geometry/distance.hpp>
 #include <geode/geometry/point.hpp>
 
-#include <geode/stochastic/configuration/object_helpers.hpp>
+#include <geode/stochastic/spatial/object_helpers.hpp>
 
 namespace geode
 {

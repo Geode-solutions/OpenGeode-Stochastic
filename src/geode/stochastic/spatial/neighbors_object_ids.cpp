@@ -21,7 +21,7 @@
  *
  */
 
-#include <geode/stochastic/configuration/neighbors_object_ids.hpp>
+#include <geode/stochastic/object_set/neighbors_object_ids.hpp>
 
 namespace
 {

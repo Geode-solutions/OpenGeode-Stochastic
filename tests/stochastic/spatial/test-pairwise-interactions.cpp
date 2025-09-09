@@ -24,7 +24,7 @@
 #include <geode/geometry/distance.hpp>
 #include <geode/geometry/point.hpp>
 
-#include <geode/stochastic/configuration/pairwise_interactions.hpp>
+#include <geode/stochastic/spatial/pairwise_interactions.hpp>
 namespace
 {
     void test_interaction()

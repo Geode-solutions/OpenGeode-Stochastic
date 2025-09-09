@@ -26,7 +26,7 @@
 #include <geode/geometry/basic_objects/sphere.hpp>
 #include <geode/geometry/point.hpp>
 
-#include <geode/stochastic/sampling/direct/configuration_sampler/configuration_sampler.hpp>
+#include <geode/stochastic/sampling/direct/object_set_sampler/object_set_sampler.hpp>
 #include <geode/stochastic/sampling/direct/point_uniform_sampler.hpp>
 
 namespace geode

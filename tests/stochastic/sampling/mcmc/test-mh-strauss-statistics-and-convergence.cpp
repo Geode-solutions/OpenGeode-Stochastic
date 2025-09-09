@@ -21,7 +21,7 @@
  *
  */
 #include <geode/geometry/point.hpp>
-#include <geode/stochastic/sampling/direct/configuration_sampler/point_configuration_sampler.hpp>
+#include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/intensity_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
@@ -78,7 +78,7 @@ namespace
             { subset_id, 0 }
         };
         geode::ObjectSet< geode::Point2D > state =
-            mh.initialize_configuration_with_sampling( engine, targets );
+            mh.initialize_object_set_with_sampling( engine, targets );
 
         constexpr geode::index_t N{ 100000 };
 

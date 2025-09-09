@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 add_geode_test(
-    SOURCE "configuration/test-pairwise-interactions.cpp"
+    SOURCE "spatial/test-pairwise-interactions.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry

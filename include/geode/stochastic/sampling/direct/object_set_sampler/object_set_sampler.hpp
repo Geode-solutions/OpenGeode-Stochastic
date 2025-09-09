@@ -22,41 +22,44 @@
  */
 
 #pragma once
-#include <geode/stochastic/configuration/r_tree.hpp>
+
+#include <geode/stochastic/sampling/random_engine.hpp>
+#include <geode/stochastic/spatial/object_set.hpp>
 
 namespace geode
 {
-    FORWARD_DECLARATION_DIMENSION_CLASS( BoundingBox );
-}
-
-namespace geode
-{
-
-    template < index_t dimension >
-    class ObjectIndexRTree
+    template < typename Type >
+    class ObjectSetSampler
     {
-        OPENGEODE_DISABLE_COPY_AND_MOVE( ObjectIndexRTree );
-
     public:
-        ObjectIndexRTree();
-        ~ObjectIndexRTree() = default;
+        ObjectSetSampler( uuid subset_id ) : subset_id_{ subset_id } {}
+        virtual ~ObjectSetSampler() = default;
 
-        void add( const BoundingBox< dimension >& box, ObjectId id );
+        virtual std::pair< Type, uuid > sample(
+            RandomEngine& engine ) const = 0;
 
-        void remove( const BoundingBox< dimension >& box, ObjectId id );
-
-        void remove_all();
-
-        std::vector< ObjectId > get(
-            const BoundingBox< dimension >& box ) const;
-
-        int count()
+        std::optional< ObjectId > sample_id(
+            const ObjectSet< Type >& config, RandomEngine& engine ) const
         {
-            return tree_.Count();
+            const auto max_obj_id = config.nb_objects_in_subset( subset_id_ );
+            if( max_obj_id == 0 )
+            {
+                return std::nullopt;
+            }
+            geode::UniformClosed< index_t > uniform_closed_index_t;
+            uniform_closed_index_t.min_value = 0;
+            uniform_closed_index_t.max_value = max_obj_id - 1;
+            ObjectId result{ engine.sample_uniform( uniform_closed_index_t ),
+                subset_id_ };
+            return result;
         }
 
-    private:
-        RTree< ObjectId, double, dimension > tree_;
-    };
+        virtual std::pair< Type, uuid > change(
+            const Type& object, RandomEngine& engine ) const = 0;
 
+        virtual double log_pdf( const Type& obj ) const = 0;
+
+    protected:
+        uuid subset_id_;
+    };
 } // namespace geode
