@@ -25,6 +25,7 @@
 #include <geode/stochastic/sampling/mcmc/models/components/energy_term.hpp>
 #include <geode/stochastic/spatial/object_set.hpp>
 
+#include <absl/container/flat_hash_map.h>
 namespace geode
 {
     template < typename Type >
@@ -38,12 +39,11 @@ namespace geode
 
         void add_energy_term( std::unique_ptr< EnergyTerm< Type > > term )
         {
-            energy_terms_.push_back( std::move( term ) );
+            energy_terms_.emplace( term->id(), std::move( term ) );
         }
         void clear_energy_terms()
         {
             energy_terms_.clear();
-            energy_terms_.shrink_to_fit();
         }
         index_t number_of_energy_terms() const
         {
@@ -53,8 +53,9 @@ namespace geode
         {
             std::vector< double > values;
             values.reserve( energy_terms_.size() );
-            for( const auto& term : energy_terms_ )
+            for( const auto& [id, term] : energy_terms_ )
             {
+                geode_unused( id );
                 values.emplace_back( term->parameter() );
             }
             return values;
@@ -66,59 +67,66 @@ namespace geode
             return vector_string( values );
         }
 
-        double total_log_energy( const ObjectSet< Type > state ) const
+        double total_log_energy( const ObjectSet< Type >& state ) const
         {
             double log_energy{ 0.0 };
-            for( const auto& term : energy_terms_ )
+            for( const auto& [id, term] : energy_terms_ )
             {
+                geode_unused( id );
                 log_energy += term->total_log( state );
             }
             return log_energy;
         }
 
-        double delta_log_energy_add( const ObjectSet< Type > state,
-            const Type& sample,
-            uuid subset_id ) const
+        double delta_log_energy_add( const ObjectSet< Type >& state,
+            const Type& new_object,
+            const uuid& new_object_subset_id ) const
         {
             double log_energy{ 0.0 };
-            for( const auto& term : energy_terms_ )
+            for( const auto& [id, term] : energy_terms_ )
             {
-                log_energy += term->delta_log_add( state, sample, subset_id );
+                geode_unused( id );
+                log_energy += term->delta_log_add(
+                    state, new_object, new_object_subset_id );
             }
             return log_energy;
         }
 
         double delta_log_energy_remove(
-            const ObjectSet< Type > state, ObjectId sample_id ) const
+            const ObjectSet< Type >& state, ObjectId object_id ) const
         {
             double log_energy{ 0.0 };
-            for( const auto& term : energy_terms_ )
+            for( const auto& [id, term] : energy_terms_ )
             {
-                log_energy += term->delta_log_remove( state, sample_id );
+                geode_unused( id );
+                log_energy += term->delta_log_remove( state, object_id );
             }
             return log_energy;
         }
 
-        double delta_log_energy_change( const ObjectSet< Type > state,
-            ObjectId old_sample_id,
-            const Type& new_sample ) const
+        double delta_log_energy_change( const ObjectSet< Type >& state,
+            ObjectId old_object_id,
+            const Type& new_object,
+            const uuid& new_object_subset_id ) const
         {
             double log_energy{ 0.0 };
-            for( const auto& term : energy_terms_ )
+            for( const auto& [id, term] : energy_terms_ )
             {
-                log_energy +=
-                    term->delta_log_change( state, old_sample_id, new_sample );
+                geode_unused( id );
+                log_energy += term->delta_log_change(
+                    state, old_object_id, new_object, new_object_subset_id );
             }
             return log_energy;
         }
 
         std::vector< double > ordered_energy_term_statistics(
-            const ObjectSet< Type > state ) const
+            const ObjectSet< Type >& state ) const
         {
             std::vector< double > values;
             values.reserve( energy_terms_.size() );
-            for( const auto& term : energy_terms_ )
+            for( const auto& [id, term] : energy_terms_ )
             {
+                geode_unused( id );
                 values.emplace_back(
                     static_cast< double >( term->statistic( state ) ) );
             }
@@ -126,7 +134,7 @@ namespace geode
         }
 
         std::string ordered_energy_term_statistics_string(
-            const ObjectSet< Type > state ) const
+            const ObjectSet< Type >& state ) const
         {
             const auto stats = ordered_energy_term_statistics( state );
             return vector_string( stats );
@@ -145,7 +153,9 @@ namespace geode
         }
 
     private:
-        std::vector< std::unique_ptr< EnergyTerm< Type > > > energy_terms_;
+        absl::flat_hash_map< geode::uuid,
+            std::unique_ptr< EnergyTerm< Type > > >
+            energy_terms_;
     };
 
 } // namespace geode

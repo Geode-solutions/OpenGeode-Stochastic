@@ -166,7 +166,7 @@ int main()
         box.add_point( max_point );
 
         geode::uuid subset_id;
-        geode::UniformPointObjectSetSampler< 2 > sampler( box, subset_id );
+        geode::UniformPointSetSampler< 2 > sampler( box, subset_id );
         double birth_prob = 0.3;
         double death_prob = 0.1;
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
@@ -177,7 +177,7 @@ int main()
         // Add intensity term
         poisson_energy.add_energy_term(
             std::make_unique< geode::IntensityTerm< geode::Point2D > >(
-                0.5, subset_id ) );
+                "intensity", 0.5, subset_id ) );
 
         geode::MetropolisHastings< geode::Point2D > mh(
             poisson_energy, std::move( kernel ) );

@@ -53,18 +53,21 @@ void test_gibbs_energy( const geode::uuid& subset_id )
     // Add intensity term
     gibbs_energy.add_energy_term(
         std::make_unique< geode::IntensityTerm< geode::Point2D > >(
-            0.5, subset_id ) );
+            "intensity", 0.5, subset_id ) );
 
     // Add pairwise term with trivial interaction: always counts 1 for each pair
-    auto interaction_fn = []( const geode::Point2D& a,
-                              const geode::Point2D& b ) {
-        geode_unused( a );
-        geode_unused( b );
-        return true;
-    };
+    auto interaction_fn =
+        []( const geode::Point2D& a, const geode::uuid& a_uuid,
+            const geode::Point2D& b, const geode::uuid& b_uuid ) {
+            geode_unused( a );
+            geode_unused( b );
+            geode_unused( a_uuid );
+            geode_unused( b_uuid );
+            return true;
+        };
     gibbs_energy.add_energy_term( std::make_unique<
         geode::PairwiseTerm< geode::Point2D, decltype( interaction_fn ) > >(
-        0.8, interaction_fn ) );
+        "interaction", 0.8, interaction_fn ) );
 
     OPENGEODE_EXCEPTION( gibbs_energy.number_of_energy_terms() == 2,
         "[test gibbs] Wrong number of components after adding terms." );
@@ -92,7 +95,7 @@ void test_gibbs_energy( const geode::uuid& subset_id )
 
     // Change point test
     double delta_change =
-        gibbs_energy.delta_log_energy_change( pattern, obj_id, p3 );
+        gibbs_energy.delta_log_energy_change( pattern, obj_id, p3, subset_id );
     OPENGEODE_EXCEPTION( std::isfinite( delta_change ),
         "[test gibbs] Delta change should be finite." );
 

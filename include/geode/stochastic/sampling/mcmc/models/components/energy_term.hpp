@@ -26,43 +26,53 @@
 #include <geode/stochastic/spatial/object_set.hpp>
 #include <optional>
 
-namespace
+namespace geode
 {
-    struct NegLogParam
+    namespace detail
     {
-        explicit NegLogParam( double param )
+        struct EnergyScale
         {
-            OPENGEODE_EXCEPTION( param >= 0.,
-                "[Gibbs energy term] - The model parameter "
-                "cannot be smaller than 0." );
-            if( param >= geode::GLOBAL_EPSILON )
+            explicit EnergyScale( double param )
             {
-                value = -std::log( param );
-            }
-        }
+                OPENGEODE_EXCEPTION( param >= 0.,
+                    "[Gibbs energy term] - The model parameter "
+                    "cannot be negative." );
 
-        double scale( double multiplier ) const
-        {
-            if( value )
-            {
-                return value.value() * multiplier;
+                if( param >= geode::GLOBAL_EPSILON )
+                {
+                    value = -std::log( param ); // store log-space parameter
+                }
+                // else value = std::nullopt → special case: param == 0
             }
-            return ( multiplier > 0 )
-                       ? std::numeric_limits< double >::infinity()
-                       : 0.0;
-        }
 
-        double param() const
-        {
-            if( value )
+            /// Compute energy contribution for a given statistic multiplier
+            double contribution( double multiplier ) const
             {
-                return std::exp( -value.value() );
+                if( value )
+                {
+                    return value.value() * multiplier;
+                }
+                // Hard constraint: param == 0
+                return ( multiplier > 0 )
+                           ? std::numeric_limits< double >::infinity()
+                           : 0.0;
             }
-            return 0.;
-        }
-        std::optional< double > value;
-    };
-} // namespace
+
+            /// Return original parameter (gamma)
+            double parameter() const
+            {
+                if( value )
+                {
+                    return std::exp( -value.value() );
+                }
+                return 0.;
+            }
+
+        private:
+            std::optional< double > value; // empty if param == 0 (hardcore)
+        };
+    } // namespace detail
+} // namespace geode
 
 namespace geode
 {
@@ -70,48 +80,94 @@ namespace geode
     class EnergyTerm
     {
     public:
-        explicit EnergyTerm( double parameter )
-            : neg_log_parameter_( parameter )
+        explicit EnergyTerm( std::string_view name, double param )
+            : name_{ name }, energy_scale_{ param }
+        {
+        }
+
+        explicit EnergyTerm( std::string_view name,
+            double param,
+            const uuid& targeted_subset_id )
+            : name_{ name },
+              energy_scale_{ param },
+              targeted_subset_id_{ targeted_subset_id }
         {
         }
 
         virtual ~EnergyTerm() = default;
 
-        geode::uuid id() const
+        const uuid& id() const
         {
-            return id_;
+            return energy_term_id_;
         }
 
-        const std::string& name() const
+        std::string_view name() const
         {
             return name_;
         }
 
         double parameter() const
         {
-            return neg_log_parameter_.param();
+            return energy_scale_.parameter();
+        }
+
+        std::optional< uuid > targeted_subset_id() const
+        {
+            return targeted_subset_id_;
+        }
+
+        /// Energy contribution for a given statistic multiplier
+        double contribution( double multiplier ) const
+        {
+            return energy_scale_.contribution( multiplier );
         }
 
         virtual double total_log( const ObjectSet< Type >& state ) const = 0;
 
         virtual double delta_log_add( const ObjectSet< Type >& state,
-            const Type& object,
-            const uuid subset_id ) const = 0;
+            const Type& new_object,
+            const uuid& new_object_subset_id ) const = 0;
 
         virtual double delta_log_remove(
             const ObjectSet< Type >& state, ObjectId object_id ) const = 0;
 
         virtual double delta_log_change( const ObjectSet< Type >& state,
             ObjectId old_object_id,
-            const Type& new_object ) const = 0;
+            const Type& new_object,
+            const uuid& new_object_subset_id ) const = 0;
 
         virtual double statistic( const ObjectSet< Type >& state ) const = 0;
 
     protected:
-        NegLogParam neg_log_parameter_;
+        bool is_targeted_subset( const uuid& subset_id ) const
+        {
+            return !targeted_subset_id_ || subset_id == *targeted_subset_id_;
+        }
+
+        template < typename Func >
+        void for_each_targeted_object(
+            const ObjectSet< Type >& state, Func&& do_apply ) const
+        {
+            if( targeted_subset_id_ )
+            {
+                for( const auto id : geode::Range{
+                         state.nb_objects_in_subset( *targeted_subset_id_ ) } )
+                {
+                    do_apply( { id, *targeted_subset_id_ } );
+                }
+                return;
+            }
+            for( const auto& id : state.get_all_object() )
+            {
+                do_apply( id );
+            }
+        }
 
     private:
-        geode::uuid id_;
         std::string name_;
+        detail::EnergyScale energy_scale_;
+
+        std::optional< uuid > targeted_subset_id_{};
+        uuid energy_term_id_{};
     };
 } // namespace geode

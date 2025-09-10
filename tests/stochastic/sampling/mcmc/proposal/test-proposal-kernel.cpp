@@ -59,7 +59,7 @@ namespace
         box.add_point( min_point );
         box.add_point( max_point );
 
-        geode::UniformPointObjectSetSampler< 2 > sampler( box, subset_id );
+        geode::UniformPointSetSampler< 2 > sampler( box, subset_id );
 
         // Create classical birth-death-change kernel
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(

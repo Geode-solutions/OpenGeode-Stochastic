@@ -41,8 +41,8 @@ namespace
     {
         geode::ObjectSet< geode::Point2D > state =
             mh.initialize_object_set_with_sampling( engine, group_targets );
-
-        constexpr geode::index_t N{ 1000000 };
+        mh.walk( state, engine, 500 );
+        constexpr geode::index_t N{ 1000 };
 
         // Sampling
 
@@ -50,7 +50,7 @@ namespace
         double sum_sq = 0.0;
         for( const auto i : geode::Range{ N } )
         {
-            mh.step( state, engine );
+            mh.walk( state, engine, 1000 );
             auto stats = energy.ordered_energy_term_statistics( state );
             sum_points += stats[0];
             sum_sq += stats[0] * stats[0];
@@ -96,12 +96,12 @@ namespace
 
         double area = domain_length * domain_length;
         geode::uuid subset_id;
-        geode::UniformPointObjectSetSampler< 2 > sampler( box, subset_id );
+        geode::UniformPointSetSampler< 2 > sampler( box, subset_id );
 
         geode::GibbsEnergy< geode::Point2D > poisson_energy;
         poisson_energy.add_energy_term(
             std::make_unique< geode::IntensityTerm< geode::Point2D > >(
-                poisson_density, subset_id ) );
+                "intensity", poisson_density, subset_id ) );
 
         std::unordered_map< geode::uuid, geode::index_t > targets = {
             { subset_id,

@@ -43,7 +43,8 @@ void test_normal_positive_intensity( double lambda,
     const geode::ObjectSet< geode::Point2D > &pattern,
     const geode::uuid &subset_id )
 {
-    geode::IntensityTerm< geode::Point2D > term( lambda, subset_id );
+    geode::IntensityTerm< geode::Point2D > term(
+        "intensity", lambda, subset_id );
     auto neg_log_lambda = -std::log( lambda );
 
     double total = term.total_log( pattern );
@@ -62,7 +63,8 @@ void test_normal_positive_intensity( double lambda,
     OPENGEODE_EXCEPTION( delta_remove == neg_log_lambda * -1.,
         "[test intensity]- delta_log_remove wrong value." );
 
-    double delta_change = term.delta_log_change( pattern, obj_id, p3 );
+    double delta_change =
+        term.delta_log_change( pattern, obj_id, p3, subset_id );
     OPENGEODE_EXCEPTION(
         delta_change == 0., "[test intensity]- delta_log_change wrong value." );
 }
@@ -71,7 +73,8 @@ void test_normal_zero_intensity( double lambda,
     const geode::ObjectSet< geode::Point2D > &pattern,
     const geode::uuid &subset_id )
 {
-    geode::IntensityTerm< geode::Point2D > term( lambda, subset_id );
+    geode::IntensityTerm< geode::Point2D > term(
+        "intensity", lambda, subset_id );
     double total = term.total_log( pattern );
 
     OPENGEODE_EXCEPTION(
@@ -89,7 +92,8 @@ void test_normal_zero_intensity( double lambda,
     OPENGEODE_EXCEPTION( delta_remove == 0.,
         "[test zero intensity]- delta_log_remove wrong value." );
 
-    double delta_change = term.delta_log_change( pattern, obj_id, p3 );
+    double delta_change =
+        term.delta_log_change( pattern, obj_id, p3, subset_id );
     OPENGEODE_EXCEPTION( delta_change == 0.,
         "[test zero intensity]- delta_log_change wrong value." );
 }
@@ -122,7 +126,7 @@ int main()
         geode::StochasticLibrary::initialize();
         geode::uuid subset_id;
         geode::IntensityTerm< geode::Point2D > term(
-            -geode::GLOBAL_EPSILON, subset_id );
+            "zero", -geode::GLOBAL_EPSILON, subset_id );
         geode::Logger::info( "TEST FAILED" );
         return 1;
     }

@@ -32,11 +32,10 @@
 namespace geode
 {
     template < index_t dimension >
-    class UniformPointObjectSetSampler
-        : public ObjectSetSampler< Point< dimension > >
+    class UniformPointSetSampler : public ObjectSetSampler< Point< dimension > >
     {
     public:
-        UniformPointObjectSetSampler(
+        UniformPointSetSampler(
             const BoundingBox< dimension >& box, uuid subset_id )
             : ObjectSetSampler< Point< dimension > >{ subset_id }, box_( box )
         {

@@ -265,7 +265,8 @@ namespace geode
                 "[MH] Change proposal has no index" );
             const auto delta_log_energy = energy_.delta_log_energy_change(
                 state, proposal.old_object_id.value(),
-                proposal.new_object.value().first );
+                proposal.new_object.value().first,
+                proposal.new_object.value().second );
             // should we test that objects are in the same group?
             // should be ensured by the dynamic
             return accept_or_reject( proposal, state, engine, delta_log_energy,
