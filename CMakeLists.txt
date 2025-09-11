@@ -36,7 +36,7 @@ find_package(OpenGeode REQUIRED CONFIG)
 add_subdirectory(src/geode/stochastic)
 
 #------------------------------------------------------------------------------------------------
-# Optional modules configuration
+# Optional modules object_set
 if(OPENGEODE_STOCHASTIC_WITH_TESTS)
     # Enable testing with CTest
     enable_testing()

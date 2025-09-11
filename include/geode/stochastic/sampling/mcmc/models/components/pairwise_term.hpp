@@ -23,101 +23,134 @@
 #pragma once
 
 #include <geode/basic/range.hpp>
-#include <geode/stochastic/configuration/configuration.hpp>
+#include <geode/stochastic/spatial/object_set.hpp>
 
 #include <geode/stochastic/sampling/mcmc/models/components/energy_term.hpp>
 
 namespace geode
 {
-    template < typename Geometry, typename InteractionFunc >
-    class PairwiseTerm : public EnergyTerm< Geometry >
+    // rename PairwiseInteractionTerm
+    template < typename Type, typename InteractionFunc >
+    class PairwiseTerm : public EnergyTerm< Type >
     {
     public:
-        explicit PairwiseTerm( double gamma, InteractionFunc func )
-            : EnergyTerm< Geometry >( gamma ),
-              interaction_func_( std::move( func ) )
+        explicit PairwiseTerm( std::string_view name,
+            double gamma,
+            InteractionFunc interaction_func )
+            : EnergyTerm< Type >( name, gamma ),
+              interaction_func_( std::move( interaction_func ) )
         {
         }
 
-        double total_log( const Configuration< Geometry >& state ) const final
+        explicit PairwiseTerm( std::string_view name,
+            double gamma,
+            InteractionFunc interaction_func,
+            const uuid& subset_id )
+            : EnergyTerm< Type >( name, gamma, subset_id ),
+              interaction_func_( std::move( interaction_func ) )
         {
-            double interaction_weight = 0.0;
-            for( const auto obj_id : geode::Range{ state.size() } )
+        }
+
+        double total_log( const ObjectSet< Type >& state ) const final
+        {
+            const auto interaction_weight = statistic( state );
+            return this->contribution( interaction_weight );
+        }
+
+        double delta_log_add( const ObjectSet< Type >& state,
+            const Type& new_object,
+            const uuid& new_object_subset_id ) const final
+        {
+            if( !this->is_targeted_subset( new_object_subset_id ) )
             {
-                for( const auto neigh_id :
-                    geode::Range{ obj_id + 1, state.size() } )
-                {
-                    interaction_weight += static_cast< double >(
-                        interaction_func_( state[obj_id], state[neigh_id] ) );
-                }
+                return 0.0;
             }
-            return this->neg_log_parameter_.scale( interaction_weight );
-        }
-
-        double delta_log_add( const Configuration< Geometry >& state,
-            const MarkedObject< Geometry >& new_object ) const final
-        {
-            double interaction_weight = 0.0;
-            for( const auto obj_id : geode::Range( state.size() ) )
+            double delta = 0.0;
+            const auto neighbors = state.neighbors( new_object, 1.1 );
+            for( const auto& neigh_id : neighbors )
             {
-                interaction_weight += static_cast< double >(
-                    interaction_func_( state[obj_id], new_object ) );
+                const auto& neigh_obj = state.get_object( neigh_id );
+                delta += static_cast< double >( interaction_func_( neigh_obj,
+                    neigh_id.subset, new_object, new_object_subset_id ) );
             }
-            return this->neg_log_parameter_.scale( interaction_weight );
+            return this->contribution( delta );
         }
 
-        double delta_log_remove( const Configuration< Geometry >& state,
-            index_t object_id ) const final
+        double delta_log_remove(
+            const ObjectSet< Type >& state, ObjectId object_id ) const override
         {
-            const auto& removed = state[object_id];
-            double interaction_weight = 0.0;
-            for( const auto neigh_id : geode::Range{ state.size() } )
+            if( !this->is_targeted_subset( object_id.subset ) )
             {
-                if( neigh_id == object_id )
-                {
-                    continue;
-                }
-                interaction_weight += static_cast< double >(
-                    interaction_func_( removed, state[neigh_id] ) );
+                return 0.0;
             }
-            return this->neg_log_parameter_.scale( -interaction_weight );
+            double delta = 0.0;
+            const auto& to_remove = state.get_object( object_id );
+            const auto neighbors = state.neighbors( object_id, 1.1 );
+            for( auto neigh_id : neighbors )
+            {
+                const auto& neigh_obj = state.get_object( neigh_id );
+                delta += static_cast< double >( interaction_func_(
+                    neigh_obj, neigh_id.subset, to_remove, object_id.subset ) );
+            }
+            return this->contribution( -delta );
         }
 
-        double delta_log_change( const Configuration< Geometry >& state,
-            index_t old_object_id,
-            const MarkedObject< Geometry >& new_object ) const final
+        double delta_log_change( const ObjectSet< Type >& state,
+            ObjectId old_object_id,
+            const Type& new_object,
+            const uuid& new_object_subset_id ) const override
         {
-            const auto& old_obj = state[old_object_id];
-            double interaction_weight_remove = 0.0;
-            double interaction_weight_add = 0.0;
-
-            for( const auto neigh_id : geode::Range{ state.size() } )
+            if( !this->is_targeted_subset( old_object_id.subset )
+                || !this->is_targeted_subset( new_object_subset_id ) )
             {
-                if( neigh_id == old_object_id )
-                {
-                    continue;
-                }
-                interaction_weight_remove += static_cast< double >(
-                    interaction_func_( old_obj, state[neigh_id] ) );
-                interaction_weight_add += static_cast< double >(
-                    interaction_func_( new_object, state[neigh_id] ) );
+                return 0.0;
             }
-            return this->neg_log_parameter_.scale(
-                interaction_weight_add - interaction_weight_remove );
+            double delta = 0.0;
+
+            // Remove old object's interactions
+            const auto& old_obj = state.get_object( old_object_id );
+            const auto old_neighbors = state.neighbors( old_object_id, 1.1 );
+            for( auto neigh_id : old_neighbors )
+            {
+                const auto& neigh_obj = state.get_object( neigh_id );
+                delta -= static_cast< double >( interaction_func_( neigh_obj,
+                    neigh_id.subset, old_obj, old_object_id.subset ) );
+            }
+
+            // Add new object's interactions
+            const auto new_neighbors = state.neighbors( new_object, 1.1 );
+            for( auto neigh_id : new_neighbors )
+            {
+                if( old_object_id == neigh_id )
+                    continue; // avoid double-counting
+                const auto& neigh_obj = state.get_object( neigh_id );
+                delta += static_cast< double >( interaction_func_( neigh_obj,
+                    neigh_id.subset, new_object, new_object_subset_id ) );
+            }
+
+            return this->contribution( delta );
         }
 
-        double statistic( const Configuration< Geometry >& state ) const final
+        double statistic( const ObjectSet< Type >& state ) const override
         {
             double sum = 0.0;
-            for( const auto obj_id : geode::Range{ state.size() } )
-            {
-                for( const auto neigh_id :
-                    geode::Range{ obj_id + 1, state.size() } )
+            this->for_each_targeted_object( state, [&]( const ObjectId&
+                                                           obj_id ) {
+                const auto& cur_obj = state.get_object( obj_id );
+                const auto neighbors =
+                    state.get_all_object(); // state.neighbors( obj_id, 1.1 );
+                for( const auto& neigh_obj_id : neighbors )
                 {
-                    sum += interaction_func_( state[obj_id], state[neigh_id] );
+                    if( neigh_obj_id == obj_id )
+                    {
+                        continue;
+                    }
+                    sum += static_cast< double >( interaction_func_( cur_obj,
+                        obj_id.subset, state.get_object( neigh_obj_id ),
+                        neigh_obj_id.subset ) );
                 }
-            }
-            return sum;
+            } );
+            return sum / 2.;
         }
 
     private:

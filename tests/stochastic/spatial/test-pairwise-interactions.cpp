@@ -24,8 +24,7 @@
 #include <geode/geometry/distance.hpp>
 #include <geode/geometry/point.hpp>
 
-#include <geode/stochastic/configuration/marked_object.hpp>
-#include <geode/stochastic/configuration/pairwise_interactions.hpp>
+#include <geode/stochastic/spatial/pairwise_interactions.hpp>
 namespace
 {
     void test_interaction()
@@ -33,11 +32,9 @@ namespace
         geode::DistanceCutoffInteraction interaction( 2.0 );
 
         geode::Point2D p1{ { 0., 0. } };
-        geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
         geode::Point2D p2{ { 1., 1. } }; // distance = 1.44 < 2.0
-        geode::MarkedObject< geode::Point2D > mp2{ std::move( p2 ) };
 
-        double result = interaction( mp1, mp2 );
+        double result = interaction( p1, p2 );
         OPENGEODE_EXCEPTION( result == 1.0,
             "[DistanceCutoffInteraction] Failed for inside cutoff case." );
     }
@@ -46,11 +43,9 @@ namespace
         geode::DistanceCutoffInteraction interaction( 2.0 );
 
         geode::Point2D p1{ { 0., 0. } };
-        geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
         geode::Point2D p2{ { 3., 0. } }; // distance = 3.0 > 2.0
-        geode::MarkedObject< geode::Point2D > mp2{ std::move( p2 ) };
 
-        double result = interaction( mp1, mp2 );
+        double result = interaction( p1, p2 );
         OPENGEODE_EXCEPTION( result == 0.0,
             "[DistanceCutoffInteraction] Failed for outside cutoff case." );
     }
@@ -59,11 +54,9 @@ namespace
         geode::DistanceCutoffInteraction interaction( 2.0 );
 
         geode::Point2D p1{ { 0., 0. } };
-        geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
         geode::Point2D p2{ { 2., 0. } }; // distance = 2.0 == cutoff
-        geode::MarkedObject< geode::Point2D > mp2{ std::move( p2 ) };
 
-        double result = interaction( mp1, mp2 );
+        double result = interaction( p1, p2 );
         OPENGEODE_EXCEPTION( result == 1.0,
             "[DistanceCutoffInteraction] Failed for exact cutoff case." );
     }

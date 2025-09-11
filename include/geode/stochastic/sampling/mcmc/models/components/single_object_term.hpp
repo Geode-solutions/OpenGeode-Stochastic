@@ -28,65 +28,81 @@
 
 namespace geode
 {
-    /// ObjectCountTerm
-    template < typename Type >
-    class IntensityTerm : public EnergyTerm< Type >
+    template < typename Type, typename ObjectContributionFunc >
+    class SingleObjectTerm : public EnergyTerm< Type >
     {
     public:
-        explicit IntensityTerm( std::string_view name, double lambda )
-            : EnergyTerm< Type >( name, lambda )
+        explicit SingleObjectTerm( std::string_view name,
+            double lambda,
+            ObjectContributionFunc contribution_func )
+            : EnergyTerm< Type >( name, lambda ),
+              contribution_func_( std::move( contribution_func ) )
         {
         }
 
-        explicit IntensityTerm(
-            std::string_view name, double lambda, const uuid& subset_id )
-            : EnergyTerm< Type >( name, lambda, subset_id )
+        explicit SingleObjectTerm( std::string_view name,
+            double lambda,
+            ObjectContributionFunc contribution_func,
+            std::optional< uuid > subset_id )
+            : EnergyTerm< Type >( name, lambda, subset_id ),
+              contribution_func_( std::move( contribution_func ) )
         {
         }
 
         double total_log( const ObjectSet< Type >& state ) const override
         {
-            const auto n = this->statistic( state );
-            return this->contribution( n );
+            auto total = this->statistic( state );
+            return this->contribution( total );
         }
 
         double delta_log_add( const ObjectSet< Type >& /*state*/,
-            const Type& /*new_object*/,
+            const Type& new_object,
             const uuid& new_object_subset_id ) const override
         {
             if( !this->is_targeted_subset( new_object_subset_id ) )
             {
                 return 0.0;
             }
-            return this->contribution( 1.0 );
+            return this->contribution( contribution_func_( new_object ) );
         }
 
-        double delta_log_remove( const ObjectSet< Type >& /*state*/,
-            ObjectId object_id ) const override
+        double delta_log_remove(
+            const ObjectSet< Type >& state, ObjectId object_id ) const override
         {
             if( !this->is_targeted_subset( object_id.subset ) )
             {
                 return 0.0;
             }
-            return this->contribution( -1.0 );
+            return this->contribution(
+                -contribution_func_( state.get_object( object_id ) ) );
         }
 
-        double delta_log_change( const ObjectSet< Type >& /*state*/,
-            ObjectId /*old_object_id*/,
-            const Type& /*new_object*/,
-            const uuid& /*new_object_subset_id*/ ) const override
+        double delta_log_change( const ObjectSet< Type >& state,
+            ObjectId old_object_id,
+            const Type& new_object,
+            const uuid& new_object_subset_id ) const override
         {
-            return 0.0;
+            if( this->is_targeted_subset( old_object_id.subset )
+                && this->is_targeted_subset( new_object_subset_id ) )
+            {
+                return 0.0;
+            }
+            auto delta =
+                contribution_func_( new_object )
+                - contribution_func_( state.get_object( old_object_id ) );
+            return this->contribution( delta );
         }
 
         double statistic( const ObjectSet< Type >& state ) const override
         {
-            if( this->targeted_subset_id() )
-            {
-                return static_cast< double >( state.nb_objects_in_subset(
-                    this->targeted_subset_id().value() ) );
-            }
-            return static_cast< double >( state.nb_objects() );
+            double total = 0.0;
+            this->for_each_targeted_object( state, [&]( const ObjectId& id ) {
+                total += contribution_func_( state.get_object( id ) );
+            } );
+            return total;
         }
+
+    private:
+        ObjectContributionFunc contribution_func_;
     };
 } // namespace geode

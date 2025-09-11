@@ -26,23 +26,18 @@
 #include <geode/geometry/basic_objects/sphere.hpp>
 #include <geode/geometry/point.hpp>
 
+#include <geode/stochastic/sampling/direct/object_set_sampler/object_set_sampler.hpp>
 #include <geode/stochastic/sampling/direct/point_uniform_sampler.hpp>
-#include <geode/stochastic/sampling/mcmc/proposal/marked_object_sampler/marked_object_sampler.hpp>
 
 namespace geode
 {
     template < index_t dimension >
-    class UniformMarkedPointSampler
-        : public MarkedObjectSampler< Point< dimension > >
+    class UniformPointSetSampler : public ObjectSetSampler< Point< dimension > >
     {
     public:
-        using MarkedPoint = MarkedObject< Point< dimension > >;
-
-        UniformMarkedPointSampler( const BoundingBox< dimension >& box,
-            const std::optional< Mark >& mark )
-            : MarkedObjectSampler< Point< dimension > >{},
-              box_( box ),
-              mark_( mark )
+        UniformPointSetSampler(
+            const BoundingBox< dimension >& box, uuid subset_id )
+            : ObjectSetSampler< Point< dimension > >{ subset_id }, box_( box )
         {
             auto volume = box_.n_volume();
             if( volume != 0. )
@@ -51,18 +46,18 @@ namespace geode
             }
         }
 
-        MarkedPoint sample( RandomEngine& engine ) const override
+        std::pair< Point< dimension >, uuid > sample(
+            RandomEngine& engine ) const override
         {
-            auto point =
-                PointUniformSampler::sample< dimension >( engine, box_ );
-            return MarkedPoint( std::move( point ), mark_ );
+            return { PointUniformSampler::sample< dimension >( engine, box_ ),
+                this->subset_id_ };
         }
 
-        MarkedPoint change(
-            const MarkedPoint& obj, RandomEngine& engine ) const override
+        std::pair< Point< dimension >, uuid > change(
+            const Point< dimension >& obj, RandomEngine& engine ) const override
         {
             double ratio = 0.1;
-            geode::Sphere< dimension > ball{ obj.geometry(),
+            geode::Sphere< dimension > ball{ obj,
                 ratio * std::get< 1 >( box_.smallest_length() ) };
 
             auto new_point =
@@ -72,12 +67,12 @@ namespace geode
                 new_point =
                     PointUniformSampler::sample< dimension >( engine, ball );
             }
-            return MarkedPoint( std::move( new_point ), mark_ );
+            return { new_point, this->subset_id_ };
         }
 
-        double log_pdf( const MarkedPoint& obj ) const override
+        double log_pdf( const Point< dimension >& obj ) const override
         {
-            if( !box_.contains( obj.geometry() ) )
+            if( !box_.contains( obj ) )
             {
                 return -std::numeric_limits< double >::infinity();
             }
@@ -87,7 +82,6 @@ namespace geode
     private:
         const BoundingBox< dimension >& box_;
         double log_pdf_{ -std::numeric_limits< double >::infinity() };
-        std::optional< Mark > mark_;
     };
 
 } // namespace geode

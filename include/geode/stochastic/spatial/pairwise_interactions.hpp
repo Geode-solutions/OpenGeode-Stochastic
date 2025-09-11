@@ -26,7 +26,7 @@
 #include <geode/geometry/distance.hpp>
 #include <geode/geometry/point.hpp>
 
-#include <geode/stochastic/configuration/marked_object.hpp>
+#include <geode/stochastic/spatial/object_helpers.hpp>
 
 namespace geode
 {
@@ -37,12 +37,11 @@ namespace geode
         {
         }
 
-        template < typename Geometry >
-        double operator()( const MarkedObject< Geometry >& object1,
-            const MarkedObject< Geometry >& object2 ) const
+        template < typename Type >
+        double operator()( const Type& object1, const Type& object2 ) const
         {
             auto dist = geode::point_point_distance(
-                object1.barycenter(), object2.barycenter() );
+                object_barycenter( object1 ), object_barycenter( object2 ) );
             return dist <= cutoff_distance ? 1.0 : 0.0;
         }
 

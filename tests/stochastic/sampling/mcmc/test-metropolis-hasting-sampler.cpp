@@ -21,11 +21,11 @@
  *
  */
 #include <geode/geometry/point.hpp>
+#include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/intensity_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
-#include <geode/stochastic/sampling/mcmc/proposal/marked_object_sampler/uniform_marked_point_sampler.hpp>
 namespace
 {
     void test_acceptance_prob_helper()
@@ -71,13 +71,16 @@ namespace
             exception_thrown, "[MH test] negative beta did not throw." );
     }
 
-    void test_steps( const geode::MetropolisHastings< geode::Point2D >& mh )
+    void test_steps( const geode::MetropolisHastings< geode::Point2D >& mh,
+        const geode::uuid& subset_id )
     {
-        geode::Configuration< geode::Point2D > state;
-        geode::Point2D p1{ { 0., 0. } };
-        geode::MarkedObject< geode::Point2D > mp1{ std::move( p1 ) };
-        state.add_object( std::move( mp1 ) );
         geode::RandomEngine engine;
+
+        std::unordered_map< geode::uuid, geode::index_t > targets = {
+            { subset_id, 20 }
+        };
+        geode::ObjectSet< geode::Point2D > state =
+            mh.initialize_object_set_with_sampling( engine, targets );
 
         geode::index_t stat_sum{ 0 };
         constexpr geode::index_t N{ 100000 };
@@ -112,21 +115,21 @@ namespace
                 nb_accepted++;
                 switch( result.move_type )
                 {
-                    case geode::Proposal< geode::Point2D >::Type::Birth:
+                    case geode::Proposal< geode::Point2D >::Move::Birth:
                         accepted_birth++;
                         break;
-                    case geode::Proposal< geode::Point2D >::Type::Death:
+                    case geode::Proposal< geode::Point2D >::Move::Death:
                         accepted_death++;
                         break;
-                    case geode::Proposal< geode::Point2D >::Type::Change:
+                    case geode::Proposal< geode::Point2D >::Move::Change:
                         accepted_change++;
                         break;
                     default:
                         break;
                 }
             }
-
-            stat_sum += state.size();
+            // should be change... only pone group here
+            stat_sum += state.nb_objects_in_subset( subset_id );
 
             if( count % 1000 == 0 )
             {
@@ -162,20 +165,24 @@ int main()
         box.add_point( min_point );
         box.add_point( max_point );
 
-        geode::UniformMarkedPointSampler< 2 > sampler( box, std::nullopt );
-
+        geode::uuid subset_id;
+        geode::UniformPointSetSampler< 2 > sampler( box, subset_id );
+        double birth_prob = 0.3;
+        double death_prob = 0.1;
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
-            sampler, 0.1, 0.1 );
+            sampler, birth_prob, death_prob );
 
         geode::GibbsEnergy< geode::Point2D > poisson_energy;
 
         // Add intensity term
         poisson_energy.add_energy_term(
-            std::make_unique< geode::IntensityTerm< geode::Point2D > >( 0.5 ) );
+            std::make_unique< geode::IntensityTerm< geode::Point2D > >(
+                "intensity", 0.5, subset_id ) );
 
         geode::MetropolisHastings< geode::Point2D > mh(
             poisson_energy, std::move( kernel ) );
-        test_steps( mh );
+
+        test_steps( mh, subset_id );
         test_beta_setter( mh );
         test_acceptance_prob_helper();
 

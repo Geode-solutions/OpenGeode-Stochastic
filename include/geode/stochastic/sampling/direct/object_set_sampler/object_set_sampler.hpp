@@ -24,58 +24,42 @@
 #pragma once
 
 #include <geode/stochastic/sampling/random_engine.hpp>
+#include <geode/stochastic/spatial/object_set.hpp>
 
 namespace geode
 {
-    template < typename Geometry >
-    class MarkedObjectSampler
+    template < typename Type >
+    class ObjectSetSampler
     {
     public:
-        using MarkedObj = MarkedObject< Geometry >;
+        ObjectSetSampler( uuid subset_id ) : subset_id_{ subset_id } {}
+        virtual ~ObjectSetSampler() = default;
 
-        virtual ~MarkedObjectSampler() = default;
+        virtual std::pair< Type, uuid > sample(
+            RandomEngine& engine ) const = 0;
 
-        virtual MarkedObj sample( RandomEngine& engine ) const = 0;
-
-        std::optional< const index_t > sample_id(
-            const Configuration< Geometry >& config,
-            RandomEngine& engine ) const
+        std::optional< ObjectId > sample_id(
+            const ObjectSet< Type >& config, RandomEngine& engine ) const
         {
-            if( config.size() == 0 )
+            const auto max_obj_id = config.nb_objects_in_subset( subset_id_ );
+            if( max_obj_id == 0 )
             {
                 return std::nullopt;
             }
             geode::UniformClosed< index_t > uniform_closed_index_t;
             uniform_closed_index_t.min_value = 0;
-            uniform_closed_index_t.max_value = config.size() - 1;
-            return engine.sample_uniform( uniform_closed_index_t );
+            uniform_closed_index_t.max_value = max_obj_id - 1;
+            ObjectId result{ engine.sample_uniform( uniform_closed_index_t ),
+                subset_id_ };
+            return result;
         }
 
-        virtual MarkedObj change(
-            const MarkedObj& object, RandomEngine& engine ) const = 0;
+        virtual std::pair< Type, uuid > change(
+            const Type& object, RandomEngine& engine ) const = 0;
 
-        virtual double log_pdf( const MarkedObj& obj ) const = 0;
+        virtual double log_pdf( const Type& obj ) const = 0;
+
+    protected:
+        uuid subset_id_;
     };
-
-    //    template <typename Geometry>
-    // class MultiTypeSampler
-    //{
-    // public:
-    //    void add_sampler(std::unique_ptr<MarkedObjectSampler<Geometry>>
-    //    sampler)
-    //    {
-    //        samplers_.push_back(std::move(sampler));
-    //    }
-    //
-    //    const MarkedObjectSampler<Geometry>& get_sampler(std::size_t type)
-    //    const
-    //    {
-    //        return *samplers_.at(type);
-    //    }
-    //
-    //    std::size_t num_types() const { return samplers_.size(); }
-    //
-    // private:
-    //    std::vector<std::unique_ptr<MarkedObjectSampler<Geometry>>> samplers_;
-    //};
 } // namespace geode

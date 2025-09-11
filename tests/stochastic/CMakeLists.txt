@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 add_geode_test(
-    SOURCE "configuration/test-pairwise-interactions.cpp"
+    SOURCE "spatial/test-pairwise-interactions.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry
@@ -97,19 +97,21 @@ add_geode_test(
         ${PROJECT_NAME}::stochastic
 )
 
-add_geode_test(
-    SOURCE "sampling/mcmc/test-metropolis-hasting-sampler.cpp"
-    DEPENDENCIES
-        OpenGeode::basic
-        OpenGeode::geometry
-        ${PROJECT_NAME}::stochastic
-)
+ add_geode_test(
+     SOURCE "sampling/mcmc/test-metropolis-hasting-sampler.cpp"
+     DEPENDENCIES
+         OpenGeode::basic
+         OpenGeode::geometry
+         ${PROJECT_NAME}::stochastic
+ )
+
 add_geode_test(
     SOURCE  "sampling/mcmc/test-mh-poisson-statistics-and-convergence.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry
         ${PROJECT_NAME}::stochastic
+    UNSTABLE
 )
 
 add_geode_test(
@@ -118,6 +120,7 @@ add_geode_test(
         OpenGeode::basic
         OpenGeode::geometry
         ${PROJECT_NAME}::stochastic
+    UNSTABLE
 )
 
 

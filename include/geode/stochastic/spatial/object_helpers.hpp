@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2019 - 2025 Geode-solutions
  *
@@ -24,36 +23,53 @@
 
 #pragma once
 
+#include <optional>
+
 #include <geode/stochastic/common.hpp>
-#include <geode/stochastic/sampling/direct/object_set_sampler/object_set_sampler.hpp>
-#include <geode/stochastic/sampling/mcmc/proposal/proposal_kernel.hpp>
+
+#include <geode/geometry/basic_objects/segment.hpp>
+#include <geode/geometry/bounding_box.hpp>
+#include <geode/geometry/point.hpp>
 
 namespace geode
 {
-    template < typename Type >
-    std::unique_ptr< ProposalKernel< Type > > create_birth_death_kernel(
-        const ObjectSetSampler< Type >& sampler, double birth_prob )
-    {
-        auto kernel = std::make_unique< ProposalKernel< Type > >();
-        kernel->add_move( std::make_unique< BirthDeathMove< Type > >(
-            sampler, 1., birth_prob ) );
-        return kernel;
-    }
+    FORWARD_DECLARATION_DIMENSION_CLASS( Point );
+} // namespace geode
+namespace geode
+{
 
     template < typename Type >
-    std::unique_ptr< ProposalKernel< Type > > create_birth_death_change_kernel(
-        const ObjectSetSampler< Type >& sampler,
-        double birth_prob,
-        double death_prob )
+    auto object_bounding_box( const Type& object )
     {
-        auto birth_death_prob = birth_prob + death_prob;
-        OPENGEODE_EXCEPTION( birth_death_prob < 1.,
-            "[Proposal Kernel] - changes should be allowed." );
-        auto kernel = std::make_unique< ProposalKernel< Type > >();
-        kernel->add_move( std::make_unique< BirthDeathMove< Type > >(
-            sampler, birth_death_prob, birth_prob / birth_death_prob ) );
-        kernel->add_move( std::make_unique< ChangeMove< Type > >(
-            sampler, 1. - birth_death_prob ) );
-        return kernel;
+        if constexpr( std::is_same_v< Type, Point2D > )
+        {
+            geode::BoundingBox< 2 > box;
+            box.add_point( object );
+            return box;
+        }
+        else if constexpr( std::is_same_v< Type, Point3D > )
+        {
+            geode::BoundingBox< 3 > box;
+            box.add_point( object );
+            return box;
+        }
+        else
+        {
+            return object.bounding_box();
+        }
     }
+    template < typename Type >
+    auto object_barycenter( const Type& object )
+    {
+        if constexpr( std::is_same_v< Type, Point2D >
+                      || std::is_same_v< Type, Point3D > )
+        {
+            return object;
+        }
+        else
+        {
+            return object.barycenter();
+        }
+    }
+
 } // namespace geode

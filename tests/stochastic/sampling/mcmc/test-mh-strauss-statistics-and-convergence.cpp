@@ -21,12 +21,12 @@
  *
  */
 #include <geode/geometry/point.hpp>
+#include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/intensity_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
-#include <geode/stochastic/sampling/mcmc/proposal/marked_object_sampler/uniform_marked_point_sampler.hpp>
 namespace
 {
 
@@ -36,9 +36,6 @@ namespace
         double nb_points,
         double nb_paires )
     {
-        geode::RandomEngine engine;
-        engine.set_seed( "@mh-test@" );
-
         geode::Point2D min_point{ { 0., 0. } };
         geode::Point2D max_point{ { domain_length, domain_length } };
 
@@ -48,55 +45,53 @@ namespace
 
         double area = domain_length * domain_length;
 
-        geode::UniformMarkedPointSampler< 2 > sampler( box, std::nullopt );
+        geode::uuid subset_id;
+        geode::UniformPointSetSampler< 2 > sampler( box, subset_id );
 
         geode::GibbsEnergy< geode::Point2D > energy;
         energy.add_energy_term(
             std::make_unique< geode::IntensityTerm< geode::Point2D > >(
-                poisson_density ) );
+                "intensity", poisson_density, subset_id ) );
 
         auto interaction_fn =
-            []( const geode::MarkedObject< geode::Point2D >& a,
-                const geode::MarkedObject< geode::Point2D >& b ) {
-                auto dx = a.geometry().value( 0 ) - b.geometry().value( 0 );
-                auto dy = a.geometry().value( 1 ) - b.geometry().value( 1 );
+            []( const geode::Point2D& a, const geode::uuid& a_uuid,
+                const geode::Point2D& b, const geode::uuid& b_uuid ) {
+                geode_unused( a_uuid );
+                geode_unused( b_uuid );
+                auto dx = a.value( 0 ) - b.value( 0 );
+                auto dy = a.value( 1 ) - b.value( 1 );
                 auto dist_sq = dx * dx + dy * dy;
                 return dist_sq < 2;
             };
 
-        geode::PairwiseTerm< geode::Point2D, decltype( interaction_fn ) > term(
-            gamma, interaction_fn );
         energy.add_energy_term( std::make_unique<
             geode::PairwiseTerm< geode::Point2D, decltype( interaction_fn ) > >(
-            gamma, interaction_fn ) );
+            "interaction", gamma, interaction_fn ) );
 
         auto kernel1 =
             geode::create_birth_death_change_kernel< geode::Point2D >(
                 sampler, 0.33, 0.33 );
         geode::MetropolisHastings< geode::Point2D > mh(
             energy, std::move( kernel1 ) );
-
-        geode::Configuration< geode::Point2D > state;
-
-        constexpr geode::index_t burn_in{ 5000 };
-        constexpr geode::index_t N{ 100000 };
-
-        // Burn-in
-        for( const auto i : geode::Range{ burn_in } )
-        {
-            geode_unused( i );
-            mh.step( state, engine );
-        }
+        geode::RandomEngine engine;
+        engine.set_seed( "@mh-test@" );
+        std::unordered_map< geode::uuid, geode::index_t > targets = {
+            { subset_id, 0 }
+        };
+        geode::ObjectSet< geode::Point2D > state =
+            mh.initialize_object_set_with_sampling( engine, targets );
+        mh.walk( state, engine, 1000 );
+        constexpr geode::index_t N{ 1000 };
 
         // Sampling
         double sum_points = 0.0;
         double sum_paires = 0.0;
         for( const auto i : geode::Range{ N } )
         {
-            mh.step( state, engine );
+            mh.walk( state, engine, 1000 );
             auto stats = energy.ordered_energy_term_statistics( state );
-            sum_points += stats[0];
-            sum_paires += stats[1];
+            sum_points += stats[1];
+            sum_paires += stats[0];
         }
 
         double mean_points = sum_points / N;
