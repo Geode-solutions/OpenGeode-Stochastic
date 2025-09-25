@@ -23,28 +23,89 @@
 
 #pragma once
 
+#include <geode/basic/uuid.hpp>
+
 #include <geode/geometry/distance.hpp>
 #include <geode/geometry/point.hpp>
 
 #include <geode/stochastic/spatial/object_helpers.hpp>
+#include <geode/stochastic/spatial/object_set.hpp>
 
 namespace geode
 {
-    struct DistanceCutoffInteraction
+    template < typename Type >
+    class PairwiseInteraction
     {
-        DistanceCutoffInteraction( double distance )
-            : cutoff_distance( distance )
+    public:
+        enum struct SCOPE
+        {
+            all_subset,
+            same_subset, // only within the same subset
+            different_subset // only across subsets
+        };
+
+        explicit PairwiseInteraction() = default;
+        explicit PairwiseInteraction( SCOPE scope ) : scope_( scope ) {}
+        virtual ~PairwiseInteraction() = default;
+
+        double evaluate( const ObjectRef< Type >& object_a,
+            const ObjectRef< Type >& object_b ) const
+        {
+            if( scope_ == SCOPE::same_subset
+                && object_a.subset != object_b.subset )
+            {
+                return 0.0;
+            }
+            if( scope_ == SCOPE::different_subset
+                && object_a.subset == object_b.subset )
+            {
+                return 0.0;
+            }
+            return compute( object_a, object_b );
+        }
+
+        virtual double neighborhood_searching_distance() const = 0;
+
+    protected:
+        virtual double compute( const ObjectRef< Type >& object_a,
+            const ObjectRef< Type >& object_b ) const = 0;
+
+    private:
+        SCOPE scope_{ SCOPE::all_subset };
+    };
+
+    template < typename Type >
+    class EuclideanCutoffInteraction : public PairwiseInteraction< Type >
+    {
+    public:
+        EuclideanCutoffInteraction( double cutoff_distance )
+            : PairwiseInteraction< Type >(), cutoff_distance_( cutoff_distance )
+        {
+        }
+        EuclideanCutoffInteraction( double cutoff_distance,
+            typename PairwiseInteraction< Type >::SCOPE scope )
+            : PairwiseInteraction< Type >( scope ),
+              cutoff_distance_( cutoff_distance )
         {
         }
 
-        template < typename Type >
-        double operator()( const Type& object1, const Type& object2 ) const
+        double neighborhood_searching_distance() const override
+        {
+            return cutoff_distance_;
+        }
+
+    protected:
+        double compute( const ObjectRef< Type >& object_a,
+            const ObjectRef< Type >& object_b ) const override
         {
             auto dist = geode::point_point_distance(
-                object_barycenter( object1 ), object_barycenter( object2 ) );
-            return dist <= cutoff_distance ? 1.0 : 0.0;
+                object_barycenter( object_a.object ),
+                object_barycenter( object_b.object ) );
+            return dist <= cutoff_distance_ ? 1.0 : 0.0;
         }
 
-        double cutoff_distance{ GLOBAL_EPSILON };
+    private:
+        double cutoff_distance_{ GLOBAL_EPSILON };
     };
+
 } // namespace geode

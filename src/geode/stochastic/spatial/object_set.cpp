@@ -4,7 +4,31 @@
 
 #include <geode/geometry/basic_objects/segment.hpp>
 #include <geode/geometry/point.hpp>
+namespace
+{
+    template < geode::index_t dimension >
+    geode::Vector< dimension > enlarge_vector( double distance );
 
+    template <>
+    geode::Vector2D enlarge_vector< 2 >( double distance )
+    {
+        return geode::Vector2D{ { distance, distance } };
+    }
+
+    template <>
+    geode::Vector3D enlarge_vector< 3 >( double distance )
+    {
+        return geode::Vector3D{ { distance, distance, distance } };
+    }
+    template < geode::index_t dimension >
+    void enlarge_box(
+        geode::BoundingBox< dimension >& box, double search_distance )
+    {
+        auto vec = enlarge_vector< dimension >( search_distance );
+        box.add_point( box.min() - vec );
+        box.add_point( box.max() + vec );
+    }
+} // namespace
 namespace geode
 {
     template < typename Type >
@@ -83,66 +107,87 @@ namespace geode
         ObjectId new_object_id{ static_cast< index_t >( group.size() ),
             subset_id };
         group.push_back( std::move( object ) );
-        //  tree_.add( object_bounding_box( object ), object_id );
+        neighborhood_.add( object_bounding_box( object ), new_object_id );
         return new_object_id;
     }
 
     template < typename Type >
     void ObjectSet< Type >::update_object(
-        const ObjectId& old_object, Type&& new_object )
+        const ObjectId& old_object_id, Type&& new_object )
     {
-        auto& subset = get_subset( old_object.subset );
-        OPENGEODE_EXCEPTION( old_object.index < subset.size(),
+        auto& subset = get_subset( old_object_id.subset );
+        OPENGEODE_EXCEPTION( old_object_id.index < subset.size(),
             "[ObjectSet]- index of object to update out of range." );
-        subset[old_object.index] = std::move( new_object );
+        auto old_box = object_bounding_box( subset[old_object_id.index] );
+        auto new_box = object_bounding_box( new_object );
+        neighborhood_.update( old_box, new_box, old_object_id );
+        subset[old_object_id.index] = std::move( new_object );
     }
 
     template < typename Type >
-    void ObjectSet< Type >::remove_object( const ObjectId& object )
+    void ObjectSet< Type >::remove_object( const ObjectId& object_id )
     {
-        auto& subset = get_subset( object.subset );
-        OPENGEODE_EXCEPTION( object.index < subset.size(),
+        auto& subset = get_subset( object_id.subset );
+        OPENGEODE_EXCEPTION( object_id.index < subset.size(),
             "[ObjectSet]- index of object to remove out of range." );
-        subset[object.index] = std::move( subset.back() );
+        neighborhood_.remove(
+            object_bounding_box( subset[object_id.index] ), object_id );
+
+        ObjectId last_id{ static_cast< geode::index_t >( subset.size() - 1 ),
+            object_id.subset };
+        if( object_id != last_id )
+        {
+            auto box_to_move = object_bounding_box( subset.back() );
+            neighborhood_.update( box_to_move, last_id, object_id );
+            subset[object_id.index] = std::move( subset.back() );
+        }
         subset.pop_back();
     }
+
     template < typename Type >
     std::vector< ObjectId > ObjectSet< Type >::neighbors(
         const ObjectId& object_id, double searching_distance ) const
     {
-        geode_unused( searching_distance );
-        std::vector< ObjectId > result;
-        for( const auto& [subset_id, objs] : groups_ )
-        {
-            for( const auto obj_id : geode::Range{ objs.size() } )
-            {
-                const ObjectId cur_object_id{ obj_id, subset_id };
-                if( cur_object_id == object_id )
-                {
-                    continue;
-                }
-                result.push_back( cur_object_id );
-            }
-        }
-        return result;
+        auto box = object_bounding_box( get_object( object_id ) );
+        enlarge_box< Type::dim >( box, searching_distance );
+        return neighborhood_.get_all_neighbor_ids( box, object_id );
+        //        std::vector< ObjectId >
+        //            result;
+        //        for( const auto& [subset_id, objs] : groups_ )
+        //        {
+        //            for( const auto obj_id : geode::Range{ objs.size() } )
+        //            {
+        //                const ObjectId cur_object_id{ obj_id, subset_id };
+        //                if( cur_object_id == object_id )
+        //                {
+        //                    continue;
+        //                }
+        //                result.push_back( cur_object_id );
+        //            }
+        //        }
+        //        return result;
     }
 
     template < typename Type >
     std::vector< ObjectId > ObjectSet< Type >::neighbors(
         const Type& object, double searching_distance ) const
     {
-        geode_unused( searching_distance );
-        geode_unused( object );
-        std::vector< ObjectId > result;
-        for( const auto& [subset_id, objs] : groups_ )
-        {
-            for( const auto obj_id : geode::Range{ objs.size() } )
-            {
-                const ObjectId cur_object_id{ obj_id, subset_id };
-                result.push_back( cur_object_id );
-            }
-        }
-        return result;
+        auto box = object_bounding_box( object );
+        enlarge_box< Type::dim >( box, searching_distance );
+        return neighborhood_.get_all_neighbor_ids( box, std::nullopt );
+
+        //        geode_unused( searching_distance );
+        //        geode_unused( object );
+        //        std::vector< ObjectId > result;
+        //        for( const auto& [subset_id, objs] : groups_ )
+        //        {
+        //            for( const auto obj_id : geode::Range{ objs.size() } )
+        //            {
+        //                const ObjectId cur_object_id{ obj_id, subset_id };
+        //                result.push_back( cur_object_id );
+        //            }
+        //        }
+        //        return result;
     }
 
     template < typename Type >

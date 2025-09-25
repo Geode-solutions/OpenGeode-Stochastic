@@ -23,6 +23,7 @@
 
 #include <geode/stochastic/common.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
+#include <geode/stochastic/spatial/pairwise_interactions.hpp>
 
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/spatial/object_set.hpp>
@@ -45,20 +46,12 @@ void test_normal_positive_pairwise( double gamma,
     const geode::ObjectSet< geode::Point2D >& pattern,
     const geode::uuid& subset_id )
 {
-    auto interaction_fn =
-        []( const geode::Point2D& a, const geode::uuid& a_uuid,
-            const geode::Point2D& b, const geode::uuid& b_uuid ) {
-            geode_unused( a_uuid );
-            geode_unused( b_uuid );
-            // Interaction if distance < sqrt(2.1) for example
-            auto dx = a.value( 0 ) - b.value( 0 );
-            auto dy = a.value( 1 ) - b.value( 1 );
-            auto dist_sq = dx * dx + dy * dy;
-            return dist_sq < 2.1;
-        };
+    auto interaction =
+        std::make_unique< geode::EuclideanCutoffInteraction< geode::Point2D > >(
+            2.1 );
 
-    geode::PairwiseTerm< geode::Point2D, decltype( interaction_fn ) > term(
-        "strauss", gamma, interaction_fn );
+    geode::PairwiseTerm< geode::Point2D > term(
+        "strauss", gamma, std::move( interaction ) );
     auto neg_log_gamma = -std::log( gamma );
 
     // p1 and p2 interact → 1 pair
@@ -70,7 +63,8 @@ void test_normal_positive_pairwise( double gamma,
     // Adding a third point close to p1 → expect new interactions
     geode::Point2D p3{ { 0.5, 0.5 } };
 
-    auto delta_add = term.delta_log_add( pattern, p3, subset_id );
+    geode::ObjectRef< geode::Point2D > p_ref{ p3, subset_id };
+    auto delta_add = term.delta_log_add( pattern, p_ref );
     // p3 interacts with p1 and p2 → 2 new pairs
     OPENGEODE_EXCEPTION( delta_add == neg_log_gamma * 2.,
         "[test pairwise] - delta_log_add wrong value." );
@@ -91,27 +85,20 @@ void test_zero_pairwise( double gamma,
     const geode::ObjectSet< geode::Point2D >& pattern,
     const geode::uuid& subset_id )
 {
-    auto interaction_fn =
-        []( const geode::Point2D& a, const geode::uuid& a_uuid,
-            const geode::Point2D& b, const geode::uuid& b_uuid ) {
-            geode_unused( a_uuid );
-            geode_unused( b_uuid );
-            auto dx = a.value( 0 ) - b.value( 0 );
-            auto dy = a.value( 1 ) - b.value( 1 );
-            auto dist_sq = dx * dx + dy * dy;
-            return dist_sq < 2.1;
-        };
+    auto interaction =
+        std::make_unique< geode::EuclideanCutoffInteraction< geode::Point2D > >(
+            2.1 );
 
-    geode::PairwiseTerm< geode::Point2D, decltype( interaction_fn ) > term(
-        "interaction", gamma, interaction_fn );
+    geode::PairwiseTerm< geode::Point2D > term(
+        "interaction", gamma, std::move( interaction ) );
 
     auto total = term.total_log( pattern );
     OPENGEODE_EXCEPTION(
         std::isinf( total ), "[test zero pairwise] - log_total wrong value." );
 
     geode::Point2D p3{ { 0.5, 0.5 } };
-
-    auto delta_add = term.delta_log_add( pattern, p3, subset_id );
+    geode::ObjectRef< geode::Point2D > p_ref{ p3, subset_id };
+    auto delta_add = term.delta_log_add( pattern, p_ref );
     OPENGEODE_EXCEPTION( std::isinf( delta_add ),
         "[test zero pairwise] - delta_log_add wrong value." );
     geode::ObjectId obj_id{ 0, subset_id };

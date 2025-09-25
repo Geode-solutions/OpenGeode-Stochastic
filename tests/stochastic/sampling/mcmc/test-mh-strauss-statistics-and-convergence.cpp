@@ -53,20 +53,23 @@ namespace
             std::make_unique< geode::IntensityTerm< geode::Point2D > >(
                 "intensity", poisson_density, subset_id ) );
 
-        auto interaction_fn =
-            []( const geode::Point2D& a, const geode::uuid& a_uuid,
-                const geode::Point2D& b, const geode::uuid& b_uuid ) {
-                geode_unused( a_uuid );
-                geode_unused( b_uuid );
-                auto dx = a.value( 0 ) - b.value( 0 );
-                auto dy = a.value( 1 ) - b.value( 1 );
-                auto dist_sq = dx * dx + dy * dy;
-                return dist_sq < 2;
-            };
+        // auto interaction_fn =
+        //     []( const geode::Point2D& a, const geode::uuid& a_uuid,
+        //         const geode::Point2D& b, const geode::uuid& b_uuid ) {
+        //         geode_unused( a_uuid );
+        //         geode_unused( b_uuid );
+        //         auto dx = a.value( 0 ) - b.value( 0 );
+        //         auto dy = a.value( 1 ) - b.value( 1 );
+        //         auto dist_sq = dx * dx + dy * dy;
+        //         return dist_sq < 2;
+        //     };
+        auto interaction = std::make_unique<
+            geode::EuclideanCutoffInteraction< geode::Point2D > >(
+            std::sqrt( 2 ) );
 
-        energy.add_energy_term( std::make_unique<
-            geode::PairwiseTerm< geode::Point2D, decltype( interaction_fn ) > >(
-            "interaction", gamma, interaction_fn ) );
+        energy.add_energy_term(
+            std::make_unique< geode::PairwiseTerm< geode::Point2D > >(
+                "interaction", gamma, std::move( interaction ) ) );
 
         auto kernel1 =
             geode::create_birth_death_change_kernel< geode::Point2D >(
@@ -81,7 +84,7 @@ namespace
         geode::ObjectSet< geode::Point2D > state =
             mh.initialize_object_set_with_sampling( engine, targets );
         mh.walk( state, engine, 1000 );
-        constexpr geode::index_t N{ 1000 };
+        constexpr geode::index_t N{ 5000 };
 
         // Sampling
         double sum_points = 0.0;
