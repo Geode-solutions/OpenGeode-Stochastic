@@ -52,8 +52,8 @@ void test_normal_positive_intensity( double lambda,
         "[test intensity]- total_log wrong value." );
 
     geode::Point2D p3{ { 2., 2. } };
-
-    double delta_add = term.delta_log_add( pattern, p3, subset_id );
+    geode::ObjectRef< geode::Point2D > p_ref{ p3, subset_id };
+    double delta_add = term.delta_log_add( pattern, p_ref );
     OPENGEODE_EXCEPTION( delta_add == neg_log_lambda * 1.,
         "[test intensity]- delta_log_add wrong value." );
 
@@ -81,8 +81,8 @@ void test_normal_zero_intensity( double lambda,
         std::isinf( total ), "[test zero intensity]- total_log wrong value." );
 
     geode::Point2D p3{ { 2., 2. } };
-
-    double delta_add = term.delta_log_add( pattern, p3, subset_id );
+    geode::ObjectRef< geode::Point2D > p_ref{ p3, subset_id };
+    double delta_add = term.delta_log_add( pattern, p_ref );
     OPENGEODE_EXCEPTION( std::isinf( delta_add ),
         "[test zero intensity]- delta_log_add wrong value." );
 

@@ -42,7 +42,7 @@ namespace
         geode::ObjectSet< geode::Point2D > state =
             mh.initialize_object_set_with_sampling( engine, group_targets );
         mh.walk( state, engine, 500 );
-        constexpr geode::index_t N{ 1000 };
+        constexpr geode::index_t N{ 5000 };
 
         // Sampling
 

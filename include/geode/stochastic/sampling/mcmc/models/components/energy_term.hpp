@@ -125,8 +125,7 @@ namespace geode
         virtual double total_log( const ObjectSet< Type >& state ) const = 0;
 
         virtual double delta_log_add( const ObjectSet< Type >& state,
-            const Type& new_object,
-            const uuid& new_object_subset_id ) const = 0;
+            const ObjectRef< Type >& new_object ) const = 0;
 
         virtual double delta_log_remove(
             const ObjectSet< Type >& state, ObjectId object_id ) const = 0;

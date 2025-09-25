@@ -51,10 +51,9 @@ namespace geode
         }
 
         double delta_log_add( const ObjectSet< Type >& /*state*/,
-            const Type& /*new_object*/,
-            const uuid& new_object_subset_id ) const override
+            const ObjectRef< Type >& new_object ) const override
         {
-            if( !this->is_targeted_subset( new_object_subset_id ) )
+            if( !this->is_targeted_subset( new_object.subset ) )
             {
                 return 0.0;
             }

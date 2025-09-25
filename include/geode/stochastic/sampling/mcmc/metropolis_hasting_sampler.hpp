@@ -231,9 +231,12 @@ namespace geode
         {
             OPENGEODE_ASSERT( proposal.new_object.has_value(),
                 "[MH] Birth proposal has no new_object" );
-            const auto delta_log_energy = energy_.delta_log_energy_add( state,
+            geode::ObjectRef< Type > new_object{
                 proposal.new_object.value().first,
-                proposal.new_object.value().second );
+                proposal.new_object.value().second
+            };
+            const auto delta_log_energy =
+                energy_.delta_log_energy_add( state, new_object );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
                 []( auto& s, auto& p ) {
                     s.add_object( std::move( p.new_object.value().first ),
