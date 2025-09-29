@@ -62,9 +62,7 @@ void test_normal_positive_intensity( double lambda,
 
     OPENGEODE_EXCEPTION( delta_remove == neg_log_lambda * -1.,
         "[test intensity]- delta_log_remove wrong value." );
-
-    double delta_change =
-        term.delta_log_change( pattern, obj_id, p3, subset_id );
+    double delta_change = term.delta_log_change( pattern, obj_id, p_ref );
     OPENGEODE_EXCEPTION(
         delta_change == 0., "[test intensity]- delta_log_change wrong value." );
 }
@@ -91,9 +89,7 @@ void test_normal_zero_intensity( double lambda,
     double delta_remove = term.delta_log_remove( pattern, obj_id );
     OPENGEODE_EXCEPTION( delta_remove == 0.,
         "[test zero intensity]- delta_log_remove wrong value." );
-
-    double delta_change =
-        term.delta_log_change( pattern, obj_id, p3, subset_id );
+    double delta_change = term.delta_log_change( pattern, obj_id, p_ref );
     OPENGEODE_EXCEPTION( delta_change == 0.,
         "[test zero intensity]- delta_log_change wrong value." );
 }

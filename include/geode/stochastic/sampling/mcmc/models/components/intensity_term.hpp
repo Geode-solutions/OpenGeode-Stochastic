@@ -61,7 +61,7 @@ namespace geode
         }
 
         double delta_log_remove( const ObjectSet< Type >& /*state*/,
-            ObjectId object_id ) const override
+            const ObjectId& object_id ) const override
         {
             if( !this->is_targeted_subset( object_id.subset ) )
             {
@@ -71,9 +71,8 @@ namespace geode
         }
 
         double delta_log_change( const ObjectSet< Type >& /*state*/,
-            ObjectId /*old_object_id*/,
-            const Type& /*new_object*/,
-            const uuid& /*new_object_subset_id*/ ) const override
+            const ObjectId& /*old_object_id*/,
+            const ObjectRef< Type >& /*new_object*/ ) const override
         {
             return 0.0;
         }

@@ -266,10 +266,12 @@ namespace geode
                 "[MH] Change proposal has no new_object" );
             OPENGEODE_ASSERT( proposal.old_object_id.has_value(),
                 "[MH] Change proposal has no index" );
-            const auto delta_log_energy = energy_.delta_log_energy_change(
-                state, proposal.old_object_id.value(),
+            geode::ObjectRef< Type > new_object{
                 proposal.new_object.value().first,
-                proposal.new_object.value().second );
+                proposal.new_object.value().second
+            };
+            const auto delta_log_energy = energy_.delta_log_energy_change(
+                state, proposal.old_object_id.value(), new_object );
             // should we test that objects are in the same group?
             // should be ensured by the dynamic
             return accept_or_reject( proposal, state, engine, delta_log_energy,

@@ -74,7 +74,7 @@ void test_normal_positive_pairwise( double gamma,
     OPENGEODE_EXCEPTION( delta_remove == neg_log_gamma * -1.,
         "[test pairwise] - delta_log_remove wrong value." );
 
-    auto delta_change = term.delta_log_change( pattern, obj_id, p3, subset_id );
+    auto delta_change = term.delta_log_change( pattern, obj_id, p_ref );
     // Replacing p1 with p3 changes interactions: p3 interacts with p2 → 1 pair
     // Old p1 interacted with p2 → 1 pair → no net change
     OPENGEODE_EXCEPTION(
@@ -106,7 +106,7 @@ void test_zero_pairwise( double gamma,
     OPENGEODE_EXCEPTION( delta_remove == 0.,
         "[test zero pairwise] - delta_log_remove wrong value." );
 
-    auto delta_change = term.delta_log_change( pattern, obj_id, p3, subset_id );
+    auto delta_change = term.delta_log_change( pattern, obj_id, p_ref );
     OPENGEODE_EXCEPTION( delta_change == 0.,
         "[test zero pairwise] - delta_log_change wrong value." );
 }

@@ -79,8 +79,8 @@ namespace geode
             return this->contribution( delta );
         }
 
-        double delta_log_remove(
-            const ObjectSet< Type >& state, ObjectId object_id ) const override
+        double delta_log_remove( const ObjectSet< Type >& state,
+            const ObjectId& object_id ) const override
         {
             if( !this->is_targeted_subset( object_id.subset ) )
             {
@@ -102,12 +102,11 @@ namespace geode
         }
 
         double delta_log_change( const ObjectSet< Type >& state,
-            ObjectId old_object_id,
-            const Type& new_object,
-            const uuid& new_object_subset_id ) const override
+            const ObjectId& old_object_id,
+            const ObjectRef< Type >& new_object ) const override
         {
             if( !this->is_targeted_subset( old_object_id.subset )
-                || !this->is_targeted_subset( new_object_subset_id ) )
+                || !this->is_targeted_subset( new_object.subset ) )
             {
                 return 0.0;
             }
@@ -128,9 +127,8 @@ namespace geode
             }
 
             // Add new object's interactions
-            ObjectRef< Type > object_to_add{ new_object, new_object_subset_id };
-            const auto new_neighbors = state.neighbors(
-                new_object, interaction_->neighborhood_searching_distance() );
+            const auto new_neighbors = state.neighbors( new_object.object,
+                interaction_->neighborhood_searching_distance() );
             for( auto neigh_id : new_neighbors )
             {
                 if( old_object_id == neigh_id )
@@ -139,7 +137,7 @@ namespace geode
                 }
                 ObjectRef< Type > neigh_object{ state.get_object( neigh_id ),
                     neigh_id.subset };
-                delta += interaction_->evaluate( object_to_add, neigh_object );
+                delta += interaction_->evaluate( new_object, neigh_object );
             }
 
             return this->contribution( delta );

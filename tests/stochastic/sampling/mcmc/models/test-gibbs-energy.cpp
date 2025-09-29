@@ -90,7 +90,7 @@ void test_gibbs_energy( const geode::uuid& subset_id )
 
     // Change point test
     double delta_change =
-        gibbs_energy.delta_log_energy_change( pattern, obj_id, p3, subset_id );
+        gibbs_energy.delta_log_energy_change( pattern, obj_id, p_ref );
     OPENGEODE_EXCEPTION( std::isfinite( delta_change ),
         "[test gibbs] Delta change should be finite." );
 
