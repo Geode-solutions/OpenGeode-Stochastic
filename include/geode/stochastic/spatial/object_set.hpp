@@ -23,14 +23,14 @@
 
 #pragma once
 
-#include <vector>
+#include <absl/container/flat_hash_map.h>
 
 #include <geode/basic/uuid.hpp>
 #include <geode/geometry/basic_objects/segment.hpp>
 #include <geode/geometry/bounding_box.hpp>
 #include <geode/geometry/point.hpp>
+#include <geode/stochastic/spatial/object_neighborhood.hpp>
 
-// #include <geode/stochastic/object_set/neighbors_object_ids.hpp>
 namespace geode
 {
     struct SubSetDescriptor
@@ -44,14 +44,11 @@ namespace geode
         }
     };
 
-    struct ObjectId
+    template < typename Type >
+    struct ObjectRef
     {
-        index_t index;
+        const Type& object;
         uuid subset;
-        bool operator==( const ObjectId& other ) const noexcept
-        {
-            return index == other.index && subset == other.subset;
-        }
     };
 } // namespace geode
 
@@ -86,7 +83,7 @@ namespace geode
         std::vector< Type >& get_subset( const uuid& subset_id );
 
     private:
-        std::unordered_map< uuid, std::vector< Type > > groups_;
-        // ObjectIndexRTree< 2 > tree_;
+        absl::flat_hash_map< uuid, std::vector< Type > > groups_;
+        ObjectNeighborhood< Type::dim > neighborhood_;
     };
 } // namespace geode

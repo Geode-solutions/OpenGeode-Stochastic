@@ -79,15 +79,13 @@ namespace geode
         }
 
         double delta_log_energy_add( const ObjectSet< Type >& state,
-            const Type& new_object,
-            const uuid& new_object_subset_id ) const
+            const ObjectRef< Type >& new_object ) const
         {
             double log_energy{ 0.0 };
             for( const auto& [id, term] : energy_terms_ )
             {
                 geode_unused( id );
-                log_energy += term->delta_log_add(
-                    state, new_object, new_object_subset_id );
+                log_energy += term->delta_log_add( state, new_object );
             }
             return log_energy;
         }
@@ -106,15 +104,14 @@ namespace geode
 
         double delta_log_energy_change( const ObjectSet< Type >& state,
             ObjectId old_object_id,
-            const Type& new_object,
-            const uuid& new_object_subset_id ) const
+            const ObjectRef< Type >& new_object ) const
         {
             double log_energy{ 0.0 };
             for( const auto& [id, term] : energy_terms_ )
             {
                 geode_unused( id );
-                log_energy += term->delta_log_change(
-                    state, old_object_id, new_object, new_object_subset_id );
+                log_energy +=
+                    term->delta_log_change( state, old_object_id, new_object );
             }
             return log_energy;
         }

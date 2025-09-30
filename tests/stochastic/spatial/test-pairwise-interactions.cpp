@@ -29,36 +29,45 @@ namespace
 {
     void test_interaction()
     {
-        geode::DistanceCutoffInteraction interaction( 2.0 );
+        geode::EuclideanCutoffInteraction< geode::Point2D > interaction( 2.0 );
 
         geode::Point2D p1{ { 0., 0. } };
         geode::Point2D p2{ { 1., 1. } }; // distance = 1.44 < 2.0
+        geode::uuid id{};
 
-        double result = interaction( p1, p2 );
+        double result =
+            interaction.evaluate( geode::ObjectRef< geode::Point2D >{ p1, id },
+                geode::ObjectRef< geode::Point2D >{ p2, id } );
         OPENGEODE_EXCEPTION( result == 1.0,
-            "[DistanceCutoffInteraction] Failed for inside cutoff case." );
+            "[EuclideanCutoffInteraction] Failed for inside cutoff case." );
     }
     void test_no_interaction()
     {
-        geode::DistanceCutoffInteraction interaction( 2.0 );
+        geode::EuclideanCutoffInteraction< geode::Point2D > interaction( 2.0 );
 
         geode::Point2D p1{ { 0., 0. } };
         geode::Point2D p2{ { 3., 0. } }; // distance = 3.0 > 2.0
+        geode::uuid id{};
 
-        double result = interaction( p1, p2 );
+        double result =
+            interaction.evaluate( geode::ObjectRef< geode::Point2D >{ p1, id },
+                geode::ObjectRef< geode::Point2D >{ p2, id } );
         OPENGEODE_EXCEPTION( result == 0.0,
-            "[DistanceCutoffInteraction] Failed for outside cutoff case." );
+            "[EuclideanCutoffInteraction] Failed for outside cutoff case." );
     }
     void test_limit_interaction()
     {
-        geode::DistanceCutoffInteraction interaction( 2.0 );
+        geode::EuclideanCutoffInteraction< geode::Point2D > interaction( 2.0 );
 
         geode::Point2D p1{ { 0., 0. } };
         geode::Point2D p2{ { 2., 0. } }; // distance = 2.0 == cutoff
+        geode::uuid id{};
 
-        double result = interaction( p1, p2 );
+        double result =
+            interaction.evaluate( geode::ObjectRef< geode::Point2D >{ p1, id },
+                geode::ObjectRef< geode::Point2D >{ p2, id } );
         OPENGEODE_EXCEPTION( result == 1.0,
-            "[DistanceCutoffInteraction] Failed for exact cutoff case." );
+            "[EuclideanCutoffInteraction] Failed for exact cutoff case." );
     }
 } // namespace
 

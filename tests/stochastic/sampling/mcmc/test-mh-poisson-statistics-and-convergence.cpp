@@ -35,14 +35,14 @@ namespace
     // ------------------------------------------------------------
     void test_convergence_one_subsete(
         geode::MetropolisHastings< geode::Point2D >& mh,
-        const std::unordered_map< geode::uuid, geode::index_t >& group_targets,
+        const absl::flat_hash_map< geode::uuid, geode::index_t >& group_targets,
         geode::RandomEngine& engine,
         const geode::GibbsEnergy< geode::Point2D >& energy )
     {
         geode::ObjectSet< geode::Point2D > state =
             mh.initialize_object_set_with_sampling( engine, group_targets );
         mh.walk( state, engine, 500 );
-        constexpr geode::index_t N{ 1000 };
+        constexpr geode::index_t N{ 5000 };
 
         // Sampling
 
@@ -103,7 +103,7 @@ namespace
             std::make_unique< geode::IntensityTerm< geode::Point2D > >(
                 "intensity", poisson_density, subset_id ) );
 
-        std::unordered_map< geode::uuid, geode::index_t > targets = {
+        absl::flat_hash_map< geode::uuid, geode::index_t > targets = {
             { subset_id,
                 static_cast< geode::index_t >( poisson_density * area ) }
         };

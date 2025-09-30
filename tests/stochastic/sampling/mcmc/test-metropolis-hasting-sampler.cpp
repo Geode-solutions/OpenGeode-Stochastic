@@ -76,7 +76,7 @@ namespace
     {
         geode::RandomEngine engine;
 
-        std::unordered_map< geode::uuid, geode::index_t > targets = {
+        absl::flat_hash_map< geode::uuid, geode::index_t > targets = {
             { subset_id, 20 }
         };
         geode::ObjectSet< geode::Point2D > state =

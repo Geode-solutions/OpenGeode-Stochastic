@@ -56,18 +56,13 @@ void test_gibbs_energy( const geode::uuid& subset_id )
             "intensity", 0.5, subset_id ) );
 
     // Add pairwise term with trivial interaction: always counts 1 for each pair
-    auto interaction_fn =
-        []( const geode::Point2D& a, const geode::uuid& a_uuid,
-            const geode::Point2D& b, const geode::uuid& b_uuid ) {
-            geode_unused( a );
-            geode_unused( b );
-            geode_unused( a_uuid );
-            geode_unused( b_uuid );
-            return true;
-        };
-    gibbs_energy.add_energy_term( std::make_unique<
-        geode::PairwiseTerm< geode::Point2D, decltype( interaction_fn ) > >(
-        "interaction", 0.8, interaction_fn ) );
+    auto interaction =
+        std::make_unique< geode::EuclideanCutoffInteraction< geode::Point2D > >(
+            1000000 );
+
+    gibbs_energy.add_energy_term(
+        std::make_unique< geode::PairwiseTerm< geode::Point2D > >(
+            "interaction", 0.8, std::move( interaction ) ) );
 
     OPENGEODE_EXCEPTION( gibbs_energy.number_of_energy_terms() == 2,
         "[test gibbs] Wrong number of components after adding terms." );
@@ -81,8 +76,8 @@ void test_gibbs_energy( const geode::uuid& subset_id )
 
     // Add new point to test delta_add
     geode::Point2D p3{ { 2., 2. } };
-    double delta_add =
-        gibbs_energy.delta_log_energy_add( pattern, p3, subset_id );
+    geode::ObjectRef< geode::Point2D > p_ref{ p3, subset_id };
+    double delta_add = gibbs_energy.delta_log_energy_add( pattern, p_ref );
     OPENGEODE_EXCEPTION( std::isfinite( delta_add ),
         "[test gibbs] Delta add should be finite." );
 
@@ -95,7 +90,7 @@ void test_gibbs_energy( const geode::uuid& subset_id )
 
     // Change point test
     double delta_change =
-        gibbs_energy.delta_log_energy_change( pattern, obj_id, p3, subset_id );
+        gibbs_energy.delta_log_energy_change( pattern, obj_id, p_ref );
     OPENGEODE_EXCEPTION( std::isfinite( delta_change ),
         "[test gibbs] Delta change should be finite." );
 
