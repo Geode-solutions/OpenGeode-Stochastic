@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <vector>
+#include <absl/container/flat_hash_map.h>
 
 #include <geode/basic/uuid.hpp>
 #include <geode/geometry/basic_objects/segment.hpp>
@@ -83,7 +83,7 @@ namespace geode
         std::vector< Type >& get_subset( const uuid& subset_id );
 
     private:
-        std::unordered_map< uuid, std::vector< Type > > groups_;
+        absl::flat_hash_map< uuid, std::vector< Type > > groups_;
         ObjectNeighborhood< Type::dim > neighborhood_;
     };
 } // namespace geode

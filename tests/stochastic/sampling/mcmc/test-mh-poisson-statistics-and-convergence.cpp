@@ -35,7 +35,7 @@ namespace
     // ------------------------------------------------------------
     void test_convergence_one_subsete(
         geode::MetropolisHastings< geode::Point2D >& mh,
-        const std::unordered_map< geode::uuid, geode::index_t >& group_targets,
+        const absl::flat_hash_map< geode::uuid, geode::index_t >& group_targets,
         geode::RandomEngine& engine,
         const geode::GibbsEnergy< geode::Point2D >& energy )
     {
@@ -103,7 +103,7 @@ namespace
             std::make_unique< geode::IntensityTerm< geode::Point2D > >(
                 "intensity", poisson_density, subset_id ) );
 
-        std::unordered_map< geode::uuid, geode::index_t > targets = {
+        absl::flat_hash_map< geode::uuid, geode::index_t > targets = {
             { subset_id,
                 static_cast< geode::index_t >( poisson_density * area ) }
         };

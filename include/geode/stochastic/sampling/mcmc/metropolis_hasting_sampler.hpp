@@ -62,7 +62,7 @@ namespace geode
 
         ObjectSet< Type > initialize_object_set_with_sampling(
             RandomEngine& engine,
-            const std::unordered_map< uuid, index_t >& group_targets ) const
+            const absl::flat_hash_map< uuid, index_t >& group_targets ) const
         {
             ObjectSet< Type > config;
             for( const auto& [subset_id, target] : group_targets )
