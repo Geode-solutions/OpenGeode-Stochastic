@@ -27,7 +27,7 @@
 
 namespace geode
 {
-    template < typename Type >
+    template < typename ObjectType >
     struct Proposal
     {
         enum class Move
@@ -39,25 +39,28 @@ namespace geode
         };
 
         Move type{ Move::Invalid };
-        std::optional< std::pair< Type, uuid > > new_object; // for birth/change
+        std::optional< std::pair< ObjectType, uuid > >
+            new_object; // for birth/change
         std::optional< ObjectId > old_object_id; // for death/change
         double log_forward_prob{ 0. };
         double log_backward_prob{ 0. };
     };
 
     // Move does not hold the sampler... should it?
-    template < typename Type >
+    template < typename ObjectType >
     class Move
     {
     public:
-        Move( const ObjectSetSampler< Type >& sampler, double probability )
+        Move(
+            const ObjectSetSampler< ObjectType >& sampler, double probability )
             : sampler_( sampler ), p_move_{ probability }
         {
         }
         virtual ~Move() = default;
 
-        virtual Proposal< Type > propose_move(
-            const ObjectSet< Type >& current, RandomEngine& engine ) const = 0;
+        virtual Proposal< ObjectType > propose_move(
+            const ObjectSet< ObjectType >& current,
+            RandomEngine& engine ) const = 0;
 
         double probability() const
         {
@@ -65,18 +68,19 @@ namespace geode
         }
 
     protected:
-        const ObjectSetSampler< Type >& sampler_;
+        const ObjectSetSampler< ObjectType >& sampler_;
         double p_move_{ 1.0 };
     };
 
-    template < typename Type >
-    class BirthDeathMove : public Move< Type >
+    template < typename ObjectType >
+    class BirthDeathMove : public Move< ObjectType >
     {
     public:
-        BirthDeathMove( const ObjectSetSampler< Type >& sampler,
+        BirthDeathMove( const ObjectSetSampler< ObjectType >& sampler,
             double probability,
             double birth_ratio )
-            : Move< Type >( sampler, probability ), birth_ratio_( birth_ratio )
+            : Move< ObjectType >( sampler, probability ),
+              birth_ratio_( birth_ratio )
         {
             OPENGEODE_EXCEPTION( birth_ratio_ > 0. && birth_ratio_ < 1.,
                 "[BirthDeathMove]-the ratio of birth over mover should be in "
@@ -86,7 +90,8 @@ namespace geode
             log_p_death_ = std::log( this->p_move_ * ( 1.0 - birth_ratio ) );
         }
 
-        Proposal< Type > propose_move( const ObjectSet< Type >& current,
+        Proposal< ObjectType > propose_move(
+            const ObjectSet< ObjectType >& current,
             RandomEngine& engine ) const override
         {
             if( engine.sample_bernoulli( birth_ratio_ ) )
@@ -97,11 +102,11 @@ namespace geode
         }
 
     private:
-        Proposal< Type > propose_birth_move(
-            const ObjectSet< Type >& current, RandomEngine& engine ) const
+        Proposal< ObjectType > propose_birth_move(
+            const ObjectSet< ObjectType >& current, RandomEngine& engine ) const
         {
-            Proposal< Type > birth;
-            birth.type = Proposal< Type >::Move::Birth;
+            Proposal< ObjectType > birth;
+            birth.type = Proposal< ObjectType >::Move::Birth;
             birth.new_object = this->sampler_.sample( engine );
             if( !birth.new_object.has_value() )
             {
@@ -116,17 +121,17 @@ namespace geode
             return birth;
         }
 
-        Proposal< Type > propose_death_move(
-            const ObjectSet< Type >& current, RandomEngine& engine ) const
+        Proposal< ObjectType > propose_death_move(
+            const ObjectSet< ObjectType >& current, RandomEngine& engine ) const
         {
-            Proposal< Type > death;
+            Proposal< ObjectType > death;
             death.old_object_id = this->sampler_.sample_id( current, engine );
             if( !death.old_object_id.has_value() )
             {
                 return death;
             }
             const auto& cur_object_id = death.old_object_id.value();
-            death.type = Proposal< Type >::Move::Death;
+            death.type = Proposal< ObjectType >::Move::Death;
             death.log_forward_prob = log_p_death_
                                      - std::log( current.nb_objects_in_subset(
                                          cur_object_id.subset ) );
@@ -142,26 +147,27 @@ namespace geode
         double log_p_death_{ 0. };
     };
 
-    template < typename Type >
-    class ChangeMove : public Move< Type >
+    template < typename ObjectType >
+    class ChangeMove : public Move< ObjectType >
     {
     public:
         ChangeMove(
-            const ObjectSetSampler< Type >& sampler, double probability )
-            : Move< Type >( sampler, probability )
+            const ObjectSetSampler< ObjectType >& sampler, double probability )
+            : Move< ObjectType >( sampler, probability )
         {
         }
 
-        Proposal< Type > propose_move( const ObjectSet< Type >& current,
+        Proposal< ObjectType > propose_move(
+            const ObjectSet< ObjectType >& current,
             RandomEngine& engine ) const override
         {
-            Proposal< Type > change;
+            Proposal< ObjectType > change;
             change.old_object_id = this->sampler_.sample_id( current, engine );
             if( !change.old_object_id.has_value() )
             {
                 return change;
             }
-            change.type = Proposal< Type >::Move::Change;
+            change.type = Proposal< ObjectType >::Move::Change;
             const auto& object_to_change =
                 current.get_object( change.old_object_id.value() );
             change.new_object =

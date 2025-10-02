@@ -30,29 +30,30 @@
 
 namespace geode
 {
-    template < typename Type >
-    std::unique_ptr< ProposalKernel< Type > > create_birth_death_kernel(
-        const ObjectSetSampler< Type >& sampler, double birth_prob )
+    template < typename ObjectType >
+    std::unique_ptr< ProposalKernel< ObjectType > > create_birth_death_kernel(
+        const ObjectSetSampler< ObjectType >& sampler, double birth_prob )
     {
-        auto kernel = std::make_unique< ProposalKernel< Type > >();
-        kernel->add_move( std::make_unique< BirthDeathMove< Type > >(
+        auto kernel = std::make_unique< ProposalKernel< ObjectType > >();
+        kernel->add_move( std::make_unique< BirthDeathMove< ObjectType > >(
             sampler, 1., birth_prob ) );
         return kernel;
     }
 
-    template < typename Type >
-    std::unique_ptr< ProposalKernel< Type > > create_birth_death_change_kernel(
-        const ObjectSetSampler< Type >& sampler,
-        double birth_prob,
-        double death_prob )
+    template < typename ObjectType >
+    std::unique_ptr< ProposalKernel< ObjectType > >
+        create_birth_death_change_kernel(
+            const ObjectSetSampler< ObjectType >& sampler,
+            double birth_prob,
+            double death_prob )
     {
         auto birth_death_prob = birth_prob + death_prob;
         OPENGEODE_EXCEPTION( birth_death_prob < 1.,
             "[Proposal Kernel] - changes should be allowed." );
-        auto kernel = std::make_unique< ProposalKernel< Type > >();
-        kernel->add_move( std::make_unique< BirthDeathMove< Type > >(
+        auto kernel = std::make_unique< ProposalKernel< ObjectType > >();
+        kernel->add_move( std::make_unique< BirthDeathMove< ObjectType > >(
             sampler, birth_death_prob, birth_prob / birth_death_prob ) );
-        kernel->add_move( std::make_unique< ChangeMove< Type > >(
+        kernel->add_move( std::make_unique< ChangeMove< ObjectType > >(
             sampler, 1. - birth_death_prob ) );
         return kernel;
     }
