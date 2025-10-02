@@ -29,29 +29,29 @@
 namespace geode
 {
     /// ObjectCountTerm
-    template < typename Type >
-    class IntensityTerm : public EnergyTerm< Type >
+    template < typename ObjectType >
+    class DensityTerm : public EnergyTerm< ObjectType >
     {
     public:
-        explicit IntensityTerm( std::string_view name, double lambda )
-            : EnergyTerm< Type >( name, lambda )
+        explicit DensityTerm( std::string_view name, double lambda )
+            : EnergyTerm< ObjectType >( name, lambda )
         {
         }
 
-        explicit IntensityTerm(
+        explicit DensityTerm(
             std::string_view name, double lambda, const uuid& subset_id )
-            : EnergyTerm< Type >( name, lambda, subset_id )
+            : EnergyTerm< ObjectType >( name, lambda, subset_id )
         {
         }
 
-        double total_log( const ObjectSet< Type >& state ) const override
+        double total_log( const ObjectSet< ObjectType >& state ) const override
         {
             const auto n = this->statistic( state );
             return this->contribution( n );
         }
 
-        double delta_log_add( const ObjectSet< Type >& /*state*/,
-            const ObjectRef< Type >& new_object ) const override
+        double delta_log_add( const ObjectSet< ObjectType >& /*state*/,
+            const ObjectRef< ObjectType >& new_object ) const override
         {
             if( !this->is_targeted_subset( new_object.subset ) )
             {
@@ -60,7 +60,7 @@ namespace geode
             return this->contribution( 1.0 );
         }
 
-        double delta_log_remove( const ObjectSet< Type >& /*state*/,
+        double delta_log_remove( const ObjectSet< ObjectType >& /*state*/,
             const ObjectId& object_id ) const override
         {
             if( !this->is_targeted_subset( object_id.subset ) )
@@ -70,14 +70,14 @@ namespace geode
             return this->contribution( -1.0 );
         }
 
-        double delta_log_change( const ObjectSet< Type >& /*state*/,
+        double delta_log_change( const ObjectSet< ObjectType >& /*state*/,
             const ObjectId& /*old_object_id*/,
-            const ObjectRef< Type >& /*new_object*/ ) const override
+            const ObjectRef< ObjectType >& /*new_object*/ ) const override
         {
             return 0.0;
         }
 
-        double statistic( const ObjectSet< Type >& state ) const override
+        double statistic( const ObjectSet< ObjectType >& state ) const override
         {
             if( this->targeted_subset_id() )
             {

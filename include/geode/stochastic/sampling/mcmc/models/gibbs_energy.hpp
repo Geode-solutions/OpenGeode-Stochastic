@@ -28,7 +28,7 @@
 #include <absl/container/flat_hash_map.h>
 namespace geode
 {
-    template < typename Type >
+    template < typename ObjectType >
     class GibbsEnergy
     {
         OPENGEODE_DISABLE_COPY_AND_MOVE( GibbsEnergy );
@@ -37,7 +37,7 @@ namespace geode
         GibbsEnergy() = default;
         ~GibbsEnergy() = default;
 
-        void add_energy_term( std::unique_ptr< EnergyTerm< Type > > term )
+        void add_energy_term( std::unique_ptr< EnergyTerm< ObjectType > > term )
         {
             energy_terms_.emplace( term->id(), std::move( term ) );
         }
@@ -67,7 +67,7 @@ namespace geode
             return vector_string( values );
         }
 
-        double total_log_energy( const ObjectSet< Type >& state ) const
+        double total_log_energy( const ObjectSet< ObjectType >& state ) const
         {
             double log_energy{ 0.0 };
             for( const auto& [id, term] : energy_terms_ )
@@ -78,8 +78,8 @@ namespace geode
             return log_energy;
         }
 
-        double delta_log_energy_add( const ObjectSet< Type >& state,
-            const ObjectRef< Type >& new_object ) const
+        double delta_log_energy_add( const ObjectSet< ObjectType >& state,
+            const ObjectRef< ObjectType >& new_object ) const
         {
             double log_energy{ 0.0 };
             for( const auto& [id, term] : energy_terms_ )
@@ -91,7 +91,7 @@ namespace geode
         }
 
         double delta_log_energy_remove(
-            const ObjectSet< Type >& state, ObjectId object_id ) const
+            const ObjectSet< ObjectType >& state, ObjectId object_id ) const
         {
             double log_energy{ 0.0 };
             for( const auto& [id, term] : energy_terms_ )
@@ -102,9 +102,9 @@ namespace geode
             return log_energy;
         }
 
-        double delta_log_energy_change( const ObjectSet< Type >& state,
+        double delta_log_energy_change( const ObjectSet< ObjectType >& state,
             ObjectId old_object_id,
-            const ObjectRef< Type >& new_object ) const
+            const ObjectRef< ObjectType >& new_object ) const
         {
             double log_energy{ 0.0 };
             for( const auto& [id, term] : energy_terms_ )
@@ -117,7 +117,7 @@ namespace geode
         }
 
         std::vector< double > ordered_energy_term_statistics(
-            const ObjectSet< Type >& state ) const
+            const ObjectSet< ObjectType >& state ) const
         {
             std::vector< double > values;
             values.reserve( energy_terms_.size() );
@@ -131,7 +131,7 @@ namespace geode
         }
 
         std::string ordered_energy_term_statistics_string(
-            const ObjectSet< Type >& state ) const
+            const ObjectSet< ObjectType >& state ) const
         {
             const auto stats = ordered_energy_term_statistics( state );
             return vector_string( stats );
@@ -151,7 +151,7 @@ namespace geode
 
     private:
         absl::flat_hash_map< geode::uuid,
-            std::unique_ptr< EnergyTerm< Type > > >
+            std::unique_ptr< EnergyTerm< ObjectType > > >
             energy_terms_;
     };
 

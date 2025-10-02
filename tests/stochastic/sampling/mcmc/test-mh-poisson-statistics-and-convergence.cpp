@@ -23,7 +23,7 @@
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
-#include <geode/stochastic/sampling/mcmc/models/components/intensity_term.hpp>
+#include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
 #include <geode/stochastic/spatial/object_set.hpp>
@@ -100,7 +100,7 @@ namespace
 
         geode::GibbsEnergy< geode::Point2D > poisson_energy;
         poisson_energy.add_energy_term(
-            std::make_unique< geode::IntensityTerm< geode::Point2D > >(
+            std::make_unique< geode::DensityTerm< geode::Point2D > >(
                 "intensity", poisson_density, subset_id ) );
 
         absl::flat_hash_map< geode::uuid, geode::index_t > targets = {

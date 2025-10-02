@@ -76,7 +76,7 @@ namespace geode
 
 namespace geode
 {
-    template < typename Type >
+    template < typename ObjectType >
     class EnergyTerm
     {
     public:
@@ -122,19 +122,21 @@ namespace geode
             return energy_scale_.contribution( multiplier );
         }
 
-        virtual double total_log( const ObjectSet< Type >& state ) const = 0;
+        virtual double total_log(
+            const ObjectSet< ObjectType >& state ) const = 0;
 
-        virtual double delta_log_add( const ObjectSet< Type >& state,
-            const ObjectRef< Type >& new_object ) const = 0;
+        virtual double delta_log_add( const ObjectSet< ObjectType >& state,
+            const ObjectRef< ObjectType >& new_object ) const = 0;
 
-        virtual double delta_log_remove( const ObjectSet< Type >& state,
+        virtual double delta_log_remove( const ObjectSet< ObjectType >& state,
             const ObjectId& object_id ) const = 0;
 
-        virtual double delta_log_change( const ObjectSet< Type >& state,
+        virtual double delta_log_change( const ObjectSet< ObjectType >& state,
             const ObjectId& old_object_id,
-            const ObjectRef< Type >& new_object ) const = 0;
+            const ObjectRef< ObjectType >& new_object ) const = 0;
 
-        virtual double statistic( const ObjectSet< Type >& state ) const = 0;
+        virtual double statistic(
+            const ObjectSet< ObjectType >& state ) const = 0;
 
     protected:
         bool is_targeted_subset( const uuid& subset_id ) const
@@ -144,7 +146,7 @@ namespace geode
 
         template < typename Func >
         void for_each_targeted_object(
-            const ObjectSet< Type >& state, Func&& do_apply ) const
+            const ObjectSet< ObjectType >& state, Func&& do_apply ) const
         {
             if( targeted_subset_id_ )
             {
