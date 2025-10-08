@@ -106,16 +106,15 @@ add_geode_test(
  )
 
 add_geode_test(
-    SOURCE  "sampling/mcmc/test-mh-poisson-statistics-and-convergence.cpp"
-    DEPENDENCIES
-        OpenGeode::basic
-        OpenGeode::geometry
-        ${PROJECT_NAME}::stochastic
-    UNSTABLE
+     SOURCE "sampling/mcmc/test-mh-poisson.cpp"
+     DEPENDENCIES
+         OpenGeode::basic
+         OpenGeode::geometry
+         ${PROJECT_NAME}::stochastic
 )
 
 add_geode_test(
-    SOURCE  "sampling/mcmc/test-mh-strauss-statistics-and-convergence.cpp"
+    SOURCE  "sampling/mcmc/test-mh-strauss.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry

@@ -64,10 +64,27 @@ namespace geode
             compute_cumulative_sum_probs();
         }
 
+        std::string string() const
+        {
+            auto message = absl::StrCat(
+                "Proposal Kernel:", "\n\t - number of moves: ", moves_.size() );
+            for( const auto& move : moves_ )
+            {
+                absl::StrAppend( &message, " \n\t --> ", move->string() );
+            }
+            absl::StrAppend( &message, "\n\t - cumsum :" );
+            for( const auto cumsum : cumulative_probs_ )
+            {
+                absl::StrAppend( &message, " ", cumsum );
+            }
+            return message;
+        }
+
     private:
         void compute_cumulative_sum_probs()
         {
             const auto n = moves_.size();
+            cumulative_probs_.clear();
             cumulative_probs_.resize( n );
             if( n == 1 )
             {

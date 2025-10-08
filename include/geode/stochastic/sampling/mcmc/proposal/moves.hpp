@@ -23,6 +23,7 @@
 
 #pragma once
 #include <geode/stochastic/sampling/direct/object_set_sampler/object_set_sampler.hpp>
+#include <geode/stochastic/spatial/object_helpers.hpp>
 #include <geode/stochastic/spatial/object_set.hpp>
 
 namespace geode
@@ -44,6 +45,26 @@ namespace geode
         std::optional< ObjectId > old_object_id; // for death/change
         double log_forward_prob{ 0. };
         double log_backward_prob{ 0. };
+        std::string string() const
+        {
+            auto message = absl::StrCat( "Poposal: Type ", type );
+            if( new_object )
+            {
+                absl::StrAppend( &message, "\n\t - New object: ",
+                    geode::object_bounding_box( new_object->first ).string(),
+                    " subset id ", new_object->second.string() );
+            }
+            if( old_object_id )
+            {
+                absl::StrAppend( &message,
+                    "\n\t - Old object: ", old_object_id->index, " subset id ",
+                    old_object_id->subset.string() );
+            }
+            absl::StrAppend( &message,
+                "\n\t - log_forward_prob: ", log_forward_prob,
+                " log_backward_prob ", log_backward_prob );
+            return message;
+        }
     };
 
     // Move does not hold the sampler... should it?
@@ -55,6 +76,10 @@ namespace geode
             const ObjectSetSampler< ObjectType >& sampler, double probability )
             : sampler_( sampler ), p_move_{ probability }
         {
+            OPENGEODE_EXCEPTION( p_move_ > 0.,
+                "[Move] - the weight factor for a move should be in higher "
+                "than 0. (here = ",
+                p_move_, ")" );
         }
         virtual ~Move() = default;
 
@@ -65,6 +90,11 @@ namespace geode
         double probability() const
         {
             return p_move_;
+        }
+
+        std::string string() const
+        {
+            return absl::StrCat( "Move proba: ", p_move_ );
         }
 
     protected:
@@ -94,10 +124,13 @@ namespace geode
             const ObjectSet< ObjectType >& current,
             RandomEngine& engine ) const override
         {
+            DEBUG( "Birth Death move" );
             if( engine.sample_bernoulli( birth_ratio_ ) )
             {
+                DEBUG( "Birth  move" );
                 return propose_birth_move( current, engine );
             }
+            DEBUG( " Death move" );
             return propose_death_move( current, engine );
         }
 

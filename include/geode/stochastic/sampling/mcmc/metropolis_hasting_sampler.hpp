@@ -83,7 +83,6 @@ namespace geode
         {
             Proposal< Type > proposal =
                 proposal_kernel_->propose( state, engine );
-
             if( proposal.type == Proposal< Type >::Move::Birth )
             {
                 return birth_step( proposal, state, engine );

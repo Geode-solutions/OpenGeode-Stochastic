@@ -32,7 +32,7 @@ namespace geode
     class ObjectSetSampler
     {
     public:
-        ObjectSetSampler( uuid subset_id ) : subset_id_{ subset_id } {}
+        ObjectSetSampler( const uuid& subset_id ) : subset_id_( subset_id ) {}
         virtual ~ObjectSetSampler() = default;
 
         virtual std::pair< Type, uuid > sample(
@@ -60,6 +60,6 @@ namespace geode
         virtual double log_pdf( const Type& obj ) const = 0;
 
     protected:
-        uuid subset_id_;
+        const uuid& subset_id_;
     };
 } // namespace geode

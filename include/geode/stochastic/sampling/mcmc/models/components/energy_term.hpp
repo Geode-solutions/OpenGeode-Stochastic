@@ -76,6 +76,22 @@ namespace geode
 
 namespace geode
 {
+    //    struct EnergyTermDescription
+    //    {
+    //        geode::uuid id;
+    //        std::string name;
+    //        std::string type;
+    //        double parameter_value;
+    //        std::optional< uuid > targeted_subset_id{};
+    //    }
+    //
+    //    struct StatisticalDescription
+    //    {
+    //        std::string label;
+    //        double value;
+    //        std::optional< uuid > targeted_subset_id{};
+    //    };
+
     template < typename ObjectType >
     class EnergyTerm
     {
@@ -137,6 +153,19 @@ namespace geode
 
         virtual double statistic(
             const ObjectSet< ObjectType >& state ) const = 0;
+
+        std::string string() const
+        {
+            auto message =
+                absl::StrCat( "Term : ", name(), "; uuid: ", id().string(),
+                    " parameter value: ", energy_scale_.parameter() );
+            if( targeted_subset_id_ )
+            {
+                absl::StrAppend( &message, " targetted subset: ",
+                    targeted_subset_id_.value().string() );
+            }
+            return message;
+        }
 
     protected:
         bool is_targeted_subset( const uuid& subset_id ) const

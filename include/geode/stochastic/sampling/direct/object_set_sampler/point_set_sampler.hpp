@@ -36,8 +36,8 @@ namespace geode
     {
     public:
         UniformPointSetSampler(
-            const BoundingBox< dimension >& box, uuid subset_id )
-            : ObjectSetSampler< Point< dimension > >{ subset_id }, box_( box )
+            const BoundingBox< dimension >& box, const uuid& subset_id )
+            : ObjectSetSampler< Point< dimension > >( subset_id ), box_( box )
         {
             auto volume = box_.n_volume();
             if( volume != 0. )
@@ -62,12 +62,21 @@ namespace geode
 
             auto new_point =
                 PointUniformSampler::sample< dimension >( engine, ball );
-            while( !box_.contains( new_point ) )
+            constexpr index_t max_try{ 100 };
+            for( const auto try_id : geode::Range{ max_try } )
             {
+                if( box_.contains( new_point ) )
+                {
+                    return { new_point, this->subset_id_ };
+                }
                 new_point =
                     PointUniformSampler::sample< dimension >( engine, ball );
             }
-            return { new_point, this->subset_id_ };
+            OPENGEODE_EXCEPTION( true == false,
+                absl::StrCat(
+                    "[PointSampler] - Cannot find a point in the box: ",
+                    box_.string() ) );
+            return { obj, this->subset_id_ };
         }
 
         double log_pdf( const Point< dimension >& obj ) const override

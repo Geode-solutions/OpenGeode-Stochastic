@@ -31,15 +31,22 @@ namespace geode
     template < typename ObjectType >
     class GibbsEnergy
     {
-        OPENGEODE_DISABLE_COPY_AND_MOVE( GibbsEnergy );
+        OPENGEODE_DISABLE_COPY( GibbsEnergy );
 
     public:
         GibbsEnergy() = default;
+        GibbsEnergy( GibbsEnergy&& other )
+            : energy_terms_( std::move( other.energy_terms_ ) )
+        {
+        }
+
         ~GibbsEnergy() = default;
 
-        void add_energy_term( std::unique_ptr< EnergyTerm< ObjectType > > term )
+        uuid add_energy_term( std::unique_ptr< EnergyTerm< ObjectType > > term )
         {
+            auto id = term->id();
             energy_terms_.emplace( term->id(), std::move( term ) );
+            return id;
         }
         void clear_energy_terms()
         {
@@ -116,6 +123,12 @@ namespace geode
             return log_energy;
         }
 
+        double energy_term_statistic(
+            const ObjectSet< ObjectType >& state, const uuid& energy_term_id )
+        {
+            return energy_terms_.at( energy_term_id )->statistic( state );
+        }
+
         std::vector< double > ordered_energy_term_statistics(
             const ObjectSet< ObjectType >& state ) const
         {
@@ -135,6 +148,20 @@ namespace geode
         {
             const auto stats = ordered_energy_term_statistics( state );
             return vector_string( stats );
+        }
+
+        std::string string() const
+        {
+            auto message = absl::StrCat(
+                "Gibbs Energy: ", energy_terms_.size(), " terms:" );
+            // we should find a way to iterate in a ordered way.
+            for( const auto& energy_term : energy_terms_ )
+            {
+                absl::StrAppend( &message,
+                    "\n\t --> uuid: ", energy_term.first.string(), " - ",
+                    energy_term.second->string() );
+            }
+            return message;
         }
 
     private:
