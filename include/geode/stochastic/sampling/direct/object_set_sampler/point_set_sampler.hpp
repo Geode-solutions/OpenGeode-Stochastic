@@ -72,10 +72,9 @@ namespace geode
                 new_point =
                     PointUniformSampler::sample< dimension >( engine, ball );
             }
-            throw OpenGeodeException(
-                absl::StrCat(
-                    "[PointSampler] - Cannot find a point in the box: ",
-                    box_.string() ) );
+            throw OpenGeodeException( absl::StrCat(
+                "[PointSampler] - Cannot find a point in the box: ",
+                box_.string() ) );
             return { obj, this->subset_id_ };
         }
 
