@@ -32,17 +32,20 @@ namespace geode
 {
     template < typename ObjectType >
     std::unique_ptr< ProposalKernel< ObjectType > > create_birth_death_kernel(
-        const ObjectSetSampler< ObjectType >& sampler, double birth_prob )
+        const uuid& subset_uuid,
+        const ObjectSetSampler< ObjectType >& sampler,
+        double birth_prob )
     {
         auto kernel = std::make_unique< ProposalKernel< ObjectType > >();
-        kernel->add_move( std::make_unique< BirthDeathMove< ObjectType > >(
-            sampler, 1., birth_prob ) );
+        kernel->add_move(
+            { subset_uuid, std::make_unique< BirthDeathMove< ObjectType > >(
+                               sampler, 1., birth_prob ) } );
         return kernel;
     }
 
     template < typename ObjectType >
     std::unique_ptr< ProposalKernel< ObjectType > >
-        create_birth_death_change_kernel(
+        create_birth_death_change_kernel( const uuid& subset_uuid,
             const ObjectSetSampler< ObjectType >& sampler,
             double birth_prob,
             double death_prob )
@@ -51,10 +54,12 @@ namespace geode
         OPENGEODE_EXCEPTION( birth_death_prob < 1.,
             "[Proposal Kernel] - changes should be allowed." );
         auto kernel = std::make_unique< ProposalKernel< ObjectType > >();
-        kernel->add_move( std::make_unique< BirthDeathMove< ObjectType > >(
-            sampler, birth_death_prob, birth_prob / birth_death_prob ) );
-        kernel->add_move( std::make_unique< ChangeMove< ObjectType > >(
-            sampler, 1. - birth_death_prob ) );
+        kernel->add_move( subset_uuid,
+            std::make_unique< BirthDeathMove< ObjectType > >(
+                sampler, birth_death_prob, birth_prob / birth_death_prob ) );
+        kernel->add_move(
+            subset_uuid, std::make_unique< ChangeMove< ObjectType > >(
+                             sampler, 1. - birth_death_prob ) );
         return kernel;
     }
 } // namespace geode

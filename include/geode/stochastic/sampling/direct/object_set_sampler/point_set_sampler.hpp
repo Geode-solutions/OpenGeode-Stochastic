@@ -35,25 +35,21 @@ namespace geode
     class UniformPointSetSampler : public ObjectSetSampler< Point< dimension > >
     {
     public:
-        UniformPointSetSampler(
-            const BoundingBox< dimension >& box, const uuid& subset_id )
-            : ObjectSetSampler< Point< dimension > >( subset_id ), box_( box )
+        UniformPointSetSampler( const BoundingBox< dimension >& box )
+            : ObjectSetSampler< Point< dimension > >{}, box_( box )
         {
             auto volume = box_.n_volume();
-            if( volume != 0. )
-            {
-                log_pdf_ = -std::log( volume );
-            }
+            OPENGEODE_EXCEPTION( volume != 0.,
+                "[PointSetSampler] - Undefined Bounding Box (volume ==0)." );
+            this->log_pdf_ = -std::log( volume );
         }
 
-        std::pair< Point< dimension >, uuid > sample(
-            RandomEngine& engine ) const override
+        Point< dimension > sample( RandomEngine& engine ) const override
         {
-            return { PointUniformSampler::sample< dimension >( engine, box_ ),
-                this->subset_id_ };
+            return PointUniformSampler::sample< dimension >( engine, box_ );
         }
 
-        std::pair< Point< dimension >, uuid > change(
+        Point< dimension > change(
             const Point< dimension >& obj, RandomEngine& engine ) const override
         {
             double ratio = 0.1;
@@ -67,30 +63,25 @@ namespace geode
             {
                 if( box_.contains( new_point ) )
                 {
-                    return { new_point, this->subset_id_ };
+                    return new_point;
                 }
                 new_point =
                     PointUniformSampler::sample< dimension >( engine, ball );
             }
-            OPENGEODE_EXCEPTION( true == false,
-                absl::StrCat(
-                    "[PointSampler] - Cannot find a point in the box: ",
-                    box_.string() ) );
-            return { obj, this->subset_id_ };
+            throw OpenGeodeException( absl::StrCat(
+                "[PointSampler] - Cannot find a point in the box: ",
+                box_.string() ) );
+            return obj;
         }
 
-        double log_pdf( const Point< dimension >& obj ) const override
+    private:
+        bool is_valid_object( const Point< dimension >& obj ) const override
         {
-            if( !box_.contains( obj ) )
-            {
-                return -std::numeric_limits< double >::infinity();
-            }
-            return log_pdf_;
+            return box_.contains( obj );
         }
 
     private:
         const BoundingBox< dimension >& box_;
-        double log_pdf_{ -std::numeric_limits< double >::infinity() };
     };
 
 } // namespace geode

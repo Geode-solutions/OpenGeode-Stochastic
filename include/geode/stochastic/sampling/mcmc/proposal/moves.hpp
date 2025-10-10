@@ -28,78 +28,134 @@
 
 namespace geode
 {
-    template < typename ObjectType >
-    struct Proposal
+    enum class MoveType
     {
-        enum class Move
-        {
-            Invalid,
-            Birth,
-            Death,
-            Change
-        };
+        Invalid,
+        Birth,
+        Death,
+        Change
+    };
 
-        Move type{ Move::Invalid };
-        std::optional< std::pair< ObjectType, uuid > >
-            new_object; // for birth/change
-        std::optional< ObjectId > old_object_id; // for death/change
+    struct ProposalProbabilities
+    {
         double log_forward_prob{ 0. };
         double log_backward_prob{ 0. };
         std::string string() const
         {
-            auto message = absl::StrCat( "Poposal: Type ", type );
+            return absl::StrCat(
+                "\t Proposal Probabilities: (log) forward probability: ",
+                log_forward_prob,
+                " (log) backward probability: ", log_backward_prob );
+        }
+
+        double transition_probability() const
+        {
+            OPENGEODE_EXCEPTION( std::isfinite( log_forward_prob )
+                                     && std::isfinite( log_backward_prob ),
+                "[Proposal Probabilities] Non-finite proposal "
+                "log-probabilities" );
+            return log_backward_prob - log_forward_prob;
+        }
+    };
+
+    template < typename ObjectType >
+    struct MoveResult
+    {
+        MoveType type{ MoveType::Invalid };
+        std::optional< ObjectType > new_object;
+        std::optional< index_t > old_object_id;
+
+        ProposalProbabilities proposal_probabilities;
+
+        std::string type_string() const
+        {
+            switch( type )
+            {
+                case MoveType::Invalid:
+                    return "Invalid";
+                case MoveType::Birth:
+                    return "Birth";
+                case MoveType::Death:
+                    return "Death";
+                case MoveType::Change:
+                    return "Change";
+                default:
+                    throw OpenGeodeException(
+                        "[MoveResult] -Move result type should always be "
+                        "defined." );
+                    return "Unknown";
+            }
+        }
+        std::string string() const
+        {
+            auto message = absl::StrCat( "Move result type: ", type_string() );
             if( new_object )
             {
-                absl::StrAppend( &message, "\n\t - New object: ",
-                    geode::object_bounding_box( new_object->first ).string(),
-                    " subset id ", new_object->second.string() );
+                absl::StrAppend( &message, "\t - New proposed object: ",
+                    geode::object_bounding_box( new_object->first ).string() );
             }
             if( old_object_id )
             {
-                absl::StrAppend( &message,
-                    "\n\t - Old object: ", old_object_id->index, " subset id ",
-                    old_object_id->subset.string() );
+                absl::StrAppend(
+                    &message, "\t - Old object id: ", old_object_id );
             }
-            absl::StrAppend( &message,
-                "\n\t - log_forward_prob: ", log_forward_prob,
-                " log_backward_prob ", log_backward_prob );
+            absl::StrAppend(
+                &message, "\t - ", proposal_probabilities.string() );
             return message;
         }
     };
 
-    // Move does not hold the sampler... should it?
     template < typename ObjectType >
     class Move
     {
     public:
-        Move(
-            const ObjectSetSampler< ObjectType >& sampler, double probability )
-            : sampler_( sampler ), p_move_{ probability }
+        Move( const ObjectSetSampler< ObjectType >& sampler,
+            double proportion_weight )
+            : sampler_( sampler ), proportion_weight_{ proportion_weight }
         {
-            OPENGEODE_EXCEPTION( p_move_ > 0.,
+            OPENGEODE_EXCEPTION( proportion_weight_ > 0.,
                 "[Move] - the weight factor for a move should be in higher "
                 "than 0. (here = ",
-                p_move_, ")" );
+                proportion_weight_, ")" );
+            initialize_probability( 1. );
         }
         virtual ~Move() = default;
 
-        virtual Proposal< ObjectType > propose_move(
-            const ObjectSet< ObjectType >& current,
+        virtual MoveResult< ObjectType > propose_move(
+            const std::vector< ObjectType >& subset,
             RandomEngine& engine ) const = 0;
 
-        double probability() const
+        double proportion_weight() const
         {
-            return p_move_;
+            return proportion_weight_;
         }
 
-        std::string string() const
+        virtual void initialize_probability( double probability )
         {
-            return absl::StrCat( "Move proba: ", p_move_ );
+            geode_unused( probability );
+        }
+
+        virtual std::string string() const = 0;
+
+    protected:
+        std::optional< geode::index_t > draw_a_sample_id(
+            const std::vector< ObjectType >& subset,
+            RandomEngine& engine ) const
+        {
+            if( subset.empty() )
+            {
+                return std::nullopt;
+            }
+            const auto max_obj_id = subset.size();
+            geode::UniformClosed< index_t > uniform_closed_index_t;
+            uniform_closed_index_t.min_value = 0;
+            uniform_closed_index_t.max_value = max_obj_id - 1;
+            return engine.sample_uniform( uniform_closed_index_t );
         }
 
     protected:
         const ObjectSetSampler< ObjectType >& sampler_;
-        double p_move_{ 1.0 };
+        double proportion_weight_{ 1.0 };
     };
 
     template < typename ObjectType >
@@ -112,65 +168,72 @@ namespace geode
             : Move< ObjectType >( sampler, probability ),
               birth_ratio_( birth_ratio )
         {
+        }
+
+        MoveResult< ObjectType > propose_move(
+            const std::vector< ObjectType >& subset,
+            RandomEngine& engine ) const override
+        {
+            if( engine.sample_bernoulli( birth_ratio_ ) )
+            {
+                return propose_birth_move( subset, engine );
+            }
+            return propose_death_move( subset, engine );
+        }
+
+        void initialize_probability( double probability ) override
+        {
             OPENGEODE_EXCEPTION( birth_ratio_ > 0. && birth_ratio_ < 1.,
                 "[BirthDeathMove]-the ratio of birth over mover should be in "
                 "]0,1[. (here = ",
                 birth_ratio_, ")" );
-            log_p_birth_ = std::log( this->p_move_ * birth_ratio );
-            log_p_death_ = std::log( this->p_move_ * ( 1.0 - birth_ratio ) );
+            log_p_birth_ = std::log( probability * birth_ratio_ );
+            log_p_death_ = std::log( probability * ( 1.0 - birth_ratio_ ) );
         }
-
-        Proposal< ObjectType > propose_move(
-            const ObjectSet< ObjectType >& current,
-            RandomEngine& engine ) const override
+        std::string string() const override
         {
-            DEBUG( "Birth Death move" );
-            if( engine.sample_bernoulli( birth_ratio_ ) )
-            {
-                DEBUG( "Birth  move" );
-                return propose_birth_move( current, engine );
-            }
-            DEBUG( " Death move" );
-            return propose_death_move( current, engine );
+            return absl::StrCat( "Birth and Death Move (proportion weight: ",
+                this->proportion_weight_, " -- birth ratio:", birth_ratio_,
+                " log_p_birth: ", log_p_birth_, " log_p_death_: ", log_p_death_,
+                ")" );
         }
 
     private:
-        Proposal< ObjectType > propose_birth_move(
-            const ObjectSet< ObjectType >& current, RandomEngine& engine ) const
+        MoveResult< ObjectType > propose_birth_move(
+            const std::vector< ObjectType >& subset,
+            RandomEngine& engine ) const
         {
-            Proposal< ObjectType > birth;
-            birth.type = Proposal< ObjectType >::Move::Birth;
+            MoveResult< ObjectType > birth;
+            birth.type = MoveType::Birth;
             birth.new_object = this->sampler_.sample( engine );
             if( !birth.new_object.has_value() )
             {
                 return birth;
             }
-            auto& [new_obj, subset_id] = birth.new_object.value();
-            birth.log_forward_prob =
+            auto& new_obj = birth.new_object.value();
+            birth.proposal_probabilities.log_forward_prob =
                 log_p_birth_ + this->sampler_.log_pdf( new_obj );
-            birth.log_backward_prob =
-                log_p_death_
-                - std::log( current.nb_objects_in_subset( subset_id ) + 1.0 );
+            birth.proposal_probabilities.log_backward_prob =
+                log_p_death_ - std::log( subset.size() + 1.0 );
             return birth;
         }
 
-        Proposal< ObjectType > propose_death_move(
-            const ObjectSet< ObjectType >& current, RandomEngine& engine ) const
+        MoveResult< ObjectType > propose_death_move(
+            const std::vector< ObjectType >& subset,
+            RandomEngine& engine ) const
         {
-            Proposal< ObjectType > death;
-            death.old_object_id = this->sampler_.sample_id( current, engine );
+            MoveResult< ObjectType > death;
+            death.old_object_id = this->draw_a_sample_id( subset, engine );
             if( !death.old_object_id.has_value() )
             {
                 return death;
             }
-            const auto& cur_object_id = death.old_object_id.value();
-            death.type = Proposal< ObjectType >::Move::Death;
-            death.log_forward_prob = log_p_death_
-                                     - std::log( current.nb_objects_in_subset(
-                                         cur_object_id.subset ) );
-            death.log_backward_prob =
-                log_p_birth_
-                + this->sampler_.log_pdf( current.get_object( cur_object_id ) );
+            const auto cur_object_id = death.old_object_id.value();
+            death.type = MoveType::Death;
+            death.proposal_probabilities.log_forward_prob =
+                log_p_death_ - std::log( subset.size() );
+            death.proposal_probabilities.log_backward_prob =
+                log_p_birth_ + this->sampler_.log_pdf( subset[cur_object_id] );
             return death;
         }
 
@@ -190,26 +253,30 @@ namespace geode
         {
         }
 
-        Proposal< ObjectType > propose_move(
-            const ObjectSet< ObjectType >& current,
+        MoveResult< ObjectType > propose_move(
+            const std::vector< ObjectType >& subset,
             RandomEngine& engine ) const override
         {
-            Proposal< ObjectType > change;
-            change.old_object_id = this->sampler_.sample_id( current, engine );
+            MoveResult< ObjectType > change;
+            change.old_object_id = this->draw_a_sample_id( subset, engine );
             if( !change.old_object_id.has_value() )
             {
                 return change;
             }
-            change.type = Proposal< ObjectType >::Move::Change;
-            const auto& object_to_change =
-                current.get_object( change.old_object_id.value() );
+            change.type = MoveType::Change;
+            const auto& object_to_change = subset[change.old_object_id.value()];
             change.new_object =
                 this->sampler_.change( object_to_change, engine );
-            change.log_forward_prob =
-                this->sampler_.log_pdf( change.new_object.value().first );
-            change.log_backward_prob =
+            change.proposal_probabilities.log_forward_prob =
+                this->sampler_.log_pdf( change.new_object.value() );
+            change.proposal_probabilities.log_backward_prob =
                 this->sampler_.log_pdf( object_to_change );
             return change;
+        }
+        std::string string() const override
+        {
+            return absl::StrCat( "Change Move (proportion weight: ",
+                this->proportion_weight_, ")" );
         }
     };
 } // namespace geode
