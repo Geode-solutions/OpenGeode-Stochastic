@@ -98,6 +98,16 @@ namespace geode
         OPENGEODE_EXCEPTION( inserted, "[ObjectSet]- group (",
             subset_id.string(), ") already exists." );
     }
+    template < typename Type >
+    uuid ObjectSet< Type >::add_subset()
+    {
+        uuid subset_id{};
+        auto [it, inserted] =
+            groups_.emplace( subset_id, std::vector< Type >{} );
+        OPENGEODE_EXCEPTION( inserted, "[ObjectSet]- group (",
+            subset_id.string(), ") already exists." );
+        return subset_id;
+    }
 
     template < typename Type >
     ObjectId ObjectSet< Type >::add_object(
@@ -195,6 +205,20 @@ namespace geode
     {
         return const_cast< std::vector< Type >& >(
             static_cast< const ObjectSet* >( this )->get_subset( subset_id ) );
+    }
+
+    template < typename Type >
+    std::string ObjectSet< Type >::string() const
+    {
+        auto message =
+            absl::StrCat( "ObjectSet with ", nb_subsets(), " subsets:" );
+        for( const auto& [subset_id, objs] : groups_ )
+        {
+            absl::StrAppend( &message,
+                "\n\t --> subset uuid: ", subset_id.string(),
+                "; number of objects: ", objs.size() );
+        }
+        return message;
     }
 
     template class opengeode_stochastic_stochastic_api ObjectSet< Point2D >;

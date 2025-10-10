@@ -59,11 +59,11 @@ namespace
         box.add_point( min_point );
         box.add_point( max_point );
 
-        geode::UniformPointSetSampler< 2 > sampler( box, subset_id );
+        geode::UniformPointSetSampler< 2 > sampler( box );
 
         // Create classical birth-death-change kernel
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
-            sampler, 0.4, 0.4 );
+            subset_id, sampler, 0.4, 0.4 );
 
         geode::RandomEngine engine;
 
@@ -71,24 +71,28 @@ namespace
 
         for( const auto i : geode::Range{ 400 } )
         {
-            auto prop = kernel->propose( config, engine );
+            auto proposal = kernel->propose( config, engine );
+            const auto& proposed_move = proposal.proposed_move;
 
-            // Validate proposal type
-            switch( prop.type )
+            switch( proposed_move.type )
             {
-                case geode::Proposal< geode::Point2D >::Move::Birth:
+                case geode::MoveType::Birth:
                     saw_birth = true;
-                    OPENGEODE_EXCEPTION( prop.new_object.has_value(),
+                    OPENGEODE_EXCEPTION( proposed_move.new_object.has_value(),
                         "[test proposal] Birth must provide new_object." );
-                    OPENGEODE_EXCEPTION( !prop.old_object_id.has_value(),
+                    OPENGEODE_EXCEPTION(
+                        !proposed_move.old_object_id.has_value(),
                         "[test proposal] Birth should not provide index." );
                     // Probabilities
-                    OPENGEODE_EXCEPTION( prop.log_forward_prob <= 0.0,
+                    OPENGEODE_EXCEPTION(
+                        proposed_move.proposal_probabilities.log_forward_prob
+                            <= 0.0,
                         "[test proposal] Birth forward log-prob must be <= "
                         "0." );
 
                     OPENGEODE_EXCEPTION(
-                        std::abs( prop.log_backward_prob
+                        std::abs( proposed_move.proposal_probabilities
+                                      .log_backward_prob
                                   - ( std::log( 0.8 * 0.5 )
                                       - std::log( config.nb_objects_in_subset(
                                                       subset_id )
@@ -97,46 +101,54 @@ namespace
                         "[test proposal] Birth backward log-prob mismatch." );
                     break;
 
-                case geode::Proposal< geode::Point2D >::Move::Death:
+                case geode::MoveType::Death:
                     saw_death = true;
-                    OPENGEODE_EXCEPTION( !prop.new_object.has_value(),
+                    OPENGEODE_EXCEPTION( !proposed_move.new_object.has_value(),
                         "[test proposal] Death should not provide "
                         "new_object." );
-                    OPENGEODE_EXCEPTION( prop.old_object_id.has_value(),
+                    OPENGEODE_EXCEPTION(
+                        proposed_move.old_object_id.has_value(),
                         "[test proposal] Death must provide index." );
                     OPENGEODE_EXCEPTION(
-                        prop.old_object_id.value().index
+                        proposed_move.old_object_id.value()
                             < config.nb_objects_in_subset( subset_id ),
                         "[test proposal] Death index out of bounds." );
                     // Probabilities
-                    OPENGEODE_EXCEPTION( prop.log_forward_prob <= 0.0,
+                    OPENGEODE_EXCEPTION(
+                        proposed_move.proposal_probabilities.log_forward_prob
+                            <= 0.0,
                         "[test proposal] Death forward log-prob must be <= "
                         "0." );
                     break;
 
-                case geode::Proposal< geode::Point2D >::Move::Change:
+                case geode::MoveType::Change:
                     saw_change = true;
-                    OPENGEODE_EXCEPTION( prop.new_object.has_value(),
+                    OPENGEODE_EXCEPTION( proposed_move.new_object.has_value(),
                         "[test proposal] Change must provide new_object." );
-                    OPENGEODE_EXCEPTION( prop.old_object_id.has_value(),
+                    OPENGEODE_EXCEPTION(
+                        proposed_move.old_object_id.has_value(),
                         "[test proposal] Change must provide index." );
                     OPENGEODE_EXCEPTION(
-                        prop.old_object_id.value().index
+                        proposed_move.old_object_id.value()
                             < config.nb_objects_in_subset( subset_id ),
                         "[test proposal] Change index out of bounds." );
                     break;
 
-                case geode::Proposal< geode::Point2D >::Move::Invalid:
+                case geode::MoveType::Invalid:
                 default:
-                    OPENGEODE_EXCEPTION(
-                        false, "[test proposal] Proposal type Invalid." );
+                    throw geode::OpenGeodeException(
+                        "[test proposal] Proposal type Invalid." );
             }
 
             // Log probabilities must be finite proposed move should be
             // possible.
-            OPENGEODE_EXCEPTION( std::isfinite( prop.log_forward_prob ),
+            OPENGEODE_EXCEPTION(
+                std::isfinite(
+                    proposed_move.proposal_probabilities.log_forward_prob ),
                 "[test proposal] Forward probability is not finite - Move" );
-            OPENGEODE_EXCEPTION( std::isfinite( prop.log_backward_prob ),
+            OPENGEODE_EXCEPTION(
+                std::isfinite(
+                    proposed_move.proposal_probabilities.log_backward_prob ),
                 "[test proposal] Backward probability is not finite." );
         }
 
@@ -148,11 +160,12 @@ namespace
         geode::ObjectSet< geode::Point2D > empty_config;
         empty_config.add_subset( subset_id );
 
-        auto prop_empty = kernel->propose( empty_config, engine );
+        auto proposal = kernel->propose( empty_config, engine );
+        const auto& proposed_move = proposal.proposed_move;
+
         OPENGEODE_EXCEPTION(
-            prop_empty.type == geode::Proposal< geode::Point2D >::Move::Birth
-                || prop_empty.type
-                       == geode::Proposal< geode::Point2D >::Move::Invalid,
+            proposed_move.type == geode::MoveType::Birth
+                || proposed_move.type == geode::MoveType::Invalid,
             "[test proposal] On empty config, only Birth should be possible." );
     }
 } // namespace

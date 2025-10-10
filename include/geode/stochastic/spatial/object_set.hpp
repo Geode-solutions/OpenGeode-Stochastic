@@ -67,6 +67,7 @@ namespace geode
         index_t nb_objects() const;
 
         void add_subset( const uuid& subset_id );
+        uuid add_subset();
         ObjectId add_object( Type&& object, const uuid& subset_id );
         void update_object( const ObjectId& object_id, Type&& object );
         void remove_object( const ObjectId& object_id );
@@ -78,6 +79,8 @@ namespace geode
         // object_set)
         std::vector< ObjectId > neighbors(
             const Type& object, double searching_distance ) const;
+
+        std::string string() const;
 
     private:
         std::vector< Type >& get_subset( const uuid& subset_id );

@@ -28,14 +28,14 @@
 
 namespace geode
 {
-    template < typename Type, typename ObjectContributionFunc >
-    class SingleObjectTerm : public EnergyTerm< Type >
+    template < typename ObjectType, typename ObjectContributionFunc >
+    class SingleObjectTerm : public EnergyTerm< ObjectType >
     {
     public:
         explicit SingleObjectTerm( std::string_view name,
             double lambda,
             ObjectContributionFunc contribution_func )
-            : EnergyTerm< Type >( name, lambda ),
+            : EnergyTerm< ObjectType >( name, lambda ),
               contribution_func_( std::move( contribution_func ) )
         {
         }
@@ -44,19 +44,19 @@ namespace geode
             double lambda,
             ObjectContributionFunc contribution_func,
             std::optional< uuid > subset_id )
-            : EnergyTerm< Type >( name, lambda, subset_id ),
+            : EnergyTerm< ObjectType >( name, lambda, subset_id ),
               contribution_func_( std::move( contribution_func ) )
         {
         }
 
-        double total_log( const ObjectSet< Type >& state ) const override
+        double total_log( const ObjectSet< ObjectType >& state ) const override
         {
             auto total = this->statistic( state );
             return this->contribution( total );
         }
 
-        double delta_log_add( const ObjectSet< Type >& /*state*/,
-            const Type& new_object,
+        double delta_log_add( const ObjectSet< ObjectType >& /*state*/,
+            const ObjectType& new_object,
             const uuid& new_object_subset_id ) const override
         {
             if( !this->is_targeted_subset( new_object_subset_id ) )
@@ -66,8 +66,8 @@ namespace geode
             return this->contribution( contribution_func_( new_object ) );
         }
 
-        double delta_log_remove(
-            const ObjectSet< Type >& state, ObjectId object_id ) const override
+        double delta_log_remove( const ObjectSet< ObjectType >& state,
+            ObjectId object_id ) const override
         {
             if( !this->is_targeted_subset( object_id.subset ) )
             {
@@ -77,9 +77,9 @@ namespace geode
                 -contribution_func_( state.get_object( object_id ) ) );
         }
 
-        double delta_log_change( const ObjectSet< Type >& state,
+        double delta_log_change( const ObjectSet< ObjectType >& state,
             ObjectId old_object_id,
-            const Type& new_object,
+            const ObjectType& new_object,
             const uuid& new_object_subset_id ) const override
         {
             if( this->is_targeted_subset( old_object_id.subset )
@@ -93,7 +93,7 @@ namespace geode
             return this->contribution( delta );
         }
 
-        double statistic( const ObjectSet< Type >& state ) const override
+        double statistic( const ObjectSet< ObjectType >& state ) const override
         {
             double total = 0.0;
             this->for_each_targeted_object( state, [&]( const ObjectId& id ) {

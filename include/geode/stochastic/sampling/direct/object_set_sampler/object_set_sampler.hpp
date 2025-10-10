@@ -32,34 +32,24 @@ namespace geode
     class ObjectSetSampler
     {
     public:
-        ObjectSetSampler( uuid subset_id ) : subset_id_{ subset_id } {}
-        virtual ~ObjectSetSampler() = default;
+        [[nodiscard]] virtual Type sample( RandomEngine& engine ) const = 0;
 
-        virtual std::pair< Type, uuid > sample(
-            RandomEngine& engine ) const = 0;
-
-        std::optional< ObjectId > sample_id(
-            const ObjectSet< Type >& config, RandomEngine& engine ) const
-        {
-            const auto max_obj_id = config.nb_objects_in_subset( subset_id_ );
-            if( max_obj_id == 0 )
-            {
-                return std::nullopt;
-            }
-            geode::UniformClosed< index_t > uniform_closed_index_t;
-            uniform_closed_index_t.min_value = 0;
-            uniform_closed_index_t.max_value = max_obj_id - 1;
-            ObjectId result{ engine.sample_uniform( uniform_closed_index_t ),
-                subset_id_ };
-            return result;
-        }
-
-        virtual std::pair< Type, uuid > change(
+        [[nodiscard]] virtual Type change(
             const Type& object, RandomEngine& engine ) const = 0;
 
-        virtual double log_pdf( const Type& obj ) const = 0;
+        [[nodiscard]] double log_pdf( const Type& obj ) const
+        {
+            if( !is_valid_object( obj ) )
+            {
+                return LOG_PROB_INVALID;
+            }
+            return log_pdf_;
+        }
 
     protected:
-        uuid subset_id_;
+        virtual bool is_valid_object( const Type& obj ) const = 0;
+
+    protected:
+        double log_pdf_{ LOG_PROB_INVALID };
     };
 } // namespace geode

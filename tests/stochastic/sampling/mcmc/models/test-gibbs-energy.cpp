@@ -25,7 +25,7 @@
 
 #include <geode/geometry/point.hpp>
 
-#include <geode/stochastic/sampling/mcmc/models/components/intensity_term.hpp>
+#include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/spatial/object_set.hpp>
@@ -52,7 +52,7 @@ void test_gibbs_energy( const geode::uuid& subset_id )
 
     // Add intensity term
     gibbs_energy.add_energy_term(
-        std::make_unique< geode::IntensityTerm< geode::Point2D > >(
+        std::make_unique< geode::DensityTerm< geode::Point2D > >(
             "intensity", 0.5, subset_id ) );
 
     // Add pairwise term with trivial interaction: always counts 1 for each pair

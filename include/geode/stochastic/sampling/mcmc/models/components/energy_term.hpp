@@ -76,7 +76,23 @@ namespace geode
 
 namespace geode
 {
-    template < typename Type >
+    //    struct EnergyTermDescription
+    //    {
+    //        geode::uuid id;
+    //        std::string name;
+    //        std::string type;
+    //        double parameter_value;
+    //        std::optional< uuid > targeted_subset_id{};
+    //    }
+    //
+    //    struct StatisticalDescription
+    //    {
+    //        std::string label;
+    //        double value;
+    //        std::optional< uuid > targeted_subset_id{};
+    //    };
+
+    template < typename ObjectType >
     class EnergyTerm
     {
     public:
@@ -122,19 +138,34 @@ namespace geode
             return energy_scale_.contribution( multiplier );
         }
 
-        virtual double total_log( const ObjectSet< Type >& state ) const = 0;
+        virtual double total_log(
+            const ObjectSet< ObjectType >& state ) const = 0;
 
-        virtual double delta_log_add( const ObjectSet< Type >& state,
-            const ObjectRef< Type >& new_object ) const = 0;
+        virtual double delta_log_add( const ObjectSet< ObjectType >& state,
+            const ObjectRef< ObjectType >& new_object ) const = 0;
 
-        virtual double delta_log_remove( const ObjectSet< Type >& state,
+        virtual double delta_log_remove( const ObjectSet< ObjectType >& state,
             const ObjectId& object_id ) const = 0;
 
-        virtual double delta_log_change( const ObjectSet< Type >& state,
+        virtual double delta_log_change( const ObjectSet< ObjectType >& state,
             const ObjectId& old_object_id,
-            const ObjectRef< Type >& new_object ) const = 0;
+            const ObjectRef< ObjectType >& new_object ) const = 0;
 
-        virtual double statistic( const ObjectSet< Type >& state ) const = 0;
+        virtual double statistic(
+            const ObjectSet< ObjectType >& state ) const = 0;
+
+        std::string string() const
+        {
+            auto message =
+                absl::StrCat( "Term : ", name(), "; uuid: ", id().string(),
+                    " parameter value: ", energy_scale_.parameter() );
+            if( targeted_subset_id_ )
+            {
+                absl::StrAppend( &message, " targetted subset: ",
+                    targeted_subset_id_.value().string() );
+            }
+            return message;
+        }
 
     protected:
         bool is_targeted_subset( const uuid& subset_id ) const
@@ -144,7 +175,7 @@ namespace geode
 
         template < typename Func >
         void for_each_targeted_object(
-            const ObjectSet< Type >& state, Func&& do_apply ) const
+            const ObjectSet< ObjectType >& state, Func&& do_apply ) const
         {
             if( targeted_subset_id_ )
             {

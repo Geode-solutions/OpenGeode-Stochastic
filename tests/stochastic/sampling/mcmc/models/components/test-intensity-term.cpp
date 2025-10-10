@@ -20,7 +20,7 @@
  * SOFTWARE.
  *
  */
-#include <geode/stochastic/sampling/mcmc/models/components/intensity_term.hpp>
+#include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
 
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/spatial/object_set.hpp>
@@ -43,8 +43,7 @@ void test_normal_positive_intensity( double lambda,
     const geode::ObjectSet< geode::Point2D > &pattern,
     const geode::uuid &subset_id )
 {
-    geode::IntensityTerm< geode::Point2D > term(
-        "intensity", lambda, subset_id );
+    geode::DensityTerm< geode::Point2D > term( "intensity", lambda, subset_id );
     auto neg_log_lambda = -std::log( lambda );
 
     double total = term.total_log( pattern );
@@ -71,8 +70,7 @@ void test_normal_zero_intensity( double lambda,
     const geode::ObjectSet< geode::Point2D > &pattern,
     const geode::uuid &subset_id )
 {
-    geode::IntensityTerm< geode::Point2D > term(
-        "intensity", lambda, subset_id );
+    geode::DensityTerm< geode::Point2D > term( "intensity", lambda, subset_id );
     double total = term.total_log( pattern );
 
     OPENGEODE_EXCEPTION(
@@ -121,7 +119,7 @@ int main()
     {
         geode::StochasticLibrary::initialize();
         geode::uuid subset_id;
-        geode::IntensityTerm< geode::Point2D > term(
+        geode::DensityTerm< geode::Point2D > term(
             "zero", -geode::GLOBAL_EPSILON, subset_id );
         geode::Logger::info( "TEST FAILED" );
         return 1;

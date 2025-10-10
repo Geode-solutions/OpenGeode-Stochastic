@@ -28,18 +28,25 @@
 #include <absl/container/flat_hash_map.h>
 namespace geode
 {
-    template < typename Type >
+    template < typename ObjectType >
     class GibbsEnergy
     {
-        OPENGEODE_DISABLE_COPY_AND_MOVE( GibbsEnergy );
+        OPENGEODE_DISABLE_COPY( GibbsEnergy );
 
     public:
         GibbsEnergy() = default;
+        GibbsEnergy( GibbsEnergy&& other )
+            : energy_terms_( std::move( other.energy_terms_ ) )
+        {
+        }
+
         ~GibbsEnergy() = default;
 
-        void add_energy_term( std::unique_ptr< EnergyTerm< Type > > term )
+        uuid add_energy_term( std::unique_ptr< EnergyTerm< ObjectType > > term )
         {
+            auto id = term->id();
             energy_terms_.emplace( term->id(), std::move( term ) );
+            return id;
         }
         void clear_energy_terms()
         {
@@ -67,7 +74,7 @@ namespace geode
             return vector_string( values );
         }
 
-        double total_log_energy( const ObjectSet< Type >& state ) const
+        double total_log_energy( const ObjectSet< ObjectType >& state ) const
         {
             double log_energy{ 0.0 };
             for( const auto& [id, term] : energy_terms_ )
@@ -78,8 +85,8 @@ namespace geode
             return log_energy;
         }
 
-        double delta_log_energy_add( const ObjectSet< Type >& state,
-            const ObjectRef< Type >& new_object ) const
+        double delta_log_energy_add( const ObjectSet< ObjectType >& state,
+            const ObjectRef< ObjectType >& new_object ) const
         {
             double log_energy{ 0.0 };
             for( const auto& [id, term] : energy_terms_ )
@@ -91,7 +98,7 @@ namespace geode
         }
 
         double delta_log_energy_remove(
-            const ObjectSet< Type >& state, ObjectId object_id ) const
+            const ObjectSet< ObjectType >& state, ObjectId object_id ) const
         {
             double log_energy{ 0.0 };
             for( const auto& [id, term] : energy_terms_ )
@@ -102,9 +109,9 @@ namespace geode
             return log_energy;
         }
 
-        double delta_log_energy_change( const ObjectSet< Type >& state,
+        double delta_log_energy_change( const ObjectSet< ObjectType >& state,
             ObjectId old_object_id,
-            const ObjectRef< Type >& new_object ) const
+            const ObjectRef< ObjectType >& new_object ) const
         {
             double log_energy{ 0.0 };
             for( const auto& [id, term] : energy_terms_ )
@@ -116,8 +123,14 @@ namespace geode
             return log_energy;
         }
 
+        double energy_term_statistic(
+            const ObjectSet< ObjectType >& state, const uuid& energy_term_id )
+        {
+            return energy_terms_.at( energy_term_id )->statistic( state );
+        }
+
         std::vector< double > ordered_energy_term_statistics(
-            const ObjectSet< Type >& state ) const
+            const ObjectSet< ObjectType >& state ) const
         {
             std::vector< double > values;
             values.reserve( energy_terms_.size() );
@@ -131,10 +144,24 @@ namespace geode
         }
 
         std::string ordered_energy_term_statistics_string(
-            const ObjectSet< Type >& state ) const
+            const ObjectSet< ObjectType >& state ) const
         {
             const auto stats = ordered_energy_term_statistics( state );
             return vector_string( stats );
+        }
+
+        std::string string() const
+        {
+            auto message = absl::StrCat(
+                "Gibbs Energy: ", energy_terms_.size(), " terms:" );
+            // we should find a way to iterate in a ordered way.
+            for( const auto& energy_term : energy_terms_ )
+            {
+                absl::StrAppend( &message,
+                    "\n\t --> uuid: ", energy_term.first.string(), " - ",
+                    energy_term.second->string() );
+            }
+            return message;
         }
 
     private:
@@ -151,7 +178,7 @@ namespace geode
 
     private:
         absl::flat_hash_map< geode::uuid,
-            std::unique_ptr< EnergyTerm< Type > > >
+            std::unique_ptr< EnergyTerm< ObjectType > > >
             energy_terms_;
     };
 

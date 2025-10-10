@@ -28,73 +28,152 @@
 
 namespace geode
 {
+    template < typename ObjectType >
+    struct Proposal
+    {
+        uuid subset_id;
 
-    template < typename Type >
+        MoveResult< ObjectType > proposed_move;
+        ObjectRef< ObjectType > new_object()
+        {
+            OPENGEODE_EXCEPTION( proposed_move.new_object.has_value(),
+                "[Proposal] Proposal has no new_object" );
+            return ObjectRef< ObjectType >{ proposed_move.new_object.value(),
+                subset_id };
+        };
+
+        ObjectId old_object_id()
+        {
+            OPENGEODE_EXCEPTION( proposed_move.old_object_id.has_value(),
+                "[Proposal] Proposal has no old_object_id" );
+            return ObjectId{ proposed_move.old_object_id.value(), subset_id };
+        };
+
+        std::string string() const
+        {
+            return absl::StrCat( "Move proposal on subset: ", subset_id, " -- ",
+                proposed_move.string() );
+        }
+    };
+
+    template < typename ObjectType >
     class ProposalKernel
     {
     public:
         virtual ~ProposalKernel() = default;
 
-        Proposal< Type > propose(
-            const ObjectSet< Type >& current, RandomEngine& engine ) const
+        Proposal< ObjectType > propose(
+            const ObjectSet< ObjectType >& current, RandomEngine& engine ) const
         {
-            OPENGEODE_EXCEPTION( !moves_.empty(),
+            OPENGEODE_EXCEPTION( !subset_moves_.empty(),
                 "[MCMC Proposal Kernel] - no move are defined in the Kernel." );
-            if( cumulative_probs_.size() == 1 )
-            {
-                return moves_[0]->propose_move( current, engine );
-            }
-            auto rnd = engine.sample_uniform( uniform_closed_double_ );
+            auto rnd = engine.sample_uniform( uniform_distribution_closed_ );
             for( const auto proba_id : Range{ cumulative_probs_.size() } )
             {
                 if( rnd <= cumulative_probs_[proba_id] )
                 {
-                    return moves_[proba_id]->propose_move( current, engine );
+                    auto& [subset_uuid, move] = subset_moves_[proba_id];
+                    return Proposal< ObjectType >{ subset_uuid,
+                        move->propose_move(
+                            current.get_subset( subset_uuid ), engine ) };
                 }
             }
-            OPENGEODE_ASSERT_NOT_REACHED(
+            throw OpenGeodeException(
                 "[MCMC Proposal Kernel]: Should not be reached move pdf is "
                 "correctly set." );
-            return moves_.back()->propose_move( current, engine );
+            return Proposal< ObjectType >{ uuid{},
+                subset_moves_.back().second->propose_move(
+                    current.get_subset( uuid{} ), engine ) };
         }
 
-        void add_move( std::unique_ptr< Move< Type > > move )
+        void add_move( const uuid& subset_uuid,
+            std::unique_ptr< Move< ObjectType > > move )
         {
-            moves_.push_back( std::move( move ) );
-            compute_cumulative_sum_probs();
+            subset_moves_.push_back( { subset_uuid, std::move( move ) } );
+            initialize_probabilities();
+        }
+
+        std::string string() const
+        {
+            auto message = absl::StrCat( "Proposal Kernel:",
+                "\n\t - number of moves: ", subset_moves_.size() );
+            absl::StrAppend(
+                &message, "\n\t --> move cumulative probabilities:" );
+            for( const auto cumsum : cumulative_probs_ )
+            {
+                absl::StrAppend( &message, " ", cumsum );
+            }
+            for( const auto& [subset_uuid, move] : subset_moves_ )
+            {
+                absl::StrAppend( &message, " \n\t --> move on subset ",
+                    subset_uuid.string(), ": ", move->string() );
+            }
+            return message;
         }
 
     private:
-        void compute_cumulative_sum_probs()
+        std::vector< double > compute_probabilities() const
         {
-            const auto n = moves_.size();
-            cumulative_probs_.resize( n );
-            if( n == 1 )
-            {
-                cumulative_probs_[0] = 1.;
-                return;
-            }
-            double sum{ 0. };
-            for( const auto prob_id : Range{ n } )
-            {
-                sum += moves_[prob_id]->probability();
-                cumulative_probs_[prob_id] = sum;
-            }
-            auto total = cumulative_probs_.back();
+            std::vector< double > probabilities( subset_moves_.size(), 0. );
+
+            // Extract weights
+            std::transform( subset_moves_.begin(), subset_moves_.end(),
+                probabilities.begin(), []( const auto& move ) {
+                    return move.second->proportion_weight();
+                } );
+
+            // Compute total
+            const double total = std::accumulate(
+                probabilities.begin(), probabilities.end(), 0.0 );
+
+            // Ensure total > 0
             OPENGEODE_EXCEPTION( total > GLOBAL_EPSILON,
                 "[MCMC Proposal Kernel] - Total "
                 "probability is zero in Kernel." );
-            std::transform( cumulative_probs_.begin(), cumulative_probs_.end(),
-                cumulative_probs_.begin(), [total]( double p ) {
+
+            // Normalize
+            std::transform( probabilities.begin(), probabilities.end(),
+                probabilities.begin(), [total]( double p ) {
                     return p / total;
                 } );
-            cumulative_probs_.back() = 1.0;
+            return probabilities;
+        }
+
+        void compute_cumulative_probabilities(
+            const std::vector< double >& probabilities )
+        {
+            cumulative_probs_.resize( probabilities.size() );
+
+            // Compute cumulative sum; works safely for empty or single-element
+            // vectors
+            std::partial_sum( probabilities.begin(), probabilities.end(),
+                cumulative_probs_.begin() );
+
+            if( !cumulative_probs_.empty() )
+                cumulative_probs_.back() = 1.0; // ensure exact 1.0
+        }
+        void initialize_move_probabilities(
+            const std::vector< double >& probabilities )
+        {
+            for( const auto move_id : geode::Range{ probabilities.size() } )
+            {
+                subset_moves_[move_id].second->initialize_probability(
+                    probabilities[move_id] );
+            }
+        }
+
+        void initialize_probabilities()
+        {
+            auto probabilities = compute_probabilities();
+            compute_cumulative_probabilities( probabilities );
+            initialize_move_probabilities( probabilities );
         }
 
     private:
-        std::vector< std::unique_ptr< Move< Type > > > moves_;
+        std::vector< std::pair< uuid, std::unique_ptr< Move< ObjectType > > > >
+            subset_moves_;
         std::vector< double > cumulative_probs_;
 
-        geode::UniformClosed< double > uniform_closed_double_;
+        geode::UniformClosed< double > uniform_distribution_closed_;
     };
 } // namespace geode
