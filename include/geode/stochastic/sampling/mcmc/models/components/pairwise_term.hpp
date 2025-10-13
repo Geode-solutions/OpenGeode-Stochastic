@@ -37,17 +37,9 @@ namespace geode
     public:
         explicit PairwiseTerm( std::string_view name,
             double gamma,
-            std::unique_ptr< PairwiseInteraction< ObjectType > >&& interaction )
-            : EnergyTerm< ObjectType >( name, gamma ),
-              interaction_( std::move( interaction ) )
-        {
-        }
-
-        explicit PairwiseTerm( std::string_view name,
-            double gamma,
-            std::unique_ptr< PairwiseInteraction< ObjectType > >&& interaction,
-            const uuid& subset_id )
-            : EnergyTerm< ObjectType >( name, gamma, subset_id ),
+            absl::flat_hash_set< uuid > targeted_subset_ids,
+            std::unique_ptr< PairwiseInteraction< ObjectType > > interaction )
+            : EnergyTerm< ObjectType >( name, gamma, targeted_subset_ids ),
               interaction_( std::move( interaction ) )
         {
         }
@@ -157,6 +149,16 @@ namespace geode
                     state.get_all_object(); // state.neighbors( obj_id, 1.1 );
                 for( const auto& neigh_obj_id : neighbors )
                 {
+                    // if( neigh_obj_id.subset_id < obj_id.subset_id )
+                    //{
+                    //     continue;
+                    // }
+                    // if( neigh_obj_id.subset_id == obj_id.subset_id
+                    //     && neigh_obj_id.id <= obj_id.id )
+                    //{
+                    //     continue;
+                    // }
+
                     if( neigh_obj_id == obj_id )
                     {
                         continue;

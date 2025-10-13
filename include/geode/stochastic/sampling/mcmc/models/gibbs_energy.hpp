@@ -22,164 +22,86 @@
  */
 #pragma once
 
-#include <geode/stochastic/sampling/mcmc/models/components/energy_term.hpp>
+#include <geode/stochastic/sampling/mcmc/models/components/energy_term_collection.hpp>
 #include <geode/stochastic/spatial/object_set.hpp>
 
-#include <absl/container/flat_hash_map.h>
 namespace geode
 {
     template < typename ObjectType >
     class GibbsEnergy
     {
-        OPENGEODE_DISABLE_COPY( GibbsEnergy );
-
     public:
-        GibbsEnergy() = default;
-        GibbsEnergy( GibbsEnergy&& other )
-            : energy_terms_( std::move( other.energy_terms_ ) )
+        explicit GibbsEnergy(
+            const EnergyTermCollection< ObjectType >& collection )
+            : energy_terms_collection_( collection )
         {
         }
 
-        ~GibbsEnergy() = default;
-
-        uuid add_energy_term( std::unique_ptr< EnergyTerm< ObjectType > > term )
-        {
-            auto id = term->id();
-            energy_terms_.emplace( term->id(), std::move( term ) );
-            return id;
-        }
-        void clear_energy_terms()
-        {
-            energy_terms_.clear();
-        }
-        index_t number_of_energy_terms() const
-        {
-            return energy_terms_.size();
-        }
-        std::vector< double > ordered_energy_term_parameter() const
-        {
-            std::vector< double > values;
-            values.reserve( energy_terms_.size() );
-            for( const auto& [id, term] : energy_terms_ )
-            {
-                geode_unused( id );
-                values.emplace_back( term->parameter() );
-            }
-            return values;
-        }
-
-        std::string ordered_energy_term_parameter_string() const
-        {
-            const auto values = ordered_energy_term_parameter();
-            return vector_string( values );
-        }
-
+        // --- Total energy computation ---
         double total_log_energy( const ObjectSet< ObjectType >& state ) const
         {
-            double log_energy{ 0.0 };
-            for( const auto& [id, term] : energy_terms_ )
+            double log_energy = 0.0;
+            for( auto* term : energy_terms_collection_.all_terms() )
             {
-                geode_unused( id );
                 log_energy += term->total_log( state );
             }
             return log_energy;
         }
 
-        double delta_log_energy_add( const ObjectSet< ObjectType >& state,
+        // --- Subset-specific energy computation ---
+        double total_log_energy_for_subset(
+            const ObjectSet< ObjectType >& state, const uuid& subset_id ) const
+        {
+            double log_energy = 0.0;
+            for( auto* term :
+                energy_terms_collection_.terms_for_subset( subset_id ) )
+            {
+                log_energy += term->total_log( state );
+            }
+            return log_energy;
+        }
+
+        // --- Incremental updates ---
+        double delta_log_add( const ObjectSet< ObjectType >& state,
             const ObjectRef< ObjectType >& new_object ) const
         {
-            double log_energy{ 0.0 };
-            for( const auto& [id, term] : energy_terms_ )
+            double log_energy = 0.0;
+            for( const auto* term : energy_terms_collection_.terms_for_subset(
+                     new_object
+                         .subset ) ) // energy_terms_collection_.all_terms() )
             {
-                geode_unused( id );
                 log_energy += term->delta_log_add( state, new_object );
             }
             return log_energy;
         }
 
-        double delta_log_energy_remove(
-            const ObjectSet< ObjectType >& state, ObjectId object_id ) const
+        double delta_log_remove(
+            const ObjectSet< ObjectType >& state, const ObjectId& id ) const
         {
-            double log_energy{ 0.0 };
-            for( const auto& [id, term] : energy_terms_ )
+            double log_energy = 0.0;
+            for( const auto* term : energy_terms_collection_.terms_for_subset(
+                     id.subset ) ) // energy_terms_collection_.all_terms() )
             {
-                geode_unused( id );
-                log_energy += term->delta_log_remove( state, object_id );
+                log_energy += term->delta_log_remove( state, id );
             }
             return log_energy;
         }
 
-        double delta_log_energy_change( const ObjectSet< ObjectType >& state,
-            ObjectId old_object_id,
+        double delta_log_change( const ObjectSet< ObjectType >& state,
+            const ObjectId& old_id,
             const ObjectRef< ObjectType >& new_object ) const
         {
-            double log_energy{ 0.0 };
-            for( const auto& [id, term] : energy_terms_ )
+            double log_energy = 0.0;
+            for( const auto* term : energy_terms_collection_.terms_for_subset(
+                     old_id.subset ) ) // energy_terms_collection_.all_terms() )
             {
-                geode_unused( id );
                 log_energy +=
-                    term->delta_log_change( state, old_object_id, new_object );
+                    term->delta_log_change( state, old_id, new_object );
             }
             return log_energy;
         }
 
-        double energy_term_statistic(
-            const ObjectSet< ObjectType >& state, const uuid& energy_term_id )
-        {
-            return energy_terms_.at( energy_term_id )->statistic( state );
-        }
-
-        std::vector< double > ordered_energy_term_statistics(
-            const ObjectSet< ObjectType >& state ) const
-        {
-            std::vector< double > values;
-            values.reserve( energy_terms_.size() );
-            for( const auto& [id, term] : energy_terms_ )
-            {
-                geode_unused( id );
-                values.emplace_back(
-                    static_cast< double >( term->statistic( state ) ) );
-            }
-            return values;
-        }
-
-        std::string ordered_energy_term_statistics_string(
-            const ObjectSet< ObjectType >& state ) const
-        {
-            const auto stats = ordered_energy_term_statistics( state );
-            return vector_string( stats );
-        }
-
-        std::string string() const
-        {
-            auto message = absl::StrCat(
-                "Gibbs Energy: ", energy_terms_.size(), " terms:" );
-            // we should find a way to iterate in a ordered way.
-            for( const auto& energy_term : energy_terms_ )
-            {
-                absl::StrAppend( &message,
-                    "\n\t --> uuid: ", energy_term.first.string(), " - ",
-                    energy_term.second->string() );
-            }
-            return message;
-        }
-
     private:
-        std::string vector_string( const std::vector< double >& vector ) const
-        {
-            std::string str_values;
-            for( const auto& value : vector )
-            {
-                absl::StrAppend( &str_values, " ", value );
-            }
-            absl::StrAppend( &str_values, "\n" );
-            return str_values;
-        }
-
-    private:
-        absl::flat_hash_map< geode::uuid,
-            std::unique_ptr< EnergyTerm< ObjectType > > >
-            energy_terms_;
+        const EnergyTermCollection< ObjectType >& energy_terms_collection_;
     };
-
 } // namespace geode

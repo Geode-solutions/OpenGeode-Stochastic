@@ -34,17 +34,9 @@ namespace geode
     public:
         explicit SingleObjectTerm( std::string_view name,
             double lambda,
+            absl::flat_hash_set< uuid > targeted_subset_ids,
             ObjectContributionFunc contribution_func )
-            : EnergyTerm< ObjectType >( name, lambda ),
-              contribution_func_( std::move( contribution_func ) )
-        {
-        }
-
-        explicit SingleObjectTerm( std::string_view name,
-            double lambda,
-            ObjectContributionFunc contribution_func,
-            std::optional< uuid > subset_id )
-            : EnergyTerm< ObjectType >( name, lambda, subset_id ),
+            : EnergyTerm< ObjectType >( name, lambda, targeted_subset_ids ),
               contribution_func_( std::move( contribution_func ) )
         {
         }

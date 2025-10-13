@@ -33,14 +33,10 @@ namespace geode
     class DensityTerm : public EnergyTerm< ObjectType >
     {
     public:
-        explicit DensityTerm( std::string_view name, double lambda )
-            : EnergyTerm< ObjectType >( name, lambda )
-        {
-        }
-
-        explicit DensityTerm(
-            std::string_view name, double lambda, const uuid& subset_id )
-            : EnergyTerm< ObjectType >( name, lambda, subset_id )
+        explicit DensityTerm( std::string_view name,
+            double lambda,
+            absl::flat_hash_set< uuid > targeted_subset_ids )
+            : EnergyTerm< ObjectType >( name, lambda, targeted_subset_ids )
         {
         }
 
@@ -79,12 +75,12 @@ namespace geode
 
         double statistic( const ObjectSet< ObjectType >& state ) const override
         {
-            if( this->targeted_subset_id() )
+            index_t count{ 0 };
+            for( const auto& subset_uuid : this->targeted_subset_ids() )
             {
-                return static_cast< double >( state.nb_objects_in_subset(
-                    this->targeted_subset_id().value() ) );
+                count += state.nb_objects_in_subset( subset_uuid );
             }
-            return static_cast< double >( state.nb_objects() );
+            return static_cast< double >( count );
         }
     };
 } // namespace geode
