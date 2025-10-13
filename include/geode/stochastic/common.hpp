@@ -31,4 +31,7 @@
 namespace geode
 {
     OPENGEODE_LIBRARY( opengeode_stochastic_stochastic_api, Stochastic );
+
+    static constexpr double LOG_PROB_INVALID =
+        -std::numeric_limits< double >::infinity();
 } // namespace geode

@@ -79,8 +79,14 @@ namespace
         absl::flat_hash_map< geode::uuid, geode::index_t > targets = {
             { subset_id, 20 }
         };
-        geode::ObjectSet< geode::Point2D > state =
-            mh.initialize_object_set_with_sampling( engine, targets );
+        //        geode::ObjectSet< geode::Point2D > state =
+        //            mh.initialize_object_set_with_sampling( engine, targets );
+
+        geode::ObjectSet< geode::Point2D > state;
+        state.add_subset( subset_id );
+        state.add_object( geode::Point2D{ { 1., 1. } }, subset_id );
+        state.add_object( geode::Point2D{ { 2., 2. } }, subset_id );
+        state.add_object( geode::Point2D{ { 3., 3. } }, subset_id );
 
         geode::index_t stat_sum{ 0 };
         constexpr geode::index_t N{ 100000 };
@@ -115,13 +121,13 @@ namespace
                 nb_accepted++;
                 switch( result.move_type )
                 {
-                    case geode::Proposal< geode::Point2D >::Move::Birth:
+                    case geode::MoveType::Birth:
                         accepted_birth++;
                         break;
-                    case geode::Proposal< geode::Point2D >::Move::Death:
+                    case geode::MoveType::Death:
                         accepted_death++;
                         break;
-                    case geode::Proposal< geode::Point2D >::Move::Change:
+                    case geode::MoveType::Change:
                         accepted_change++;
                         break;
                     default:
@@ -166,11 +172,12 @@ int main()
         box.add_point( max_point );
 
         geode::uuid subset_id;
-        geode::UniformPointSetSampler< 2 > sampler( box, subset_id );
+        geode::UniformPointSetSampler< 2 > sampler( box );
+
         double birth_prob = 0.3;
         double death_prob = 0.1;
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
-            sampler, birth_prob, death_prob );
+            subset_id, sampler, birth_prob, death_prob );
 
         geode::GibbsEnergy< geode::Point2D > poisson_energy;
 

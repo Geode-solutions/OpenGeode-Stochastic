@@ -36,23 +36,21 @@ namespace geode
         Undecided
     };
 
-    template < typename Type >
+    template < typename ObjectType >
     struct StepResult
     {
         MHDecision decision{ MHDecision::Undecided };
-        typename Proposal< Type >::Move move_type{
-            Proposal< Type >::Move::Invalid
-        };
+        MoveType move_type{ MoveType::Invalid };
         double log_accept{ -std::numeric_limits< double >::infinity() };
         double delta_log_energy{ 0.0 };
     };
 
-    template < typename Type >
+    template < typename ObjectType >
     class MetropolisHastings
     {
     public:
-        MetropolisHastings( GibbsEnergy< Type >& energy,
-            std::unique_ptr< ProposalKernel< Type > > proposal_kernel )
+        MetropolisHastings( GibbsEnergy< ObjectType >& energy,
+            std::unique_ptr< ProposalKernel< ObjectType > > proposal_kernel )
             : energy_( energy ),
               proposal_kernel_( std::move( proposal_kernel ) )
         {
@@ -60,45 +58,28 @@ namespace geode
                 proposal_kernel_ != nullptr, "[MH] null proposal kernel" );
         }
 
-        ObjectSet< Type > initialize_object_set_with_sampling(
-            RandomEngine& engine,
-            const absl::flat_hash_map< uuid, index_t >& group_targets ) const
+        StepResult< ObjectType > step(
+            ObjectSet< ObjectType >& state, RandomEngine& engine ) const
         {
-            ObjectSet< Type > config;
-            for( const auto& [subset_id, target] : group_targets )
-            {
-                config.add_subset( subset_id );
-                while( config.nb_objects_in_subset( subset_id ) < target )
-                {
-                    OPENGEODE_EXCEPTION( try_birth( config, subset_id, engine ),
-                        "[MH] Birth move need to be more probable for group: ",
-                        subset_id.string() );
-                }
-            }
-            return config;
-        }
-
-        StepResult< Type > step(
-            ObjectSet< Type >& state, RandomEngine& engine ) const
-        {
-            Proposal< Type > proposal =
+            Proposal< ObjectType > proposal =
                 proposal_kernel_->propose( state, engine );
-            if( proposal.type == Proposal< Type >::Move::Birth )
+            const auto& move_type = proposal.proposed_move.type;
+            if( move_type == MoveType::Birth )
             {
                 return birth_step( proposal, state, engine );
             }
-            if( proposal.type == Proposal< Type >::Move::Death )
+            if( move_type == MoveType::Death )
             {
                 return death_step( proposal, state, engine );
             }
-            if( proposal.type == Proposal< Type >::Move::Change )
+            if( move_type == MoveType::Change )
             {
                 return change_step( proposal, state, engine );
             }
-            return StepResult< Type >{};
+            return StepResult< ObjectType >{};
         }
 
-        void walk( ObjectSet< Type >& state,
+        void walk( ObjectSet< ObjectType >& state,
             RandomEngine& engine,
             index_t nb_steps ) const
         {
@@ -109,7 +90,7 @@ namespace geode
             }
         }
 
-        ObjectSet< Type > walk_copy( ObjectSet< Type > initial,
+        ObjectSet< ObjectType > walk_copy( ObjectSet< ObjectType > initial,
             RandomEngine& engine,
             index_t nb_steps ) const
         {
@@ -162,7 +143,7 @@ namespace geode
                 return 0.0;
             if( log_accept >= 0.0 )
                 return 1.0;
-            // prevent expoential overflow
+            // prevent exponential overflow
             constexpr double LOG_MIN = -745.0;
             if( log_accept < LOG_MIN )
                 return 0.0;
@@ -170,49 +151,26 @@ namespace geode
         }
 
     private:
-        bool try_birth( ObjectSet< Type >& config,
-            const uuid& subset_id,
-            RandomEngine& engine ) const
+        const double compute_log_accept( const double deltaU,
+            const ProposalProbabilities& proposal_probas ) const
         {
-            // pbirth_should be > 0.01
-            for( const auto attempt : geode::Range{ 100 } )
-            {
-                geode_unused( attempt );
-                auto proposal = proposal_kernel_->propose( config, engine );
-                if( proposal.type == Proposal< Type >::Move::Birth
-                    && proposal.new_object->second == subset_id )
-                {
-                    config.add_object( std::move( proposal.new_object->first ),
-                        proposal.new_object->second );
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        const double compute_log_accept(
-            const double deltaU, const Proposal< Type >& proposal ) const
-        {
-            OPENGEODE_ASSERT(
-                std::isfinite( proposal.log_forward_prob )
-                    && std::isfinite( proposal.log_backward_prob ),
-                "[MH] Non-finite proposal log-probabilities" );
-            return -beta_ * deltaU + proposal.log_backward_prob
-                   - proposal.log_forward_prob;
+            return -beta_ * deltaU + proposal_probas.transition_probability();
         }
 
         template < typename ApplyMove >
-        StepResult< Type > accept_or_reject( Proposal< Type >& proposal,
-            ObjectSet< Type >& state,
+        StepResult< ObjectType > accept_or_reject(
+            Proposal< ObjectType >& proposal,
+            ObjectSet< ObjectType >& state,
             RandomEngine& engine,
             const double delta_log_energy,
             ApplyMove&& apply_move ) const
         {
-            StepResult< Type > step_result;
-            step_result.move_type = proposal.type;
+            const auto& proposed_move = proposal.proposed_move;
+            StepResult< ObjectType > step_result;
+            step_result.move_type = proposed_move.type;
             step_result.delta_log_energy = delta_log_energy;
-            step_result.log_accept =
-                compute_log_accept( delta_log_energy, proposal );
+            step_result.log_accept = compute_log_accept(
+                delta_log_energy, proposed_move.proposal_probabilities );
 
             double log_u = engine.sample_log();
             step_result.decision = ( log_u < step_result.log_accept )
@@ -224,65 +182,55 @@ namespace geode
             return step_result;
         }
 
-        StepResult< Type > birth_step( Proposal< Type >& proposal,
-            ObjectSet< Type >& state,
+        StepResult< ObjectType > birth_step( Proposal< ObjectType >& proposal,
+            ObjectSet< ObjectType >& state,
             RandomEngine& engine ) const
         {
-            OPENGEODE_ASSERT( proposal.new_object.has_value(),
-                "[MH] Birth proposal has no new_object" );
-            geode::ObjectRef< Type > new_object{
-                proposal.new_object.value().first,
-                proposal.new_object.value().second
-            };
+            const auto new_object = proposal.new_object();
             const auto delta_log_energy =
                 energy_.delta_log_energy_add( state, new_object );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
-                []( auto& s, auto& p ) {
-                    s.add_object( std::move( p.new_object.value().first ),
-                        p.new_object.value().second );
+                []( auto& state, auto& proposal ) {
+                    state.add_object(
+                        std::move( proposal.proposed_move.new_object.value() ),
+                        proposal.subset_id );
                 } );
         };
 
-        StepResult< Type > death_step( Proposal< Type >& proposal,
-            ObjectSet< Type >& state,
+        StepResult< ObjectType > death_step( Proposal< ObjectType >& proposal,
+            ObjectSet< ObjectType >& state,
             RandomEngine& engine ) const
         {
-            OPENGEODE_ASSERT( proposal.old_object_id.has_value(),
-                "[MH] Death proposal has no index" );
-            const auto delta_log_energy = energy_.delta_log_energy_remove(
-                state, proposal.old_object_id.value() );
+            const auto old_object_id = proposal.old_object_id();
+            const auto delta_log_energy =
+                energy_.delta_log_energy_remove( state, old_object_id );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
-                []( auto& s, auto& p ) {
-                    s.remove_object( p.old_object_id.value() );
+                []( auto& state, auto& proposal ) {
+                    state.remove_object( proposal.old_object_id() );
                 } );
         };
 
-        StepResult< Type > change_step( Proposal< Type >& proposal,
-            ObjectSet< Type >& state,
+        StepResult< ObjectType > change_step( Proposal< ObjectType >& proposal,
+            ObjectSet< ObjectType >& state,
             RandomEngine& engine ) const
         {
-            OPENGEODE_ASSERT( proposal.new_object.has_value(),
-                "[MH] Change proposal has no new_object" );
-            OPENGEODE_ASSERT( proposal.old_object_id.has_value(),
-                "[MH] Change proposal has no index" );
-            geode::ObjectRef< Type > new_object{
-                proposal.new_object.value().first,
-                proposal.new_object.value().second
-            };
+            const auto new_object = proposal.new_object();
+            const auto old_object_id = proposal.old_object_id();
             const auto delta_log_energy = energy_.delta_log_energy_change(
-                state, proposal.old_object_id.value(), new_object );
+                state, old_object_id, new_object );
             // should we test that objects are in the same group?
             // should be ensured by the dynamic
             return accept_or_reject( proposal, state, engine, delta_log_energy,
-                []( auto& s, auto& p ) {
-                    s.update_object( p.old_object_id.value(),
-                        std::move( p.new_object.value().first ) );
+                []( auto& state, auto& proposal ) {
+                    state.update_object( proposal.old_object_id(),
+                        std::move(
+                            proposal.proposed_move.new_object.value() ) );
                 } );
         };
 
     private:
-        const GibbsEnergy< Type >& energy_;
-        std::unique_ptr< ProposalKernel< Type > > proposal_kernel_;
+        const GibbsEnergy< ObjectType >& energy_;
+        std::unique_ptr< ProposalKernel< ObjectType > > proposal_kernel_;
         double beta_{ 1.0 };
     };
 } // namespace geode
