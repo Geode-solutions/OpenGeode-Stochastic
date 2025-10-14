@@ -23,8 +23,13 @@
 #pragma once
 
 #include <absl/container/flat_hash_set.h>
+
+#include <geode/basic/identifier.hpp>
+#include <geode/basic/identifier_builder.hpp>
+
 #include <geode/stochastic/common.hpp>
 #include <geode/stochastic/spatial/object_set.hpp>
+
 #include <optional>
 
 namespace geode
@@ -94,29 +99,21 @@ namespace geode
     //    };
 
     template < typename ObjectType >
-    class EnergyTerm
+    class EnergyTerm : public Identifier
     {
     public:
         explicit EnergyTerm( std::string_view name,
             double param,
-            absl::flat_hash_set< uuid > targeted_subset_ids )
-            : name_{ name },
+            absl::flat_hash_set< uuid >&& targeted_subset_ids )
+            : Identifier{},
               energy_scale_{ param },
               targeted_subset_ids_{ std::move( targeted_subset_ids ) }
         {
+            IdentifierBuilder builder( *this );
+            builder.set_name( name );
         }
 
         virtual ~EnergyTerm() = default;
-
-        const uuid& id() const
-        {
-            return energy_term_id_;
-        }
-
-        std::string_view name() const
-        {
-            return name_;
-        }
 
         double parameter() const
         {
@@ -186,10 +183,7 @@ namespace geode
         }
 
     private:
-        std::string name_;
         detail::EnergyScale energy_scale_;
-
         absl::flat_hash_set< uuid > targeted_subset_ids_;
-        uuid energy_term_id_{};
     };
 } // namespace geode

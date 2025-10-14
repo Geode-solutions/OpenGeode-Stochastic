@@ -39,7 +39,8 @@ namespace geode
             double gamma,
             absl::flat_hash_set< uuid > targeted_subset_ids,
             std::unique_ptr< PairwiseInteraction< ObjectType > > interaction )
-            : EnergyTerm< ObjectType >( name, gamma, targeted_subset_ids ),
+            : EnergyTerm< ObjectType >(
+                  name, gamma, std::move( targeted_subset_ids ) ),
               interaction_( std::move( interaction ) )
         {
         }

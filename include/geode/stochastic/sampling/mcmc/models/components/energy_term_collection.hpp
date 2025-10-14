@@ -15,16 +15,13 @@ namespace geode
         EnergyTermCollection( EnergyTermCollection&& ) noexcept = default;
         ~EnergyTermCollection() = default;
 
-        uuid add_energy_term( std::unique_ptr< EnergyTerm< ObjectType > > term )
+        uuid add_energy_term( std::shared_ptr< EnergyTerm< ObjectType > > term )
         {
             const uuid id = term->id();
-            EnergyTerm< ObjectType >* ptr = term.get();
-
-            energy_terms_.emplace( id, std::move( term ) );
-
-            for( const uuid& subset_id : ptr->targeted_subset_ids() )
+            energy_terms_.emplace( id, term );
+            for( const uuid& subset_id : term->targeted_subset_ids() )
             {
-                subset_to_terms_[subset_id].push_back( ptr );
+                subset_to_terms_[subset_id].push_back( term );
             }
             return id;
         }
@@ -35,14 +32,20 @@ namespace geode
             if( it == energy_terms_.end() )
                 return false;
 
-            EnergyTerm< ObjectType >* ptr = it->second.get();
-            for( const uuid& subset_id : ptr->targeted_subset_ids() )
+            auto term = it->second;
+
+            for( const uuid& subset_id : term->targeted_subset_ids() )
             {
-                auto& vec = subset_to_terms_[subset_id];
+                auto vec_it = subset_to_terms_.find( subset_id );
+                if( vec_it == subset_to_terms_.end() )
+                    continue;
+
+                auto& vec = vec_it->second;
                 vec.erase(
-                    std::remove( vec.begin(), vec.end(), ptr ), vec.end() );
+                    std::remove( vec.begin(), vec.end(), term ), vec.end() );
+
                 if( vec.empty() )
-                    subset_to_terms_.erase( subset_id );
+                    subset_to_terms_.erase( vec_it );
             }
 
             energy_terms_.erase( it );
@@ -60,51 +63,54 @@ namespace geode
             return energy_terms_.size();
         }
 
-        [[nodiscard]] EnergyTerm< ObjectType >* get( const uuid& id ) const
+        [[nodiscard]] std::shared_ptr< const EnergyTerm< ObjectType > > get(
+            const uuid& id ) const
         {
             auto it = energy_terms_.find( id );
             OPENGEODE_EXCEPTION( it != energy_terms_.end(),
                 absl::StrCat( "[EnergyTermCollection] Unknown energy term: ",
                     id.string() ) );
-            return it->second.get();
+            return it->second;
         }
 
-        [[nodiscard]] std::vector< EnergyTerm< ObjectType >* > terms_for_subset(
-            const uuid& subset_id ) const
+        [[nodiscard]] const absl::flat_hash_map< uuid,
+            std::shared_ptr< EnergyTerm< ObjectType > > >&
+            all_terms() const
         {
-            auto it = subset_to_terms_.find( subset_id );
-            return it != subset_to_terms_.end()
-                       ? it->second
-                       : std::vector< EnergyTerm< ObjectType >* >{};
+            return energy_terms_;
         }
 
-        [[nodiscard]] std::vector< EnergyTerm< ObjectType >* > all_terms() const
+        [[nodiscard]] const std::vector<
+            std::shared_ptr< EnergyTerm< ObjectType > > >&
+            terms_for_subset( const uuid& subset_id ) const
         {
-            std::vector< EnergyTerm< ObjectType >* > result;
-            result.reserve( energy_terms_.size() );
-            for( const auto& [id, term] : energy_terms_ )
-            {
-                result.push_back( term.get() );
-            }
-            return result;
+            const auto it = subset_to_terms_.find( subset_id );
+            OPENGEODE_EXCEPTION( it != subset_to_terms_.end(),
+                "[EnergyTermCollection] - Object Subset (", subset_id.string(),
+                ") does not have any energy term." );
+            return it->second;
         }
 
         std::string string() const
         {
             auto message = absl::StrCat(
-                "Gibbs Energy: ", energy_terms_.size(), " terms:" );
-            // we should find a way to iterate in a ordered way.
-            for( const auto energy_term : all_terms() )
+                "EnergyTermCollection: ", energy_terms_.size(), " terms:" );
+            for( const auto& [id, term] : energy_terms_ )
             {
-                absl::StrAppend( &message, "\n\t --> ", energy_term->string() );
+                absl::StrAppend( &message, "\n\t --> ", term->string() );
             }
             return message;
         }
 
     private:
-        absl::flat_hash_map< uuid, std::unique_ptr< EnergyTerm< ObjectType > > >
+        // strong ownership
+        absl::flat_hash_map< uuid, std::shared_ptr< EnergyTerm< ObjectType > > >
             energy_terms_;
-        absl::flat_hash_map< uuid, std::vector< EnergyTerm< ObjectType >* > >
+
+        // subset index (shared ownership)
+        absl::flat_hash_map< uuid,
+            std::vector< std::shared_ptr< EnergyTerm< ObjectType > > > >
             subset_to_terms_;
     };
+
 } // namespace geode

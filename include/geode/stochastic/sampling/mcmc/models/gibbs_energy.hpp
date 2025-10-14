@@ -37,23 +37,22 @@ namespace geode
         {
         }
 
-        // --- Total energy computation ---
         double total_log_energy( const ObjectSet< ObjectType >& state ) const
         {
             double log_energy = 0.0;
-            for( auto* term : energy_terms_collection_.all_terms() )
+            const auto& energy_terms = energy_terms_collection_.all_terms();
+            for( auto& [id, term] : energy_terms )
             {
                 log_energy += term->total_log( state );
             }
             return log_energy;
         }
 
-        // --- Subset-specific energy computation ---
         double total_log_energy_for_subset(
             const ObjectSet< ObjectType >& state, const uuid& subset_id ) const
         {
             double log_energy = 0.0;
-            for( auto* term :
+            for( const auto term :
                 energy_terms_collection_.terms_for_subset( subset_id ) )
             {
                 log_energy += term->total_log( state );
@@ -61,14 +60,13 @@ namespace geode
             return log_energy;
         }
 
-        // --- Incremental updates ---
         double delta_log_add( const ObjectSet< ObjectType >& state,
             const ObjectRef< ObjectType >& new_object ) const
         {
             double log_energy = 0.0;
-            for( const auto* term :
-                energy_terms_collection_.terms_for_subset( new_object
-                        .subset ) ) // energy_terms_collection_.all_terms() )
+            for( const auto& term : energy_terms_collection_.terms_for_subset(
+                     new_object
+                         .subset ) ) // energy_terms_collection_.all_terms() )
             {
                 log_energy += term->delta_log_add( state, new_object );
             }
@@ -79,7 +77,7 @@ namespace geode
             const ObjectSet< ObjectType >& state, const ObjectId& id ) const
         {
             double log_energy = 0.0;
-            for( const auto* term : energy_terms_collection_.terms_for_subset(
+            for( const auto& term : energy_terms_collection_.terms_for_subset(
                      id.subset ) ) // energy_terms_collection_.all_terms() )
             {
                 log_energy += term->delta_log_remove( state, id );
@@ -92,7 +90,7 @@ namespace geode
             const ObjectRef< ObjectType >& new_object ) const
         {
             double log_energy = 0.0;
-            for( const auto* term : energy_terms_collection_.terms_for_subset(
+            for( const auto& term : energy_terms_collection_.terms_for_subset(
                      old_id.subset ) ) // energy_terms_collection_.all_terms() )
             {
                 log_energy +=
