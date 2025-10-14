@@ -64,9 +64,9 @@ namespace geode
             const ObjectRef< ObjectType >& new_object ) const
         {
             double log_energy = 0.0;
-            for( const auto& term : energy_terms_collection_.terms_for_subset(
-                     new_object
-                         .subset ) ) // energy_terms_collection_.all_terms() )
+            for( const auto& term :
+                energy_terms_collection_.terms_for_subset( new_object
+                        .subset ) ) // energy_terms_collection_.all_terms() )
             {
                 log_energy += term->delta_log_add( state, new_object );
             }
