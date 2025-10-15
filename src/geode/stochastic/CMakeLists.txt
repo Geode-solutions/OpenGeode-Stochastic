@@ -48,6 +48,7 @@ add_geode_library(
         "sampling/direct/segment_uniform_sampler.hpp"
         "sampling/mcmc/models/components/pairwise_term.hpp"
         "sampling/mcmc/models/components/density_term.hpp"
+        "sampling/mcmc/models/components/energy_term_collection.hpp"
         "sampling/mcmc/models/components/energy_term.hpp"
         "sampling/mcmc/models/gibbs_energy.hpp"
         "sampling/mcmc/proposal/classical_proposals.hpp"

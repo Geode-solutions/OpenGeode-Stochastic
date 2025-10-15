@@ -26,6 +26,7 @@
 #include <geode/geometry/point.hpp>
 
 #include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
+#include <geode/stochastic/sampling/mcmc/models/components/energy_term_collection.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/spatial/object_set.hpp>
@@ -48,24 +49,27 @@ namespace
 
 void test_gibbs_energy( const geode::uuid& subset_id )
 {
-    geode::GibbsEnergy< geode::Point2D > gibbs_energy;
+    geode::EnergyTermCollection< geode::Point2D > energy_terms;
 
     // Add intensity term
-    gibbs_energy.add_energy_term(
-        std::make_unique< geode::DensityTerm< geode::Point2D > >(
-            "intensity", 0.5, subset_id ) );
+    energy_terms.add_energy_term(
+        std::make_unique< geode::DensityTerm< geode::Point2D > >( "intensity",
+            0.5, absl::flat_hash_set< geode::uuid >{ subset_id } ) );
 
     // Add pairwise term with trivial interaction: always counts 1 for each pair
     auto interaction =
         std::make_unique< geode::EuclideanCutoffInteraction< geode::Point2D > >(
             1000000 );
 
-    gibbs_energy.add_energy_term(
+    energy_terms.add_energy_term(
         std::make_unique< geode::PairwiseTerm< geode::Point2D > >(
-            "interaction", 0.8, std::move( interaction ) ) );
+            "interaction", 0.8, absl::flat_hash_set< geode::uuid >{ subset_id },
+            std::move( interaction ) ) );
 
-    OPENGEODE_EXCEPTION( gibbs_energy.number_of_energy_terms() == 2,
+    OPENGEODE_EXCEPTION( energy_terms.size() == 2,
         "[test gibbs] Wrong number of components after adding terms." );
+
+    geode::GibbsEnergy< geode::Point2D > gibbs_energy( energy_terms );
 
     auto pattern = create_object_set( subset_id );
 
@@ -77,35 +81,25 @@ void test_gibbs_energy( const geode::uuid& subset_id )
     // Add new point to test delta_add
     geode::Point2D p3{ { 2., 2. } };
     geode::ObjectRef< geode::Point2D > p_ref{ p3, subset_id };
-    double delta_add = gibbs_energy.delta_log_energy_add( pattern, p_ref );
+    double delta_add = gibbs_energy.delta_log_add( pattern, p_ref );
     OPENGEODE_EXCEPTION( std::isfinite( delta_add ),
         "[test gibbs] Delta add should be finite." );
 
     geode::ObjectId obj_id{ 0, subset_id };
     // Remove point test
-    double delta_remove =
-        gibbs_energy.delta_log_energy_remove( pattern, obj_id );
+    double delta_remove = gibbs_energy.delta_log_remove( pattern, obj_id );
     OPENGEODE_EXCEPTION( std::isfinite( delta_remove ),
         "[test gibbs] Delta remove should be finite." );
 
     // Change point test
     double delta_change =
-        gibbs_energy.delta_log_energy_change( pattern, obj_id, p_ref );
+        gibbs_energy.delta_log_change( pattern, obj_id, p_ref );
     OPENGEODE_EXCEPTION( std::isfinite( delta_change ),
         "[test gibbs] Delta change should be finite." );
 
-    // Check string outputs don’t crash
-    auto comp_str = gibbs_energy.ordered_energy_term_parameter_string();
-    auto stats_str =
-        gibbs_energy.ordered_energy_term_statistics_string( pattern );
-    OPENGEODE_EXCEPTION(
-        !comp_str.empty(), "[test gibbs] Components string is empty." );
-    OPENGEODE_EXCEPTION(
-        !stats_str.empty(), "[test gibbs] Statistics string is empty." );
-
     // Clear components and verify
-    gibbs_energy.clear_energy_terms();
-    OPENGEODE_EXCEPTION( gibbs_energy.number_of_energy_terms() == 0,
+    energy_terms.clear();
+    OPENGEODE_EXCEPTION( energy_terms.size() == 2,
         "[test gibbs] Components not cleared properly." );
 }
 

@@ -51,7 +51,7 @@ void test_normal_positive_pairwise( double gamma,
             2.1 );
 
     geode::PairwiseTerm< geode::Point2D > term(
-        "strauss", gamma, std::move( interaction ) );
+        "strauss", gamma, { subset_id }, std::move( interaction ) );
     auto neg_log_gamma = -std::log( gamma );
 
     // p1 and p2 interact → 1 pair
@@ -90,7 +90,7 @@ void test_zero_pairwise( double gamma,
             2.1 );
 
     geode::PairwiseTerm< geode::Point2D > term(
-        "interaction", gamma, std::move( interaction ) );
+        "interaction", gamma, { subset_id }, std::move( interaction ) );
 
     auto total = term.total_log( pattern );
     OPENGEODE_EXCEPTION(

@@ -43,7 +43,8 @@ void test_normal_positive_intensity( double lambda,
     const geode::ObjectSet< geode::Point2D > &pattern,
     const geode::uuid &subset_id )
 {
-    geode::DensityTerm< geode::Point2D > term( "intensity", lambda, subset_id );
+    geode::DensityTerm< geode::Point2D > term(
+        "intensity", lambda, { subset_id } );
     auto neg_log_lambda = -std::log( lambda );
 
     double total = term.total_log( pattern );
@@ -70,7 +71,8 @@ void test_normal_zero_intensity( double lambda,
     const geode::ObjectSet< geode::Point2D > &pattern,
     const geode::uuid &subset_id )
 {
-    geode::DensityTerm< geode::Point2D > term( "intensity", lambda, subset_id );
+    geode::DensityTerm< geode::Point2D > term(
+        "intensity", lambda, { subset_id } );
     double total = term.total_log( pattern );
 
     OPENGEODE_EXCEPTION(
@@ -120,7 +122,7 @@ int main()
         geode::StochasticLibrary::initialize();
         geode::uuid subset_id;
         geode::DensityTerm< geode::Point2D > term(
-            "zero", -geode::GLOBAL_EPSILON, subset_id );
+            "zero", -geode::GLOBAL_EPSILON, { subset_id } );
         geode::Logger::info( "TEST FAILED" );
         return 1;
     }

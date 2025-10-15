@@ -22,8 +22,14 @@
  */
 #pragma once
 
+#include <absl/container/flat_hash_set.h>
+
+#include <geode/basic/identifier.hpp>
+#include <geode/basic/identifier_builder.hpp>
+
 #include <geode/stochastic/common.hpp>
 #include <geode/stochastic/spatial/object_set.hpp>
+
 #include <optional>
 
 namespace geode
@@ -93,43 +99,30 @@ namespace geode
     //    };
 
     template < typename ObjectType >
-    class EnergyTerm
+    class EnergyTerm : public Identifier
     {
     public:
-        explicit EnergyTerm( std::string_view name, double param )
-            : name_{ name }, energy_scale_{ param }
-        {
-        }
-
         explicit EnergyTerm( std::string_view name,
             double param,
-            const uuid& targeted_subset_id )
-            : name_{ name },
+            absl::flat_hash_set< uuid >&& targeted_subset_ids )
+            : Identifier{},
               energy_scale_{ param },
-              targeted_subset_id_{ targeted_subset_id }
+              targeted_subset_ids_{ std::move( targeted_subset_ids ) }
         {
+            IdentifierBuilder builder( *this );
+            builder.set_name( name );
         }
 
         virtual ~EnergyTerm() = default;
-
-        const uuid& id() const
-        {
-            return energy_term_id_;
-        }
-
-        std::string_view name() const
-        {
-            return name_;
-        }
 
         double parameter() const
         {
             return energy_scale_.parameter();
         }
 
-        std::optional< uuid > targeted_subset_id() const
+        const absl::flat_hash_set< uuid >& targeted_subset_ids() const
         {
-            return targeted_subset_id_;
+            return targeted_subset_ids_;
         }
 
         /// Energy contribution for a given statistic multiplier
@@ -158,11 +151,12 @@ namespace geode
         {
             auto message =
                 absl::StrCat( "Term : ", name(), "; uuid: ", id().string(),
-                    " parameter value: ", energy_scale_.parameter() );
-            if( targeted_subset_id_ )
+                    " parameter value: ", energy_scale_.parameter(),
+                    " applyied on ", targeted_subset_ids_.size(),
+                    " object subsets -->" );
+            for( const auto& subset_uuid : targeted_subset_ids_ )
             {
-                absl::StrAppend( &message, " targetted subset: ",
-                    targeted_subset_id_.value().string() );
+                absl::StrAppend( &message, "\t", subset_uuid.string() );
             }
             return message;
         }
@@ -170,33 +164,26 @@ namespace geode
     protected:
         bool is_targeted_subset( const uuid& subset_id ) const
         {
-            return !targeted_subset_id_ || subset_id == *targeted_subset_id_;
+            return targeted_subset_ids_.find( subset_id )
+                   != targeted_subset_ids_.end();
         }
 
         template < typename Func >
         void for_each_targeted_object(
             const ObjectSet< ObjectType >& state, Func&& do_apply ) const
         {
-            if( targeted_subset_id_ )
+            for( const auto& targeted_subset_id : targeted_subset_ids_ )
             {
                 for( const auto id : geode::Range{
-                         state.nb_objects_in_subset( *targeted_subset_id_ ) } )
+                         state.nb_objects_in_subset( targeted_subset_id ) } )
                 {
-                    do_apply( { id, *targeted_subset_id_ } );
+                    do_apply( ObjectId{ id, targeted_subset_id } );
                 }
-                return;
-            }
-            for( const auto& id : state.get_all_object() )
-            {
-                do_apply( id );
             }
         }
 
     private:
-        std::string name_;
         detail::EnergyScale energy_scale_;
-
-        std::optional< uuid > targeted_subset_id_{};
-        uuid energy_term_id_{};
+        absl::flat_hash_set< uuid > targeted_subset_ids_;
     };
 } // namespace geode

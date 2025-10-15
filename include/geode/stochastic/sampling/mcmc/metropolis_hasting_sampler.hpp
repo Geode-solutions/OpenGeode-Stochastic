@@ -188,7 +188,7 @@ namespace geode
         {
             const auto new_object = proposal.new_object();
             const auto delta_log_energy =
-                energy_.delta_log_energy_add( state, new_object );
+                energy_.delta_log_add( state, new_object );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
                 []( auto& state, auto& proposal ) {
                     state.add_object(
@@ -203,7 +203,7 @@ namespace geode
         {
             const auto old_object_id = proposal.old_object_id();
             const auto delta_log_energy =
-                energy_.delta_log_energy_remove( state, old_object_id );
+                energy_.delta_log_remove( state, old_object_id );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
                 []( auto& state, auto& proposal ) {
                     state.remove_object( proposal.old_object_id() );
@@ -216,8 +216,8 @@ namespace geode
         {
             const auto new_object = proposal.new_object();
             const auto old_object_id = proposal.old_object_id();
-            const auto delta_log_energy = energy_.delta_log_energy_change(
-                state, old_object_id, new_object );
+            const auto delta_log_energy =
+                energy_.delta_log_change( state, old_object_id, new_object );
             // should we test that objects are in the same group?
             // should be ensured by the dynamic
             return accept_or_reject( proposal, state, engine, delta_log_energy,

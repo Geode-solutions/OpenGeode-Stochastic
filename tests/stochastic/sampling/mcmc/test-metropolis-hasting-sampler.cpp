@@ -24,6 +24,7 @@
 #include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
+#include <geode/stochastic/sampling/mcmc/models/components/energy_term_collection.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
 namespace
@@ -179,12 +180,15 @@ int main()
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
             subset_id, sampler, birth_prob, death_prob );
 
-        geode::GibbsEnergy< geode::Point2D > poisson_energy;
+        geode::EnergyTermCollection< geode::Point2D > energy_terms;
 
         // Add intensity term
-        poisson_energy.add_energy_term(
+        energy_terms.add_energy_term(
             std::make_unique< geode::DensityTerm< geode::Point2D > >(
-                "intensity", 0.5, subset_id ) );
+                "intensity", 0.5,
+                absl::flat_hash_set< geode::uuid >{ subset_id } ) );
+
+        geode::GibbsEnergy< geode::Point2D > poisson_energy( energy_terms );
 
         geode::MetropolisHastings< geode::Point2D > mh(
             poisson_energy, std::move( kernel ) );
