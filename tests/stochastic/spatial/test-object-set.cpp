@@ -42,29 +42,32 @@ namespace
             "[TestObjectSet] - Set should not be empty after insertions" );
 
         const auto& p = set.get_object( idx1 );
-        OPENGEODE_EXCEPTION( p == geode::Point2D( { { 1.0, 1.0 } } ),
-            "[TestObjectSet] - Wrong object value at index 1" );
+        const auto result = geode::Point2D{ { 1.0, 1.0 } };
+        OPENGEODE_EXCEPTION(
+            p == result, "[TestObjectSet] - Wrong object value at index 1" );
     }
 
     void test_update_object()
     {
         geode::ObjectSet< geode::Point2D > set;
-        const auto idx0 = set.add_object( geode::Point2D( { { 0.0, 0.0 } } ) );
-        const auto idx1 = set.add_object( geode::Point2D( { { 1.0, 1.0 } } ) );
+        const auto idx0 = set.add_object( geode::Point2D{ { 0.0, 0.0 } } );
+        const auto idx1 = set.add_object( geode::Point2D{ { 1.0, 1.0 } } );
 
-        set.update_object( idx1, geode::Point2D( { { 5.0, 5.0 } } ) );
+        set.update_object( idx1, geode::Point2D{ { 5.0, 5.0 } } );
 
         const auto& updated = set.get_object( idx1 );
-        OPENGEODE_EXCEPTION( updated == geode::Point2D( { { 5.0, 5.0 } } ),
-            "[TestObjectSet] - Object update failed" );
+
+        const auto new_point = geode::Point2D{ { 5.0, 5.0 } };
+        OPENGEODE_EXCEPTION(
+            updated == new_point, "[TestObjectSet] - Object update failed" );
     }
 
     void test_remove_object()
     {
         geode::ObjectSet< geode::Point2D > set;
-        set.add_object( geode::Point2D( { { 0.0, 0.0 } } ) );
-        set.add_object( geode::Point2D( { { 1.0, 1.0 } } ) );
-        set.add_object( geode::Point2D( { { 2.0, 2.0 } } ) );
+        set.add_object( geode::Point2D{ { 0.0, 0.0 } } );
+        set.add_object( geode::Point2D{ { 1.0, 1.0 } } );
+        set.add_object( geode::Point2D{ { 2.0, 2.0 } } );
 
         set.remove_object( 1 );
 
@@ -72,7 +75,8 @@ namespace
             "[TestObjectSet] - Set size should be 2 after removal" );
 
         const auto& last = set.get_object( 1 );
-        OPENGEODE_EXCEPTION( last == geode::Point2D( { { 2.0, 2.0 } } ),
+        const auto result = geode::Point2D{ { 2.0, 2.0 } };
+        OPENGEODE_EXCEPTION( last == result,
             "[TestObjectSet] - Remaining objects not shifted properly after "
             "removal" );
     }
@@ -80,19 +84,20 @@ namespace
     void test_const_access()
     {
         geode::ObjectSet< geode::Point2D > set;
-        set.add_object( geode::Point2D( { { 10.0, 10.0 } } ) );
+        set.add_object( geode::Point2D{ { 10.0, 10.0 } } );
 
         const auto& const_set = set;
         const auto& p = const_set.get_object( 0 );
-        OPENGEODE_EXCEPTION( p == geode::Point2D( { { 10.0, 10.0 } } ),
-            "[TestObjectSet] - Const access mismatch" );
+        const auto result = geode::Point2D{ { 10.0, 10.0 } };
+        OPENGEODE_EXCEPTION( p == result ),
+            "[TestObjectSet] - Const access mismatch";
     }
 
     void test_string_representation()
     {
         geode::ObjectSet< geode::Point2D > set;
-        set.add_object( geode::Point2D( { { 0.0, 0.0 } } ) );
-        set.add_object( geode::Point2D( { { 1.0, 1.0 } } ) );
+        set.add_object( geode::Point2D{ { 0.0, 0.0 } } );
+        set.add_object( geode::Point2D{ { 1.0, 1.0 } } );
 
         const auto desc = set.string();
         OPENGEODE_EXCEPTION( desc.find( "2 objects" ) != std::string::npos,
