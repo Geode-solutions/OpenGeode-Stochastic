@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#include <geode/stochastic/spatial/object_set.hpp>
+#include <geode/stochastic/spatial/object_sets.hpp>
 
 #include <geode/stochastic/sampling/mcmc/models/components/energy_term.hpp>
 
@@ -34,34 +34,34 @@ namespace geode
     public:
         explicit SingleObjectTerm( std::string_view name,
             double lambda,
-            absl::flat_hash_set< uuid > targeted_subset_ids,
+            absl::flat_hash_set< uuid > targeted_set_ids,
             ObjectContributionFunc contribution_func )
-            : EnergyTerm< ObjectType >( name, lambda, targeted_subset_ids ),
+            : EnergyTerm< ObjectType >( name, lambda, targeted_set_ids ),
               contribution_func_( std::move( contribution_func ) )
         {
         }
 
-        double total_log( const ObjectSet< ObjectType >& state ) const override
+        double total_log( const ObjectSets< ObjectType >& state ) const override
         {
             auto total = this->statistic( state );
             return this->contribution( total );
         }
 
-        double delta_log_add( const ObjectSet< ObjectType >& /*state*/,
+        double delta_log_add( const ObjectSets< ObjectType >& /*state*/,
             const ObjectType& new_object,
-            const uuid& new_object_subset_id ) const override
+            const uuid& new_object_set_id ) const override
         {
-            if( !this->is_targeted_subset( new_object_subset_id ) )
+            if( !this->is_targeted_set( new_object_set_id ) )
             {
                 return 0.0;
             }
             return this->contribution( contribution_func_( new_object ) );
         }
 
-        double delta_log_remove( const ObjectSet< ObjectType >& state,
+        double delta_log_remove( const ObjectSets< ObjectType >& state,
             ObjectId object_id ) const override
         {
-            if( !this->is_targeted_subset( object_id.subset ) )
+            if( !this->is_targeted_set( object_id.set_id ) )
             {
                 return 0.0;
             }
@@ -69,13 +69,13 @@ namespace geode
                 -contribution_func_( state.get_object( object_id ) ) );
         }
 
-        double delta_log_change( const ObjectSet< ObjectType >& state,
+        double delta_log_change( const ObjectSets< ObjectType >& state,
             ObjectId old_object_id,
             const ObjectType& new_object,
-            const uuid& new_object_subset_id ) const override
+            const uuid& new_object_set_id ) const override
         {
-            if( this->is_targeted_subset( old_object_id.subset )
-                && this->is_targeted_subset( new_object_subset_id ) )
+            if( this->is_targeted_set( old_object_id.set_id )
+                && this->is_targeted_set( new_object_set_id ) )
             {
                 return 0.0;
             }
@@ -85,7 +85,7 @@ namespace geode
             return this->contribution( delta );
         }
 
-        double statistic( const ObjectSet< ObjectType >& state ) const override
+        double statistic( const ObjectSets< ObjectType >& state ) const override
         {
             double total = 0.0;
             this->for_each_targeted_object( state, [&]( const ObjectId& id ) {

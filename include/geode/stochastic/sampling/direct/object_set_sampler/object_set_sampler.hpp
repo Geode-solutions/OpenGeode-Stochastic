@@ -24,7 +24,7 @@
 #pragma once
 
 #include <geode/stochastic/sampling/random_engine.hpp>
-#include <geode/stochastic/spatial/object_set.hpp>
+#include <geode/stochastic/spatial/object_sets.hpp>
 
 namespace geode
 {

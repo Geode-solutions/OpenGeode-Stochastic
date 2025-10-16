@@ -26,7 +26,7 @@
 #include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
-#include <geode/stochastic/spatial/object_set.hpp>
+#include <geode/stochastic/spatial/object_sets.hpp>
 namespace
 {
     struct PoissonDescription
@@ -56,17 +56,17 @@ namespace
     struct UserProblem
     {
         geode::BoundingBox2D box;
-        geode::ObjectSet< geode::Point2D > object_set;
-        std::vector< geode::uuid > object_subset_id;
+        geode::ObjectSets< geode::Point2D > object_set;
+        std::vector< geode::uuid > object_set_id;
 
         geode::GibbsEnergy< geode::Point2D > gibbs_energy;
 
-        absl::flat_hash_map< geode::uuid, geode::uuid > subset_energy_term_ids;
+        absl::flat_hash_map< geode::uuid, geode::uuid > set_energy_term_ids;
 
-        absl::flat_hash_map< geode::uuid, double > subset_stats_targets;
+        absl::flat_hash_map< geode::uuid, double > set_stats_targets;
 
         absl::flat_hash_map< geode::uuid, geode::UniformPointSetSampler< 2 > >
-            subset_samplers;
+            set_samplers;
 
         std::unique_ptr< geode::MetropolisHastings< geode::Point2D > >
             mh_sampler;
@@ -85,37 +85,37 @@ namespace
                 std::make_unique< geode::ProposalKernel< geode::Point2D > >();
         for( const auto& points_desc : description.set_desc )
         {
-            auto subset_id = problem.object_set.add_subset();
-            problem.object_subset_id.push_back( subset_id );
+            auto set_id = problem.object_set.add_set();
+            problem.object_set_id.push_back( set_id );
 
             // this should be linked to the object subset
-            // flat_hash_map<subset_id,ObjectSetSampler>
-            problem.subset_samplers.emplace( subset_id,
-                geode::UniformPointSetSampler< 2 >{ problem.box, subset_id } );
+            // flat_hash_map<set_id,ObjectSetSampler>
+            problem.set_samplers.emplace( set_id,
+                geode::UniformPointSetSampler< 2 >{ problem.box, set_id } );
             OPENGEODE_EXCEPTION( points_desc.death_birth_ratio > 0.,
                 "Object cannot be add or removed. Please set a BIRTH-DEATH "
                 "with a positive probability." );
             proposal_kernel->add_move(
                 std::make_unique< geode::BirthDeathMove< geode::Point2D > >(
-                    problem.subset_samplers.at( subset_id ),
+                    problem.set_samplers.at( set_id ),
                     points_desc.death_birth_ratio, points_desc.birth_ratio ) );
             if( points_desc.change_ratio > 0. )
             {
                 proposal_kernel->add_move(
                     std::make_unique< geode::ChangeMove< geode::Point2D > >(
-                        problem.subset_samplers.at( subset_id ),
+                        problem.set_samplers.at( set_id ),
                         points_desc.change_ratio ) );
             }
 
             // energy terms here we define intra subset terms (can be
             // several of them) need to add inter set energy terms
-            problem.subset_energy_term_ids.emplace( subset_id,
+            problem.set_energy_term_ids.emplace( set_id,
                 problem.gibbs_energy.add_energy_term(
                     std::make_unique< geode::DensityTerm< geode::Point2D > >(
-                        points_desc.name, points_desc.density, subset_id ) ) );
+                        points_desc.name, points_desc.density, set_id ) ) );
 
-            problem.subset_stats_targets.emplace(
-                subset_id, points_desc.density * area );
+            problem.set_stats_targets.emplace(
+                set_id, points_desc.density * area );
         }
         problem.mh_sampler =
             std::make_unique< geode::MetropolisHastings< geode::Point2D > >(
@@ -131,26 +131,24 @@ namespace
 
         problem.mh_sampler->walk( problem.object_set, engine, 500 );
 
-        std::vector< double > sum_points( problem.object_subset_id.size(), 0. );
-        std::vector< double > sum_sq_points(
-            problem.object_subset_id.size(), 0. );
+        std::vector< double > sum_points( problem.object_set_id.size(), 0. );
+        std::vector< double > sum_sq_points( problem.object_set_id.size(), 0. );
         auto N = problem_description.nb_realizations;
 
         for( const auto i : geode::Range{ N } )
         {
             problem.mh_sampler->walk(
                 problem.object_set, engine, problem_description.nb_steps );
-            for( const auto subset_id :
-                geode::Range{ problem.object_subset_id.size() } )
+            for( const auto set_id :
+                geode::Range{ problem.object_set_id.size() } )
             {
-                const auto& energy_term_uuid =
-                    problem.subset_energy_term_ids.at(
-                        problem.object_subset_id[subset_id] );
+                const auto& energy_term_uuid = problem.set_energy_term_ids.at(
+                    problem.object_set_id[set_id] );
                 const auto nb_points =
                     problem.gibbs_energy.energy_term_statistic(
                         problem.object_set, energy_term_uuid );
-                sum_points[subset_id] += nb_points;
-                sum_sq_points[subset_id] += nb_points * nb_points;
+                sum_points[set_id] += nb_points;
+                sum_sq_points[set_id] += nb_points * nb_points;
             }
         }
         std::transform( sum_points.begin(), sum_points.end(),
@@ -161,21 +159,17 @@ namespace
             sum_sq_points.begin(), [N]( double p ) {
                 return p / N;
             } );
-        for( const auto subset_id :
-            geode::Range{ problem.object_subset_id.size() } )
+        for( const auto set_id : geode::Range{ problem.object_set_id.size() } )
         {
-            const auto& subset_uuid = problem.object_subset_id[subset_id];
-            const auto expected_points =
-                problem.subset_stats_targets.at( subset_uuid );
+            const auto& set_id = problem.object_set_id[set_id];
+            const auto expected_points = problem.set_stats_targets.at( set_id );
 
-            const auto variance =
-                sum_sq_points[subset_id]
-                - ( sum_points[subset_id] * sum_points[subset_id] );
-            geode::Logger::info(
-                "[MH test] mean points = ", sum_points[subset_id],
+            const auto variance = sum_sq_points[set_id]
+                                  - ( sum_points[set_id] * sum_points[set_id] );
+            geode::Logger::info( "[MH test] mean points = ", sum_points[set_id],
                 " and var = ", variance, " (expected ", expected_points, ")" );
             const auto error_stat =
-                std::abs( sum_points[subset_id] - expected_points )
+                std::abs( sum_points[set_id] - expected_points )
                 / expected_points;
             OPENGEODE_EXCEPTION( error_stat < 0.02,
                 "[MH test] mean number of points not close to enought to "

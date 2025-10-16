@@ -26,32 +26,30 @@
 #include <geode/stochastic/spatial/pairwise_interactions.hpp>
 
 #include <geode/geometry/point.hpp>
-#include <geode/stochastic/spatial/object_set.hpp>
+#include <geode/stochastic/spatial/object_sets.hpp>
 
-geode::ObjectSet< geode::Point2D > create_pairwise_object_set(
-    const geode::uuid& subset_id )
+geode::uuid init_object_set( geode::ObjectSets< geode::Point2D >& pattern )
 {
     geode::Point2D p1{ { 0., 0. } };
     geode::Point2D p2{ { 1., 1. } };
 
-    geode::ObjectSet< geode::Point2D > pattern;
-    pattern.add_subset( subset_id );
-    pattern.add_object( std::move( p1 ), subset_id );
-    pattern.add_object( std::move( p2 ), subset_id );
+    auto set_id = pattern.add_set();
+    pattern.add_object( std::move( p1 ), set_id );
+    pattern.add_object( std::move( p2 ), set_id );
 
-    return pattern;
+    return set_id;
 }
 
 void test_normal_positive_pairwise( double gamma,
-    const geode::ObjectSet< geode::Point2D >& pattern,
-    const geode::uuid& subset_id )
+    const geode::ObjectSets< geode::Point2D >& pattern,
+    const geode::uuid& set_id )
 {
     auto interaction =
         std::make_unique< geode::EuclideanCutoffInteraction< geode::Point2D > >(
             2.1 );
 
     geode::PairwiseTerm< geode::Point2D > term(
-        "strauss", gamma, { subset_id }, std::move( interaction ) );
+        "strauss", gamma, { set_id }, std::move( interaction ) );
     auto neg_log_gamma = -std::log( gamma );
 
     // p1 and p2 interact → 1 pair
@@ -63,12 +61,12 @@ void test_normal_positive_pairwise( double gamma,
     // Adding a third point close to p1 → expect new interactions
     geode::Point2D p3{ { 0.5, 0.5 } };
 
-    geode::ObjectRef< geode::Point2D > p_ref{ p3, subset_id };
+    geode::ObjectRef< geode::Point2D > p_ref{ p3, set_id };
     auto delta_add = term.delta_log_add( pattern, p_ref );
     // p3 interacts with p1 and p2 → 2 new pairs
     OPENGEODE_EXCEPTION( delta_add == neg_log_gamma * 2.,
         "[test pairwise] - delta_log_add wrong value." );
-    geode::ObjectId obj_id{ 0, subset_id };
+    geode::ObjectId obj_id{ 0, set_id };
     auto delta_remove = term.delta_log_remove( pattern, obj_id );
     // Removing p1 removes its interaction with p2 → 1 removed pair
     OPENGEODE_EXCEPTION( delta_remove == neg_log_gamma * -1.,
@@ -82,26 +80,26 @@ void test_normal_positive_pairwise( double gamma,
 }
 
 void test_zero_pairwise( double gamma,
-    const geode::ObjectSet< geode::Point2D >& pattern,
-    const geode::uuid& subset_id )
+    const geode::ObjectSets< geode::Point2D >& pattern,
+    const geode::uuid& set_id )
 {
     auto interaction =
         std::make_unique< geode::EuclideanCutoffInteraction< geode::Point2D > >(
             2.1 );
 
     geode::PairwiseTerm< geode::Point2D > term(
-        "interaction", gamma, { subset_id }, std::move( interaction ) );
+        "interaction", gamma, { set_id }, std::move( interaction ) );
 
     auto total = term.total_log( pattern );
     OPENGEODE_EXCEPTION(
         std::isinf( total ), "[test zero pairwise] - log_total wrong value." );
 
     geode::Point2D p3{ { 0.5, 0.5 } };
-    geode::ObjectRef< geode::Point2D > p_ref{ p3, subset_id };
+    geode::ObjectRef< geode::Point2D > p_ref{ p3, set_id };
     auto delta_add = term.delta_log_add( pattern, p_ref );
     OPENGEODE_EXCEPTION( std::isinf( delta_add ),
         "[test zero pairwise] - delta_log_add wrong value." );
-    geode::ObjectId obj_id{ 0, subset_id };
+    geode::ObjectId obj_id{ 0, set_id };
     auto delta_remove = term.delta_log_remove( pattern, obj_id );
     OPENGEODE_EXCEPTION( delta_remove == 0.,
         "[test zero pairwise] - delta_log_remove wrong value." );
@@ -117,17 +115,15 @@ int main()
     {
         geode::StochasticLibrary::initialize();
 
-        geode::uuid subset_id;
-        auto pattern = create_pairwise_object_set( subset_id );
+        geode::ObjectSets< geode::Point2D > pattern;
+        auto set_id = init_object_set( pattern );
 
-        test_normal_positive_pairwise( 0.5, pattern, subset_id );
-        test_normal_positive_pairwise(
-            geode::GLOBAL_EPSILON, pattern, subset_id );
-        test_normal_positive_pairwise( 2.0, pattern, subset_id );
+        test_normal_positive_pairwise( 0.5, pattern, set_id );
+        test_normal_positive_pairwise( geode::GLOBAL_EPSILON, pattern, set_id );
+        test_normal_positive_pairwise( 2.0, pattern, set_id );
 
-        test_zero_pairwise( 0., pattern, subset_id );
-        test_zero_pairwise(
-            0.9999 * geode::GLOBAL_EPSILON, pattern, subset_id );
+        test_zero_pairwise( 0., pattern, set_id );
+        test_zero_pairwise( 0.9999 * geode::GLOBAL_EPSILON, pattern, set_id );
         geode::Logger::info( "TEST SUCCESS" );
         return 0;
     }

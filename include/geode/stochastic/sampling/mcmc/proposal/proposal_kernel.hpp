@@ -31,7 +31,7 @@ namespace geode
     template < typename ObjectType >
     struct Proposal
     {
-        uuid subset_id;
+        uuid set_id;
 
         MoveResult< ObjectType > proposed_move;
         ObjectRef< ObjectType > new_object()
@@ -39,19 +39,19 @@ namespace geode
             OPENGEODE_EXCEPTION( proposed_move.new_object.has_value(),
                 "[Proposal] Proposal has no new_object" );
             return ObjectRef< ObjectType >{ proposed_move.new_object.value(),
-                subset_id };
+                set_id };
         };
 
         ObjectId old_object_id()
         {
             OPENGEODE_EXCEPTION( proposed_move.old_object_id.has_value(),
                 "[Proposal] Proposal has no old_object_id" );
-            return ObjectId{ proposed_move.old_object_id.value(), subset_id };
+            return ObjectId{ proposed_move.old_object_id.value(), set_id };
         };
 
         std::string string() const
         {
-            return absl::StrCat( "Move proposal on subset: ", subset_id, " -- ",
+            return absl::StrCat( "Move proposal on subset: ", set_id, " -- ",
                 proposed_move.string() );
         }
     };
@@ -62,51 +62,51 @@ namespace geode
     public:
         virtual ~ProposalKernel() = default;
 
-        Proposal< ObjectType > propose(
-            const ObjectSet< ObjectType >& current, RandomEngine& engine ) const
+        Proposal< ObjectType > propose( const ObjectSets< ObjectType >& current,
+            RandomEngine& engine ) const
         {
-            OPENGEODE_EXCEPTION( !subset_moves_.empty(),
+            OPENGEODE_EXCEPTION( !set_moves_.empty(),
                 "[MCMC Proposal Kernel] - no move are defined in the Kernel." );
             auto rnd = engine.sample_uniform( uniform_distribution_closed_ );
             for( const auto proba_id : Range{ cumulative_probs_.size() } )
             {
                 if( rnd <= cumulative_probs_[proba_id] )
                 {
-                    auto& [subset_uuid, move] = subset_moves_[proba_id];
-                    return Proposal< ObjectType >{ subset_uuid,
+                    auto& [set_id, move] = set_moves_[proba_id];
+                    return Proposal< ObjectType >{ set_id,
                         move->propose_move(
-                            current.get_subset( subset_uuid ), engine ) };
+                            current.get_set( set_id ), engine ) };
                 }
             }
             throw OpenGeodeException(
                 "[MCMC Proposal Kernel]: Should not be reached move pdf is "
                 "correctly set." );
             return Proposal< ObjectType >{ uuid{},
-                subset_moves_.back().second->propose_move(
-                    current.get_subset( uuid{} ), engine ) };
+                set_moves_.back().second->propose_move(
+                    current.get_set( uuid{} ), engine ) };
         }
 
-        void add_move( const uuid& subset_uuid,
-            std::unique_ptr< Move< ObjectType > > move )
+        void add_move(
+            const uuid& set_id, std::unique_ptr< Move< ObjectType > > move )
         {
-            subset_moves_.push_back( { subset_uuid, std::move( move ) } );
+            set_moves_.push_back( { set_id, std::move( move ) } );
             initialize_probabilities();
         }
 
         std::string string() const
         {
             auto message = absl::StrCat( "Proposal Kernel:",
-                "\n\t - number of moves: ", subset_moves_.size() );
+                "\n\t - number of moves: ", set_moves_.size() );
             absl::StrAppend(
                 &message, "\n\t --> move cumulative probabilities:" );
             for( const auto cumsum : cumulative_probs_ )
             {
                 absl::StrAppend( &message, " ", cumsum );
             }
-            for( const auto& [subset_uuid, move] : subset_moves_ )
+            for( const auto& [set_id, move] : set_moves_ )
             {
                 absl::StrAppend( &message, " \n\t --> move on subset ",
-                    subset_uuid.string(), ": ", move->string() );
+                    set_id.string(), ": ", move->string() );
             }
             return message;
         }
@@ -114,10 +114,10 @@ namespace geode
     private:
         std::vector< double > compute_probabilities() const
         {
-            std::vector< double > probabilities( subset_moves_.size(), 0. );
+            std::vector< double > probabilities( set_moves_.size(), 0. );
 
             // Extract weights
-            std::transform( subset_moves_.begin(), subset_moves_.end(),
+            std::transform( set_moves_.begin(), set_moves_.end(),
                 probabilities.begin(), []( const auto& move ) {
                     return move.second->proportion_weight();
                 } );
@@ -157,7 +157,7 @@ namespace geode
         {
             for( const auto move_id : geode::Range{ probabilities.size() } )
             {
-                subset_moves_[move_id].second->initialize_probability(
+                set_moves_[move_id].second->initialize_probability(
                     probabilities[move_id] );
             }
         }
@@ -171,7 +171,7 @@ namespace geode
 
     private:
         std::vector< std::pair< uuid, std::unique_ptr< Move< ObjectType > > > >
-            subset_moves_;
+            set_moves_;
         std::vector< double > cumulative_probs_;
 
         geode::UniformClosed< double > uniform_distribution_closed_;

@@ -24,7 +24,7 @@
 #pragma once
 #include <geode/stochastic/sampling/direct/object_set_sampler/object_set_sampler.hpp>
 #include <geode/stochastic/spatial/object_helpers.hpp>
-#include <geode/stochastic/spatial/object_set.hpp>
+#include <geode/stochastic/spatial/object_sets.hpp>
 
 namespace geode
 {
@@ -122,7 +122,7 @@ namespace geode
         virtual ~Move() = default;
 
         virtual MoveResult< ObjectType > propose_move(
-            const std::vector< ObjectType >& subset,
+            const ObjectSet< ObjectType >& set,
             RandomEngine& engine ) const = 0;
 
         double proportion_weight() const
@@ -139,14 +139,13 @@ namespace geode
 
     protected:
         std::optional< geode::index_t > draw_a_sample_id(
-            const std::vector< ObjectType >& subset,
-            RandomEngine& engine ) const
+            const ObjectSet< ObjectType >& set, RandomEngine& engine ) const
         {
-            if( subset.empty() )
+            if( set.empty() )
             {
                 return std::nullopt;
             }
-            const auto max_obj_id = subset.size();
+            const auto max_obj_id = set.size();
             geode::UniformClosed< index_t > uniform_closed_index_t;
             uniform_closed_index_t.min_value = 0;
             uniform_closed_index_t.max_value = max_obj_id - 1;
@@ -171,14 +170,14 @@ namespace geode
         }
 
         MoveResult< ObjectType > propose_move(
-            const std::vector< ObjectType >& subset,
+            const ObjectSet< ObjectType >& set,
             RandomEngine& engine ) const override
         {
             if( engine.sample_bernoulli( birth_ratio_ ) )
             {
-                return propose_birth_move( subset, engine );
+                return propose_birth_move( set, engine );
             }
-            return propose_death_move( subset, engine );
+            return propose_death_move( set, engine );
         }
 
         void initialize_probability( double probability ) override
@@ -200,8 +199,7 @@ namespace geode
 
     private:
         MoveResult< ObjectType > propose_birth_move(
-            const std::vector< ObjectType >& subset,
-            RandomEngine& engine ) const
+            const ObjectSet< ObjectType >& set, RandomEngine& engine ) const
         {
             MoveResult< ObjectType > birth;
             birth.type = MoveType::Birth;
@@ -214,16 +212,15 @@ namespace geode
             birth.proposal_probabilities.log_forward_prob =
                 log_p_birth_ + this->sampler_.log_pdf( new_obj );
             birth.proposal_probabilities.log_backward_prob =
-                log_p_death_ - std::log( subset.size() + 1.0 );
+                log_p_death_ - std::log( set.size() + 1.0 );
             return birth;
         }
 
         MoveResult< ObjectType > propose_death_move(
-            const std::vector< ObjectType >& subset,
-            RandomEngine& engine ) const
+            const ObjectSet< ObjectType >& set, RandomEngine& engine ) const
         {
             MoveResult< ObjectType > death;
-            death.old_object_id = this->draw_a_sample_id( subset, engine );
+            death.old_object_id = this->draw_a_sample_id( set, engine );
             if( !death.old_object_id.has_value() )
             {
                 return death;
@@ -231,9 +228,10 @@ namespace geode
             const auto cur_object_id = death.old_object_id.value();
             death.type = MoveType::Death;
             death.proposal_probabilities.log_forward_prob =
-                log_p_death_ - std::log( subset.size() );
+                log_p_death_ - std::log( set.size() );
             death.proposal_probabilities.log_backward_prob =
-                log_p_birth_ + this->sampler_.log_pdf( subset[cur_object_id] );
+                log_p_birth_
+                + this->sampler_.log_pdf( set.get_object( cur_object_id ) );
             return death;
         }
 
@@ -254,17 +252,18 @@ namespace geode
         }
 
         MoveResult< ObjectType > propose_move(
-            const std::vector< ObjectType >& subset,
+            const ObjectSet< ObjectType >& set,
             RandomEngine& engine ) const override
         {
             MoveResult< ObjectType > change;
-            change.old_object_id = this->draw_a_sample_id( subset, engine );
+            change.old_object_id = this->draw_a_sample_id( set, engine );
             if( !change.old_object_id.has_value() )
             {
                 return change;
             }
             change.type = MoveType::Change;
-            const auto& object_to_change = subset[change.old_object_id.value()];
+            const auto& object_to_change =
+                set.get_object( change.old_object_id.value() );
             change.new_object =
                 this->sampler_.change( object_to_change, engine );
             change.proposal_probabilities.log_forward_prob =

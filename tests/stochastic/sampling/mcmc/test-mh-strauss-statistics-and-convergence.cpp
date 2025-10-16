@@ -45,13 +45,13 @@ namespace
 
         double area = domain_length * domain_length;
 
-        geode::uuid subset_id;
-        geode::UniformPointSetSampler< 2 > sampler( box, subset_id );
+        geode::uuid set_id;
+        geode::UniformPointSetSampler< 2 > sampler( box, set_id );
 
         geode::GibbsEnergy< geode::Point2D > energy;
         energy.add_energy_term(
             std::make_unique< geode::DensityTerm< geode::Point2D > >(
-                "intensity", poisson_density, subset_id ) );
+                "intensity", poisson_density, set_id ) );
 
         // auto interaction_fn =
         //     []( const geode::Point2D& a, const geode::uuid& a_uuid,
@@ -78,10 +78,9 @@ namespace
             energy, std::move( kernel1 ) );
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test@" );
-        absl::flat_hash_map< geode::uuid, geode::index_t > targets = {
-            { subset_id, 0 }
-        };
-        geode::ObjectSet< geode::Point2D > state =
+        absl::flat_hash_map< geode::uuid, geode::index_t > targets = { { set_id,
+            0 } };
+        geode::ObjectSets< geode::Point2D > state =
             mh.initialize_object_set_with_sampling( engine, targets );
         mh.walk( state, engine, 1000 );
         constexpr geode::index_t N{ 5000 };

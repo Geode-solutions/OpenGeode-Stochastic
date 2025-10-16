@@ -23,7 +23,7 @@
 #pragma once
 
 #include <geode/basic/range.hpp>
-#include <geode/stochastic/spatial/object_set.hpp>
+#include <geode/stochastic/spatial/object_sets.hpp>
 #include <geode/stochastic/spatial/pairwise_interactions.hpp>
 
 #include <geode/stochastic/sampling/mcmc/models/components/energy_term.hpp>
@@ -37,24 +37,24 @@ namespace geode
     public:
         explicit PairwiseTerm( std::string_view name,
             double gamma,
-            absl::flat_hash_set< uuid > targeted_subset_ids,
+            absl::flat_hash_set< uuid > targeted_set_ids,
             std::unique_ptr< PairwiseInteraction< ObjectType > > interaction )
             : EnergyTerm< ObjectType >(
-                  name, gamma, std::move( targeted_subset_ids ) ),
+                  name, gamma, std::move( targeted_set_ids ) ),
               interaction_( std::move( interaction ) )
         {
         }
 
-        double total_log( const ObjectSet< ObjectType >& state ) const final
+        double total_log( const ObjectSets< ObjectType >& state ) const final
         {
             const auto interaction_weight = statistic( state );
             return this->contribution( interaction_weight );
         }
 
-        double delta_log_add( const ObjectSet< ObjectType >& state,
+        double delta_log_add( const ObjectSets< ObjectType >& state,
             const ObjectRef< ObjectType >& new_object ) const final
         {
-            if( !this->is_targeted_subset( new_object.subset ) )
+            if( !this->is_targeted_set( new_object.set_id ) )
             {
                 return 0.0;
             }
@@ -64,7 +64,7 @@ namespace geode
             for( const auto& neigh_id : neighbors )
             {
                 geode::ObjectRef< ObjectType > neigh_object{
-                    state.get_object( neigh_id ), neigh_id.subset
+                    state.get_object( neigh_id ), neigh_id.set_id
                 };
 
                 delta += interaction_->evaluate( new_object, neigh_object );
@@ -72,23 +72,23 @@ namespace geode
             return this->contribution( delta );
         }
 
-        double delta_log_remove( const ObjectSet< ObjectType >& state,
+        double delta_log_remove( const ObjectSets< ObjectType >& state,
             const ObjectId& object_id ) const override
         {
-            if( !this->is_targeted_subset( object_id.subset ) )
+            if( !this->is_targeted_set( object_id.set_id ) )
             {
                 return 0.0;
             }
             double delta = 0.0;
             ObjectRef< ObjectType > object_to_remove{
-                state.get_object( object_id ), object_id.subset
+                state.get_object( object_id ), object_id.set_id
             };
             const auto neighbors = state.neighbors(
                 object_id, interaction_->neighborhood_searching_distance() );
             for( auto neigh_id : neighbors )
             {
                 ObjectRef< ObjectType > neigh_object{
-                    state.get_object( neigh_id ), neigh_id.subset
+                    state.get_object( neigh_id ), neigh_id.set_id
                 };
                 delta +=
                     interaction_->evaluate( object_to_remove, neigh_object );
@@ -96,12 +96,12 @@ namespace geode
             return this->contribution( -delta );
         }
 
-        double delta_log_change( const ObjectSet< ObjectType >& state,
+        double delta_log_change( const ObjectSets< ObjectType >& state,
             const ObjectId& old_object_id,
             const ObjectRef< ObjectType >& new_object ) const override
         {
-            if( !this->is_targeted_subset( old_object_id.subset )
-                || !this->is_targeted_subset( new_object.subset ) )
+            if( !this->is_targeted_set( old_object_id.set_id )
+                || !this->is_targeted_set( new_object.set_id ) )
             {
                 return 0.0;
             }
@@ -109,14 +109,14 @@ namespace geode
 
             // Remove old object's interactions
             ObjectRef< ObjectType > object_to_remove{
-                state.get_object( old_object_id ), old_object_id.subset
+                state.get_object( old_object_id ), old_object_id.set_id
             };
             const auto old_neighbors = state.neighbors( old_object_id,
                 interaction_->neighborhood_searching_distance() );
             for( auto neigh_id : old_neighbors )
             {
                 ObjectRef< ObjectType > neigh_object{
-                    state.get_object( neigh_id ), neigh_id.subset
+                    state.get_object( neigh_id ), neigh_id.set_id
                 };
                 delta -=
                     interaction_->evaluate( object_to_remove, neigh_object );
@@ -132,7 +132,7 @@ namespace geode
                     continue; // avoid double-counting
                 }
                 ObjectRef< ObjectType > neigh_object{
-                    state.get_object( neigh_id ), neigh_id.subset
+                    state.get_object( neigh_id ), neigh_id.set_id
                 };
                 delta += interaction_->evaluate( new_object, neigh_object );
             }
@@ -140,7 +140,7 @@ namespace geode
             return this->contribution( delta );
         }
 
-        double statistic( const ObjectSet< ObjectType >& state ) const override
+        double statistic( const ObjectSets< ObjectType >& state ) const override
         {
             double sum = 0.0;
             this->for_each_targeted_object( state, [&]( const ObjectId&
@@ -150,11 +150,11 @@ namespace geode
                     state.get_all_object(); // state.neighbors( obj_id, 1.1 );
                 for( const auto& neigh_obj_id : neighbors )
                 {
-                    // if( neigh_obj_id.subset_id < obj_id.subset_id )
+                    // if( neigh_obj_id.set_id < obj_id.set_id )
                     //{
                     //     continue;
                     // }
-                    // if( neigh_obj_id.subset_id == obj_id.subset_id
+                    // if( neigh_obj_id.set_id == obj_id.set_id
                     //     && neigh_obj_id.id <= obj_id.id )
                     //{
                     //     continue;
@@ -164,9 +164,9 @@ namespace geode
                     {
                         continue;
                     }
-                    ObjectRef< ObjectType > object{ cur_obj, obj_id.subset };
+                    ObjectRef< ObjectType > object{ cur_obj, obj_id.set_id };
                     ObjectRef< ObjectType > neigh_object{
-                        state.get_object( neigh_obj_id ), neigh_obj_id.subset
+                        state.get_object( neigh_obj_id ), neigh_obj_id.set_id
                     };
 
                     sum += interaction_->evaluate( object, neigh_object );

@@ -73,21 +73,20 @@ namespace
     }
 
     void test_steps( const geode::MetropolisHastings< geode::Point2D >& mh,
-        const geode::uuid& subset_id )
+        const geode::uuid& set_id )
     {
         geode::RandomEngine engine;
 
-        absl::flat_hash_map< geode::uuid, geode::index_t > targets = {
-            { subset_id, 20 }
-        };
-        //        geode::ObjectSet< geode::Point2D > state =
+        absl::flat_hash_map< geode::uuid, geode::index_t > targets = { { set_id,
+            20 } };
+        //        geode::ObjectSets< geode::Point2D > state =
         //            mh.initialize_object_set_with_sampling( engine, targets );
 
-        geode::ObjectSet< geode::Point2D > state;
-        state.add_subset( subset_id );
-        state.add_object( geode::Point2D{ { 1., 1. } }, subset_id );
-        state.add_object( geode::Point2D{ { 2., 2. } }, subset_id );
-        state.add_object( geode::Point2D{ { 3., 3. } }, subset_id );
+        geode::ObjectSets< geode::Point2D > state;
+        state.add_set( set_id );
+        state.add_object( geode::Point2D{ { 1., 1. } }, set_id );
+        state.add_object( geode::Point2D{ { 2., 2. } }, set_id );
+        state.add_object( geode::Point2D{ { 3., 3. } }, set_id );
 
         geode::index_t stat_sum{ 0 };
         constexpr geode::index_t N{ 100000 };
@@ -136,7 +135,7 @@ namespace
                 }
             }
             // should be change... only pone group here
-            stat_sum += state.nb_objects_in_subset( subset_id );
+            stat_sum += state.nb_objects_in_set( set_id );
 
             if( count % 1000 == 0 )
             {
@@ -172,13 +171,13 @@ int main()
         box.add_point( min_point );
         box.add_point( max_point );
 
-        geode::uuid subset_id;
+        geode::uuid set_id;
         geode::UniformPointSetSampler< 2 > sampler( box );
 
         double birth_prob = 0.3;
         double death_prob = 0.1;
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
-            subset_id, sampler, birth_prob, death_prob );
+            set_id, sampler, birth_prob, death_prob );
 
         geode::EnergyTermCollection< geode::Point2D > energy_terms;
 
@@ -186,14 +185,14 @@ int main()
         energy_terms.add_energy_term(
             std::make_unique< geode::DensityTerm< geode::Point2D > >(
                 "intensity", 0.5,
-                absl::flat_hash_set< geode::uuid >{ subset_id } ) );
+                absl::flat_hash_set< geode::uuid >{ set_id } ) );
 
         geode::GibbsEnergy< geode::Point2D > poisson_energy( energy_terms );
 
         geode::MetropolisHastings< geode::Point2D > mh(
             poisson_energy, std::move( kernel ) );
 
-        test_steps( mh, subset_id );
+        test_steps( mh, set_id );
         test_beta_setter( mh );
         test_acceptance_prob_helper();
 

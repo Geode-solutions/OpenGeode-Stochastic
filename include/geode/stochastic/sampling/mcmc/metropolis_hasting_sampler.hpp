@@ -59,7 +59,7 @@ namespace geode
         }
 
         StepResult< ObjectType > step(
-            ObjectSet< ObjectType >& state, RandomEngine& engine ) const
+            ObjectSets< ObjectType >& state, RandomEngine& engine ) const
         {
             Proposal< ObjectType > proposal =
                 proposal_kernel_->propose( state, engine );
@@ -79,7 +79,7 @@ namespace geode
             return StepResult< ObjectType >{};
         }
 
-        void walk( ObjectSet< ObjectType >& state,
+        void walk( ObjectSets< ObjectType >& state,
             RandomEngine& engine,
             index_t nb_steps ) const
         {
@@ -90,7 +90,7 @@ namespace geode
             }
         }
 
-        ObjectSet< ObjectType > walk_copy( ObjectSet< ObjectType > initial,
+        ObjectSets< ObjectType > walk_copy( ObjectSets< ObjectType > initial,
             RandomEngine& engine,
             index_t nb_steps ) const
         {
@@ -160,7 +160,7 @@ namespace geode
         template < typename ApplyMove >
         StepResult< ObjectType > accept_or_reject(
             Proposal< ObjectType >& proposal,
-            ObjectSet< ObjectType >& state,
+            ObjectSets< ObjectType >& state,
             RandomEngine& engine,
             const double delta_log_energy,
             ApplyMove&& apply_move ) const
@@ -183,7 +183,7 @@ namespace geode
         }
 
         StepResult< ObjectType > birth_step( Proposal< ObjectType >& proposal,
-            ObjectSet< ObjectType >& state,
+            ObjectSets< ObjectType >& state,
             RandomEngine& engine ) const
         {
             const auto new_object = proposal.new_object();
@@ -193,12 +193,12 @@ namespace geode
                 []( auto& state, auto& proposal ) {
                     state.add_object(
                         std::move( proposal.proposed_move.new_object.value() ),
-                        proposal.subset_id );
+                        proposal.set_id );
                 } );
         };
 
         StepResult< ObjectType > death_step( Proposal< ObjectType >& proposal,
-            ObjectSet< ObjectType >& state,
+            ObjectSets< ObjectType >& state,
             RandomEngine& engine ) const
         {
             const auto old_object_id = proposal.old_object_id();
@@ -211,7 +211,7 @@ namespace geode
         };
 
         StepResult< ObjectType > change_step( Proposal< ObjectType >& proposal,
-            ObjectSet< ObjectType >& state,
+            ObjectSets< ObjectType >& state,
             RandomEngine& engine ) const
         {
             const auto new_object = proposal.new_object();
