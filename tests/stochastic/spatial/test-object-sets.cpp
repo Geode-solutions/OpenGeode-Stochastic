@@ -90,7 +90,7 @@ namespace
         sets.add_object( geode::Point2D{ { 1.0, 0.0 } }, set_id );
         sets.add_object( geode::Point2D{ { 3.0, 0.0 } }, set_id );
 
-        const geode::Point2D query( { { 0.5, 0.0 } } );
+        const geode::Point2D query{ { 0.5, 0.0 } };
         const auto nearby = sets.neighbors( query, 1.0 );
 
         OPENGEODE_EXCEPTION( !nearby.empty(),
