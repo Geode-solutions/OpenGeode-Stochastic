@@ -50,6 +50,10 @@ namespace geode
         OPENGEODE_DISABLE_COPY( ObjectSets );
 
     public:
+        ObjectSets() noexcept = default;
+        ObjectSets( ObjectSets&& ) noexcept = default;
+        ObjectSets& operator=( ObjectSets&& ) noexcept = default;
+
         const ObjectSet< Type >& get_set( const uuid& set_id ) const;
         const Type& get_object( const ObjectId& object_id ) const;
         std::vector< ObjectId > get_all_object() const;
