@@ -35,8 +35,6 @@ namespace geode
         ObjectSet() noexcept = default;
         ObjectSet( ObjectSet&& ) noexcept = default;
         ObjectSet& operator=( ObjectSet&& ) noexcept = default;
-        ObjectSet( const ObjectSet& ) noexcept = default;
-        ObjectSet& operator=( const ObjectSet& ) noexcept = default;
 
         const Type& get_object( index_t index ) const;
 
