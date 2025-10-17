@@ -47,6 +47,8 @@ namespace geode
     template < typename Type >
     class ObjectSets
     {
+        OPENGEODE_DISABLE_COPY( ObjectSets );
+
     public:
         const ObjectSet< Type >& get_set( const uuid& set_id ) const;
         const Type& get_object( const ObjectId& object_id ) const;
