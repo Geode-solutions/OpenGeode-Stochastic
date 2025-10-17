@@ -29,7 +29,7 @@ namespace
 
     void test_add_sets_and_objects()
     {
-        ObjectSets< Point2D > sets;
+        ObjectSets< geode::Point2D > sets;
         const auto set_id1 = sets.add_set();
         const auto set_id2 = sets.add_set();
 
@@ -37,11 +37,11 @@ namespace
             sets.nb_sets() == 2, "[TestObjectSets] - Expected 2 sets" );
 
         const auto obj_a =
-            sets.add_object( geode::Point2D( { { 0.0, 0.0 } } ), set_id1 );
+            sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id1 );
         const auto obj_b =
-            sets.add_object( geode::Point2D( { { 1.0, 1.0 } } ), set_id1 );
+            sets.add_object( geode::Point2D{ { 1.0, 1.0 } }, set_id1 );
         const auto obj_c =
-            sets.add_object( geode::Point2D( { { 5.0, 5.0 } } ), set_id2 );
+            sets.add_object( geode::Point2D{ { 5.0, 5.0 } }, set_id2 );
 
         OPENGEODE_EXCEPTION( sets.nb_objects_in_set( set_id1 ) == 2,
             "[TestObjectSets] - Set 1 should have 2 objects" );
@@ -51,21 +51,22 @@ namespace
             "[TestObjectSets] - Total object count mismatch" );
 
         const auto& point = sets.get_object( obj_b );
-        OPENGEODE_EXCEPTION( point == Point2D( { { 1.0, 1.0 } } ),
+        const auto result = geode::Point2D{ { 1.0, 1.0 } };
+        OPENGEODE_EXCEPTION( point == result,
             "[TestObjectSets] - Wrong object value retrieved" );
     }
 
     void test_neighbors_by_object_id()
     {
-        ObjectSets< Point2D > sets;
+        ObjectSets< geode::Point2D > sets;
         const auto set_id = sets.add_set();
 
         const auto obj0 =
-            sets.add_object( geode::Point2D( { { 0.0, 0.0 } } ), set_id );
+            sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id );
         const auto obj1 =
-            sets.add_object( geode::Point2D( { { 1.0, 0.0 } } ), set_id );
+            sets.add_object( geode::Point2D{ { 1.0, 0.0 } }, set_id );
         const auto obj2 =
-            sets.add_object( geode::Point2D( { { 5.0, 0.0 } } ), set_id );
+            sets.add_object( geode::Point2D{ { 5.0, 0.0 } }, set_id );
 
         // Near neighbors should be within distance 2.0
         const auto near_neighbors = sets.neighbors( obj0, 2.0 );
@@ -82,14 +83,14 @@ namespace
 
     void test_neighbors_by_object_value()
     {
-        ObjectSets< Point2D > sets;
+        ObjectSets< geode::Point2D > sets;
         const auto set_id = sets.add_set();
 
-        sets.add_object( geode::Point2D( { { 0.0, 0.0 } } ), set_id );
-        sets.add_object( geode::Point2D( { { 1.0, 0.0 } } ), set_id );
-        sets.add_object( geode::Point2D( { { 3.0, 0.0 } } ), set_id );
+        sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id );
+        sets.add_object( geode::Point2D{ { 1.0, 0.0 } }, set_id );
+        sets.add_object( geode::Point2D{ { 3.0, 0.0 } }, set_id );
 
-        const geode::Point2D query( { { 0.5, 0.0 } } );
+        const geode::Point2D query{ { 0.5, 0.0 } };
         const auto nearby = sets.neighbors( query, 1.0 );
 
         OPENGEODE_EXCEPTION( !nearby.empty(),
@@ -100,10 +101,10 @@ namespace
 
     void test_string_representation()
     {
-        ObjectSets< Point2D > sets;
+        ObjectSets< geode::Point2D > sets;
         const auto set_id = sets.add_set();
-        sets.add_object( geode::Point2D( { { 0.0, 0.0 } } ), set_id );
-        sets.add_object( geode::Point2D( { { 1.0, 1.0 } } ), set_id );
+        sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id );
+        sets.add_object( geode::Point2D{ { 1.0, 1.0 } }, set_id );
 
         const auto desc = sets.string();
         OPENGEODE_EXCEPTION( desc.find( "objects" ) != std::string::npos,

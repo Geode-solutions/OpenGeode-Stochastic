@@ -34,17 +34,6 @@
 
 namespace geode
 {
-    struct SubSetDescriptor
-    {
-        geode::uuid unique_id;
-        bool operator==( SubSetDescriptor const& other ) const noexcept
-        {
-            {
-                return unique_id == other.unique_id;
-            }
-        }
-    };
-
     template < typename Type >
     struct ObjectRef
     {
@@ -58,7 +47,13 @@ namespace geode
     template < typename Type >
     class ObjectSets
     {
+        OPENGEODE_DISABLE_COPY( ObjectSets );
+
     public:
+        ObjectSets() noexcept = default;
+        ObjectSets( ObjectSets&& ) noexcept = default;
+        ObjectSets& operator=( ObjectSets&& ) noexcept = default;
+
         const ObjectSet< Type >& get_set( const uuid& set_id ) const;
         const Type& get_object( const ObjectId& object_id ) const;
         std::vector< ObjectId > get_all_object() const;
