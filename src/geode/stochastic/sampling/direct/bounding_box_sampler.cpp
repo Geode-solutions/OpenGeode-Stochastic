@@ -38,7 +38,7 @@ namespace geode
     public:
         Impl( const BoundingBox< dimension >& box )
         {
-            for( const auto dim : Range( dimension ) )
+            for( const auto dim : LRange( dimension ) )
             {
                 dist_coordinates[dim].min_value = box.min().value( dim );
                 dist_coordinates[dim].max_value = box.max().value( dim );

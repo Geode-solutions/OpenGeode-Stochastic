@@ -36,9 +36,6 @@ namespace geode
         ObjectSet( ObjectSet&& ) noexcept = default;
         ObjectSet& operator=( ObjectSet&& ) noexcept = default;
 
-        //        const std::vector< Type >& objects() const;
-        //        std::vector< Type >& objects();
-
         const Type& get_object( index_t index ) const;
 
         index_t add_object( Type&& object );

@@ -94,7 +94,8 @@ namespace geode
     {
         ObjectSet< Type > new_set;
         const auto new_set_id = new_set.id();
-        auto [it, inserted] = sets_.emplace( new_set_id, std::move( new_set ) );
+        auto [it, inserted] =
+            sets_.insert( { new_set_id, std::move( new_set ) } );
         OPENGEODE_EXCEPTION( inserted, "[ObjectSet]- group (",
             new_set_id.string(), ") already exists." );
         return new_set_id;

@@ -34,17 +34,6 @@
 
 namespace geode
 {
-    struct SubSetDescriptor
-    {
-        geode::uuid unique_id;
-        bool operator==( SubSetDescriptor const& other ) const noexcept
-        {
-            {
-                return unique_id == other.unique_id;
-            }
-        }
-    };
-
     template < typename Type >
     struct ObjectRef
     {
