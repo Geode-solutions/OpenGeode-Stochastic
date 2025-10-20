@@ -29,28 +29,26 @@
 #include <geode/stochastic/sampling/mcmc/proposal/moves.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/proposal_kernel.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
-#include <geode/stochastic/spatial/object_set.hpp>
+#include <geode/stochastic/spatial/object_sets.hpp>
 
 namespace
 {
-    geode::ObjectSet< geode::Point2D > create_object_set(
-        const geode::uuid& subset_id )
+    geode::uuid init_object_set( geode::ObjectSets< geode::Point2D >& pattern )
     {
         geode::Point2D p1{ { 0., 0. } };
         geode::Point2D p2{ { 1., 1. } };
 
-        geode::ObjectSet< geode::Point2D > pattern;
-        pattern.add_subset( subset_id );
-        pattern.add_object( std::move( p1 ), subset_id );
-        pattern.add_object( std::move( p2 ), subset_id );
+        auto set_id = pattern.add_set();
+        pattern.add_object( std::move( p1 ), set_id );
+        pattern.add_object( std::move( p2 ), set_id );
 
-        return pattern;
+        return set_id;
     }
 
     void test_proposal_kernel()
     {
-        geode::uuid subset_id;
-        auto config = create_object_set( subset_id );
+        geode::ObjectSets< geode::Point2D > config;
+        auto set_id = init_object_set( config );
 
         geode::Point2D min_point{ { 0., 0. } };
         geode::Point2D max_point{ { 10., 100. } };
@@ -63,7 +61,7 @@ namespace
 
         // Create classical birth-death-change kernel
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
-            subset_id, sampler, 0.4, 0.4 );
+            set_id, sampler, 0.4, 0.4 );
 
         geode::RandomEngine engine;
 
@@ -91,12 +89,12 @@ namespace
                         "0." );
 
                     OPENGEODE_EXCEPTION(
-                        std::abs( proposed_move.proposal_probabilities
-                                      .log_backward_prob
-                                  - ( std::log( 0.8 * 0.5 )
-                                      - std::log( config.nb_objects_in_subset(
-                                                      subset_id )
-                                                  + 1.0 ) ) )
+                        std::abs(
+                            proposed_move.proposal_probabilities
+                                .log_backward_prob
+                            - ( std::log( 0.8 * 0.5 )
+                                - std::log( config.nb_objects_in_set( set_id )
+                                            + 1.0 ) ) )
                             < geode::GLOBAL_EPSILON,
                         "[test proposal] Birth backward log-prob mismatch." );
                     break;
@@ -111,7 +109,7 @@ namespace
                         "[test proposal] Death must provide index." );
                     OPENGEODE_EXCEPTION(
                         proposed_move.old_object_id.value()
-                            < config.nb_objects_in_subset( subset_id ),
+                            < config.nb_objects_in_set( set_id ),
                         "[test proposal] Death index out of bounds." );
                     // Probabilities
                     OPENGEODE_EXCEPTION(
@@ -130,7 +128,7 @@ namespace
                         "[test proposal] Change must provide index." );
                     OPENGEODE_EXCEPTION(
                         proposed_move.old_object_id.value()
-                            < config.nb_objects_in_subset( subset_id ),
+                            < config.nb_objects_in_set( set_id ),
                         "[test proposal] Change index out of bounds." );
                     break;
 
@@ -157,10 +155,12 @@ namespace
             "[test proposal] Kernel did not produce all move types." );
 
         // --- Edge case: empty object_set ---
-        geode::ObjectSet< geode::Point2D > empty_config;
-        empty_config.add_subset( subset_id );
-
-        auto proposal = kernel->propose( empty_config, engine );
+        geode::ObjectSets< geode::Point2D > empty_config;
+        const auto empty_set_id = empty_config.add_set();
+        auto empty_kernel =
+            geode::create_birth_death_change_kernel< geode::Point2D >(
+                empty_set_id, sampler, 0.4, 0.4 );
+        auto proposal = empty_kernel->propose( empty_config, engine );
         const auto& proposed_move = proposal.proposed_move;
 
         OPENGEODE_EXCEPTION(

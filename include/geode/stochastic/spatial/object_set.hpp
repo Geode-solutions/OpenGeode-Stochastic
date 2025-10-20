@@ -23,70 +23,31 @@
 
 #pragma once
 
-#include <absl/container/flat_hash_map.h>
-
-#include <geode/basic/uuid.hpp>
-#include <geode/geometry/basic_objects/segment.hpp>
-#include <geode/geometry/bounding_box.hpp>
-#include <geode/geometry/point.hpp>
-#include <geode/stochastic/spatial/object_neighborhood.hpp>
-
-namespace geode
-{
-    struct SubSetDescriptor
-    {
-        geode::uuid unique_id;
-        bool operator==( SubSetDescriptor const& other ) const noexcept
-        {
-            {
-                return unique_id == other.unique_id;
-            }
-        }
-    };
-
-    template < typename Type >
-    struct ObjectRef
-    {
-        const Type& object;
-        uuid subset;
-    };
-} // namespace geode
+#include <geode/basic/identifier.hpp>
+#include <geode/stochastic/common.hpp>
 
 namespace geode
 {
     template < typename Type >
-    class ObjectSet
+    class ObjectSet : public Identifier
     {
     public:
-        const std::vector< Type >& get_subset( const uuid& subset_id ) const;
-        const Type& get_object( const ObjectId& object_id ) const;
-        std::vector< ObjectId > get_all_object() const;
+        ObjectSet() noexcept = default;
+        ObjectSet( ObjectSet&& ) noexcept = default;
+        ObjectSet& operator=( ObjectSet&& ) noexcept = default;
 
-        index_t nb_subsets() const;
-        index_t nb_objects_in_subset( const uuid& subset_id ) const;
-        index_t nb_objects() const;
+        const Type& get_object( index_t index ) const;
 
-        void add_subset( const uuid& subset_id );
-        uuid add_subset();
-        ObjectId add_object( Type&& object, const uuid& subset_id );
-        void update_object( const ObjectId& object_id, Type&& object );
-        void remove_object( const ObjectId& object_id );
+        index_t add_object( Type&& object );
+        void update_object( index_t index, Type&& object );
+        void remove_object( index_t index );
 
-        // Object neighbor search by ObjectId (always excludes self)
-        std::vector< ObjectId > neighbors(
-            const ObjectId& object_id, double searching_distance ) const;
-        // Object neighbor search by arbitrary object (return self if in the
-        // object_set)
-        std::vector< ObjectId > neighbors(
-            const Type& object, double searching_distance ) const;
+        index_t size() const;
+        bool empty() const;
 
         std::string string() const;
 
     private:
-        std::vector< Type >& get_subset( const uuid& subset_id );
-
-    private:
-        absl::flat_hash_map< uuid, std::vector< Type > > groups_;
-        ObjectNeighborhood< Type::dim > neighborhood_;
+        std::vector< Type > objects_;
     };
 } // namespace geode

@@ -27,7 +27,7 @@
 #include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
-#include <geode/stochastic/spatial/object_set.hpp>
+#include <geode/stochastic/spatial/object_sets.hpp>
 
 namespace
 {
@@ -65,18 +65,18 @@ namespace
     struct UserProblem
     {
         geode::BoundingBox2D box;
-        geode::ObjectSet< geode::Point2D > object_set;
-        std::vector< geode::uuid > object_subset_id;
+        geode::ObjectSets< geode::Point2D > object_set;
+        std::vector< geode::uuid > object_set_id;
 
         geode::GibbsEnergy< geode::Point2D > gibbs_energy;
 
         absl::flat_hash_map< geode::uuid, std::vector< geode::uuid > >
-            subset_energy_term_ids;
+            set_energy_term_ids;
         absl::flat_hash_map< geode::uuid, std::vector< double > >
-            subset_stats_targets;
+            set_stats_targets;
 
         absl::flat_hash_map< geode::uuid, geode::UniformPointSetSampler< 2 > >
-            subset_samplers;
+            set_samplers;
         std::unique_ptr< geode::MetropolisHastings< geode::Point2D > >
             mh_sampler;
 
@@ -87,7 +87,7 @@ namespace
                 &message, "\n\t - VOI: BoundingBox ", box.string() );
             absl::StrAppend( &message, "\n\t - ", object_set.string() );
             absl::StrAppend( &message, "\n\t - subset uuid list: " );
-            for( const auto& uuid : object_subset_id )
+            for( const auto& uuid : object_set_id )
             {
                 absl::StrAppend(
                     &message, "\n\t --> subset uuid: ", uuid.string() );
@@ -95,7 +95,7 @@ namespace
             absl::StrAppend( &message, "\n\t - ", gibbs_energy.string() );
             absl::StrAppend(
                 &message, "\n\t - subset energy term uuid list: " );
-            for( const auto& [uuid, et_uuids] : subset_energy_term_ids )
+            for( const auto& [uuid, et_uuids] : set_energy_term_ids )
             {
                 absl::StrAppend(
                     &message, "\n\t --> subset uuid: ", uuid.string() );
@@ -107,7 +107,7 @@ namespace
             }
             absl::StrAppend( &message, "\n\t - subset stat target list: " );
 
-            for( const auto& [uuid, stats] : subset_stats_targets )
+            for( const auto& [uuid, stats] : set_stats_targets )
             {
                 absl::StrAppend(
                     &message, "\n\t --> subset uuid: ", uuid.string() );
@@ -117,8 +117,8 @@ namespace
                 }
             }
             absl::StrAppend(
-                &message, "\n\t - subset sampler: ", subset_samplers.size() );
-            for( const auto& [uuid, sampler] : subset_samplers )
+                &message, "\n\t - subset sampler: ", set_samplers.size() );
+            for( const auto& [uuid, sampler] : set_samplers )
             {
                 absl::StrAppend(
                     &message, "\n\t --> subset uuid: ", uuid.string() );
@@ -141,23 +141,23 @@ namespace
                 std::make_unique< geode::ProposalKernel< geode::Point2D > >();
         for( const auto& points_desc : description.set_desc )
         {
-            auto subset_id = problem.object_set.add_subset();
-            problem.object_subset_id.push_back( subset_id );
+            auto set_id = problem.object_set.add_set();
+            problem.object_set_id.push_back( set_id );
 
-            problem.subset_samplers.emplace( subset_id,
-                geode::UniformPointSetSampler< 2 >{ problem.box, subset_id } );
+            problem.set_samplers.emplace( set_id,
+                geode::UniformPointSetSampler< 2 >{ problem.box, set_id } );
             OPENGEODE_EXCEPTION( points_desc.death_birth_ratio > 0.,
                 "Object cannot be add or removed. Please set a BIRTH-DEATH "
                 "with a positive probability." );
             proposal_kernel->add_move(
                 std::make_unique< geode::BirthDeathMove< geode::Point2D > >(
-                    problem.subset_samplers.at( subset_id ),
+                    problem.set_samplers.at( set_id ),
                     points_desc.death_birth_ratio, points_desc.birth_ratio ) );
             if( points_desc.change_ratio > 0. )
             {
                 proposal_kernel->add_move(
                     std::make_unique< geode::ChangeMove< geode::Point2D > >(
-                        problem.subset_samplers.at( subset_id ),
+                        problem.set_samplers.at( set_id ),
                         points_desc.change_ratio ) );
             }
 
@@ -166,7 +166,7 @@ namespace
             std::vector< geode::uuid > energy_terms;
             energy_terms.push_back( problem.gibbs_energy.add_energy_term(
                 std::make_unique< geode::DensityTerm< geode::Point2D > >(
-                    points_desc.name, points_desc.density, subset_id ) ) );
+                    points_desc.name, points_desc.density, set_id ) ) );
 
             auto interaction = std::make_unique<
                 geode::EuclideanCutoffInteraction< geode::Point2D > >(
@@ -174,16 +174,15 @@ namespace
             energy_terms.push_back( problem.gibbs_energy.add_energy_term(
                 std::make_unique< geode::PairwiseTerm< geode::Point2D > >(
                     "interaction", points_desc.gamma, std::move( interaction ),
-                    subset_id ) ) );
-            problem.subset_energy_term_ids.emplace( subset_id, energy_terms );
+                    set_id ) ) );
+            problem.set_energy_term_ids.emplace( set_id, energy_terms );
 
             std::vector< double > expected_statistics;
             expected_statistics.push_back(
                 points_desc.expected_number_of_objects );
             expected_statistics.push_back(
                 points_desc.expected_number_of_intersections );
-            problem.subset_stats_targets.emplace(
-                subset_id, expected_statistics );
+            problem.set_stats_targets.emplace( set_id, expected_statistics );
         }
         DEBUG( proposal_kernel->string() );
         problem.mh_sampler =
@@ -202,9 +201,9 @@ namespace
         problem.mh_sampler->walk( problem.object_set, engine, 500 );
 
         //        std::vector< double > sum_points(
-        //        problem.object_subset_id.size(), 0. ); std::vector< double >
+        //        problem.object_set_id.size(), 0. ); std::vector< double >
         //        sum_nb_interactions(
-        //            problem.object_subset_id.size(), 0. );
+        //            problem.object_set_id.size(), 0. );
         //
         //        auto N = problem_description.nb_realizations;
 
@@ -213,16 +212,16 @@ namespace
         //            problem.mh_sampler->walk(
         //                problem.object_set, engine,
         //                problem_description.nb_steps );
-        //            for( const auto subset_id :
-        //                geode::Range{ problem.object_subset_id.size() } )
+        //            for( const auto set_id :
+        //                geode::Range{ problem.object_set_id.size() } )
         //            {
         //                const auto& energy_term_uuids =
-        //                    problem.subset_energy_term_ids.at(
-        //                        problem.object_subset_id[subset_id] );
-        //                sum_points[subset_id] +=
+        //                    problem.set_energy_term_ids.at(
+        //                        problem.object_set_id[set_id] );
+        //                sum_points[set_id] +=
         //                    problem.gibbs_energy.energy_term_statistic(
         //                        problem.object_set, energy_term_uuids[0] );
-        //                sum_nb_interactions[subset_id] +=
+        //                sum_nb_interactions[set_id] +=
         //                    problem.gibbs_energy.energy_term_statistic(
         //                        problem.object_set, energy_term_uuids[1] );
         //            }
@@ -236,23 +235,23 @@ namespace
         //            sum_nb_interactions.begin(), [N]( double p ) {
         //                return p / N;
         //            } );
-        //        for( const auto subset_id :
-        //            geode::Range{ problem.object_subset_id.size() } )
+        //        for( const auto set_id :
+        //            geode::Range{ problem.object_set_id.size() } )
         //        {
-        //            const auto& subset_uuid =
-        //            problem.object_subset_id[subset_id]; const auto&
+        //            const auto& set_id =
+        //            problem.object_set_id[set_id]; const auto&
         //            expected_stats =
-        //                problem.subset_stats_targets.at( subset_uuid );
+        //                problem.set_stats_targets.at( set_id );
         //
         //            geode::Logger::info( "[MH test] mean points = ",
-        //                sum_points[subset_id], " (expected ",
+        //                sum_points[set_id], " (expected ",
         //                expected_stats[0],
         //                ")"
         //                " and mean interactions = ",
-        //                sum_nb_interactions[subset_id], " (expected ",
+        //                sum_nb_interactions[set_id], " (expected ",
         //                expected_stats[1], ")" );
         //            const auto error_stat =
-        //                std::abs( sum_points[subset_id] - expected_stats[0] )
+        //                std::abs( sum_points[set_id] - expected_stats[0] )
         //                / expected_stats[0];
         //            //            OPENGEODE_EXCEPTION( error_stat < 0.015,
         //            //                "[MH test] mean number of points not
@@ -263,17 +262,17 @@ namespace
         //            if( expected_stats[1] == 0 )
         //            {
         //                OPENGEODE_EXCEPTION(
-        //                    sum_nb_interactions[subset_id] <
+        //                    sum_nb_interactions[set_id] <
         //                    geode::GLOBAL_EPSILON,
         //                    "[MH test] Number of interactions not close to
         //                    enought to " " expected value-- > error : ",
-        //                    sum_nb_interactions[subset_id] );
+        //                    sum_nb_interactions[set_id] );
         //            }
         //            else
         //            {
         //                const auto error_interactions =
         //                    std::abs(
-        //                        sum_nb_interactions[subset_id] -
+        //                        sum_nb_interactions[set_id] -
         //                        expected_stats[1] )
         //                    / expected_stats[1];
         //                //                OPENGEODE_EXCEPTION(
@@ -310,7 +309,7 @@ namespace
             description1.expected_number_of_objects = nb_points[config];
 
             description1.scope =
-                geode::PairwiseInteraction< geode::Point2D >::SCOPE::all_subset;
+                geode::PairwiseInteraction< geode::Point2D >::SCOPE::all_set;
             description1.distance_treshold = 1;
             description1.gamma = gamma_values[config];
             description1.expected_number_of_intersections =
@@ -354,7 +353,7 @@ namespace
         description1.expected_number_of_objects = nb_points[0];
 
         description1.scope =
-            geode::PairwiseInteraction< geode::Point2D >::SCOPE::same_subset;
+            geode::PairwiseInteraction< geode::Point2D >::SCOPE::same_set;
         description1.distance_treshold = 1;
         description1.gamma = gamma_values[0];
         description1.expected_number_of_intersections = nb_interactions[0];
@@ -370,7 +369,7 @@ namespace
         description2.expected_number_of_objects = nb_points[1];
 
         description2.scope =
-            geode::PairwiseInteraction< geode::Point2D >::SCOPE::same_subset;
+            geode::PairwiseInteraction< geode::Point2D >::SCOPE::same_set;
         description2.distance_treshold = 2;
         description2.gamma = gamma_values[1];
         description2.expected_number_of_intersections = nb_interactions[1];
@@ -386,7 +385,7 @@ namespace
         description3.expected_number_of_objects = nb_points[2];
 
         description3.scope =
-            geode::PairwiseInteraction< geode::Point2D >::SCOPE::same_subset;
+            geode::PairwiseInteraction< geode::Point2D >::SCOPE::same_set;
         description3.distance_treshold = 1;
         description3.gamma = gamma_values[2];
         description3.expected_number_of_intersections = nb_interactions[2];
@@ -402,7 +401,7 @@ namespace
         description4.expected_number_of_objects = nb_points[3];
 
         description4.scope =
-            geode::PairwiseInteraction< geode::Point2D >::SCOPE::same_subset;
+            geode::PairwiseInteraction< geode::Point2D >::SCOPE::same_set;
         description4.distance_treshold = 1;
         description4.gamma = gamma_values[3];
         description4.expected_number_of_intersections = nb_interactions[3];

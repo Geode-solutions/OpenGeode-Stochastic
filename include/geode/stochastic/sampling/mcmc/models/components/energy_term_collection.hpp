@@ -19,9 +19,9 @@ namespace geode
         {
             const uuid id = term->id();
             energy_terms_.emplace( id, term );
-            for( const uuid& subset_id : term->targeted_subset_ids() )
+            for( const uuid& set_id : term->targeted_set_ids() )
             {
-                subset_to_terms_[subset_id].push_back( term );
+                set_to_terms_[set_id].push_back( term );
             }
             return id;
         }
@@ -34,10 +34,10 @@ namespace geode
 
             auto term = it->second;
 
-            for( const uuid& subset_id : term->targeted_subset_ids() )
+            for( const uuid& set_id : term->targeted_set_ids() )
             {
-                auto vec_it = subset_to_terms_.find( subset_id );
-                if( vec_it == subset_to_terms_.end() )
+                auto vec_it = set_to_terms_.find( set_id );
+                if( vec_it == set_to_terms_.end() )
                     continue;
 
                 auto& vec = vec_it->second;
@@ -45,7 +45,7 @@ namespace geode
                     std::remove( vec.begin(), vec.end(), term ), vec.end() );
 
                 if( vec.empty() )
-                    subset_to_terms_.erase( vec_it );
+                    set_to_terms_.erase( vec_it );
             }
 
             energy_terms_.erase( it );
@@ -55,7 +55,7 @@ namespace geode
         void clear()
         {
             energy_terms_.clear();
-            subset_to_terms_.clear();
+            set_to_terms_.clear();
         }
 
         [[nodiscard]] index_t size() const
@@ -82,11 +82,11 @@ namespace geode
 
         [[nodiscard]] const std::vector<
             std::shared_ptr< EnergyTerm< ObjectType > > >&
-            terms_for_subset( const uuid& subset_id ) const
+            terms_for_set( const uuid& set_id ) const
         {
-            const auto it = subset_to_terms_.find( subset_id );
-            OPENGEODE_EXCEPTION( it != subset_to_terms_.end(),
-                "[EnergyTermCollection] - Object Subset (", subset_id.string(),
+            const auto it = set_to_terms_.find( set_id );
+            OPENGEODE_EXCEPTION( it != set_to_terms_.end(),
+                "[EnergyTermCollection] - Object Subset (", set_id.string(),
                 ") does not have any energy term." );
             return it->second;
         }
@@ -103,14 +103,12 @@ namespace geode
         }
 
     private:
-        // strong ownership
         absl::flat_hash_map< uuid, std::shared_ptr< EnergyTerm< ObjectType > > >
             energy_terms_;
 
-        // subset index (shared ownership)
         absl::flat_hash_map< uuid,
             std::vector< std::shared_ptr< EnergyTerm< ObjectType > > > >
-            subset_to_terms_;
+            set_to_terms_;
     };
 
 } // namespace geode

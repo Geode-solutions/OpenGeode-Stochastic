@@ -28,7 +28,7 @@
 #include <geode/basic/identifier_builder.hpp>
 
 #include <geode/stochastic/common.hpp>
-#include <geode/stochastic/spatial/object_set.hpp>
+#include <geode/stochastic/spatial/object_sets.hpp>
 
 #include <optional>
 
@@ -88,14 +88,14 @@ namespace geode
     //        std::string name;
     //        std::string type;
     //        double parameter_value;
-    //        std::optional< uuid > targeted_subset_id{};
+    //        std::optional< uuid > targeted_set_id{};
     //    }
     //
     //    struct StatisticalDescription
     //    {
     //        std::string label;
     //        double value;
-    //        std::optional< uuid > targeted_subset_id{};
+    //        std::optional< uuid > targeted_set_id{};
     //    };
 
     template < typename ObjectType >
@@ -104,10 +104,9 @@ namespace geode
     public:
         explicit EnergyTerm( std::string_view name,
             double param,
-            absl::flat_hash_set< uuid >&& targeted_subset_ids )
-            : Identifier{},
-              energy_scale_{ param },
-              targeted_subset_ids_{ std::move( targeted_subset_ids ) }
+            absl::flat_hash_set< uuid >&& targeted_set_ids )
+            : energy_scale_{ param },
+              targeted_set_ids_{ std::move( targeted_set_ids ) }
         {
             IdentifierBuilder builder( *this );
             builder.set_name( name );
@@ -120,9 +119,9 @@ namespace geode
             return energy_scale_.parameter();
         }
 
-        const absl::flat_hash_set< uuid >& targeted_subset_ids() const
+        const absl::flat_hash_set< uuid >& targeted_set_ids() const
         {
-            return targeted_subset_ids_;
+            return targeted_set_ids_;
         }
 
         /// Energy contribution for a given statistic multiplier
@@ -132,58 +131,57 @@ namespace geode
         }
 
         virtual double total_log(
-            const ObjectSet< ObjectType >& state ) const = 0;
+            const ObjectSets< ObjectType >& state ) const = 0;
 
-        virtual double delta_log_add( const ObjectSet< ObjectType >& state,
+        virtual double delta_log_add( const ObjectSets< ObjectType >& state,
             const ObjectRef< ObjectType >& new_object ) const = 0;
 
-        virtual double delta_log_remove( const ObjectSet< ObjectType >& state,
+        virtual double delta_log_remove( const ObjectSets< ObjectType >& state,
             const ObjectId& object_id ) const = 0;
 
-        virtual double delta_log_change( const ObjectSet< ObjectType >& state,
+        virtual double delta_log_change( const ObjectSets< ObjectType >& state,
             const ObjectId& old_object_id,
             const ObjectRef< ObjectType >& new_object ) const = 0;
 
         virtual double statistic(
-            const ObjectSet< ObjectType >& state ) const = 0;
+            const ObjectSets< ObjectType >& state ) const = 0;
 
         std::string string() const
         {
             auto message =
                 absl::StrCat( "Term : ", name(), "; uuid: ", id().string(),
                     " parameter value: ", energy_scale_.parameter(),
-                    " applyied on ", targeted_subset_ids_.size(),
+                    " applyied on ", targeted_set_ids_.size(),
                     " object subsets -->" );
-            for( const auto& subset_uuid : targeted_subset_ids_ )
+            for( const auto& set_id : targeted_set_ids_ )
             {
-                absl::StrAppend( &message, "\t", subset_uuid.string() );
+                absl::StrAppend( &message, "\t", set_id.string() );
             }
             return message;
         }
 
     protected:
-        bool is_targeted_subset( const uuid& subset_id ) const
+        bool is_targeted_set( const uuid& set_id ) const
         {
-            return targeted_subset_ids_.find( subset_id )
-                   != targeted_subset_ids_.end();
+            return targeted_set_ids_.find( set_id ) != targeted_set_ids_.end();
         }
 
         template < typename Func >
         void for_each_targeted_object(
-            const ObjectSet< ObjectType >& state, Func&& do_apply ) const
+            const ObjectSets< ObjectType >& state, Func&& do_apply ) const
         {
-            for( const auto& targeted_subset_id : targeted_subset_ids_ )
+            for( const auto& targeted_set_id : targeted_set_ids_ )
             {
-                for( const auto id : geode::Range{
-                         state.nb_objects_in_subset( targeted_subset_id ) } )
+                for( const auto id :
+                    geode::Range{ state.nb_objects_in_set( targeted_set_id ) } )
                 {
-                    do_apply( ObjectId{ id, targeted_subset_id } );
+                    do_apply( ObjectId{ id, targeted_set_id } );
                 }
             }
         }
 
     private:
         detail::EnergyScale energy_scale_;
-        absl::flat_hash_set< uuid > targeted_subset_ids_;
+        absl::flat_hash_set< uuid > targeted_set_ids_;
     };
 } // namespace geode

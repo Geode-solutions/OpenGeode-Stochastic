@@ -23,6 +23,7 @@ add_geode_library(
     FOLDER "geode/stochastic"
     SOURCES
         "spatial/object_set.cpp"
+        "spatial/object_sets.cpp"
         "spatial/object_neighborhood.cpp"
         "sampling/direct/ball_sampler.cpp"
         "sampling/direct/bounding_box_sampler.cpp"
@@ -35,6 +36,7 @@ add_geode_library(
         "hello_world.cpp"
     PUBLIC_HEADERS
         "spatial/object_set.hpp"
+        "spatial/object_sets.hpp"
         "spatial/object_neighborhood.hpp"
         "spatial/object_helpers.hpp"
         "spatial/pairwise_interactions.hpp"

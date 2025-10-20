@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#include <geode/stochastic/spatial/object_set.hpp>
+#include <geode/stochastic/spatial/object_sets.hpp>
 
 #include <geode/stochastic/sampling/mcmc/models/components/energy_term.hpp>
 
@@ -35,51 +35,51 @@ namespace geode
     public:
         explicit DensityTerm( std::string_view name,
             double lambda,
-            absl::flat_hash_set< uuid > targeted_subset_ids )
+            absl::flat_hash_set< uuid > targeted_set_ids )
             : EnergyTerm< ObjectType >(
-                  name, lambda, std::move( targeted_subset_ids ) )
+                  name, lambda, std::move( targeted_set_ids ) )
         {
         }
 
-        double total_log( const ObjectSet< ObjectType >& state ) const override
+        double total_log( const ObjectSets< ObjectType >& state ) const override
         {
             const auto n = this->statistic( state );
             return this->contribution( n );
         }
 
-        double delta_log_add( const ObjectSet< ObjectType >& /*state*/,
+        double delta_log_add( const ObjectSets< ObjectType >& /*state*/,
             const ObjectRef< ObjectType >& new_object ) const override
         {
-            if( !this->is_targeted_subset( new_object.subset ) )
+            if( !this->is_targeted_set( new_object.set_id ) )
             {
                 return 0.0;
             }
             return this->contribution( 1.0 );
         }
 
-        double delta_log_remove( const ObjectSet< ObjectType >& /*state*/,
+        double delta_log_remove( const ObjectSets< ObjectType >& /*state*/,
             const ObjectId& object_id ) const override
         {
-            if( !this->is_targeted_subset( object_id.subset ) )
+            if( !this->is_targeted_set( object_id.set_id ) )
             {
                 return 0.0;
             }
             return this->contribution( -1.0 );
         }
 
-        double delta_log_change( const ObjectSet< ObjectType >& /*state*/,
+        double delta_log_change( const ObjectSets< ObjectType >& /*state*/,
             const ObjectId& /*old_object_id*/,
             const ObjectRef< ObjectType >& /*new_object*/ ) const override
         {
             return 0.0;
         }
 
-        double statistic( const ObjectSet< ObjectType >& state ) const override
+        double statistic( const ObjectSets< ObjectType >& state ) const override
         {
             index_t count{ 0 };
-            for( const auto& subset_uuid : this->targeted_subset_ids() )
+            for( const auto& set_id : this->targeted_set_ids() )
             {
-                count += state.nb_objects_in_subset( subset_uuid );
+                count += state.nb_objects_in_set( set_id );
             }
             return static_cast< double >( count );
         }

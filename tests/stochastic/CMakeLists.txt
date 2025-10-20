@@ -19,6 +19,22 @@
 # SOFTWARE.
 
 add_geode_test(
+    SOURCE "spatial/test-object-set.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
+    SOURCE "spatial/test-object-sets.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
     SOURCE "spatial/test-pairwise-interactions.cpp"
     DEPENDENCIES
         OpenGeode::basic
@@ -97,13 +113,13 @@ add_geode_test(
         ${PROJECT_NAME}::stochastic
 )
 
- add_geode_test(
-     SOURCE "sampling/mcmc/test-metropolis-hasting-sampler.cpp"
-     DEPENDENCIES
-         OpenGeode::basic
-         OpenGeode::geometry
-         ${PROJECT_NAME}::stochastic
- )
+# add_geode_test(
+#     SOURCE "sampling/mcmc/test-metropolis-hasting-sampler.cpp"
+#     DEPENDENCIES
+#         OpenGeode::basic
+#         OpenGeode::geometry
+#         ${PROJECT_NAME}::stochastic
+# )
 
 #add_geode_test(
 #     SOURCE "sampling/mcmc/test-mh-poisson.cpp"

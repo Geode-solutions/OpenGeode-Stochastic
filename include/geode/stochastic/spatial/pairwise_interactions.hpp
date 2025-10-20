@@ -29,7 +29,7 @@
 #include <geode/geometry/point.hpp>
 
 #include <geode/stochastic/spatial/object_helpers.hpp>
-#include <geode/stochastic/spatial/object_set.hpp>
+#include <geode/stochastic/spatial/object_sets.hpp>
 
 namespace geode
 {
@@ -39,9 +39,9 @@ namespace geode
     public:
         enum struct SCOPE
         {
-            all_subset,
-            same_subset, // only within the same subset
-            different_subset // only across subsets
+            all_set,
+            same_set, // only within the same subset
+            different_set // only across subsets
         };
 
         explicit PairwiseInteraction() = default;
@@ -51,13 +51,13 @@ namespace geode
         double evaluate( const ObjectRef< Type >& object_a,
             const ObjectRef< Type >& object_b ) const
         {
-            if( scope_ == SCOPE::same_subset
-                && object_a.subset != object_b.subset )
+            if( scope_ == SCOPE::same_set
+                && object_a.set_id != object_b.set_id )
             {
                 return 0.0;
             }
-            if( scope_ == SCOPE::different_subset
-                && object_a.subset == object_b.subset )
+            if( scope_ == SCOPE::different_set
+                && object_a.set_id == object_b.set_id )
             {
                 return 0.0;
             }
@@ -71,7 +71,7 @@ namespace geode
             const ObjectRef< Type >& object_b ) const = 0;
 
     private:
-        SCOPE scope_{ SCOPE::all_subset };
+        SCOPE scope_{ SCOPE::all_set };
     };
 
     template < typename Type >

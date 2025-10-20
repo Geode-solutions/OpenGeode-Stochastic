@@ -29,32 +29,32 @@
 #include <geode/stochastic/sampling/mcmc/models/components/energy_term_collection.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
-#include <geode/stochastic/spatial/object_set.hpp>
+#include <geode/stochastic/spatial/object_sets.hpp>
 
 namespace
 {
-    geode::ObjectSet< geode::Point2D > create_object_set(
-        const geode::uuid& subset_id )
+    geode::ObjectSets< geode::Point2D > create_object_set(
+        const geode::uuid& set_id )
     {
         geode::Point2D p1{ { 0., 0. } };
         geode::Point2D p2{ { 1., 1. } };
 
-        geode::ObjectSet< geode::Point2D > pattern;
-        pattern.add_object( std::move( p1 ), subset_id );
-        pattern.add_object( std::move( p2 ), subset_id );
+        geode::ObjectSets< geode::Point2D > pattern;
+        pattern.add_object( std::move( p1 ), set_id );
+        pattern.add_object( std::move( p2 ), set_id );
 
         return pattern;
     }
 } // namespace
 
-void test_gibbs_energy( const geode::uuid& subset_id )
+void test_gibbs_energy( const geode::uuid& set_id )
 {
     geode::EnergyTermCollection< geode::Point2D > energy_terms;
 
     // Add intensity term
     energy_terms.add_energy_term(
-        std::make_unique< geode::DensityTerm< geode::Point2D > >( "intensity",
-            0.5, absl::flat_hash_set< geode::uuid >{ subset_id } ) );
+        std::make_unique< geode::DensityTerm< geode::Point2D > >(
+            "intensity", 0.5, absl::flat_hash_set< geode::uuid >{ set_id } ) );
 
     // Add pairwise term with trivial interaction: always counts 1 for each pair
     auto interaction =
@@ -63,7 +63,7 @@ void test_gibbs_energy( const geode::uuid& subset_id )
 
     energy_terms.add_energy_term(
         std::make_unique< geode::PairwiseTerm< geode::Point2D > >(
-            "interaction", 0.8, absl::flat_hash_set< geode::uuid >{ subset_id },
+            "interaction", 0.8, absl::flat_hash_set< geode::uuid >{ set_id },
             std::move( interaction ) ) );
 
     OPENGEODE_EXCEPTION( energy_terms.size() == 2,
@@ -71,7 +71,7 @@ void test_gibbs_energy( const geode::uuid& subset_id )
 
     geode::GibbsEnergy< geode::Point2D > gibbs_energy( energy_terms );
 
-    auto pattern = create_object_set( subset_id );
+    auto pattern = create_object_set( set_id );
 
     // Check total log-energy is finite
     double total_energy = gibbs_energy.total_log_energy( pattern );
@@ -80,12 +80,12 @@ void test_gibbs_energy( const geode::uuid& subset_id )
 
     // Add new point to test delta_add
     geode::Point2D p3{ { 2., 2. } };
-    geode::ObjectRef< geode::Point2D > p_ref{ p3, subset_id };
+    geode::ObjectRef< geode::Point2D > p_ref{ p3, set_id };
     double delta_add = gibbs_energy.delta_log_add( pattern, p_ref );
     OPENGEODE_EXCEPTION( std::isfinite( delta_add ),
         "[test gibbs] Delta add should be finite." );
 
-    geode::ObjectId obj_id{ 0, subset_id };
+    geode::ObjectId obj_id{ 0, set_id };
     // Remove point test
     double delta_remove = gibbs_energy.delta_log_remove( pattern, obj_id );
     OPENGEODE_EXCEPTION( std::isfinite( delta_remove ),
@@ -108,9 +108,9 @@ int main()
     try
     {
         geode::StochasticLibrary::initialize();
-        geode::uuid subset_id;
+        geode::uuid set_id;
 
-        // test_gibbs_energy( subset_id );
+        // test_gibbs_energy( set_id );
     }
     catch( ... )
     {
