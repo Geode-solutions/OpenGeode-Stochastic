@@ -38,6 +38,8 @@ namespace geode
         std::vector< double > sum_squares;
         std::vector< double > means;
         std::vector< double > variances;
+        MonitoringStatistics( MonitoringStatistics&& ) = default;
+        MonitoringStatistics( const MonitoringStatistics& ) = default;
 
         MonitoringStatistics( const index_t nb_energy_terms )
         {
