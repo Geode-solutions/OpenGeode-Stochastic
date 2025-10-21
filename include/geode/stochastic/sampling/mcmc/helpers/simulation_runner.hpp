@@ -22,10 +22,11 @@
  */
 
 #pragma once
+#include <geode/stochastic/common.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
 
-#include "absl/strings/str_join.h"
+#include <absl/strings/str_join.h>
 #include <fstream>
 
 namespace geode
