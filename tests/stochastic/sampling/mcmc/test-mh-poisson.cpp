@@ -49,9 +49,8 @@ namespace
         : public geode::SimulationRunner< geode::Point2D >
     {
     public:
-        PoissonSimulationRunner( const geode::BoundingBox2D& box ) : box_( box )
-        {
-        }
+        PoissonSimulationRunner( const geode::BoundingBox2D& box )
+            : box_( box ){};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {
