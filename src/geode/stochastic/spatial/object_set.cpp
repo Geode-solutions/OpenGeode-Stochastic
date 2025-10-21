@@ -32,6 +32,12 @@
 namespace geode
 {
     template < typename Type >
+    void ObjectSet< Type >::set_name( std::string_view name )
+    {
+        IdentifierBuilder builder( *this );
+        builder.set_name( name );
+    }
+    template < typename Type >
     const Type& ObjectSet< Type >::get_object( index_t index ) const
     {
         OPENGEODE_EXCEPTION( index < objects_.size(),

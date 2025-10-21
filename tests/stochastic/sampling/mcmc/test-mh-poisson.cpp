@@ -22,6 +22,7 @@
  */
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
+#include <geode/stochastic/sampling/mcmc/helpers/simulation_runner.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
@@ -29,161 +30,106 @@
 #include <geode/stochastic/spatial/object_sets.hpp>
 namespace
 {
-    struct PoissonDescription
+    struct PoissonSetDescription
     {
         std::string name;
         double density;
+        double target_count;
 
-        // mh dynamic
-        double death_birth_ratio{ 2. };
-        double birth_ratio{ 0.5 };
-        double change_ratio{ 1. };
+        double birth_ratio{ 1.0 };
+        double death_ratio{ 1.0 };
+        double change_ratio{ 1.0 };
     };
 
-    struct MultitypePoissonDescription
+    class PoissonSimulationRunner
+        : public geode::SimulationRunner< geode::Point2D >
     {
-        // voi
-        geode::Point2D min_point;
-        geode::Point2D max_point;
+    public:
+        PoissonSimulationRunner( const geode::BoundingBox2D& box )
+            : box_( box ){};
 
-        // object sets
-        std::vector< PoissonDescription > set_desc;
+        void add_set_descriptor( const PoissonSetDescription& descriptor )
+        {
+            set_descriptors_.push_back( descriptor );
+        }
 
-        // mh
-        geode::index_t nb_steps{ 1000 };
-        geode::index_t nb_realizations{ 1000 };
-    };
-    struct UserProblem
-    {
-        geode::BoundingBox2D box;
-        geode::ObjectSets< geode::Point2D > object_set;
-        std::vector< geode::uuid > object_set_id;
-
-        geode::GibbsEnergy< geode::Point2D > gibbs_energy;
-
-        absl::flat_hash_map< geode::uuid, geode::uuid > set_energy_term_ids;
-
-        absl::flat_hash_map< geode::uuid, double > set_stats_targets;
-
-        absl::flat_hash_map< geode::uuid, geode::UniformPointSetSampler< 2 > >
-            set_samplers;
-
-        std::unique_ptr< geode::MetropolisHastings< geode::Point2D > >
-            mh_sampler;
-    };
-
-    UserProblem create_problems(
-        const MultitypePoissonDescription& description )
-    {
-        UserProblem problem;
-        problem.box.add_point( description.min_point );
-        problem.box.add_point( description.max_point );
-        double area = problem.box.n_volume();
-
-        std::unique_ptr< geode::ProposalKernel< geode::Point2D > >
-            proposal_kernel =
+        void initialize() override
+        {
+            auto proposal_kernel =
                 std::make_unique< geode::ProposalKernel< geode::Point2D > >();
-        for( const auto& points_desc : description.set_desc )
-        {
-            auto set_id = problem.object_set.add_set();
-            problem.object_set_id.push_back( set_id );
 
-            // this should be linked to the object subset
-            // flat_hash_map<set_id,ObjectSetSampler>
-            problem.set_samplers.emplace( set_id,
-                geode::UniformPointSetSampler< 2 >{ problem.box, set_id } );
-            OPENGEODE_EXCEPTION( points_desc.death_birth_ratio > 0.,
-                "Object cannot be add or removed. Please set a BIRTH-DEATH "
-                "with a positive probability." );
-            proposal_kernel->add_move(
-                std::make_unique< geode::BirthDeathMove< geode::Point2D > >(
-                    problem.set_samplers.at( set_id ),
-                    points_desc.death_birth_ratio, points_desc.birth_ratio ) );
-            if( points_desc.change_ratio > 0. )
+            for( const auto& descriptor : set_descriptors_ )
             {
-                proposal_kernel->add_move(
-                    std::make_unique< geode::ChangeMove< geode::Point2D > >(
-                        problem.set_samplers.at( set_id ),
-                        points_desc.change_ratio ) );
+                const auto set_id =
+                    this->object_sets_.add_set( descriptor.name );
+
+                this->set_samplers_.push_back(
+                    std::make_unique< geode::UniformPointSetSampler< 2 > >(
+                        box_ ) );
+
+                // density energy term
+                this->ordered_energy_terms_.push_back(
+                    this->energy_terms_collection_.add_energy_term(
+                        std::make_unique<
+                            geode::DensityTerm< geode::Point2D > >(
+                            absl::StrCat( descriptor.name, "_density" ),
+                            descriptor.density,
+                            absl::flat_hash_set< geode::uuid >{ set_id } ) ) );
+
+                // target statistics
+                this->ordered_target_statistics_.push_back(
+                    descriptor.target_count );
+
+                // proposal moves
+                geode::add_birth_death_change_moves( this->set_samplers_.back(),
+                    *proposal_kernel, set_id, descriptor.birth_ratio,
+                    descriptor.death_ratio, descriptor.change_ratio );
             }
-
-            // energy terms here we define intra subset terms (can be
-            // several of them) need to add inter set energy terms
-            problem.set_energy_term_ids.emplace( set_id,
-                problem.gibbs_energy.add_energy_term(
-                    std::make_unique< geode::DensityTerm< geode::Point2D > >(
-                        points_desc.name, points_desc.density, set_id ) ) );
-
-            problem.set_stats_targets.emplace(
-                set_id, points_desc.density * area );
+            this->mh_sampler_ =
+                std::make_unique< geode::MetropolisHastings< geode::Point2D > >(
+                    this->energy_terms_collection_,
+                    std::move( proposal_kernel ) );
         }
-        problem.mh_sampler =
-            std::make_unique< geode::MetropolisHastings< geode::Point2D > >(
-                problem.gibbs_energy, std::move( proposal_kernel ) );
 
-        return problem;
-    }
-    void test_convergence(
-        const MultitypePoissonDescription& problem_description,
-        geode::RandomEngine& engine )
-    {
-        auto problem = create_problems( problem_description );
-
-        problem.mh_sampler->walk( problem.object_set, engine, 500 );
-
-        std::vector< double > sum_points( problem.object_set_id.size(), 0. );
-        std::vector< double > sum_sq_points( problem.object_set_id.size(), 0. );
-        auto N = problem_description.nb_realizations;
-
-        for( const auto i : geode::Range{ N } )
+        void check_statistics(
+            const geode::MonitoringStatistics& statistic_monitoring ) const
         {
-            problem.mh_sampler->walk(
-                problem.object_set, engine, problem_description.nb_steps );
-            for( const auto set_id :
-                geode::Range{ problem.object_set_id.size() } )
+            for( const auto stat_id :
+                geode::Range{ this->energy_terms_collection_.size() } )
             {
-                const auto& energy_term_uuid = problem.set_energy_term_ids.at(
-                    problem.object_set_id[set_id] );
-                const auto nb_points =
-                    problem.gibbs_energy.energy_term_statistic(
-                        problem.object_set, energy_term_uuid );
-                sum_points[set_id] += nb_points;
-                sum_sq_points[set_id] += nb_points * nb_points;
+                const auto& term = energy_terms_collection_.get(
+                    ordered_energy_terms_[stat_id] );
+
+                const auto expected_means =
+                    this->ordered_target_statistics_[stat_id];
+                const auto target_vs_mean_error =
+                    std::abs(
+                        statistic_monitoring.means[stat_id] - expected_means )
+                    / expected_means;
+                OPENGEODE_EXCEPTION( target_vs_mean_error < 0.02,
+                    "[MH test] statistic value ",
+                    statistic_monitoring.means[stat_id],
+                    " for energy term: ", term.name().data(),
+                    " not close to enought to expected value ", expected_means,
+                    " --> error : ", target_vs_mean_error );
+
+                const auto target_vs_variance_error =
+                    std::abs( statistic_monitoring.variances[stat_id]
+                              - expected_means )
+                    / expected_means;
+                OPENGEODE_EXCEPTION( target_vs_variance_error < 0.15,
+                    "[MH test] The variance of the staistic value ",
+                    statistic_monitoring.variances[stat_id],
+                    " for energy term: ", term.name().data(),
+                    " is not close to enought to expected value ",
+                    expected_means, " --> error : ", target_vs_variance_error );
             }
         }
-        std::transform( sum_points.begin(), sum_points.end(),
-            sum_points.begin(), [N]( double p ) {
-                return p / N;
-            } );
-        std::transform( sum_sq_points.begin(), sum_sq_points.end(),
-            sum_sq_points.begin(), [N]( double p ) {
-                return p / N;
-            } );
-        for( const auto set_id : geode::Range{ problem.object_set_id.size() } )
-        {
-            const auto& set_id = problem.object_set_id[set_id];
-            const auto expected_points = problem.set_stats_targets.at( set_id );
 
-            const auto variance = sum_sq_points[set_id]
-                                  - ( sum_points[set_id] * sum_points[set_id] );
-            geode::Logger::info( "[MH test] mean points = ", sum_points[set_id],
-                " and var = ", variance, " (expected ", expected_points, ")" );
-            const auto error_stat =
-                std::abs( sum_points[set_id] - expected_points )
-                / expected_points;
-            OPENGEODE_EXCEPTION( error_stat < 0.02,
-                "[MH test] mean number of points not close to enought to "
-                "expected value --> error : ",
-                error_stat );
-            // Variance test: Poisson => Var(N) ≈ E[N]
-            const auto error_var =
-                std::abs( variance - expected_points ) / expected_points;
-            OPENGEODE_EXCEPTION( error_var < 0.15,
-                "[MH test] Variance not close to enought to "
-                "expected value --> error : ",
-                error_var );
-        }
-    }
+    private:
+        geode::BoundingBox2D box_;
+        std::vector< PoissonSetDescription > set_descriptors_;
+    };
 
     void test_single_type_poisson()
     {
@@ -192,25 +138,34 @@ namespace
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test-single-POISSON@" );
 
-        std::array< double, 4 > birth_ratio{ 0.1, 0.3, 0.7, 0.9 };
-        std::array< double, 4 > change_ratio{ 0., 1., 1., 0. };
+        geode::BoundingBox2D box;
+        box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
+        box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
 
+        std::array< double, 4 > birth_ratio{ 0.1, 0.5, 2., 4. };
+        std::array< double, 4 > change_ratio{ 0., 1., 1., 0. };
         for( const auto config : geode::Range{ birth_ratio.size() } )
         {
-            MultitypePoissonDescription problem_description;
-            problem_description.min_point = geode::Point2D{ { 0., 0. } };
-            problem_description.max_point = geode::Point2D{ { 10., 10. } };
+            PoissonSetDescription setA;
+            setA.name = "A";
+            setA.density = 0.3;
+            setA.target_count = 30.0;
+            setA.birth_ratio = birth_ratio[config];
+            setA.death_ratio = 1.0;
+            setA.change_ratio = change_ratio[config];
 
-            std::vector< PoissonDescription > poisson_description{ { "set01",
-                0.5, 1., birth_ratio[config], change_ratio[config] } };
-            problem_description.set_desc = poisson_description;
+            PoissonSimulationRunner runner( box );
+            runner.add_set_descriptor( setA );
+            runner.initialize();
 
-            problem_description.nb_steps = 1000.;
-            problem_description.nb_realizations = 1000.;
-
-            test_convergence( problem_description, engine );
+            constexpr geode::index_t steps = 1000;
+            constexpr geode::index_t nb_realizations = 1000;
+            runner.run( engine, steps );
+            auto statistic_monitoring = runner.run_print_and_monitor(
+                "poisson_statistics", engine, steps, nb_realizations );
+            runner.check_statistics( statistic_monitoring );
         }
-        geode::Logger::info( "MH SINGLE TYPE POISSON -- SUCCESS!" );
+        geode::Logger::info( "--> SUCCESS!" );
     }
 
     void test_multitype_poisson()
@@ -220,21 +175,53 @@ namespace
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test-POISSON-multi@" );
 
-        MultitypePoissonDescription problem_description;
-        problem_description.min_point = geode::Point2D{ { 0., 0. } };
-        problem_description.max_point = geode::Point2D{ { 10., 10. } };
+        geode::BoundingBox2D box;
+        box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
+        box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
 
-        std::vector< PoissonDescription > poisson_description{
-            { "set01", 0.1, 3., 0.25, 1. }, { "set02", 0.4, 1., 0.75, 1. },
-            { "set03", 0.3, 5., 0.5, 1. }
-        };
-        problem_description.set_desc = poisson_description;
+        std::array< double, 4 > birth_ratio{ 0.1, 0.5, 2., 4. };
+        std::array< double, 4 > change_ratio{ 0., 1., 1., 0. };
+        for( const auto config : geode::Range{ birth_ratio.size() } )
+        {
+            PoissonSetDescription set01;
+            set01.name = "set01";
+            set01.density = 0.1;
+            set01.target_count = 10.0;
+            set01.birth_ratio = 1.;
+            set01.death_ratio = 3.;
+            set01.change_ratio = 1.;
 
-        problem_description.nb_steps = 1000.;
-        problem_description.nb_realizations = 1000.;
+            PoissonSetDescription set02;
+            set02.name = "set02";
+            set02.density = 0.4;
+            set02.target_count = 40.0;
+            set02.birth_ratio = 3.;
+            set02.death_ratio = 0.5;
+            set02.change_ratio = 1.;
 
-        test_convergence( problem_description, engine );
-        geode::Logger::info( "MH MULTITYPE POISSON -- SUCCESS!" );
+            PoissonSetDescription set03;
+            set03.name = "set03";
+            set03.density = 0.3;
+            set03.target_count = 30.0;
+            set03.birth_ratio = 4.;
+            set03.death_ratio = 1.;
+            set03.change_ratio = 1.;
+
+            PoissonSimulationRunner runner( box );
+            runner.add_set_descriptor( set01 );
+            runner.add_set_descriptor( set02 );
+            runner.add_set_descriptor( set03 );
+
+            runner.initialize();
+
+            constexpr geode::index_t steps = 1000;
+            constexpr geode::index_t nb_realizations = 1000;
+
+            auto statistic_monitoring = runner.run_print_and_monitor(
+                "poisson_statistics", engine, steps, nb_realizations );
+            runner.check_statistics( statistic_monitoring );
+        }
+        geode::Logger::info( "--> SUCCESS!" );
     }
 } // namespace
 
@@ -243,6 +230,7 @@ int main()
     try
     {
         geode::StochasticLibrary::initialize();
+        geode::Logger::set_level( geode::Logger::LEVEL::debug );
         test_single_type_poisson();
         test_multitype_poisson();
         return 0;

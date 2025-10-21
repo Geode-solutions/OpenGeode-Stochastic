@@ -38,7 +38,7 @@ namespace
         geode::Point2D p1{ { 0., 0. } };
         geode::Point2D p2{ { 1., 1. } };
 
-        auto set_id = pattern.add_set();
+        auto set_id = pattern.add_set( "default_name" );
         pattern.add_object( std::move( p1 ), set_id );
         pattern.add_object( std::move( p2 ), set_id );
 
@@ -156,7 +156,7 @@ namespace
 
         // --- Edge case: empty object_set ---
         geode::ObjectSets< geode::Point2D > empty_config;
-        const auto empty_set_id = empty_config.add_set();
+        const auto empty_set_id = empty_config.add_set( "default_name" );
         auto empty_kernel =
             geode::create_birth_death_change_kernel< geode::Point2D >(
                 empty_set_id, sampler, 0.4, 0.4 );

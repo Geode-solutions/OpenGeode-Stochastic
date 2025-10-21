@@ -34,6 +34,7 @@ namespace geode
     void add_birth_death_change_moves(
         std::unique_ptr< geode::ObjectSetSampler< ObjectType > >& sampler,
         geode::ProposalKernel< ObjectType >& kernel,
+        const uuid& set_id,
         double birth_ratio,
         double death_ratio,
         double change_ratio )
@@ -44,14 +45,14 @@ namespace geode
 
         const auto p_birth = birth_ratio / total_ratio;
         kernel.add_move(
-            std::make_unique< geode::BirthDeathMove< ObjectType > >(
-                sampler, total_ratio, p_birth ) );
+            set_id, std::make_unique< geode::BirthDeathMove< ObjectType > >(
+                        *sampler, total_ratio, p_birth ) );
 
         if( change_ratio > 0. )
         {
             kernel.add_move(
-                std::make_unique< geode::ChangeMove< ObjectType > >(
-                    sampler, change_ratio ) );
+                set_id, std::make_unique< geode::ChangeMove< ObjectType > >(
+                            *sampler, change_ratio ) );
         }
     }
 

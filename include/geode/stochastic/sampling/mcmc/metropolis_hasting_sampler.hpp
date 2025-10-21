@@ -49,9 +49,10 @@ namespace geode
     class MetropolisHastings
     {
     public:
-        MetropolisHastings( GibbsEnergy< ObjectType >& energy,
+        MetropolisHastings(
+            const EnergyTermCollection< ObjectType >& energy_term_collection,
             std::unique_ptr< ProposalKernel< ObjectType > > proposal_kernel )
-            : energy_( energy ),
+            : gibbs_energy_{ energy_term_collection },
               proposal_kernel_( std::move( proposal_kernel ) )
         {
             OPENGEODE_ASSERT(
@@ -188,7 +189,7 @@ namespace geode
         {
             const auto new_object = proposal.new_object();
             const auto delta_log_energy =
-                energy_.delta_log_add( state, new_object );
+                gibbs_energy_.delta_log_add( state, new_object );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
                 []( auto& state, auto& proposal ) {
                     state.add_object(
@@ -203,7 +204,7 @@ namespace geode
         {
             const auto old_object_id = proposal.old_object_id();
             const auto delta_log_energy =
-                energy_.delta_log_remove( state, old_object_id );
+                gibbs_energy_.delta_log_remove( state, old_object_id );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
                 []( auto& state, auto& proposal ) {
                     state.remove_object( proposal.old_object_id() );
@@ -216,8 +217,8 @@ namespace geode
         {
             const auto new_object = proposal.new_object();
             const auto old_object_id = proposal.old_object_id();
-            const auto delta_log_energy =
-                energy_.delta_log_change( state, old_object_id, new_object );
+            const auto delta_log_energy = gibbs_energy_.delta_log_change(
+                state, old_object_id, new_object );
             // should we test that objects are in the same group?
             // should be ensured by the dynamic
             return accept_or_reject( proposal, state, engine, delta_log_energy,
@@ -229,7 +230,7 @@ namespace geode
         };
 
     private:
-        const GibbsEnergy< ObjectType >& energy_;
+        GibbsEnergy< ObjectType > gibbs_energy_;
         std::unique_ptr< ProposalKernel< ObjectType > > proposal_kernel_;
         double beta_{ 1.0 };
     };

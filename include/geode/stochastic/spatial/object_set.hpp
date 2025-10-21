@@ -36,6 +36,7 @@ namespace geode
         ObjectSet( ObjectSet&& ) noexcept = default;
         ObjectSet& operator=( ObjectSet&& ) noexcept = default;
 
+        void set_name( std::string_view name );
         const Type& get_object( index_t index ) const;
 
         index_t add_object( Type&& object );

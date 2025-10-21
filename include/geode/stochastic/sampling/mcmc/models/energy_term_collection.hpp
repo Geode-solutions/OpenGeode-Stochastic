@@ -63,14 +63,14 @@ namespace geode
             return energy_terms_.size();
         }
 
-        [[nodiscard]] std::shared_ptr< const EnergyTerm< ObjectType > > get(
+        [[nodiscard]] const EnergyTerm< ObjectType >& get(
             const uuid& id ) const
         {
             auto it = energy_terms_.find( id );
             OPENGEODE_EXCEPTION( it != energy_terms_.end(),
                 absl::StrCat( "[EnergyTermCollection] Unknown energy term: ",
                     id.string() ) );
-            return it->second;
+            return *it->second;
         }
 
         [[nodiscard]] const absl::flat_hash_map< uuid,

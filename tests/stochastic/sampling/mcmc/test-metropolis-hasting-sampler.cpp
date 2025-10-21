@@ -24,7 +24,7 @@
 #include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
-#include <geode/stochastic/sampling/mcmc/models/components/energy_term_collection.hpp>
+#include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
 namespace
@@ -73,20 +73,9 @@ namespace
     }
 
     void test_steps( const geode::MetropolisHastings< geode::Point2D >& mh,
-        const geode::uuid& set_id )
+        geode::ObjectSets< geode::Point2D >& state )
     {
         geode::RandomEngine engine;
-
-        absl::flat_hash_map< geode::uuid, geode::index_t > targets = { { set_id,
-            20 } };
-        //        geode::ObjectSets< geode::Point2D > state =
-        //            mh.initialize_object_set_with_sampling( engine, targets );
-
-        geode::ObjectSets< geode::Point2D > state;
-        state.add_set( set_id );
-        state.add_object( geode::Point2D{ { 1., 1. } }, set_id );
-        state.add_object( geode::Point2D{ { 2., 2. } }, set_id );
-        state.add_object( geode::Point2D{ { 3., 3. } }, set_id );
 
         geode::index_t stat_sum{ 0 };
         constexpr geode::index_t N{ 100000 };
@@ -135,7 +124,7 @@ namespace
                 }
             }
             // should be change... only pone group here
-            stat_sum += state.nb_objects_in_set( set_id );
+            stat_sum += state.nb_objects();
 
             if( count % 1000 == 0 )
             {
@@ -171,7 +160,8 @@ int main()
         box.add_point( min_point );
         box.add_point( max_point );
 
-        geode::uuid set_id;
+        geode::ObjectSets< geode::Point2D > state;
+        const auto set_id = state.add_set( "default_name" );
         geode::UniformPointSetSampler< 2 > sampler( box );
 
         double birth_prob = 0.3;
@@ -187,12 +177,14 @@ int main()
                 "intensity", 0.5,
                 absl::flat_hash_set< geode::uuid >{ set_id } ) );
 
-        geode::GibbsEnergy< geode::Point2D > poisson_energy( energy_terms );
-
         geode::MetropolisHastings< geode::Point2D > mh(
-            poisson_energy, std::move( kernel ) );
+            energy_terms, std::move( kernel ) );
 
-        test_steps( mh, set_id );
+        state.add_object( geode::Point2D{ { 1., 1. } }, set_id );
+        state.add_object( geode::Point2D{ { 2., 2. } }, set_id );
+        state.add_object( geode::Point2D{ { 3., 3. } }, set_id );
+
+        test_steps( mh, state );
         test_beta_setter( mh );
         test_acceptance_prob_helper();
 

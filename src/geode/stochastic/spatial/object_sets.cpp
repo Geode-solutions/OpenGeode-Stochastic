@@ -90,9 +90,10 @@ namespace geode
     }
 
     template < typename Type >
-    uuid ObjectSets< Type >::add_set()
+    uuid ObjectSets< Type >::add_set( std::string_view name )
     {
         ObjectSet< Type > new_set;
+        new_set.set_name( name );
         const auto new_set_id = new_set.id();
         auto [it, inserted] = sets_.emplace( new_set_id, std::move( new_set ) );
         OPENGEODE_EXCEPTION( inserted, "[ObjectSet]- group (",

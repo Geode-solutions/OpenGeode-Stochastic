@@ -30,8 +30,8 @@ namespace
     void test_add_sets_and_objects()
     {
         ObjectSets< geode::Point2D > sets;
-        const auto set_id1 = sets.add_set();
-        const auto set_id2 = sets.add_set();
+        const auto set_id1 = sets.add_set( "default_name" );
+        const auto set_id2 = sets.add_set( "default_name" );
 
         OPENGEODE_EXCEPTION(
             sets.nb_sets() == 2, "[TestObjectSets] - Expected 2 sets" );
@@ -59,7 +59,7 @@ namespace
     void test_neighbors_by_object_id()
     {
         ObjectSets< geode::Point2D > sets;
-        const auto set_id = sets.add_set();
+        const auto set_id = sets.add_set( "default_name" );
 
         const auto obj0 =
             sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id );
@@ -84,7 +84,7 @@ namespace
     void test_neighbors_by_object_value()
     {
         ObjectSets< geode::Point2D > sets;
-        const auto set_id = sets.add_set();
+        const auto set_id = sets.add_set( "default_name" );
 
         sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id );
         sets.add_object( geode::Point2D{ { 1.0, 0.0 } }, set_id );
@@ -102,7 +102,7 @@ namespace
     void test_string_representation()
     {
         ObjectSets< geode::Point2D > sets;
-        const auto set_id = sets.add_set();
+        const auto set_id = sets.add_set( "default_name" );
         sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id );
         sets.add_object( geode::Point2D{ { 1.0, 1.0 } }, set_id );
 

@@ -141,7 +141,7 @@ namespace
                 std::make_unique< geode::ProposalKernel< geode::Point2D > >();
         for( const auto& points_desc : description.set_desc )
         {
-            auto set_id = problem.object_set.add_set();
+            auto set_id = problem.object_set.add_set( "default_name" );
             problem.object_set_id.push_back( set_id );
 
             problem.set_samplers.emplace( set_id,

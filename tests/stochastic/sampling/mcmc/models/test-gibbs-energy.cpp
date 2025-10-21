@@ -26,8 +26,8 @@
 #include <geode/geometry/point.hpp>
 
 #include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
-#include <geode/stochastic/sampling/mcmc/models/components/energy_term_collection.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
+#include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 
