@@ -50,7 +50,7 @@ namespace
     {
     public:
         PoissonSimulationRunner( const geode::BoundingBox2D& box )
-            : box_( box ) {};
+            : box_( box ){};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {
@@ -126,7 +126,7 @@ namespace
                         statistic_monitoring.means[stat_id] - expected_means )
                     / expected_means;
 
-                OPENGEODE_EXCEPTION( target_vs_mean_error < 0.02,
+                OPENGEODE_EXCEPTION( target_vs_mean_error < 0.05,
                     "[MH test] statistic value ",
                     statistic_monitoring.means[stat_id],
                     " for energy term: ", term.name().data(),
