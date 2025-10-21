@@ -34,12 +34,12 @@ namespace geode
     class opengeode_stochastic_stochastic_api MonitoringStatistics
     {
     public:
-        std::vector< double > sum;
-        std::vector< double > sum_squares;
-        std::vector< double > means;
-        std::vector< double > variances;
         MonitoringStatistics( MonitoringStatistics&& ) = default;
         MonitoringStatistics( const MonitoringStatistics& ) = default;
+        MonitoringStatistics& operator=(
+            MonitoringStatistics&& ) noexcept = default;
+        MonitoringStatistics& operator=(
+            const MonitoringStatistics& ) noexcept = default;
 
         MonitoringStatistics( const index_t nb_energy_terms )
         {
@@ -71,6 +71,12 @@ namespace geode
                 // stddevs[stat_id] =std::sqrt( std::max( variance, 0.0 ) );
             }
         }
+
+    public:
+        std::vector< double > sum;
+        std::vector< double > sum_squares;
+        std::vector< double > means;
+        std::vector< double > variances;
     };
 
     template < typename ObjectType >
