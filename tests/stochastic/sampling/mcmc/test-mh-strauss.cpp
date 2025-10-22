@@ -204,7 +204,7 @@ namespace
 
         std::array< double, 5 > gamma_values{ 0, 0.3, 0.5, 0.7, 1.0 };
         std::array< double, 5 > nb_points{ 22.6, 27.4, 31.3, 36.1, 50. };
-        std::array< double, 5 > nb_interactions{ 0, 4, 8, 13, 36 };
+        std::array< double, 5 > nb_interactions{ 0, 4, 8, 14, 36 };
 
         for( const auto config : geode::Range{ gamma_values.size() } )
         {
