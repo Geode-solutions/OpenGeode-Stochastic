@@ -249,71 +249,69 @@ namespace
         geode::Logger::info( "--> SUCCESS!" );
     }
 
-    //    void test_multitype_strauss()
-    //    {
-    //        geode::Logger::info(
-    //            "TEST - MH MULTITYPE STRAUSS (with inter-set interactions)" );
-    //
-    //        geode::RandomEngine engine;
-    //        engine.set_seed( "@mh-test-multi-STRAUSS@" );
-    //
-    //        geode::BoundingBox2D box;
-    //        box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
-    //        box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
-    //
-    //        for( const auto config : geode::Range{ gamma_values.size() } )
-    //        {
-    //            // --- Sets
-    //            SetDescription set01{ "set01", 1.0, 3.0, 1.0 };
-    //            SetDescription set02{ "set02", 3.0, 0.5, 1.0 };
-    //            SetDescription set03{ "set03", 4.0, 1.0, 1.0 };
-    //
-    //            // --- Density terms
-    //            PoissonDensityDescription d01{ "set01", 0.1, 10.0 };
-    //            PoissonDensityDescription d02{ "set02", 0.4, 40.0 };
-    //            PoissonDensityDescription d03{ "set03", 0.3, 30.0 };
-    //
-    //            // --- Pairwise interactions
-    //            // 1. Intra-type (repulsion within same set)
-    //            PairwiseInteractionDescription intra01{ { "set01" }, 1.5, 1.2,
-    //                /*geode::PairwiseInteraction::SCOPE::INTRA,*/ 10.0 };
-    //            PairwiseInteractionDescription intra02{ { "set02" }, 1.2, 1.0,
-    //                /*geode::PairwiseInteraction::SCOPE::INTRA,*/ 20.0 };
-    //
-    //            // 2. Inter-type (attraction or exclusion between sets)
-    //            PairwiseInteractionDescription inter12{ { "set01", "set02"
-    //            }, 2.5,
-    //                1.5, /*geode::PairwiseInteraction::SCOPE::INTER,*/ 15.0 };
-    //            PairwiseInteractionDescription inter23{ { "set02", "set03"
-    //            }, 1.0,
-    //                1.0, /*geode::PairwiseInteraction::SCOPE::INTER,*/ 25.0 };
-    //
-    //            StraussSimulationRunner runner( box );
-    //            runner.add_set_descriptor( set01 );
-    //            runner.add_set_descriptor( set02 );
-    //            runner.add_set_descriptor( set03 );
-    //
-    //            runner.add_density_descriptor( d01 );
-    //            runner.add_density_descriptor( d02 );
-    //            runner.add_density_descriptor( d03 );
-    //
-    //            runner.add_interaction_descriptor( intra01 );
-    //            runner.add_interaction_descriptor( intra02 );
-    //            runner.add_interaction_descriptor( inter12 );
-    //            runner.add_interaction_descriptor( inter23 );
-    //
-    //            runner.initialize();
-    //
-    //            constexpr geode::index_t steps = 1000;
-    //            constexpr geode::index_t nb_realizations = 500;
-    //
-    //            auto stats = runner.run_print_and_monitor(
-    //                "multi_strauss_stats", engine, steps, nb_realizations );
-    //            runner.check_statistics( stats );
-    //        }
-    //
-    //        geode::Logger::info( "--> SUCCESS!" );
-    //    }
+    void test_multitype_strauss()
+    {
+        geode::Logger::info(
+            "TEST - MH MULTITYPE STRAUSS (with inter-set interactions)" );
+
+        geode::RandomEngine engine;
+        engine.set_seed( "@mh-test-multi-STRAUSS@" );
+
+        geode::BoundingBox2D box;
+        box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
+        box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
+
+        std::array< double, 3 > gamma_values{ 0, 0.5, 1.0 };
+        std::array< double, 3 > nb_points01{ 3.4, 5, 10.0 };
+        std::array< double, 3 > nb_points02{ 14, 21, 40.0 };
+        std::array< double, 3 > nb_points03{ 11, 16, 30. };
+        std::array< double, 3 > nb_interactions01{ 0, 15, 95 };
+        std::array< double, 3 > nb_interactions02{ 16, 41, 171 };
+
+        for( const auto config : geode::Range{ gamma_values.size() } )
+        {
+            // --- Sets
+            SetDescription set01{ "set01", 1.0, 3.0, 1.0 };
+            SetDescription set02{ "set02", 3.0, 0.5, 1.0 };
+            SetDescription set03{ "set03", 4.0, 1.0, 1.0 };
+
+            // --- Density terms
+            PoissonDensityDescription d01{ "set01", 0.1, nb_points01[config] };
+            PoissonDensityDescription d02{ "set02", 0.4, nb_points02[config] };
+            PoissonDensityDescription d03{ "set03", 0.3, nb_points03[config] };
+
+            // --- Pairwise interactions
+            // 1. Intra-type (repulsion within same set)
+            PairwiseInteractionDescription intra01{ { "set01", "set02",
+                                                        "set03" },
+                gamma_values[config], 1., nb_interactions01[config] };
+            PairwiseInteractionDescription intra02{ { "set02" }, 1., 2.,
+                nb_interactions02[config] };
+
+            StraussSimulationRunner runner( box );
+            runner.add_set_descriptor( set01 );
+            runner.add_set_descriptor( set02 );
+            runner.add_set_descriptor( set03 );
+
+            runner.add_density_descriptor( d01 );
+            runner.add_density_descriptor( d02 );
+            runner.add_density_descriptor( d03 );
+
+            runner.add_interaction_descriptor( intra01 );
+            runner.add_interaction_descriptor( intra02 );
+
+            runner.initialize();
+
+            constexpr geode::index_t steps = 1000;
+            constexpr geode::index_t nb_realizations = 500;
+
+            auto stats = runner.run_print_and_monitor(
+                "multi_strauss_stats", engine, steps, nb_realizations );
+            runner.check_statistics( stats );
+        }
+
+        geode::Logger::info( "--> SUCCESS!" );
+    }
 } // namespace
 
 int main()
@@ -323,7 +321,7 @@ int main()
         geode::StochasticLibrary::initialize();
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
         test_single_type_strauss();
-        // test_multitype_strauss();
+        test_multitype_strauss();
         return 0;
     }
     catch( ... )

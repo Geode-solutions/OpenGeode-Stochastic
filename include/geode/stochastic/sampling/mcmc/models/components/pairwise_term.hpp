@@ -155,7 +155,7 @@ namespace geode
                     //     continue;
                     // }
                     // if( neigh_obj_id.set_id == obj_id.set_id
-                    //     && neigh_obj_id.id <= obj_id.id )
+                    //     && neigh_obj_id.index <= obj_id.index )
                     //{
                     //     continue;
                     // }

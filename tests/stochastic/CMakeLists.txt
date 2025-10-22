@@ -135,7 +135,6 @@ add_geode_test(
         OpenGeode::basic
         OpenGeode::geometry
         ${PROJECT_NAME}::stochastic
-    UNSTABLE
 )
 
 
