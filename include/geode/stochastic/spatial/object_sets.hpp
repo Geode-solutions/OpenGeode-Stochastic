@@ -62,7 +62,7 @@ namespace geode
         index_t nb_objects_in_set( const uuid& set_id ) const;
         index_t nb_objects() const;
 
-        uuid add_set();
+        uuid add_set( std::string_view name );
         ObjectId add_object( Type&& object, const uuid& set_id );
         void update_object( const ObjectId& object_id, Type&& object );
         void remove_object( const ObjectId& object_id );

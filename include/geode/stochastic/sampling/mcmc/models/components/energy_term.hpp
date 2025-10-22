@@ -82,22 +82,6 @@ namespace geode
 
 namespace geode
 {
-    //    struct EnergyTermDescription
-    //    {
-    //        geode::uuid id;
-    //        std::string name;
-    //        std::string type;
-    //        double parameter_value;
-    //        std::optional< uuid > targeted_set_id{};
-    //    }
-    //
-    //    struct StatisticalDescription
-    //    {
-    //        std::string label;
-    //        double value;
-    //        std::optional< uuid > targeted_set_id{};
-    //    };
-
     template < typename ObjectType >
     class EnergyTerm : public Identifier
     {

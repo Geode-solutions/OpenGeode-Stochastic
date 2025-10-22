@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#include <geode/stochastic/sampling/mcmc/models/components/energy_term_collection.hpp>
+#include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 
 namespace geode
@@ -65,8 +65,7 @@ namespace geode
         {
             double log_energy = 0.0;
             for( const auto& term :
-                energy_terms_collection_.terms_for_set( new_object
-                        .set_id ) ) // energy_terms_collection_.all_terms() )
+                energy_terms_collection_.terms_for_set( new_object.set_id ) )
             {
                 log_energy += term->delta_log_add( state, new_object );
             }
@@ -77,8 +76,8 @@ namespace geode
             const ObjectSets< ObjectType >& state, const ObjectId& id ) const
         {
             double log_energy = 0.0;
-            for( const auto& term : energy_terms_collection_.terms_for_set(
-                     id.set_id ) ) // energy_terms_collection_.all_terms() )
+            for( const auto& term :
+                energy_terms_collection_.terms_for_set( id.set_id ) )
             {
                 log_energy += term->delta_log_remove( state, id );
             }
@@ -90,8 +89,8 @@ namespace geode
             const ObjectRef< ObjectType >& new_object ) const
         {
             double log_energy = 0.0;
-            for( const auto& term : energy_terms_collection_.terms_for_set(
-                     old_id.set_id ) ) // energy_terms_collection_.all_terms() )
+            for( const auto& term :
+                energy_terms_collection_.terms_for_set( old_id.set_id ) )
             {
                 log_energy +=
                     term->delta_log_change( state, old_id, new_object );

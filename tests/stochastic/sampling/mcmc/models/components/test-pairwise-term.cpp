@@ -33,7 +33,7 @@ geode::uuid init_object_set( geode::ObjectSets< geode::Point2D >& pattern )
     geode::Point2D p1{ { 0., 0. } };
     geode::Point2D p2{ { 1., 1. } };
 
-    auto set_id = pattern.add_set();
+    auto set_id = pattern.add_set( "default_name" );
     pattern.add_object( std::move( p1 ), set_id );
     pattern.add_object( std::move( p2 ), set_id );
 

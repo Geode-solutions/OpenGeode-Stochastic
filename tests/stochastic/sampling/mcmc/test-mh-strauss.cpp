@@ -22,407 +22,295 @@
  */
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
+#include <geode/stochastic/sampling/mcmc/helpers/simulation_runner.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
+#include <geode/stochastic/spatial/pairwise_interactions.hpp>
 
 namespace
 {
-    struct StraussDescription
+    struct SetDescription
     {
         std::string name;
+        double birth_ratio{ 1.0 };
+        double death_ratio{ 1.0 };
+        double change_ratio{ 1.0 };
+    };
+
+    struct PoissonDensityDescription
+    {
+        std::string set_name;
         double density;
-        double expected_number_of_objects;
-
-        // interaction
-        geode::PairwiseInteraction< geode::Point2D >::SCOPE scope;
-        double distance_treshold;
-        double gamma;
-        double expected_number_of_intersections;
-
-        // mh dynamic
-        double death_birth_ratio{ 1. };
-        double birth_ratio{ 0.5 };
-        double change_ratio{ 1. };
+        double target_count;
     };
 
-    struct MultitypeStraussDescription
+    struct PairwiseInteractionDescription
     {
-        // voi
-        geode::Point2D min_point;
-        geode::Point2D max_point;
-
-        // object sets
-        std::vector< StraussDescription > set_desc;
-
-        // mh
-        geode::index_t nb_steps{ 10000 };
-        geode::index_t nb_realizations{ 1000 };
+        std::vector< std::string > set_names;
+        double strength;
+        double distance_threshold;
+        // geode::PairwiseInteraction::SCOPE interaction_scope;
+        double target_interaction_count;
     };
-    struct UserProblem
+
+    class StraussSimulationRunner
+        : public geode::SimulationRunner< geode::Point2D >
     {
-        geode::BoundingBox2D box;
-        geode::ObjectSets< geode::Point2D > object_set;
-        std::vector< geode::uuid > object_set_id;
-
-        geode::GibbsEnergy< geode::Point2D > gibbs_energy;
-
-        absl::flat_hash_map< geode::uuid, std::vector< geode::uuid > >
-            set_energy_term_ids;
-        absl::flat_hash_map< geode::uuid, std::vector< double > >
-            set_stats_targets;
-
-        absl::flat_hash_map< geode::uuid, geode::UniformPointSetSampler< 2 > >
-            set_samplers;
-        std::unique_ptr< geode::MetropolisHastings< geode::Point2D > >
-            mh_sampler;
-
-        std::string string() const
+    public:
+        StraussSimulationRunner( const geode::BoundingBox2D& box ) : box_( box )
         {
-            std::string message( "User Problem for stochastic simulation: " );
-            absl::StrAppend(
-                &message, "\n\t - VOI: BoundingBox ", box.string() );
-            absl::StrAppend( &message, "\n\t - ", object_set.string() );
-            absl::StrAppend( &message, "\n\t - subset uuid list: " );
-            for( const auto& uuid : object_set_id )
-            {
-                absl::StrAppend(
-                    &message, "\n\t --> subset uuid: ", uuid.string() );
-            }
-            absl::StrAppend( &message, "\n\t - ", gibbs_energy.string() );
-            absl::StrAppend(
-                &message, "\n\t - subset energy term uuid list: " );
-            for( const auto& [uuid, et_uuids] : set_energy_term_ids )
-            {
-                absl::StrAppend(
-                    &message, "\n\t --> subset uuid: ", uuid.string() );
-                for( const auto& et_id : et_uuids )
-                {
-                    absl::StrAppend(
-                        &message, "; energy term uuid: ", et_id.string() );
-                }
-            }
-            absl::StrAppend( &message, "\n\t - subset stat target list: " );
-
-            for( const auto& [uuid, stats] : set_stats_targets )
-            {
-                absl::StrAppend(
-                    &message, "\n\t --> subset uuid: ", uuid.string() );
-                for( const auto& stat : stats )
-                {
-                    absl::StrAppend( &message, "; stat: ", stat );
-                }
-            }
-            absl::StrAppend(
-                &message, "\n\t - subset sampler: ", set_samplers.size() );
-            for( const auto& [uuid, sampler] : set_samplers )
-            {
-                absl::StrAppend(
-                    &message, "\n\t --> subset uuid: ", uuid.string() );
-            }
-            absl::StrAppend( &message, "\n\t END " );
-            return message;
         }
-    };
 
-    UserProblem create_problems(
-        const MultitypeStraussDescription& description )
-    {
-        UserProblem problem;
-        problem.box.add_point( description.min_point );
-        problem.box.add_point( description.max_point );
-        double area = problem.box.n_volume();
+        void add_set_descriptor( const SetDescription& descriptor )
+        {
+            set_descriptors_.push_back( descriptor );
+        }
 
-        std::unique_ptr< geode::ProposalKernel< geode::Point2D > >
-            proposal_kernel =
+        void add_density_descriptor(
+            const PoissonDensityDescription& descriptor )
+        {
+            density_descriptors_.push_back( descriptor );
+        }
+
+        void add_interaction_descriptor(
+            const PairwiseInteractionDescription& descriptor )
+        {
+            interaction_descriptors_.push_back( descriptor );
+        }
+
+        void initialize() override
+        {
+            auto proposal_kernel =
                 std::make_unique< geode::ProposalKernel< geode::Point2D > >();
-        for( const auto& points_desc : description.set_desc )
-        {
-            auto set_id = problem.object_set.add_set();
-            problem.object_set_id.push_back( set_id );
 
-            problem.set_samplers.emplace( set_id,
-                geode::UniformPointSetSampler< 2 >{ problem.box, set_id } );
-            OPENGEODE_EXCEPTION( points_desc.death_birth_ratio > 0.,
-                "Object cannot be add or removed. Please set a BIRTH-DEATH "
-                "with a positive probability." );
-            proposal_kernel->add_move(
-                std::make_unique< geode::BirthDeathMove< geode::Point2D > >(
-                    problem.set_samplers.at( set_id ),
-                    points_desc.death_birth_ratio, points_desc.birth_ratio ) );
-            if( points_desc.change_ratio > 0. )
+            // Mapping set names -> UUID
+            std::unordered_map< std::string, geode::uuid > name_to_uuid;
+
+            // Step 1: create object sets and samplers
+            for( const auto& set_desc : set_descriptors_ )
             {
-                proposal_kernel->add_move(
-                    std::make_unique< geode::ChangeMove< geode::Point2D > >(
-                        problem.set_samplers.at( set_id ),
-                        points_desc.change_ratio ) );
+                const auto set_id = this->object_sets_.add_set( set_desc.name );
+                name_to_uuid[set_desc.name] = set_id;
+
+                this->set_samplers_.push_back(
+                    std::make_unique< geode::UniformPointSetSampler< 2 > >(
+                        box_ ) );
+
+                geode::add_birth_death_change_moves( this->set_samplers_.back(),
+                    *proposal_kernel, set_id, set_desc.birth_ratio,
+                    set_desc.death_ratio, set_desc.change_ratio );
             }
 
-            // energy terms here we define intra subset terms (can be
-            // several of them) need to add inter set energy terms
-            std::vector< geode::uuid > energy_terms;
-            energy_terms.push_back( problem.gibbs_energy.add_energy_term(
-                std::make_unique< geode::DensityTerm< geode::Point2D > >(
-                    points_desc.name, points_desc.density, set_id ) ) );
+            // Step 2: create density energy terms
+            for( const auto& density_desc : density_descriptors_ )
+            {
+                const auto set_id = name_to_uuid.at( density_desc.set_name );
 
-            auto interaction = std::make_unique<
-                geode::EuclideanCutoffInteraction< geode::Point2D > >(
-                points_desc.distance_treshold, points_desc.scope );
-            energy_terms.push_back( problem.gibbs_energy.add_energy_term(
-                std::make_unique< geode::PairwiseTerm< geode::Point2D > >(
-                    "interaction", points_desc.gamma, std::move( interaction ),
-                    set_id ) ) );
-            problem.set_energy_term_ids.emplace( set_id, energy_terms );
+                this->ordered_energy_terms_.push_back(
+                    this->energy_terms_collection_.add_energy_term(
+                        std::make_unique<
+                            geode::DensityTerm< geode::Point2D > >(
+                            absl::StrCat( density_desc.set_name, "_density" ),
+                            density_desc.density,
+                            absl::flat_hash_set< geode::uuid >{ set_id } ) ) );
 
-            std::vector< double > expected_statistics;
-            expected_statistics.push_back(
-                points_desc.expected_number_of_objects );
-            expected_statistics.push_back(
-                points_desc.expected_number_of_intersections );
-            problem.set_stats_targets.emplace( set_id, expected_statistics );
+                this->ordered_target_statistics_.push_back(
+                    density_desc.target_count );
+            }
+
+            // Step 3: create pairwise interaction terms
+            for( const auto& interaction_desc : interaction_descriptors_ )
+            {
+                absl::flat_hash_set< geode::uuid > set_ids;
+                for( const auto& name : interaction_desc.set_names )
+                {
+                    set_ids.emplace( name_to_uuid.at( name ) );
+                }
+
+                auto interaction = std::make_unique<
+                    geode::EuclideanCutoffInteraction< geode::Point2D > >(
+                    interaction_desc.distance_threshold
+                    /*,interaction_desc.interaction_scope*/ );
+
+                this->ordered_energy_terms_.push_back(
+                    this->energy_terms_collection_.add_energy_term(
+                        std::make_unique<
+                            geode::PairwiseTerm< geode::Point2D > >(
+                            absl::StrCat( absl::StrJoin(
+                                              interaction_desc.set_names, "_" ),
+                                "_interaction" ),
+                            interaction_desc.strength, set_ids,
+                            std::move( interaction ) ) ) );
+
+                this->ordered_target_statistics_.push_back(
+                    interaction_desc.target_interaction_count );
+            }
+
+            this->mh_sampler_ =
+                std::make_unique< geode::MetropolisHastings< geode::Point2D > >(
+                    this->energy_terms_collection_,
+                    std::move( proposal_kernel ) );
         }
-        DEBUG( proposal_kernel->string() );
-        problem.mh_sampler =
-            std::make_unique< geode::MetropolisHastings< geode::Point2D > >(
-                problem.gibbs_energy, std::move( proposal_kernel ) );
 
-        return problem;
-    }
-    void test_convergence(
-        const MultitypeStraussDescription& problem_description,
-        geode::RandomEngine& engine )
+        void check_statistics(
+            const geode::MonitoringStatistics& statistic_monitoring ) const
+        {
+            for( const auto stat_id :
+                geode::Range{ this->energy_terms_collection_.size() } )
+            {
+                const auto& term = energy_terms_collection_.get(
+                    ordered_energy_terms_[stat_id] );
+
+                const auto expected_mean =
+                    this->ordered_target_statistics_[stat_id];
+                auto target_vs_mean_error = std::abs(
+                    statistic_monitoring.means[stat_id] - expected_mean );
+                if( expected_mean > 0 )
+                {
+                    target_vs_mean_error /= expected_mean;
+                }
+
+                OPENGEODE_EXCEPTION( target_vs_mean_error < 0.1,
+                    "[MH test] Statistic value ",
+                    statistic_monitoring.means[stat_id],
+                    " for energy term: ", term.name().data(),
+                    " not close enough to expected value ", expected_mean,
+                    " --> error: ", target_vs_mean_error );
+            }
+        }
+
+    private:
+        geode::BoundingBox2D box_;
+        std::vector< SetDescription > set_descriptors_;
+        std::vector< PoissonDensityDescription > density_descriptors_;
+        std::vector< PairwiseInteractionDescription > interaction_descriptors_;
+    };
+
+    void test_single_type_strauss()
     {
-        auto problem = create_problems( problem_description );
-        SDEBUG( problem );
-
-        problem.mh_sampler->walk( problem.object_set, engine, 500 );
-
-        //        std::vector< double > sum_points(
-        //        problem.object_set_id.size(), 0. ); std::vector< double >
-        //        sum_nb_interactions(
-        //            problem.object_set_id.size(), 0. );
-        //
-        //        auto N = problem_description.nb_realizations;
-
-        //        for( const auto i : geode::Range{ N } )
-        //        {
-        //            problem.mh_sampler->walk(
-        //                problem.object_set, engine,
-        //                problem_description.nb_steps );
-        //            for( const auto set_id :
-        //                geode::Range{ problem.object_set_id.size() } )
-        //            {
-        //                const auto& energy_term_uuids =
-        //                    problem.set_energy_term_ids.at(
-        //                        problem.object_set_id[set_id] );
-        //                sum_points[set_id] +=
-        //                    problem.gibbs_energy.energy_term_statistic(
-        //                        problem.object_set, energy_term_uuids[0] );
-        //                sum_nb_interactions[set_id] +=
-        //                    problem.gibbs_energy.energy_term_statistic(
-        //                        problem.object_set, energy_term_uuids[1] );
-        //            }
-        //        }
-        //        std::transform( sum_points.begin(), sum_points.end(),
-        //            sum_points.begin(), [N]( double p ) {
-        //                return p / N;
-        //            } );
-        //        std::transform( sum_nb_interactions.begin(),
-        //        sum_nb_interactions.end(),
-        //            sum_nb_interactions.begin(), [N]( double p ) {
-        //                return p / N;
-        //            } );
-        //        for( const auto set_id :
-        //            geode::Range{ problem.object_set_id.size() } )
-        //        {
-        //            const auto& set_id =
-        //            problem.object_set_id[set_id]; const auto&
-        //            expected_stats =
-        //                problem.set_stats_targets.at( set_id );
-        //
-        //            geode::Logger::info( "[MH test] mean points = ",
-        //                sum_points[set_id], " (expected ",
-        //                expected_stats[0],
-        //                ")"
-        //                " and mean interactions = ",
-        //                sum_nb_interactions[set_id], " (expected ",
-        //                expected_stats[1], ")" );
-        //            const auto error_stat =
-        //                std::abs( sum_points[set_id] - expected_stats[0] )
-        //                / expected_stats[0];
-        //            //            OPENGEODE_EXCEPTION( error_stat < 0.015,
-        //            //                "[MH test] mean number of points not
-        //            close to
-        //            //                enought to " " expected value-- > error:
-        //            ",
-        //            //                error_stat );
-        //            if( expected_stats[1] == 0 )
-        //            {
-        //                OPENGEODE_EXCEPTION(
-        //                    sum_nb_interactions[set_id] <
-        //                    geode::GLOBAL_EPSILON,
-        //                    "[MH test] Number of interactions not close to
-        //                    enought to " " expected value-- > error : ",
-        //                    sum_nb_interactions[set_id] );
-        //            }
-        //            else
-        //            {
-        //                const auto error_interactions =
-        //                    std::abs(
-        //                        sum_nb_interactions[set_id] -
-        //                        expected_stats[1] )
-        //                    / expected_stats[1];
-        //                //                OPENGEODE_EXCEPTION(
-        //                error_interactions < 0.1,
-        //                //                    "[MH test] Number of
-        //                interactions not
-        //                //                    close to enought to " " expected
-        //                value-- >
-        //                //                    error : ", error_interactions );
-        //            }
-        //        }
-        SDEBUG( problem );
-    }
-
-    void test_single_type_poisson()
-    {
-        geode::Logger::info( "TEST - MH SINGLE TYPE STRAUSS" );
+        geode::Logger::info(
+            "TEST - MH SINGLE TYPE STRAUSS (with intra-set interactions)" );
 
         geode::RandomEngine engine;
-        engine.set_seed( "@mh-test-Strauss-single@" );
+        engine.set_seed( "@mh-test-single-STRAUSS@" );
+
+        geode::BoundingBox2D box;
+        box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
+        box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
+
         std::array< double, 5 > gamma_values{ 0, 0.3, 0.5, 0.7, 1.0 };
         std::array< double, 5 > nb_points{ 22.6, 27.4, 31.3, 36.1, 50. };
-        std::array< double, 5 > nb_interactions{ 0, 4, 8, 13, 36 };
+        std::array< double, 5 > nb_interactions{ 0, 4, 8, 14, 36 };
 
         for( const auto config : geode::Range{ gamma_values.size() } )
         {
-            MultitypeStraussDescription problem_description;
-            problem_description.min_point = geode::Point2D{ { 0., 0. } };
-            problem_description.max_point = geode::Point2D{ { 10., 10. } };
+            // --- Object set
+            SetDescription setA;
+            setA.name = "A";
+            setA.birth_ratio = 1.0;
+            setA.death_ratio = 1.0;
+            setA.change_ratio = 1.0;
 
-            StraussDescription description1;
-            description1.name = "set1";
-            description1.density = 0.5;
-            description1.expected_number_of_objects = nb_points[config];
+            // --- Density term
+            PoissonDensityDescription densityA;
+            densityA.set_name = "A";
+            densityA.density = 0.5;
+            densityA.target_count = nb_points[config];
 
-            description1.scope =
-                geode::PairwiseInteraction< geode::Point2D >::SCOPE::all_set;
-            description1.distance_treshold = 1;
-            description1.gamma = gamma_values[config];
-            description1.expected_number_of_intersections =
-                nb_interactions[config];
+            // --- Intra-set pairwise interaction (Strauss process)
+            PairwiseInteractionDescription intraA;
+            intraA.set_names = { "A" }; // same set
+            intraA.strength = gamma_values[config];
+            intraA.distance_threshold = 1;
+            // intraA.interaction_scope =
+            // geode::PairwiseInteraction::SCOPE::INTRA;
+            intraA.target_interaction_count = nb_interactions[config];
 
-            // mh dynamic
-            description1.death_birth_ratio = 1.;
-            description1.birth_ratio = 0.5;
-            description1.change_ratio = 0.;
+            StraussSimulationRunner runner( box );
+            runner.add_set_descriptor( setA );
+            runner.add_density_descriptor( densityA );
+            runner.add_interaction_descriptor( intraA );
 
-            std::vector< StraussDescription > poisson_description{
-                description1
-            };
-            problem_description.set_desc = poisson_description;
+            runner.initialize();
 
-            problem_description.nb_steps = 1000.;
-            problem_description.nb_realizations = 1000.;
+            constexpr geode::index_t steps = 1000;
+            constexpr geode::index_t nb_realizations = 750;
 
-            test_convergence( problem_description, engine );
+            runner.run( engine, steps );
+            auto stats = runner.run_print_and_monitor(
+                "single_strauss_stats", engine, steps, nb_realizations );
+            runner.check_statistics( stats );
         }
-        geode::Logger::info( "TEST - MH SINGLE TYPE STRAUSS ... SUCCESS!" );
+
+        geode::Logger::info( "--> SUCCESS!" );
     }
 
-    void test_multi_type_strauss()
+    void test_multitype_strauss()
     {
-        geode::Logger::info( "TEST - MH MULTI TYPE STRAUSS" );
+        geode::Logger::info(
+            "TEST - MH MULTITYPE STRAUSS (with inter-set interactions)" );
 
         geode::RandomEngine engine;
-        engine.set_seed( "@mh-test-Strauss-multi@" );
-        std::array< double, 4 > gamma_values{ 0, 0.3, 0.7, 1.0 };
-        std::array< double, 4 > nb_points{ 22.6, 27.4, 31.3, 36.1 };
-        std::array< double, 4 > nb_interactions{ 0, 4, 8, 13 };
+        engine.set_seed( "@mh-test-multi-STRAUSS@" );
 
-        MultitypeStraussDescription problem_description;
-        problem_description.min_point = geode::Point2D{ { 0., 0. } };
-        problem_description.max_point = geode::Point2D{ { 10., 10. } };
+        geode::BoundingBox2D box;
+        box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
+        box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
 
-        StraussDescription description1;
-        description1.name = "set1";
-        description1.density = 0.5;
-        description1.expected_number_of_objects = nb_points[0];
+        std::array< double, 3 > gamma_values{ 0, 0.5, 1.0 };
+        std::array< double, 3 > nb_points01{ 3.5, 5, 10.0 };
+        std::array< double, 3 > nb_points02{ 14, 21, 40.0 };
+        std::array< double, 3 > nb_points03{ 11, 16, 30. };
+        std::array< double, 3 > nb_interactions01{ 0, 15, 95 };
+        std::array< double, 3 > nb_interactions02{ 16, 41, 171 };
 
-        description1.scope =
-            geode::PairwiseInteraction< geode::Point2D >::SCOPE::same_set;
-        description1.distance_treshold = 1;
-        description1.gamma = gamma_values[0];
-        description1.expected_number_of_intersections = nb_interactions[0];
+        for( const auto config : geode::Range{ gamma_values.size() } )
+        {
+            // --- Sets
+            SetDescription set01{ "set01", 1.0, 3.0, 1.0 };
+            SetDescription set02{ "set02", 3.0, 0.5, 1.0 };
+            SetDescription set03{ "set03", 4.0, 1.0, 1.0 };
 
-        // mh dynamic
-        description1.death_birth_ratio = 1.;
-        description1.birth_ratio = 0.5;
-        description1.change_ratio = 0.;
+            // --- Density terms
+            PoissonDensityDescription d01{ "set01", 0.1, nb_points01[config] };
+            PoissonDensityDescription d02{ "set02", 0.4, nb_points02[config] };
+            PoissonDensityDescription d03{ "set03", 0.3, nb_points03[config] };
 
-        StraussDescription description2;
-        description2.name = "set2";
-        description2.density = 0.5;
-        description2.expected_number_of_objects = nb_points[1];
+            // --- Pairwise interactions
+            // 1. Intra-type (repulsion within same set)
+            PairwiseInteractionDescription intra01{ { "set01", "set02",
+                                                        "set03" },
+                gamma_values[config], 1., nb_interactions01[config] };
+            PairwiseInteractionDescription intra02{ { "set02" }, 1., 2.,
+                nb_interactions02[config] };
 
-        description2.scope =
-            geode::PairwiseInteraction< geode::Point2D >::SCOPE::same_set;
-        description2.distance_treshold = 2;
-        description2.gamma = gamma_values[1];
-        description2.expected_number_of_intersections = nb_interactions[1];
+            StraussSimulationRunner runner( box );
+            runner.add_set_descriptor( set01 );
+            runner.add_set_descriptor( set02 );
+            runner.add_set_descriptor( set03 );
 
-        // mh dynamic
-        description2.death_birth_ratio = 1.;
-        description2.birth_ratio = 0.5;
-        description2.change_ratio = 0.;
+            runner.add_density_descriptor( d01 );
+            runner.add_density_descriptor( d02 );
+            runner.add_density_descriptor( d03 );
 
-        StraussDescription description3;
-        description3.name = "set3";
-        description3.density = 0.3;
-        description3.expected_number_of_objects = nb_points[2];
+            runner.add_interaction_descriptor( intra01 );
+            runner.add_interaction_descriptor( intra02 );
 
-        description3.scope =
-            geode::PairwiseInteraction< geode::Point2D >::SCOPE::same_set;
-        description3.distance_treshold = 1;
-        description3.gamma = gamma_values[2];
-        description3.expected_number_of_intersections = nb_interactions[2];
+            runner.initialize();
 
-        // mh dynamic
-        description3.death_birth_ratio = 1.;
-        description3.birth_ratio = 0.5;
-        description3.change_ratio = 0.;
+            constexpr geode::index_t steps = 1000;
+            constexpr geode::index_t nb_realizations = 500;
 
-        StraussDescription description4;
-        description4.name = "set4";
-        description4.density = 0.5;
-        description4.expected_number_of_objects = nb_points[3];
+            auto stats = runner.run_print_and_monitor(
+                "multi_strauss_stats", engine, steps, nb_realizations );
+            runner.check_statistics( stats );
+        }
 
-        description4.scope =
-            geode::PairwiseInteraction< geode::Point2D >::SCOPE::same_set;
-        description4.distance_treshold = 1;
-        description4.gamma = gamma_values[3];
-        description4.expected_number_of_intersections = nb_interactions[3];
-
-        // mh dynamic
-        description4.death_birth_ratio = 1.;
-        description4.birth_ratio = 0.5;
-        description4.change_ratio = 0.;
-
-        std::vector< StraussDescription > strauss_description{ // description1,
-            // description2,
-            description3, description4
-        };
-        problem_description.set_desc = strauss_description;
-
-        problem_description.nb_steps = 10000.;
-        problem_description.nb_realizations = 1000.;
-
-        test_convergence( problem_description, engine );
-
-        geode::Logger::info( "TEST - MH SINGLE TYPE STRAUSS ... SUCCESS!" );
+        geode::Logger::info( "--> SUCCESS!" );
     }
 } // namespace
 
@@ -431,9 +319,9 @@ int main()
     try
     {
         geode::StochasticLibrary::initialize();
-        geode::Logger::set_level( geode::Logger::LEVEL::trace );
-        // test_single_type_poisson();
-        test_multi_type_strauss();
+        geode::Logger::set_level( geode::Logger::LEVEL::debug );
+        test_single_type_strauss();
+        test_multitype_strauss();
         return 0;
     }
     catch( ... )
