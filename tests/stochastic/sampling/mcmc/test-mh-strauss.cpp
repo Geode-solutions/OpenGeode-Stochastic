@@ -238,7 +238,7 @@ namespace
             runner.initialize();
 
             constexpr geode::index_t steps = 1000;
-            constexpr geode::index_t nb_realizations = 500;
+            constexpr geode::index_t nb_realizations = 750;
 
             runner.run( engine, steps );
             auto stats = runner.run_print_and_monitor(
@@ -262,7 +262,7 @@ namespace
         box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
 
         std::array< double, 3 > gamma_values{ 0, 0.5, 1.0 };
-        std::array< double, 3 > nb_points01{ 3.4, 5, 10.0 };
+        std::array< double, 3 > nb_points01{ 3.5, 5, 10.0 };
         std::array< double, 3 > nb_points02{ 14, 21, 40.0 };
         std::array< double, 3 > nb_points03{ 11, 16, 30. };
         std::array< double, 3 > nb_interactions01{ 0, 15, 95 };
