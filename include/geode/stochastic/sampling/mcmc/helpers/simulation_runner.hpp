@@ -31,7 +31,7 @@
 
 namespace geode
 {
-    class opengeode_stochastic_stochastic_api MonitoringStatistics
+    class MonitoringStatistics
     {
     public:
         MonitoringStatistics( MonitoringStatistics&& ) = default;
