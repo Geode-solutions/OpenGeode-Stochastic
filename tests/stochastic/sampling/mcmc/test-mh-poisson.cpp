@@ -40,7 +40,7 @@ namespace
 
     struct PoissonDensityDescription
     {
-        std::string set_name;
+        std::string name;
         double density;
         double target_count;
     };
@@ -50,7 +50,7 @@ namespace
     {
     public:
         PoissonSimulationRunner( const geode::BoundingBox2D& box )
-            : box_( box ) {};
+            : box_( box ){};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {
@@ -89,13 +89,13 @@ namespace
             // Step 2: create energy terms
             for( const auto& energy_desc : density_descriptors_ )
             {
-                const auto set_id = name_to_uuid.at( energy_desc.set_name );
+                const auto set_id = name_to_uuid.at( energy_desc.name );
 
                 this->ordered_energy_terms_.push_back(
                     this->energy_terms_collection_.add_energy_term(
                         std::make_unique<
                             geode::DensityTerm< geode::Point2D > >(
-                            absl::StrCat( energy_desc.set_name, "_density" ),
+                            absl::StrCat( energy_desc.name, "_density" ),
                             energy_desc.density,
                             absl::flat_hash_set< geode::uuid >{ set_id } ) ) );
 
@@ -178,7 +178,7 @@ namespace
 
             // --- Energy term description
             PoissonDensityDescription densityA;
-            densityA.set_name = "A";
+            densityA.name = "A";
             densityA.density = 0.3;
             densityA.target_count = 30.0;
 

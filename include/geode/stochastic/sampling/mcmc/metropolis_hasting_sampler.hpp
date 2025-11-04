@@ -219,8 +219,6 @@ namespace geode
             const auto old_object_id = proposal.old_object_id();
             const auto delta_log_energy = gibbs_energy_.delta_log_change(
                 state, old_object_id, new_object );
-            // should we test that objects are in the same group?
-            // should be ensured by the dynamic
             return accept_or_reject( proposal, state, engine, delta_log_energy,
                 []( auto& state, auto& proposal ) {
                     state.update_object( proposal.old_object_id(),

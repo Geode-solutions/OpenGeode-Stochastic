@@ -92,7 +92,7 @@ void test_zero_pairwise( double gamma,
 
     auto total = term.total_log( pattern );
     OPENGEODE_EXCEPTION(
-        std::isinf( total ), "[test zero pairwise] - log_total wrong value." );
+        std::isinf( total ), "[test zero pairwise] - total_log wrong value." );
 
     geode::Point2D p3{ { 0.5, 0.5 } };
     geode::ObjectRef< geode::Point2D > p_ref{ p3, set_id };
@@ -114,6 +114,7 @@ int main()
     try
     {
         geode::StochasticLibrary::initialize();
+        geode::Logger::set_level( geode::Logger::LEVEL::debug );
 
         geode::ObjectSets< geode::Point2D > pattern;
         auto set_id = init_object_set( pattern );

@@ -43,14 +43,14 @@ namespace
 
     struct PoissonDensityDescription
     {
-        std::string set_name;
+        std::string name;
         double density;
         double target_count;
     };
 
     struct PairwiseInteractionDescription
     {
-        std::vector< std::string > set_names;
+        std::vector< std::string > names;
         double strength;
         double distance_threshold;
         // geode::PairwiseInteraction::SCOPE interaction_scope;
@@ -108,13 +108,13 @@ namespace
             // Step 2: create density energy terms
             for( const auto& density_desc : density_descriptors_ )
             {
-                const auto set_id = name_to_uuid.at( density_desc.set_name );
+                const auto set_id = name_to_uuid.at( density_desc.name );
 
                 this->ordered_energy_terms_.push_back(
                     this->energy_terms_collection_.add_energy_term(
                         std::make_unique<
                             geode::DensityTerm< geode::Point2D > >(
-                            absl::StrCat( density_desc.set_name, "_density" ),
+                            absl::StrCat( density_desc.name, "_density" ),
                             density_desc.density,
                             absl::flat_hash_set< geode::uuid >{ set_id } ) ) );
 
@@ -126,7 +126,7 @@ namespace
             for( const auto& interaction_desc : interaction_descriptors_ )
             {
                 absl::flat_hash_set< geode::uuid > set_ids;
-                for( const auto& name : interaction_desc.set_names )
+                for( const auto& name : interaction_desc.names )
                 {
                     set_ids.emplace( name_to_uuid.at( name ) );
                 }
@@ -140,8 +140,8 @@ namespace
                     this->energy_terms_collection_.add_energy_term(
                         std::make_unique<
                             geode::PairwiseTerm< geode::Point2D > >(
-                            absl::StrCat( absl::StrJoin(
-                                              interaction_desc.set_names, "_" ),
+                            absl::StrCat(
+                                absl::StrJoin( interaction_desc.names, "_" ),
                                 "_interaction" ),
                             interaction_desc.strength, set_ids,
                             std::move( interaction ) ) ) );
@@ -217,13 +217,13 @@ namespace
 
             // --- Density term
             PoissonDensityDescription densityA;
-            densityA.set_name = "A";
+            densityA.name = "A";
             densityA.density = 0.5;
             densityA.target_count = nb_points[config];
 
             // --- Intra-set pairwise interaction (Strauss process)
             PairwiseInteractionDescription intraA;
-            intraA.set_names = { "A" }; // same set
+            intraA.names = { "A" }; // same set
             intraA.strength = gamma_values[config];
             intraA.distance_threshold = 1;
             // intraA.interaction_scope =

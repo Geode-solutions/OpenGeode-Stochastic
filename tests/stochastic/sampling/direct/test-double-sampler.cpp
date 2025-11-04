@@ -51,7 +51,7 @@ void test_double_sampler( geode::RandomEngine& engine )
 
     geode::TruncatedGaussian t_gaussian_double;
     t_gaussian_double.mean = 0.;
-    t_gaussian_double.mean = 1.;
+    t_gaussian_double.standard_deviation = 1.;
     t_gaussian_double.max_value = 1.;
     t_gaussian_double.min_value = -1.;
     value = 1000.;

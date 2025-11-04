@@ -122,6 +122,14 @@ add_geode_test(
 )
 
 add_geode_test(
+     SOURCE "sampling/mcmc/test-mh-fractures.cpp"
+     DEPENDENCIES
+         OpenGeode::basic
+         OpenGeode::geometry
+         ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
      SOURCE "sampling/mcmc/test-mh-poisson.cpp"
      DEPENDENCIES
          OpenGeode::basic
