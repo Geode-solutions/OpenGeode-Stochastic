@@ -28,6 +28,69 @@
 
 namespace geode
 {
+    struct DistributionTypeHasher
+    {
+        std::size_t operator()( const DistributionType& d ) const noexcept
+        {
+            // Use the underlying string from NamedType
+            return absl::Hash< std::string >{}( d.get() );
+        }
+    };
+
+    using DistributionFactory = std::function< DoubleSampler::Distribution(
+        const DistributionDescription& ) >;
+
+    static absl::flat_hash_map< DistributionType, // key type
+        DistributionFactory, // value type
+        DistributionTypeHasher // custom hasher
+        >
+        distribution_registry = {
+            { UniformClosed< double >::distribution_type_static(),
+                []( const DistributionDescription& d ) {
+                    UniformClosed< double > dist;
+                    dist.min_value = d.min_value;
+                    dist.max_value = d.max_value;
+                    return dist;
+                } },
+            { UniformClosedOpen< double >::distribution_type_static(),
+                []( const DistributionDescription& d ) {
+                    UniformClosedOpen< double > dist;
+                    dist.min_value = d.min_value;
+                    dist.max_value = d.max_value;
+                    return dist;
+                } },
+            { Gaussian::distribution_type_static(),
+                []( const DistributionDescription& d ) {
+                    Gaussian dist;
+                    dist.mean =
+                        d.mean.value_or( ( d.max_value - d.min_value ) / 2.0 );
+                    dist.standard_deviation = d.standard_deviation.value_or(
+                        ( d.max_value - d.min_value ) / 6.0 );
+                    return dist;
+                } },
+            { TruncatedGaussian::distribution_type_static(),
+                []( const DistributionDescription& d ) {
+                    TruncatedGaussian dist;
+                    dist.mean =
+                        d.mean.value_or( ( d.max_value - d.min_value ) / 2.0 );
+                    dist.standard_deviation = d.standard_deviation.value_or(
+                        ( d.max_value - d.min_value ) / 6.0 );
+                    dist.min_value = d.min_value;
+                    dist.max_value = d.max_value;
+                    return dist;
+                } }
+        };
+
+    DoubleSampler::Distribution DoubleSampler::create_distribution(
+        const DistributionDescription& desc )
+    {
+        auto it = distribution_registry.find( desc.distribution_type );
+        if( it == distribution_registry.end() )
+            throw geode::OpenGeodeException( absl::StrCat(
+                "Unknown distribution type: ", desc.distribution_type.get() ) );
+        return it->second( desc );
+    }
+
     double DoubleSampler::sample(
         RandomEngine& engine, const Distribution& dist )
     {

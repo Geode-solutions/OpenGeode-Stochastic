@@ -35,6 +35,16 @@ namespace geode
 
 namespace geode
 {
+    struct opengeode_stochastic_stochastic_api DistributionDescription
+    {
+        std::string name;
+        DistributionType distribution_type;
+
+        double min_value{};
+        double max_value{};
+        std::optional< double > mean{};
+        std::optional< double > standard_deviation{};
+    };
 
     struct opengeode_stochastic_stochastic_api DoubleSampler
     {
@@ -42,6 +52,9 @@ namespace geode
             UniformClosedOpen< double >,
             Gaussian,
             TruncatedGaussian >;
+
+        static Distribution create_distribution(
+            const DistributionDescription& desc );
 
         static double sample( RandomEngine& engine, const Distribution& dist );
     };
