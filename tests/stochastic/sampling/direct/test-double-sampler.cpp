@@ -72,7 +72,7 @@ void test_double_sampler( geode::RandomEngine& engine )
 // Test function: create a uniform closed distribution from description
 void test_create_uniform_closed( geode::RandomEngine& engine )
 {
-    geode::DistributionDescription desc;
+    geode::DoubleSampler::DistributionDescription desc;
     desc.name = "uniform_closed";
     desc.distribution_type =
         geode::UniformClosed< double >::distribution_type_static();
@@ -88,7 +88,7 @@ void test_create_uniform_closed( geode::RandomEngine& engine )
 // Test function: create a truncated Gaussian distribution from description
 void test_create_truncated_gaussian( geode::RandomEngine& engine )
 {
-    geode::DistributionDescription desc;
+    geode::DoubleSampler::DistributionDescription desc;
     desc.name = "truncated_gaussian";
     desc.distribution_type =
         geode::TruncatedGaussian::distribution_type_static();

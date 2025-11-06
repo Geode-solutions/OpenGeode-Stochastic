@@ -25,7 +25,45 @@
 
 #include <geode/stochastic/common.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
+namespace
+{
+    struct DistributionParams
+    {
+        double min;
+        double max;
+        double mean;
+        double std;
+    };
 
+    DistributionParams complete_distribution_params(
+        const geode::DoubleSampler::DistributionDescription& d )
+    {
+        DistributionParams p{};
+
+        if( d.min_value && d.max_value )
+        {
+            p.min = *d.min_value;
+            p.max = *d.max_value;
+            p.mean = ( p.min + p.max ) / 2.0;
+            p.std = ( p.max - p.min ) / std::sqrt( 12.0 );
+            return p;
+        }
+
+        if( d.mean && d.standard_deviation )
+        {
+            p.mean = *d.mean;
+            p.std = *d.standard_deviation;
+            p.min = p.mean - std::sqrt( 3.0 ) * p.std;
+            p.max = p.mean + std::sqrt( 3.0 ) * p.std;
+            return p;
+        }
+
+        throw geode::OpenGeodeException(
+            "[DistributionDescripption] Incomplete distribution description: "
+            "need at least (min,max) or (mean,std)." );
+        return p;
+    }
+} // namespace
 namespace geode
 {
     struct DistributionTypeHasher
@@ -38,7 +76,7 @@ namespace geode
     };
 
     using DistributionFactory = std::function< DoubleSampler::Distribution(
-        const DistributionDescription& ) >;
+        const DoubleSampler::DistributionDescription& ) >;
 
     static absl::flat_hash_map< DistributionType, // key type
         DistributionFactory, // value type
@@ -46,39 +84,39 @@ namespace geode
         >
         distribution_registry = {
             { UniformClosed< double >::distribution_type_static(),
-                []( const DistributionDescription& d ) {
+                []( const DoubleSampler::DistributionDescription& d ) {
+                    auto p = complete_distribution_params( d );
                     UniformClosed< double > dist;
-                    dist.min_value = d.min_value;
-                    dist.max_value = d.max_value;
+                    dist.min_value = p.min;
+                    dist.max_value = p.max;
                     return dist;
                 } },
             { UniformClosedOpen< double >::distribution_type_static(),
-                []( const DistributionDescription& d ) {
+                []( const DoubleSampler::DistributionDescription& d ) {
+                    auto p = complete_distribution_params( d );
                     UniformClosedOpen< double > dist;
-                    dist.min_value = d.min_value;
-                    dist.max_value = d.max_value;
+                    dist.min_value = p.min;
+                    dist.max_value = p.max;
                     return dist;
                 } },
             { Gaussian::distribution_type_static(),
-                []( const DistributionDescription& d ) {
+                []( const DoubleSampler::DistributionDescription& d ) {
+                    auto p = complete_distribution_params( d );
                     Gaussian dist;
-                    dist.mean =
-                        d.mean.value_or( ( d.max_value - d.min_value ) / 2.0 );
-                    dist.standard_deviation = d.standard_deviation.value_or(
-                        ( d.max_value - d.min_value ) / 6.0 );
+                    dist.mean = p.mean;
+                    dist.standard_deviation = p.std;
                     return dist;
                 } },
             { TruncatedGaussian::distribution_type_static(),
-                []( const DistributionDescription& d ) {
+                []( const DoubleSampler::DistributionDescription& d ) {
+                    auto p = complete_distribution_params( d );
                     TruncatedGaussian dist;
-                    dist.mean =
-                        d.mean.value_or( ( d.max_value - d.min_value ) / 2.0 );
-                    dist.standard_deviation = d.standard_deviation.value_or(
-                        ( d.max_value - d.min_value ) / 6.0 );
-                    dist.min_value = d.min_value;
-                    dist.max_value = d.max_value;
+                    dist.mean = p.mean;
+                    dist.standard_deviation = p.std;
+                    dist.min_value = p.min;
+                    dist.max_value = p.max;
                     return dist;
-                } }
+                } },
         };
 
     DoubleSampler::Distribution DoubleSampler::create_distribution(

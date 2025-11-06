@@ -38,8 +38,8 @@ namespace
     {
         std::string name;
 
-        geode::DistributionDescription length;
-        geode::DistributionDescription azimuth;
+        geode::DoubleSampler::DistributionDescription length;
+        geode::DoubleSampler::DistributionDescription azimuth;
 
         // positionning
         double p20;
