@@ -27,8 +27,16 @@
 
 #include <optional>
 
+#include <geode/basic/named_type.hpp>
+
 namespace geode
 {
+    struct DistributionTag
+    {
+    };
+
+    using DistributionType = NamedType< std::string, DistributionTag >;
+
     template < typename Type >
     struct UniformClosed
     {
@@ -37,6 +45,16 @@ namespace geode
 
         Type min_value{ static_cast< Type >( 0 ) };
         Type max_value{ static_cast< Type >( 1 ) };
+
+        [[nodiscard]] static DistributionType distribution_type_static()
+        {
+            return DistributionType{ "UniformClosed" };
+        }
+
+        [[nodiscard]] DistributionType distribution_type() const
+        {
+            return distribution_type_static();
+        }
     };
 
     template < typename Type >
@@ -47,6 +65,16 @@ namespace geode
 
         Type min_value{ static_cast< Type >( 0 ) };
         Type max_value{ static_cast< Type >( 1 ) };
+
+        [[nodiscard]] static DistributionType distribution_type_static()
+        {
+            return DistributionType{ "UniformClosedOpen" };
+        }
+
+        [[nodiscard]] DistributionType distribution_type() const
+        {
+            return distribution_type_static();
+        }
     };
 
     struct opengeode_stochastic_stochastic_api Gaussian
@@ -56,6 +84,16 @@ namespace geode
 
         double mean{ 0. };
         double standard_deviation{ 1. };
+
+        [[nodiscard]] static DistributionType distribution_type_static()
+        {
+            return DistributionType{ "Gaussian" };
+        }
+
+        [[nodiscard]] DistributionType distribution_type() const
+        {
+            return distribution_type_static();
+        }
     };
 
     struct opengeode_stochastic_stochastic_api TruncatedGaussian
@@ -69,6 +107,16 @@ namespace geode
 
         std::optional< double > min_value;
         std::optional< double > max_value;
+
+        [[nodiscard]] static DistributionType distribution_type_static()
+        {
+            return DistributionType{ "TruncatedGaussian" };
+        }
+
+        [[nodiscard]] DistributionType distribution_type() const
+        {
+            return distribution_type_static();
+        }
     };
 
 } // namespace geode

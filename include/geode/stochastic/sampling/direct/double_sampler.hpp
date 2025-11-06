@@ -43,6 +43,20 @@ namespace geode
             Gaussian,
             TruncatedGaussian >;
 
+        struct DistributionDescription
+        {
+            std::string name{ "default_distribution" };
+            DistributionType distribution_type;
+
+            std::optional< double > min_value;
+            std::optional< double > max_value;
+            std::optional< double > mean;
+            std::optional< double > standard_deviation;
+        };
+
+        static Distribution create_distribution(
+            const DistributionDescription& desc );
+
         static double sample( RandomEngine& engine, const Distribution& dist );
     };
 

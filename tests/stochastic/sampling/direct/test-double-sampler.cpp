@@ -69,6 +69,43 @@ void test_double_sampler( geode::RandomEngine& engine )
         value != 1000., "[Gaussian] -  value did not changed." );
 }
 
+// Test function: create a uniform closed distribution from description
+void test_create_uniform_closed( geode::RandomEngine& engine )
+{
+    geode::DoubleSampler::DistributionDescription desc;
+    desc.name = "uniform_closed";
+    desc.distribution_type =
+        geode::UniformClosed< double >::distribution_type_static();
+    desc.min_value = 2.;
+    desc.max_value = 5.;
+
+    auto dist = geode::DoubleSampler::create_distribution( desc );
+    double value = geode::DoubleSampler::sample( engine, dist );
+    OPENGEODE_EXCEPTION(
+        value >= 2. && value <= 5., "[UniformClosed] - value out of bounds" );
+}
+
+// Test function: create a truncated Gaussian distribution from description
+void test_create_truncated_gaussian( geode::RandomEngine& engine )
+{
+    geode::DoubleSampler::DistributionDescription desc;
+    desc.name = "truncated_gaussian";
+    desc.distribution_type =
+        geode::TruncatedGaussian::distribution_type_static();
+    desc.min_value = -2.;
+    desc.max_value = 2.;
+    desc.mean = 0.0;
+    desc.standard_deviation = 1.0;
+
+    auto dist = geode::DoubleSampler::create_distribution( desc );
+    for( int i = 0; i < 100; ++i )
+    {
+        double value = geode::DoubleSampler::sample( engine, dist );
+        OPENGEODE_EXCEPTION( value >= -2. && value <= 2.,
+            "[TruncatedGaussian] - value out of bounds" );
+    }
+}
+
 int main()
 {
     try
@@ -77,6 +114,9 @@ int main()
         geode::RandomEngine random_engine;
 
         test_double_sampler( random_engine );
+
+        test_create_uniform_closed( random_engine );
+        test_create_truncated_gaussian( random_engine );
 
         geode::Logger::info( "TEST SUCCESS" );
         return 0;

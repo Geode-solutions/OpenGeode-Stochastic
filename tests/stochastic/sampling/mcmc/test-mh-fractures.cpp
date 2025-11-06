@@ -21,6 +21,7 @@
  *
  */
 #include <geode/geometry/point.hpp>
+#include <geode/stochastic/sampling/direct/double_sampler.hpp>
 #include <geode/stochastic/sampling/direct/object_set_sampler/segment_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_runner.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
@@ -37,17 +38,8 @@ namespace
     {
         std::string name;
 
-        // length
-        std::string length_distribution_type;
-        double minimal_length;
-        double maximal_length;
-        double mean_length;
-
-        // azimuth
-        std::string azimuth_distribution_type;
-        double minimal_azimuth;
-        double maximal_azimuth;
-        double mean_azimuth;
+        geode::DoubleSampler::DistributionDescription length;
+        geode::DoubleSampler::DistributionDescription azimuth;
 
         // positionning
         double p20;
@@ -89,14 +81,12 @@ namespace
                 const auto set_id = this->object_sets_.add_set( set_desc.name );
                 name_to_uuid[set_desc.name] = set_id;
 
-                geode::UniformClosed< double > length_distribution;
-                length_distribution.min_value = set_desc.minimal_length;
-                length_distribution.max_value = set_desc.maximal_length;
-
-                geode::UniformClosed< double > azimuth_distribution;
-                azimuth_distribution.min_value = set_desc.minimal_azimuth;
-                azimuth_distribution.max_value = set_desc.maximal_azimuth;
-
+                auto length_distribution =
+                    geode::DoubleSampler::create_distribution(
+                        set_desc.length );
+                auto azimuth_distribution =
+                    geode::DoubleSampler::create_distribution(
+                        set_desc.azimuth );
                 this->set_samplers_.push_back(
                     std::make_unique< geode::UniformSegmentSetSampler >(
                         box_, length_distribution, azimuth_distribution ) );
@@ -175,12 +165,16 @@ namespace
         setA.name = "A";
 
         // length
-        setA.minimal_length = 1;
-        setA.maximal_length = 10.;
+        setA.length.distribution_type =
+            geode::UniformClosed< double >::distribution_type_static();
+        setA.length.min_value = 1;
+        setA.length.max_value = 10.;
 
         // azimuth
-        setA.minimal_azimuth = 1;
-        setA.maximal_azimuth = 10;
+        setA.azimuth.distribution_type =
+            geode::UniformClosed< double >::distribution_type_static();
+        setA.azimuth.min_value = 1;
+        setA.azimuth.max_value = 10.;
 
         // positionning
         setA.p20 = 0.1;
@@ -219,12 +213,16 @@ namespace
         setA.name = "A";
 
         // length
-        setA.minimal_length = 1;
-        setA.maximal_length = 10.;
+        setA.length.distribution_type =
+            geode::UniformClosed< double >::distribution_type_static();
+        setA.length.min_value = 1;
+        setA.length.max_value = 10.;
 
         // azimuth
-        setA.minimal_azimuth = 1;
-        setA.maximal_azimuth = 10;
+        setA.azimuth.distribution_type =
+            geode::UniformClosed< double >::distribution_type_static();
+        setA.azimuth.min_value = 1;
+        setA.azimuth.max_value = 10.;
 
         // positionning
         setA.p20 = 0.1;
@@ -235,12 +233,16 @@ namespace
         setB.name = "B";
 
         // length
-        setB.minimal_length = 1;
-        setB.maximal_length = 10.;
+        setB.length.distribution_type =
+            geode::UniformClosed< double >::distribution_type_static();
+        setB.length.min_value = 1;
+        setB.length.max_value = 10.;
 
         // azimuth
-        setB.minimal_azimuth = 90;
-        setB.maximal_azimuth = 100;
+        setB.azimuth.distribution_type =
+            geode::UniformClosed< double >::distribution_type_static();
+        setB.azimuth.min_value = 90.;
+        setB.azimuth.max_value = 100.;
 
         // positionning
         setB.p20 = 0.1;
