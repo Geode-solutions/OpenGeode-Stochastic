@@ -26,9 +26,11 @@
 #include <absl/container/flat_hash_map.h>
 
 #include <geode/basic/uuid.hpp>
+
 #include <geode/geometry/basic_objects/segment.hpp>
 #include <geode/geometry/bounding_box.hpp>
 #include <geode/geometry/point.hpp>
+
 #include <geode/stochastic/spatial/object_neighborhood.hpp>
 #include <geode/stochastic/spatial/object_set.hpp>
 
