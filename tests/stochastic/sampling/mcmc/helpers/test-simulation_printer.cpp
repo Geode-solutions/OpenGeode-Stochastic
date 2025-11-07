@@ -71,7 +71,6 @@ namespace
         geode::SimulationPrinter printer( config );
         geode::StatisticsMonitor monitor( 2 );
         monitor.add_realization( { 1, 2 } );
-        monitor.finalize();
 
         printer.print_statistics_summary( monitor, "EnergyTerm1;EnergyTerm2" );
 
@@ -102,8 +101,7 @@ namespace
     void test_print_objects(
         const geode::SimulationPrinterConfigurator& config )
     {
-        geode::Logger::info(
-            "[TEST] SimulationPrinter print statistics summary" );
+        geode::Logger::info( "[TEST] SimulationPrinter print object" );
 
         geode::ObjectSets< geode::Point2D > object_sets;
         const auto set_id = object_sets.add_set( "default_name" );
@@ -113,11 +111,11 @@ namespace
         object_sets.add_object( geode::Point2D{ { 3.0, 0.0 } }, set_id );
 
         geode::SimulationPrinter printer( config );
-        printer.print_object_sets( object_sets, 1 );
+        printer.print_object_sets( object_sets, 0 );
 
         const std::filesystem::path temp_folder = config.output_folder;
 
-        const auto obj_path = temp_folder / "pattern_1.txt";
+        const auto obj_path = temp_folder / "pattern_0.txt";
         OPENGEODE_EXCEPTION( std::filesystem::exists( obj_path ),
             "Object sets file not created" );
 
@@ -134,7 +132,7 @@ int main()
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
 
         const std::filesystem::path temp_folder =
-            std::filesystem::temp_directory_path() / "simprinter_test";
+            std::filesystem::current_path() / "simprinter_test";
         SDEBUG( temp_folder );
         std::filesystem::create_directories( temp_folder );
 

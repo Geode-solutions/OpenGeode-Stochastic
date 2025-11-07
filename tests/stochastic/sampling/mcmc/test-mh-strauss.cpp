@@ -157,8 +157,10 @@ namespace
         }
 
         void check_statistics(
-            const geode::MonitoringStatistics& statistic_monitoring ) const
+            const geode::StatisticsMonitor& statistic_monitoring ) const
         {
+            const auto& computed_means = statistic_monitoring.means();
+
             for( const auto stat_id :
                 geode::Range{ this->energy_terms_collection_.size() } )
             {
@@ -167,16 +169,15 @@ namespace
 
                 const auto expected_mean =
                     this->ordered_target_statistics_[stat_id];
-                auto target_vs_mean_error = std::abs(
-                    statistic_monitoring.means[stat_id] - expected_mean );
+                auto target_vs_mean_error =
+                    std::abs( computed_means[stat_id] - expected_mean );
                 if( expected_mean > 0 )
                 {
                     target_vs_mean_error /= expected_mean;
                 }
 
                 OPENGEODE_EXCEPTION( target_vs_mean_error < 0.1,
-                    "[MH test] Statistic value ",
-                    statistic_monitoring.means[stat_id],
+                    "[MH test] Statistic value ", computed_means[stat_id],
                     " for energy term: ", term.name().data(),
                     " not close enough to expected value ", expected_mean,
                     " --> error: ", target_vs_mean_error );
@@ -237,13 +238,22 @@ namespace
 
             runner.initialize();
 
-            constexpr geode::index_t steps = 1000;
-            constexpr geode::index_t nb_realizations = 750;
+            // run simulation
+            geode::SimulationPrinterConfigurator printer_config;
+            printer_config.output_folder =
+                absl::StrCat( printer_config.output_folder,
+                    "/sim_point_strauss_test_", config );
 
-            runner.run( engine, steps );
-            auto stats = runner.run_print_and_monitor(
-                "single_strauss_stats", engine, steps, nb_realizations );
-            runner.check_statistics( stats );
+            geode::SimulationConfigurator sim_config;
+            sim_config.realizations = 1000;
+            sim_config.metropolis_hasting_steps = 1000;
+            sim_config.burn_in_steps = 1000;
+            sim_config.printer = printer_config;
+
+            // runner.run( engine, sim_config );
+            auto statistic_monitoring =
+                runner.run_and_monitor( engine, sim_config );
+            runner.check_statistics( statistic_monitoring );
         }
 
         geode::Logger::info( "--> SUCCESS!" );
@@ -302,12 +312,22 @@ namespace
 
             runner.initialize();
 
-            constexpr geode::index_t steps = 1000;
-            constexpr geode::index_t nb_realizations = 500;
+            // run simulation
+            geode::SimulationPrinterConfigurator printer_config;
+            printer_config.output_folder =
+                absl::StrCat( printer_config.output_folder,
+                    "/sim_point_multitype_strauss_test" );
 
-            auto stats = runner.run_print_and_monitor(
-                "multi_strauss_stats", engine, steps, nb_realizations );
-            runner.check_statistics( stats );
+            geode::SimulationConfigurator sim_config;
+            sim_config.realizations = 1000;
+            sim_config.metropolis_hasting_steps = 1000;
+            sim_config.burn_in_steps = 1000;
+            sim_config.printer = printer_config;
+
+            // runner.run( engine, sim_config );
+            auto statistic_monitoring =
+                runner.run_and_monitor( engine, sim_config );
+            runner.check_statistics( statistic_monitoring );
         }
 
         geode::Logger::info( "--> SUCCESS!" );

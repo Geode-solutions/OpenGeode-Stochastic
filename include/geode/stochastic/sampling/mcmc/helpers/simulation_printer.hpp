@@ -22,9 +22,9 @@
  */
 
 #pragma once
+
 #include <geode/stochastic/common.hpp>
-// #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
-// #include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
+
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_monitor.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 
@@ -46,7 +46,7 @@ namespace geode
         std::string realisations_prefix{ "pattern_" };
         index_t realisations_print_frequency{ 100 };
 
-        std::string output_folder{ "." };
+        std::string output_folder{ std::filesystem::current_path().string() };
     };
 
     class SimulationPrinter
@@ -59,7 +59,7 @@ namespace geode
 
         // Print statistics to the configured statistics file
         void print_statistics(
-            const std::vector< double >& stats, absl::string_view header )
+            const std::vector< double >& stats, absl::string_view header ) const
         {
             if( !config_.print_statistics )
                 return;
@@ -72,9 +72,10 @@ namespace geode
 
         template < typename ObjectType >
         void print_object_sets( const ObjectSets< ObjectType >& object_sets,
-            index_t realization_id )
+            index_t realization_id ) const
         {
-            if( !config_.print_realisations )
+            if( !config_.print_realisations
+                || realization_id % config_.realisations_print_frequency != 0 )
                 return;
 
             const auto filename =
@@ -96,7 +97,7 @@ namespace geode
             }
         }
         void print_statistics_summary( const StatisticsMonitor& monitor,
-            absl::string_view energy_term_names )
+            absl::string_view energy_term_names ) const
         {
             if( !config_.print_statistics_summary )
                 return;
@@ -109,16 +110,17 @@ namespace geode
             std::ofstream file = open_file_with_dirs( summary_path );
             file << "# Summary statistics\n";
             file << energy_term_names.data() << "\n";
-            file << absl::StrCat( "# Count:\n", monitor.count, "\n" );
             file << absl::StrCat(
-                "# Means:\n", absl::StrJoin( monitor.means, " ; " ), "\n" );
+                "# Count:\n", monitor.statiscal_count(), "\n" );
+            file << absl::StrCat(
+                "# Means:\n", absl::StrJoin( monitor.means(), " ; " ), "\n" );
             file << absl::StrCat( "# Variances:\n",
-                absl::StrJoin( monitor.variances, " ; " ), "\n" );
+                absl::StrJoin( monitor.variances(), " ; " ), "\n" );
         }
 
     private:
         void write_header_if_new(
-            absl::string_view filename, absl::string_view header )
+            absl::string_view filename, absl::string_view header ) const
         {
             namespace fs = std::filesystem;
             fs::path file_path{ std::string( filename ) };
@@ -148,7 +150,8 @@ namespace geode
 
             return file;
         }
-        const std::string& create_statistics_file( absl::string_view header )
+        const std::string& create_statistics_file(
+            absl::string_view header ) const
         {
             stats_file_path_ = ( std::filesystem::path( config_.output_folder )
                                  / config_.statistics_filename )
@@ -165,7 +168,7 @@ namespace geode
 
     private:
         SimulationPrinterConfigurator config_;
-        std::optional< std::string > stats_file_path_;
+        mutable std::optional< std::string > stats_file_path_;
     };
 
 } // namespace geode

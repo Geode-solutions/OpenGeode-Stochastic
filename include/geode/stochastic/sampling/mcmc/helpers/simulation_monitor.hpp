@@ -22,13 +22,8 @@
  */
 
 #pragma once
+#include <geode/basic/range.hpp>
 #include <geode/stochastic/common.hpp>
-// #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
-// #include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
-
-#include <absl/strings/str_join.h>
-#include <filesystem>
-#include <fstream>
 
 namespace geode
 {
@@ -44,40 +39,50 @@ namespace geode
 
         StatisticsMonitor( const index_t nb_energy_terms )
         {
-            sum.resize( nb_energy_terms, 0.0 );
-            sum_squares.resize( nb_energy_terms, 0.0 );
-            means.resize( nb_energy_terms, 0.0 );
-            variances.resize( nb_energy_terms, 0.0 );
+            sum_.resize( nb_energy_terms, 0.0 );
+            sum_squares_.resize( nb_energy_terms, 0.0 );
+            means_.resize( nb_energy_terms, 0.0 );
+            variances_.resize( nb_energy_terms, 0.0 );
         }
 
         void add_realization( const std::vector< double >& values )
         {
-            for( const auto stat_id : Range{ values.size() } )
+            OPENGEODE_EXCEPTION( values.size() == sum_.size(),
+                "[StatisticsMonitor] - Mismatch between realization size and "
+                "expected number of statistics." );
+            ++count_;
+            for( size_t i = 0; i < values.size(); ++i )
             {
-                sum[stat_id] += values[stat_id];
-                sum_squares[stat_id] += values[stat_id] * values[stat_id];
+                double delta = values[i] - means_[i];
+                means_[i] += delta / count_;
+                if( count_ > 1 )
+                    variances_[i] = ( ( count_ - 2 ) * variances_[i]
+                                        + delta * ( values[i] - means_[i] ) )
+                                    / ( count_ - 1 );
             }
         }
 
-        void finalize( const index_t nb_realizations )
+        const index_t statiscal_count() const
         {
-            for( const auto stat_id : Range{ sum.size() } )
-            {
-                means[stat_id] = sum[stat_id] / nb_realizations;
-                double variance =
-                    ( sum_squares[stat_id]
-                        - ( sum[stat_id] * sum[stat_id] ) / nb_realizations )
-                    / ( nb_realizations - 1 );
-                variances[stat_id] = variance;
-                // stddevs[stat_id] =std::sqrt( std::max( variance, 0.0 ) );
-            }
+            return count_;
         }
 
-    public:
-        std::vector< double > sum;
-        std::vector< double > sum_squares;
-        std::vector< double > means;
-        std::vector< double > variances;
+        const std::vector< double >& means() const
+        {
+            return means_;
+        }
+
+        const std::vector< double >& variances() const
+        {
+            return variances_;
+        }
+
+    private:
+        std::vector< double > sum_;
+        std::vector< double > sum_squares_;
+        std::vector< double > means_;
+        std::vector< double > variances_;
+        index_t count_{ 0 };
     };
 
 } // namespace geode

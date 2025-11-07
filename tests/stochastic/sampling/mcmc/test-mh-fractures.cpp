@@ -130,15 +130,17 @@ namespace
         }
 
         void check_statistics(
-            const geode::MonitoringStatistics& statistic_monitoring ) const
+            const geode::StatisticsMonitor& statistic_monitoring ) const
         {
+            const auto& computed_means = statistic_monitoring.means();
+
             for( const auto stat_id :
                 geode::Range{ this->energy_terms_collection_.size() } )
             {
                 const auto& term = energy_terms_collection_.get(
                     ordered_energy_terms_[stat_id] );
                 geode::Logger::info( "[MH test] Statistic value ",
-                    statistic_monitoring.means[stat_id],
+                    computed_means[stat_id],
                     " for energy term: ", term.name().data() );
             }
         }
@@ -185,13 +187,21 @@ namespace
 
         runner.initialize();
 
-        constexpr geode::index_t steps = 1000;
-        constexpr geode::index_t nb_realizations = 750;
+        // run simulation
+        geode::SimulationPrinterConfigurator printer_config;
+        printer_config.output_folder = absl::StrCat(
+            printer_config.output_folder, "/single_fracture_set" );
 
-        runner.run( engine, 10000 );
-        auto stats = runner.run_print_and_monitor(
-            "single_fracture_set_stats", engine, steps, nb_realizations );
-        runner.check_statistics( stats );
+        geode::SimulationConfigurator sim_config;
+        sim_config.realizations = 1000;
+        sim_config.metropolis_hasting_steps = 1000;
+        sim_config.burn_in_steps = 1000;
+        sim_config.printer = printer_config;
+
+        // runner.run( engine, sim_config );
+        auto statistic_monitoring =
+            runner.run_and_monitor( engine, sim_config );
+        runner.check_statistics( statistic_monitoring );
 
         geode::Logger::info( "--> SUCCESS!" );
     }
@@ -254,13 +264,21 @@ namespace
 
         runner.initialize();
 
-        constexpr geode::index_t steps = 1000;
-        constexpr geode::index_t nb_realizations = 750;
+        // run simulation
+        geode::SimulationPrinterConfigurator printer_config;
+        printer_config.output_folder =
+            absl::StrCat( printer_config.output_folder, "/two_fracture_sets" );
 
-        runner.run( engine, 10000 );
-        auto stats = runner.run_print_and_monitor(
-            "two_fracture_sets_stats", engine, steps, nb_realizations );
-        runner.check_statistics( stats );
+        geode::SimulationConfigurator sim_config;
+        sim_config.realizations = 1000;
+        sim_config.metropolis_hasting_steps = 1000;
+        sim_config.burn_in_steps = 1000;
+        sim_config.printer = printer_config;
+
+        // runner.run( engine, sim_config );
+        auto statistic_monitoring =
+            runner.run_and_monitor( engine, sim_config );
+        runner.check_statistics( statistic_monitoring );
 
         geode::Logger::info( "--> SUCCESS!" );
     }
