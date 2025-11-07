@@ -25,6 +25,8 @@
 #include <geode/stochastic/common.hpp>
 // #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 // #include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
+#include <geode/stochastic/sampling/mcmc/helpers/simulation_monitor.hpp>
+#include <geode/stochastic/spatial/object_sets.hpp>
 
 #include <absl/strings/str_join.h>
 #include <filesystem>
@@ -37,6 +39,9 @@ namespace geode
         bool print_statistics{ true };
         std::string statistics_filename{ "statistics.txt" };
 
+        bool print_statistics_summary{ true };
+        std::string statistics_summary_filename{ "statistics_summary.txt" };
+
         bool print_realisations{ true };
         std::string realisations_prefix{ "pattern_" };
         index_t realisations_print_frequency{ 100 };
@@ -47,13 +52,71 @@ namespace geode
     class SimulationPrinter
     {
     public:
-        SimulationPrinter( absl::string_view stats_file )
-            : stats_file_( stats_file )
+        SimulationPrinter( const SimulationPrinterConfigurator& config )
+            : config_( config )
         {
-            write_header_if_new( stats_file_, "Simulation Statistics\n" );
         }
 
-        // Print header if file does not exist
+        // Print statistics to the configured statistics file
+        void print_statistics(
+            const std::vector< double >& stats, absl::string_view header )
+        {
+            if( !config_.print_statistics )
+                return;
+            const auto stats_file_path =
+                stats_file_path_.value_or( create_statistics_file( header ) );
+            std::ofstream file =
+                open_file_with_dirs( stats_file_path, std::ios::app );
+            file << absl::StrJoin( stats, " ; " ) << "\n";
+        }
+
+        template < typename ObjectType >
+        void print_object_sets( const ObjectSets< ObjectType >& object_sets,
+            index_t realization_id )
+        {
+            if( !config_.print_realisations )
+                return;
+
+            const auto filename =
+                ( std::filesystem::path( config_.output_folder )
+                    / absl::StrCat(
+                        config_.realisations_prefix, realization_id, ".txt" ) )
+                    .string();
+
+            std::ofstream file = open_file_with_dirs( filename );
+
+            const auto all_objects = object_sets.get_all_object();
+            file << "#nb_objects\t" << all_objects.size() << "\n";
+
+            for( const auto& object_id : all_objects )
+            {
+                const auto& object = object_sets.get_object( object_id );
+                file << object.string() << "\t" << object_id.set_id.string()
+                     << "\n";
+            }
+        }
+        void print_statistics_summary( const StatisticsMonitor& monitor,
+            absl::string_view energy_term_names )
+        {
+            if( !config_.print_statistics_summary )
+                return;
+
+            const auto summary_path =
+                ( std::filesystem::path( config_.output_folder )
+                    / config_.statistics_summary_filename )
+                    .string();
+
+            std::ofstream file = open_file_with_dirs( summary_path );
+            file << "# Summary statistics\n";
+            file << energy_term_names.data() << "\n";
+            file << absl::StrCat( "# Count:\n", monitor.count, "\n" );
+            file << absl::StrCat(
+                "# Means:\n", absl::StrJoin( monitor.means, " ; " ), "\n" );
+            file << absl::StrCat( "# Variances:\n",
+                absl::StrJoin( monitor.variances, " ; " ), "\n" );
+        }
+
+    private:
         void write_header_if_new(
             absl::string_view filename, absl::string_view header )
         {
@@ -66,37 +129,10 @@ namespace geode
             }
         }
 
-        void print_statistics( const std::vector< double >& stats )
-        {
-            std::ofstream file =
-                open_file_with_dirs( stats_file_, std::ios::app );
-            file << absl::StrJoin( stats, " ; " ) << "\n";
-        }
-
-        template < typename ObjectType >
-        void print_object_sets( const ObjectSets< ObjectType >& object_sets,
-            absl::string_view filename )
-        {
-            std::ofstream file = open_file_with_dirs( filename );
-
-            const auto all_objects = object_sets.get_all_object();
-
-            file << "#nb_objects\t" << all_objects.size() << "\n";
-
-            for( const auto& object_id : all_objects )
-            {
-                const auto& object = object_sets.get_object( object_id );
-                file << object.string() << "\t" << object_id.set_id.string()
-                     << "\n";
-            }
-        }
-
-        // Reusable helper to open files with directories created
         std::ofstream open_file_with_dirs( absl::string_view path_filename,
-            std::ios::openmode mode = std::ofstream::out )
+            std::ios::openmode mode = std::ofstream::out ) const
         {
             namespace fs = std::filesystem;
-
             fs::path file_path{ std::string( path_filename ) };
 
             if( !file_path.has_parent_path() )
@@ -112,9 +148,24 @@ namespace geode
 
             return file;
         }
+        const std::string& create_statistics_file( absl::string_view header )
+        {
+            stats_file_path_ = ( std::filesystem::path( config_.output_folder )
+                                 / config_.statistics_filename )
+                                   .string();
+
+            if( config_.print_statistics )
+            {
+                write_header_if_new( *stats_file_path_,
+                    absl::StrCat(
+                        "# Simulation Statistics\n", header.data(), "\n" ) );
+            }
+            return *stats_file_path_;
+        }
 
     private:
-        std::string stats_file_;
+        SimulationPrinterConfigurator config_;
+        std::optional< std::string > stats_file_path_;
     };
 
 } // namespace geode
