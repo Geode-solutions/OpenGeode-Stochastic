@@ -33,7 +33,6 @@ namespace geode
     class RandomEngine;
 } // namespace geode
 
-
 namespace geode
 {
 
