@@ -24,7 +24,6 @@
 
 #pragma once
 
-
 #include <geode/stochastic/sampling/distributions.hpp>
 
 #include <variant>
