@@ -4,31 +4,7 @@
 
 #include <geode/geometry/basic_objects/segment.hpp>
 #include <geode/geometry/point.hpp>
-namespace
-{
-    template < geode::index_t dimension >
-    geode::Vector< dimension > enlarge_vector( double distance );
 
-    template <>
-    geode::Vector2D enlarge_vector< 2 >( double distance )
-    {
-        return geode::Vector2D{ { distance, distance } };
-    }
-
-    template <>
-    geode::Vector3D enlarge_vector< 3 >( double distance )
-    {
-        return geode::Vector3D{ { distance, distance, distance } };
-    }
-    template < geode::index_t dimension >
-    void enlarge_box(
-        geode::BoundingBox< dimension >& box, double search_distance )
-    {
-        auto vec = enlarge_vector< dimension >( search_distance );
-        box.add_point( box.min() - vec );
-        box.add_point( box.max() + vec );
-    }
-} // namespace
 namespace geode
 {
     template < typename Type >
@@ -150,7 +126,7 @@ namespace geode
         const ObjectId& object_id, double searching_distance ) const
     {
         auto box = object_bounding_box( get_object( object_id ) );
-        enlarge_box< Type::dim >( box, searching_distance );
+        box.extends( searching_distance * 2. );
         return neighborhood_.get_all_neighbor_ids( box, object_id );
     }
 
@@ -159,7 +135,7 @@ namespace geode
         const Type& object, double searching_distance ) const
     {
         auto box = object_bounding_box( object );
-        enlarge_box< Type::dim >( box, searching_distance );
+        box.extends( searching_distance * 2. );
         return neighborhood_.get_all_neighbor_ids( box, std::nullopt );
     }
 
@@ -173,12 +149,11 @@ namespace geode
     template < typename Type >
     std::string ObjectSets< Type >::string() const
     {
-        auto message =
-            absl::StrCat( "ObjectSets with ", nb_sets(), " ObjectSet:" );
+        auto message = absl::StrCat( "ObjectSets with ", nb_objects(),
+            " objects in, ", nb_sets(), " sets" );
         for( const auto& [set_id, objs] : sets_ )
         {
-            absl::StrAppend( &message, "\n\t - set uuid: ", set_id.string(),
-                "--> ", objs.string() );
+            absl::StrAppend( &message, "\n\t --> ", objs.string() );
         }
         return message;
     }

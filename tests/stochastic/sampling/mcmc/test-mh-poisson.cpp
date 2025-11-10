@@ -40,7 +40,7 @@ namespace
 
     struct PoissonDensityDescription
     {
-        std::string set_name;
+        std::string name;
         double density;
         double target_count;
     };
@@ -89,13 +89,13 @@ namespace
             // Step 2: create energy terms
             for( const auto& energy_desc : density_descriptors_ )
             {
-                const auto set_id = name_to_uuid.at( energy_desc.set_name );
+                const auto set_id = name_to_uuid.at( energy_desc.name );
 
                 this->ordered_energy_terms_.push_back(
                     this->energy_terms_collection_.add_energy_term(
                         std::make_unique<
                             geode::DensityTerm< geode::Point2D > >(
-                            absl::StrCat( energy_desc.set_name, "_density" ),
+                            absl::StrCat( energy_desc.name, "_density" ),
                             energy_desc.density,
                             absl::flat_hash_set< geode::uuid >{ set_id } ) ) );
 
@@ -110,8 +110,11 @@ namespace
         }
 
         void check_statistics(
-            const geode::MonitoringStatistics& statistic_monitoring ) const
+            const geode::StatisticsMonitor& statistic_monitoring ) const
         {
+            const auto& computed_means = statistic_monitoring.means();
+            const auto& computed_variances = statistic_monitoring.variances();
+
             for( const auto stat_id :
                 geode::Range{ this->energy_terms_collection_.size() } )
             {
@@ -122,25 +125,22 @@ namespace
                     this->ordered_target_statistics_[stat_id];
 
                 const auto target_vs_mean_error =
-                    std::abs(
-                        statistic_monitoring.means[stat_id] - expected_means )
+                    std::abs( computed_means[stat_id] - expected_means )
                     / expected_means;
 
                 OPENGEODE_EXCEPTION( target_vs_mean_error < 0.05,
-                    "[MH test] statistic value ",
-                    statistic_monitoring.means[stat_id],
+                    "[MH test] statistic value ", computed_means[stat_id],
                     " for energy term: ", term.name().data(),
                     " not close enough to expected value ", expected_means,
                     " --> error : ", target_vs_mean_error );
 
                 const auto target_vs_variance_error =
-                    std::abs( statistic_monitoring.variances[stat_id]
-                              - expected_means )
+                    std::abs( computed_variances[stat_id] - expected_means )
                     / expected_means;
 
                 OPENGEODE_EXCEPTION( target_vs_variance_error < 0.15,
                     "[MH test] variance of statistic ",
-                    statistic_monitoring.variances[stat_id],
+                    computed_variances[stat_id],
                     " for energy term: ", term.name().data(),
                     " not close enough to expected value ", expected_means,
                     " --> error : ", target_vs_variance_error );
@@ -178,7 +178,7 @@ namespace
 
             // --- Energy term description
             PoissonDensityDescription densityA;
-            densityA.set_name = "A";
+            densityA.name = "A";
             densityA.density = 0.3;
             densityA.target_count = 30.0;
 
@@ -187,12 +187,21 @@ namespace
             runner.add_density_descriptor( densityA );
             runner.initialize();
 
-            constexpr geode::index_t steps = 1000;
-            constexpr geode::index_t nb_realizations = 1000;
+            // run simulation
+            geode::SimulationPrinterConfigurator printer_config;
+            printer_config.output_folder =
+                absl::StrCat( printer_config.output_folder,
+                    "/sim_point_poisson_test_", config );
 
-            runner.run( engine, steps );
-            auto statistic_monitoring = runner.run_print_and_monitor(
-                "poisson_statistics", engine, steps, nb_realizations );
+            geode::SimulationConfigurator sim_config;
+            sim_config.realizations = 1000;
+            sim_config.metropolis_hasting_steps = 1000;
+            sim_config.burn_in_steps = 1000;
+            sim_config.printer = printer_config;
+
+            // runner.run( engine, sim_config );
+            auto statistic_monitoring =
+                runner.run_and_monitor( engine, sim_config );
             runner.check_statistics( statistic_monitoring );
         }
 
@@ -231,11 +240,20 @@ namespace
 
         runner.initialize();
 
-        constexpr geode::index_t steps = 1000;
-        constexpr geode::index_t nb_realizations = 1000;
+        // run simulation
+        geode::SimulationPrinterConfigurator printer_config;
+        printer_config.output_folder = absl::StrCat(
+            printer_config.output_folder, "/sim_point_multitype_poisson_test" );
 
-        auto statistic_monitoring = runner.run_print_and_monitor(
-            "poisson_statistics", engine, steps, nb_realizations );
+        geode::SimulationConfigurator sim_config;
+        sim_config.realizations = 1000;
+        sim_config.metropolis_hasting_steps = 1000;
+        sim_config.burn_in_steps = 1000;
+        sim_config.printer = printer_config;
+
+        // runner.run( engine, sim_config );
+        auto statistic_monitoring =
+            runner.run_and_monitor( engine, sim_config );
         runner.check_statistics( statistic_monitoring );
 
         geode::Logger::info( "--> SUCCESS!" );

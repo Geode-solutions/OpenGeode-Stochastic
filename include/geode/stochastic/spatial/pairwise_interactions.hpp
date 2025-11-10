@@ -25,6 +25,7 @@
 
 #include <geode/basic/uuid.hpp>
 
+#include <geode/geometry/basic_objects/segment.hpp>
 #include <geode/geometry/distance.hpp>
 #include <geode/geometry/point.hpp>
 
@@ -74,38 +75,26 @@ namespace geode
         SCOPE scope_{ SCOPE::all_set };
     };
 
+    /*!
+     * EuclideanCutoffInteraction
+     * A pairwise interaction that returns 1 if the Euclidean distance
+     * between objects is within a cutoff radius, otherwise 0.
+     */
     template < typename Type >
     class EuclideanCutoffInteraction : public PairwiseInteraction< Type >
     {
     public:
-        EuclideanCutoffInteraction( double cutoff_distance )
-            : PairwiseInteraction< Type >(), cutoff_distance_( cutoff_distance )
-        {
-        }
+        explicit EuclideanCutoffInteraction( double cutoff_distance );
         EuclideanCutoffInteraction( double cutoff_distance,
-            typename PairwiseInteraction< Type >::SCOPE scope )
-            : PairwiseInteraction< Type >( scope ),
-              cutoff_distance_( cutoff_distance )
-        {
-        }
+            typename PairwiseInteraction< Type >::SCOPE scope );
 
-        double neighborhood_searching_distance() const override
-        {
-            return cutoff_distance_;
-        }
+        double neighborhood_searching_distance() const override;
 
     protected:
         double compute( const ObjectRef< Type >& object_a,
-            const ObjectRef< Type >& object_b ) const override
-        {
-            auto dist = geode::point_point_distance(
-                object_barycenter( object_a.object ),
-                object_barycenter( object_b.object ) );
-            return dist <= cutoff_distance_ ? 1.0 : 0.0;
-        }
+            const ObjectRef< Type >& object_b ) const override;
 
     private:
         double cutoff_distance_{ GLOBAL_EPSILON };
     };
-
 } // namespace geode

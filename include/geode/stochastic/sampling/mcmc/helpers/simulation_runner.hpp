@@ -23,60 +23,22 @@
 
 #pragma once
 #include <geode/stochastic/common.hpp>
+#include <geode/stochastic/sampling/mcmc/helpers/simulation_monitor.hpp>
+#include <geode/stochastic/sampling/mcmc/helpers/simulation_printer.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
 
 #include <absl/strings/str_join.h>
-#include <fstream>
 
 namespace geode
 {
-    class MonitoringStatistics
+    struct SimulationConfigurator
     {
-    public:
-        MonitoringStatistics( MonitoringStatistics&& ) = default;
-        MonitoringStatistics( const MonitoringStatistics& ) = default;
-        MonitoringStatistics& operator=(
-            MonitoringStatistics&& ) noexcept = default;
-        MonitoringStatistics& operator=(
-            const MonitoringStatistics& ) noexcept = default;
+        index_t realizations{ 1000 };
+        index_t metropolis_hasting_steps{ 1000 };
+        index_t burn_in_steps{ 1000 };
 
-        MonitoringStatistics( const index_t nb_energy_terms )
-        {
-            sum.resize( nb_energy_terms, 0.0 );
-            sum_squares.resize( nb_energy_terms, 0.0 );
-            means.resize( nb_energy_terms, 0.0 );
-            variances.resize( nb_energy_terms, 0.0 );
-        }
-
-        void add_realization( const std::vector< double >& values )
-        {
-            for( const auto stat_id : Range{ values.size() } )
-            {
-                sum[stat_id] += values[stat_id];
-                sum_squares[stat_id] += values[stat_id] * values[stat_id];
-            }
-        }
-
-        void finalize( const index_t nb_realizations )
-        {
-            for( const auto stat_id : Range{ sum.size() } )
-            {
-                means[stat_id] = sum[stat_id] / nb_realizations;
-                double variance =
-                    ( sum_squares[stat_id]
-                        - ( sum[stat_id] * sum[stat_id] ) / nb_realizations )
-                    / ( nb_realizations - 1 );
-                variances[stat_id] = variance;
-                // stddevs[stat_id] =std::sqrt( std::max( variance, 0.0 ) );
-            }
-        }
-
-    public:
-        std::vector< double > sum;
-        std::vector< double > sum_squares;
-        std::vector< double > means;
-        std::vector< double > variances;
+        std::optional< SimulationPrinter > printer{ std::nullopt };
     };
 
     template < typename ObjectType >
@@ -95,60 +57,63 @@ namespace geode
             return object_sets_;
         }
 
-        void run_and_print( std::string_view filename,
-            RandomEngine& engine,
-            const index_t steps,
-            const index_t nb_realizations )
+        void run(
+            RandomEngine& engine, const SimulationConfigurator& configurator )
         {
-            const auto file_exist =
-                static_cast< bool >( std::ifstream( filename.data() ) );
-            if( !file_exist )
+            if( configurator.burn_in_steps > 0 )
             {
-                const auto header = statistics_header_file();
-                print_to_file( filename, header );
+                run( engine, configurator.burn_in_steps );
             }
-
-            for( const auto realization : Range{ nb_realizations } )
+            for( const auto realization : Range{ configurator.realizations } )
             {
-                run( engine, steps );
-                const auto statistics = statistics_string();
-                print_to_file( filename, statistics );
+                run( engine, configurator.metropolis_hasting_steps );
+
+                if( configurator.printer.has_value() )
+                {
+                    configurator.printer->print_statistics(
+                        state_statistics(), model_energy_term_names() );
+                    configurator.printer->print_object_sets(
+                        object_sets_, realization );
+                }
             }
         }
 
-        MonitoringStatistics run_print_and_monitor( std::string_view filename,
-            RandomEngine& engine,
-            const index_t steps,
-            const index_t nb_realizations )
+        StatisticsMonitor run_and_monitor(
+            RandomEngine& engine, const SimulationConfigurator& configurator )
         {
-            const auto file_exist =
-                static_cast< bool >( std::ifstream( filename.data() ) );
-            if( !file_exist )
+            if( configurator.burn_in_steps > 0 )
             {
-                const auto header = statistics_header_file();
-                print_to_file( filename, header );
+                run( engine, configurator.burn_in_steps );
             }
-            MonitoringStatistics stat_monitoring(
+            StatisticsMonitor stat_monitoring(
                 energy_terms_collection_.size() );
-
-            for( const auto realization : Range{ nb_realizations } )
+            for( const auto realization : Range{ configurator.realizations } )
             {
-                run( engine, steps );
-                const auto stats = statistics();
-                print_to_file( filename,
-                    absl::StrCat( absl::StrJoin( stats, " ; " ), "\n" ) );
+                run( engine, configurator.metropolis_hasting_steps );
+                const auto stats = state_statistics();
                 stat_monitoring.add_realization( stats );
+                if( configurator.printer.has_value() )
+                {
+                    configurator.printer->print_statistics(
+                        state_statistics(), model_energy_term_names() );
+                    configurator.printer->print_object_sets(
+                        object_sets_, realization );
+                }
             }
-            stat_monitoring.finalize( nb_realizations );
+            if( configurator.printer.has_value() )
+            {
+                configurator.printer->print_statistics_summary(
+                    stat_monitoring, model_energy_term_names() );
+            }
             return stat_monitoring;
         }
 
-        const ObjectSets< ObjectType >& current_pattern_realization() const
+        const ObjectSets< ObjectType >& state_realization() const
         {
             return object_sets_;
         }
 
-        std::vector< double > statistics() const
+        std::vector< double > state_statistics() const
         {
             std::vector< double > statistic_values;
             statistic_values.reserve( ordered_energy_terms_.size() );
@@ -163,24 +128,7 @@ namespace geode
             return statistic_values;
         }
 
-        std::string statistics_log_info() const
-        {
-            std::string message( "Pattern statistics: " );
-            for( const auto term_id :
-                geode::Range{ ordered_energy_terms_.size() } )
-            {
-                const auto& energy_term = energy_terms_collection_.get(
-                    ordered_energy_terms_[term_id] );
-                const double value = energy_term.statistic( object_sets_ );
-                absl::StrAppend( &message, " \t Term(", energy_term.name(),
-                    ") --> value/traget: ", value, " / ",
-                    ordered_target_statistics_[term_id] );
-            }
-            return message;
-        }
-
-    protected:
-        std::string energy_term_names() const
+        std::string model_energy_term_names() const
         {
             std::vector< std::string > term_names;
             term_names.reserve( ordered_energy_terms_.size() );
@@ -193,28 +141,6 @@ namespace geode
             }
 
             return absl::StrCat( absl::StrJoin( term_names, " ; " ), "\n" );
-        }
-
-        std::string statistics_string() const
-        {
-            return absl::StrCat( absl::StrJoin( statistics(), " ; " ), "\n" );
-        }
-
-        std::string statistics_header_file()
-        {
-            std::string message( "Sufficient statistics mcmc iterations:\n" );
-            absl::StrAppend( &message, energy_term_names() );
-            return message;
-        }
-
-        void print_to_file(
-            absl::string_view filename, absl::string_view message )
-        {
-            std::ofstream file(
-                filename.data(), std::ofstream::out | std::ofstream::app );
-            file << message;
-            file.close();
-            return;
         }
 
     protected:

@@ -23,50 +23,61 @@
 
 #pragma once
 
+#include <geode/geometry/basic_objects/segment.hpp>
 #include <geode/geometry/basic_objects/sphere.hpp>
-#include <geode/geometry/point.hpp>
 
 #include <geode/stochastic/sampling/direct/object_set_sampler/object_set_sampler.hpp>
 #include <geode/stochastic/sampling/direct/point_uniform_sampler.hpp>
+#include <geode/stochastic/sampling/direct/segment_uniform_sampler.hpp>
 
 namespace geode
 {
-    template < index_t dimension >
-    class UniformPointSetSampler : public ObjectSetSampler< Point< dimension > >
+    class UniformSegmentSetSampler : public ObjectSetSampler< OwnerSegment2D >
     {
     public:
-        UniformPointSetSampler( const BoundingBox< dimension >& box )
-            : ObjectSetSampler< Point< dimension > >{}, box_( box )
+        UniformSegmentSetSampler( const BoundingBox< 2 >& box,
+            const DoubleSampler::Distribution& length,
+            const DoubleSampler::Distribution& azimuth )
+            : ObjectSetSampler< OwnerSegment2D >{},
+              box_{ box },
+              length_{ length },
+              azimuth_{ azimuth }
         {
             auto volume = box_.n_volume();
             OPENGEODE_EXCEPTION( volume != 0.,
-                "[PointSetSampler] - Undefined Bounding Box (volume ==0)." );
+                "[SegmentSetSampler] - Undefined Bounding Box (volume == 0)." );
             this->log_pdf_ = -std::log( volume );
         }
 
-        Point< dimension > sample( RandomEngine& engine ) const override
+        OwnerSegment2D sample( RandomEngine& engine ) const override
         {
-            return PointUniformSampler::sample< dimension >( engine, box_ );
+            auto seg = SegmentUniformSampler::sample(
+                engine, box_, length_, azimuth_ );
+            return seg;
         }
 
-        Point< dimension > change(
-            const Point< dimension >& obj, RandomEngine& engine ) const override
+        OwnerSegment2D change(
+            const OwnerSegment2D& obj, RandomEngine& engine ) const override
         {
             double ratio = 0.1;
-            geode::Sphere< dimension > ball{ obj,
-                ratio * std::get< 1 >( box_.smallest_length() ) };
+            const auto& extremities = obj.vertices();
+            const auto current =
+                static_cast< local_index_t >( engine.sample_bernoulli( 0.5 ) );
 
-            auto new_point =
-                PointUniformSampler::sample< dimension >( engine, ball );
+            geode::Sphere< 2 > ball{ extremities[current],
+                ratio * obj.length() };
+
+            auto new_point = PointUniformSampler::sample< 2 >( engine, ball );
             constexpr index_t max_try{ 100 };
             for( const auto try_id : geode::Range{ max_try } )
             {
                 if( box_.contains( new_point ) )
                 {
-                    return new_point;
+                    OwnerSegment2D new_segment{ obj };
+                    new_segment.set_point( current, new_point );
+                    return new_segment;
                 }
-                new_point =
-                    PointUniformSampler::sample< dimension >( engine, ball );
+                new_point = PointUniformSampler::sample< 2 >( engine, ball );
             }
             throw OpenGeodeException( absl::StrCat(
                 "[PointSampler] - Cannot find a point in the box: ",
@@ -75,13 +86,18 @@ namespace geode
         }
 
     private:
-        bool is_valid_object( const Point< dimension >& obj ) const override
+        bool is_valid_object( const OwnerSegment2D& obj ) const override
         {
-            return box_.contains( obj );
+            const auto& extremities = obj.vertices();
+
+            return box_.contains( extremities[0] )
+                   && box_.contains( extremities[1] );
         }
 
     private:
-        BoundingBox< dimension > box_;
+        BoundingBox2D box_;
+        DoubleSampler::Distribution length_;
+        DoubleSampler::Distribution azimuth_;
     };
 
 } // namespace geode
