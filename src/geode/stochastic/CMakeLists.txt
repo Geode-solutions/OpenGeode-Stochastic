@@ -34,7 +34,6 @@ add_geode_library(
         "sampling/distributions.cpp"
         "sampling/random_engine.cpp"
         "common.cpp"
-        "hello_world.cpp"
     PUBLIC_HEADERS
         "spatial/object_set.hpp"
         "spatial/object_sets.hpp"
@@ -50,8 +49,8 @@ add_geode_library(
         "sampling/direct/double_sampler.hpp"
         "sampling/direct/point_uniform_sampler.hpp"
         "sampling/direct/segment_uniform_sampler.hpp"
+        "sampling/mcmc/helpers/fracture_simulation_runner.hpp"
         "sampling/mcmc/helpers/simulation_runner.hpp"
-        "sampling/mcmc/helpers/simulation_manager.hpp"
         "sampling/mcmc/helpers/simulation_printer.hpp"
         "sampling/mcmc/helpers/simulation_monitor.hpp"
         "sampling/mcmc/models/components/pairwise_term.hpp"
@@ -66,7 +65,6 @@ add_geode_library(
         "sampling/distributions.hpp"
         "sampling/random_engine.hpp"
         "common.hpp"
-        "hello_world.hpp"
     PRIVATE_DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry

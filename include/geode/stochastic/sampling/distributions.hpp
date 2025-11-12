@@ -41,7 +41,24 @@ namespace geode
     struct UniformClosed
     {
         UniformClosed() = default;
-        bool is_valid() const;
+        bool is_valid() const
+        {
+            if( min_value < max_value )
+            {
+                return true;
+            }
+            if( min_value == max_value )
+            {
+                geode::Logger::warn(
+                    "[Uniform Closed] - check range boundaries definintion [",
+                    min_value, ",", max_value, "]." );
+                return true;
+            }
+            geode::Logger::error(
+                "[Uniform Closed] - check range boundaries definintion [",
+                min_value, ",", max_value, "]." );
+            return false;
+        }
 
         Type min_value{ static_cast< Type >( 0 ) };
         Type max_value{ static_cast< Type >( 1 ) };
@@ -55,13 +72,28 @@ namespace geode
         {
             return distribution_type_static();
         }
+        std::string string() const
+        {
+            return absl::StrCat(
+                distribution_type().get(), "[", min_value, max_value, "]" );
+        }
     };
 
     template < typename Type >
     struct UniformClosedOpen
     {
         UniformClosedOpen() = default;
-        bool is_valid() const;
+        bool is_valid() const
+        {
+            if( min_value < max_value )
+            {
+                return true;
+            }
+            geode::Logger::error(
+                "[Uniform ClosedOpen] - check range boundaries definintion [",
+                min_value, ",", max_value, "]." );
+            return false;
+        }
 
         Type min_value{ static_cast< Type >( 0 ) };
         Type max_value{ static_cast< Type >( 1 ) };
@@ -74,6 +106,12 @@ namespace geode
         [[nodiscard]] DistributionType distribution_type() const
         {
             return distribution_type_static();
+        }
+
+        std::string string() const
+        {
+            return absl::StrCat(
+                distribution_type().get(), "[", min_value, max_value, "]" );
         }
     };
 
@@ -93,6 +131,12 @@ namespace geode
         [[nodiscard]] DistributionType distribution_type() const
         {
             return distribution_type_static();
+        }
+
+        std::string string() const
+        {
+            return absl::StrCat( distribution_type().get(), "(", mean, ",",
+                standard_deviation, ")" );
         }
     };
 
@@ -116,6 +160,19 @@ namespace geode
         [[nodiscard]] DistributionType distribution_type() const
         {
             return distribution_type_static();
+        }
+
+        std::string string() const
+        {
+            std::string min_str = min_value.has_value()
+                                      ? std::to_string( min_value.value() )
+                                      : "-inf";
+
+            std::string max_str = max_value.has_value()
+                                      ? std::to_string( max_value.value() )
+                                      : "+inf";
+            return absl::StrCat( distribution_type().get(), "(", mean,
+                standard_deviation, ") in [", min_str, ",", max_str, "]" );
         }
     };
 

@@ -21,8 +21,17 @@
 add_geode_python_binding(
     NAME "py_stochastic"
     SOURCES
-#        "random_engine.cpp"
+        "sampling/mcmc/helpers/fracture_simulation_runner.hpp"
+        "sampling/mcmc/helpers/simulation_monitor.hpp"
+        "sampling/mcmc/helpers/simulation_printer.hpp"
+        "sampling/mcmc/helpers/simulation_runner.hpp"
+        "sampling/direct/double_sampler.hpp"
+        "sampling/random_engine.hpp"
+        "sampling/distributions.hpp"
         "stochastic.cpp"
     DEPENDENCIES
         ${PROJECT_NAME}::stochastic
+        OpenGeode::basic
+        OpenGeode::geometry
+        OpenGeode::model
 )

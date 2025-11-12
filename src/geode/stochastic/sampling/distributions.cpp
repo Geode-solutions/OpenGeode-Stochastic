@@ -28,56 +28,58 @@
 
 namespace geode
 {
-    template < typename Type >
-    bool UniformClosed< Type >::is_valid() const
-    {
-        if( min_value < max_value )
-        {
-            return true;
-        }
-        if( min_value == max_value )
-        {
-            geode::Logger::warn(
-                "[Uniform Closed] - check range boundaries definintion [",
-                min_value, ",", max_value, "]." );
-            return true;
-        }
-        geode::Logger::error(
-            "[Uniform Closed] - check range boundaries definintion [",
-            min_value, ",", max_value, "]." );
-        return false;
-    }
-    template opengeode_stochastic_stochastic_api struct UniformClosed<
-        index_t >;
-    template opengeode_stochastic_stochastic_api struct UniformClosed<
-        local_index_t >;
-    template opengeode_stochastic_stochastic_api struct UniformClosed<
-        signed_index_t >;
-    template opengeode_stochastic_stochastic_api struct UniformClosed< float >;
-    template opengeode_stochastic_stochastic_api struct UniformClosed< double >;
-
-    template < typename Type >
-    bool UniformClosedOpen< Type >::is_valid() const
-    {
-        if( min_value < max_value )
-        {
-            return true;
-        }
-        geode::Logger::error(
-            "[Uniform ClosedOpen] - check range boundaries definintion [",
-            min_value, ",", max_value, "]." );
-        return false;
-    }
-    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
-        index_t >;
-    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
-        local_index_t >;
-    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
-        signed_index_t >;
-    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
-        float >;
-    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
-        double >;
+    //    template < typename Type >
+    //    bool UniformClosed< Type >::is_valid() const
+    //    {
+    //        if( min_value < max_value )
+    //        {
+    //            return true;
+    //        }
+    //        if( min_value == max_value )
+    //        {
+    //            geode::Logger::warn(
+    //                "[Uniform Closed] - check range boundaries definintion [",
+    //                min_value, ",", max_value, "]." );
+    //            return true;
+    //        }
+    //        geode::Logger::error(
+    //            "[Uniform Closed] - check range boundaries definintion [",
+    //            min_value, ",", max_value, "]." );
+    //        return false;
+    //    }
+    //    template opengeode_stochastic_stochastic_api struct UniformClosed<
+    //        index_t >;
+    //    template opengeode_stochastic_stochastic_api struct UniformClosed<
+    //        local_index_t >;
+    //    template opengeode_stochastic_stochastic_api struct UniformClosed<
+    //        signed_index_t >;
+    //    template opengeode_stochastic_stochastic_api struct UniformClosed<
+    //    float >; template opengeode_stochastic_stochastic_api struct
+    //    UniformClosed< double >;
+    //
+    //
+    //    template < typename Type >
+    //    bool UniformClosedOpen< Type >::is_valid() const
+    //    {
+    //        if( min_value < max_value )
+    //        {
+    //            return true;
+    //        }
+    //        geode::Logger::error(
+    //            "[Uniform ClosedOpen] - check range boundaries definintion [",
+    //            min_value, ",", max_value, "]." );
+    //        return false;
+    //    }
+    //    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
+    //        index_t >;
+    //    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
+    //        local_index_t >;
+    //    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
+    //        signed_index_t >;
+    //    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
+    //        float >;
+    //    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
+    //        double >;
 
     bool Gaussian::is_valid() const
     {
