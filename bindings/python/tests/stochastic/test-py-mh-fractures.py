@@ -66,7 +66,7 @@ def test_fracture_simulator():
 
     # Simulation printer
     printer_config = stochastic.SimulationPrinterConfigurator()
-    printer_config.output_folder = os.path.join(printer_config.output_folder , "single_fracture_set")
+    printer_config.output_folder = os.path.join(printer_config.output_folder , "py_single_fracture_set")
 
     sim_config = stochastic.SimulationConfigurator()
     sim_config.realizations = 1000
@@ -121,7 +121,7 @@ def test_two_fracture_sets_simulator():
     runner.initialize()
 
     printer_config = stochastic.SimulationPrinterConfigurator()
-    printer_config.output_folder = os.path.join(printer_config.output_folder ,printer_config.output_folder, "two_fracture_sets")
+    printer_config.output_folder = os.path.join(printer_config.output_folder ,printer_config.output_folder, "py_two_fracture_sets")
 
     sim_config = stochastic.SimulationConfigurator()
     sim_config.realizations = 1000

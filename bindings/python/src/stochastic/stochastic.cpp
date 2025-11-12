@@ -40,13 +40,12 @@ PYBIND11_MODULE( opengeode_stochastic_py_stochastic, module )
     pybind11::class_< geode::StochasticLibrary >( module, "StochasticLibrary" )
         .def( "initialize", &geode::StochasticLibrary::initialize );
 
+    geode::define_random_engine( module );
+    geode::define_distributions( module );
     geode::define_double_sampler( module );
 
-    geode::define_fracture_simulation( module );
     geode::define_simulation_monitor( module );
     geode::define_simulation_printer( module );
     geode::define_simulation_runner( module );
-
-    geode::define_distributions( module );
-    geode::define_random_engine( module );
+    geode::define_fracture_simulation( module );
 }
