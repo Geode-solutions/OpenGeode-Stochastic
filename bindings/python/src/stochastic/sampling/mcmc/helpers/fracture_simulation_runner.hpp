@@ -67,12 +67,12 @@ namespace geode
                 pybind11::arg( "statistic_monitoring" ),
                 "Check computed statistics after simulation." )
             // Explicit overload bindings
-            .def( "run",
-                static_cast< const ObjectSets< OwnerSegment2D >& (
-                    FractureSimulationRunner::*) ( RandomEngine&, index_t ) >(
-                    &FractureSimulationRunner::run ),
-                pybind11::arg( "engine" ), pybind11::arg( "steps" ),
-                "Run simulation for a fixed number of steps." )
+            //            .def( "run",
+            //                static_cast< const ObjectSets< OwnerSegment2D >& (
+            //                    FractureSimulationRunner::*) ( RandomEngine&,
+            //                    index_t ) >( &FractureSimulationRunner::run ),
+            //                pybind11::arg( "engine" ), pybind11::arg( "steps"
+            //                ), "Run simulation for a fixed number of steps." )
             .def( "run",
                 static_cast< StatisticsMonitor ( FractureSimulationRunner::* )(
                     RandomEngine&, const SimulationConfigurator& ) >(
