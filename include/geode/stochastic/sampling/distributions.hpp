@@ -41,7 +41,24 @@ namespace geode
     struct UniformClosed
     {
         UniformClosed() = default;
-        bool is_valid() const;
+        bool is_valid() const
+        {
+            if( min_value < max_value )
+            {
+                return true;
+            }
+            if( min_value == max_value )
+            {
+                geode::Logger::warn(
+                    "[Uniform Closed] - check range boundaries definintion [",
+                    min_value, ",", max_value, "]." );
+                return true;
+            }
+            geode::Logger::error(
+                "[Uniform Closed] - check range boundaries definintion [",
+                min_value, ",", max_value, "]." );
+            return false;
+        }
 
         Type min_value{ static_cast< Type >( 0 ) };
         Type max_value{ static_cast< Type >( 1 ) };
@@ -66,7 +83,17 @@ namespace geode
     struct UniformClosedOpen
     {
         UniformClosedOpen() = default;
-        bool is_valid() const;
+        bool is_valid() const
+        {
+            if( min_value < max_value )
+            {
+                return true;
+            }
+            geode::Logger::error(
+                "[Uniform ClosedOpen] - check range boundaries definintion [",
+                min_value, ",", max_value, "]." );
+            return false;
+        }
 
         Type min_value{ static_cast< Type >( 0 ) };
         Type max_value{ static_cast< Type >( 1 ) };
