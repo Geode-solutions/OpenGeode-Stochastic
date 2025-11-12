@@ -63,34 +63,5 @@ namespace geode
             .def_static( "sample", &DoubleSampler::sample,
                 pybind11::arg( "engine" ), pybind11::arg( "dist" ),
                 "Sample a value from a distribution using a RandomEngine" );
-
-        // Optionally, expose the variant types
-        pybind11::class_< UniformClosed< double > >(
-            module, "UniformClosedDouble" )
-            .def( pybind11::init<>() )
-            .def_readwrite( "min_value", &UniformClosed< double >::min_value )
-            .def_readwrite( "max_value", &UniformClosed< double >::max_value );
-
-        pybind11::class_< UniformClosedOpen< double > >(
-            module, "UniformClosedOpenDouble" )
-            .def( pybind11::init<>() )
-            .def_readwrite(
-                "min_value", &UniformClosedOpen< double >::min_value )
-            .def_readwrite(
-                "max_value", &UniformClosedOpen< double >::max_value );
-
-        pybind11::class_< Gaussian >( module, "Gaussian" )
-            .def( pybind11::init<>() )
-            .def_readwrite( "mean", &Gaussian::mean )
-            .def_readwrite(
-                "standard_deviation", &Gaussian::standard_deviation );
-
-        pybind11::class_< TruncatedGaussian >( module, "TruncatedGaussian" )
-            .def( pybind11::init<>() )
-            .def_readwrite( "mean", &TruncatedGaussian::mean )
-            .def_readwrite(
-                "standard_deviation", &TruncatedGaussian::standard_deviation )
-            .def_readwrite( "min_value", &TruncatedGaussian::min_value )
-            .def_readwrite( "max_value", &TruncatedGaussian::max_value );
     }
 } // namespace geode
