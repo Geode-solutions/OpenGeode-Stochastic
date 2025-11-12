@@ -52,6 +52,34 @@ namespace geode
             std::optional< double > max_value;
             std::optional< double > mean;
             std::optional< double > standard_deviation;
+
+            std::string string() const
+            {
+                auto message = absl::StrCat( "Distribution - ", name );
+                absl::StrAppend( &message,
+                    "\n\t - distribution type: ", distribution_type.get() );
+                if( min_value.has_value() )
+                {
+                    absl::StrAppend(
+                        &message, "\n\t - min value: ", min_value.value() );
+                }
+                if( max_value.has_value() )
+                {
+                    absl::StrAppend(
+                        &message, "\n\t - max value: ", max_value.value() );
+                }
+                if( mean.has_value() )
+                {
+                    absl::StrAppend(
+                        &message, "\n\t - mean value: ", mean.value() );
+                }
+                if( standard_deviation.has_value() )
+                {
+                    absl::StrAppend( &message,
+                        "\n\t - std value: ", standard_deviation.value() );
+                }
+                return message;
+            }
         };
 
         static Distribution create_distribution(

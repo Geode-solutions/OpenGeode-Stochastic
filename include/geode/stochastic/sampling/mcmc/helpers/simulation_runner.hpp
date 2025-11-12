@@ -38,7 +38,24 @@ namespace geode
         index_t metropolis_hasting_steps{ 1000 };
         index_t burn_in_steps{ 1000 };
 
-        std::optional< SimulationPrinter > printer{ std::nullopt };
+        std::optional< SimulationPrinterConfigurator > printer{ std::nullopt };
+
+        std::string string() const
+        {
+            auto message = absl::StrCat( "SimulationConfigurator: " );
+            absl::StrAppend( &message, "\n\t --> ", realizations,
+                " metropolis hasting realizations" );
+            absl::StrAppend( &message, "\n\t --> ", metropolis_hasting_steps,
+                " metropolis hasting steps" );
+            absl::StrAppend(
+                &message, "\n\t --> ", burn_in_steps, " burnin steps" );
+            if( printer.has_value() )
+            {
+                absl::StrAppend( &message, "\n\t --> Simulation Printer: \n",
+                    printer.value().string() );
+            }
+            return message;
+        }
     };
 
     template < typename ObjectType >
@@ -57,55 +74,47 @@ namespace geode
             return object_sets_;
         }
 
-        void run(
-            RandomEngine& engine, const SimulationConfigurator& configurator )
+        StatisticsMonitor run(
+            RandomEngine& engine, const SimulationConfigurator& config )
         {
-            if( configurator.burn_in_steps > 0 )
+            if( config.burn_in_steps > 0 )
             {
-                run( engine, configurator.burn_in_steps );
+                mh_sampler_->walk( object_sets_, engine, config.burn_in_steps );
             }
-            for( const auto realization : Range{ configurator.realizations } )
-            {
-                run( engine, configurator.metropolis_hasting_steps );
 
-                if( configurator.printer.has_value() )
-                {
-                    configurator.printer->print_statistics(
-                        state_statistics(), model_energy_term_names() );
-                    configurator.printer->print_object_sets(
-                        object_sets_, realization );
-                }
-            }
-        }
+            // Initialize monitoring
+            StatisticsMonitor stats_monitor( energy_terms_collection_.size() );
+            std::unique_ptr< SimulationPrinter > printer;
 
-        StatisticsMonitor run_and_monitor(
-            RandomEngine& engine, const SimulationConfigurator& configurator )
-        {
-            if( configurator.burn_in_steps > 0 )
+            if( config.printer.has_value() )
             {
-                run( engine, configurator.burn_in_steps );
+                printer = std::make_unique< SimulationPrinter >(
+                    config.printer.value() );
             }
-            StatisticsMonitor stat_monitoring(
-                energy_terms_collection_.size() );
-            for( const auto realization : Range{ configurator.realizations } )
+
+            for( const auto realization : Range{ config.realizations } )
             {
-                run( engine, configurator.metropolis_hasting_steps );
+                mh_sampler_->walk(
+                    object_sets_, engine, config.metropolis_hasting_steps );
+
                 const auto stats = state_statistics();
-                stat_monitoring.add_realization( stats );
-                if( configurator.printer.has_value() )
+                stats_monitor.add_realization( stats );
+
+                if( printer )
                 {
-                    configurator.printer->print_statistics(
-                        state_statistics(), model_energy_term_names() );
-                    configurator.printer->print_object_sets(
-                        object_sets_, realization );
+                    printer->print_statistics(
+                        stats, model_energy_term_names() );
+                    printer->print_object_sets( object_sets_, realization );
                 }
             }
-            if( configurator.printer.has_value() )
+
+            if( printer )
             {
-                configurator.printer->print_statistics_summary(
-                    stat_monitoring, model_energy_term_names() );
+                printer->print_statistics_summary(
+                    stats_monitor, model_energy_term_names() );
             }
-            return stat_monitoring;
+
+            return stats_monitor;
         }
 
         const ObjectSets< ObjectType >& state_realization() const

@@ -168,13 +168,3 @@ add_geode_test(
         OpenGeode::basic
         ${PROJECT_NAME}::stochastic
 )
-
-add_geode_test(
-    SOURCE "test-hello-world.cpp"
-    DEPENDENCIES
-        OpenGeode::basic
-        ${PROJECT_NAME}::stochastic
-)
-
-
-

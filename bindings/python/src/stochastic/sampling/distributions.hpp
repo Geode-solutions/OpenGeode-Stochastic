@@ -21,15 +21,19 @@
  *
  */
 
-#include <geode/stochastic/hello_world.hpp>
-
-#include <geode/basic/logger.hpp>
+#include <geode/stochastic/sampling/distributions.hpp>
 
 namespace geode
 {
-    bool hello_world()
+
+    void define_distributions( pybind11::module& module )
     {
-        geode::Logger::info( "Hello Geode Stochastic World!" );
-        return true;
+        // DistributionType
+        pybind11::class_< DistributionType >( module, "DistributionType" )
+            .def( pybind11::init<>() )
+            .def( pybind11::init< std::string >() )
+            .def( "get", &DistributionType::get )
+            .def( "matches", &DistributionType::operator== );
     }
+
 } // namespace geode

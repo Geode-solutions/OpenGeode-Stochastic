@@ -39,15 +39,13 @@ namespace geode
 
         StatisticsMonitor( const index_t nb_energy_terms )
         {
-            sum_.resize( nb_energy_terms, 0.0 );
-            sum_squares_.resize( nb_energy_terms, 0.0 );
             means_.resize( nb_energy_terms, 0.0 );
             variances_.resize( nb_energy_terms, 0.0 );
         }
 
         void add_realization( const std::vector< double >& values )
         {
-            OPENGEODE_EXCEPTION( values.size() == sum_.size(),
+            OPENGEODE_EXCEPTION( values.size() == means_.size(),
                 "[StatisticsMonitor] - Mismatch between realization size and "
                 "expected number of statistics." );
             ++count_;
@@ -78,8 +76,6 @@ namespace geode
         }
 
     private:
-        std::vector< double > sum_;
-        std::vector< double > sum_squares_;
         std::vector< double > means_;
         std::vector< double > variances_;
         index_t count_{ 0 };

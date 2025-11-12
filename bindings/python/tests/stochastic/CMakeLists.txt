@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 add_geode_python_test(
-    SOURCE "test-py-hello-world.py"
+    SOURCE "test-py-mh-fractures.py"
     DEPENDENCIES
         ${PROJECT_NAME}::py_stochastic
 )

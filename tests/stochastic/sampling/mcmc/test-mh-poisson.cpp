@@ -50,7 +50,7 @@ namespace
     {
     public:
         PoissonSimulationRunner( const geode::BoundingBox2D& box )
-            : box_( box ) {};
+            : box_( box ){};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {
@@ -199,9 +199,7 @@ namespace
             sim_config.burn_in_steps = 1000;
             sim_config.printer = printer_config;
 
-            // runner.run( engine, sim_config );
-            auto statistic_monitoring =
-                runner.run_and_monitor( engine, sim_config );
+            auto statistic_monitoring = runner.run( engine, sim_config );
             runner.check_statistics( statistic_monitoring );
         }
 
@@ -251,9 +249,7 @@ namespace
         sim_config.burn_in_steps = 1000;
         sim_config.printer = printer_config;
 
-        // runner.run( engine, sim_config );
-        auto statistic_monitoring =
-            runner.run_and_monitor( engine, sim_config );
+        auto statistic_monitoring = runner.run( engine, sim_config );
         runner.check_statistics( statistic_monitoring );
 
         geode::Logger::info( "--> SUCCESS!" );

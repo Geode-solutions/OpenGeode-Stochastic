@@ -47,6 +47,32 @@ namespace geode
         index_t realisations_print_frequency{ 100 };
 
         std::string output_folder{ std::filesystem::current_path().string() };
+
+        std::string string() const
+        {
+            auto message = absl::StrCat(
+                "SimulationPrinterConfigurator - print to folder: ",
+                output_folder );
+            if( print_statistics )
+            {
+                absl::StrAppend( &message,
+                    "\n\t --> print statistics for each realisation to file: ",
+                    statistics_filename );
+            }
+            if( print_statistics_summary )
+            {
+                absl::StrAppend( &message,
+                    "\n\t --> print summary statistics to file: ",
+                    statistics_summary_filename );
+            }
+            if( print_realisations )
+            {
+                absl::StrAppend( &message, "\n\t --> print pattern every ",
+                    realisations_print_frequency,
+                    " realizations behind the prefix: ", realisations_prefix );
+            }
+            return message;
+        }
     };
 
     class SimulationPrinter

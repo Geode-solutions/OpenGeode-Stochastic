@@ -22,15 +22,31 @@
  */
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
-#include <geode/stochastic/hello_world.hpp>
-#include <geode/stochastic/sampling/random_engine.hpp>
+#include "sampling/direct/double_sampler.hpp"
+
+#include "sampling/mcmc/helpers/fracture_simulation_runner.hpp"
+#include "sampling/mcmc/helpers/simulation_monitor.hpp"
+#include "sampling/mcmc/helpers/simulation_printer.hpp"
+#include "sampling/mcmc/helpers/simulation_runner.hpp"
+
+#include "sampling/distributions.hpp"
+#include "sampling/random_engine.hpp"
 
 PYBIND11_MODULE( opengeode_stochastic_py_stochastic, module )
 {
     module.doc() = "OpenGeode-Stochastic Python binding";
     pybind11::class_< geode::StochasticLibrary >( module, "StochasticLibrary" )
         .def( "initialize", &geode::StochasticLibrary::initialize );
-    module.def( "hello_world", &geode::hello_world );
-    //    geode::define_random_engine( module );
+
+    geode::define_double_sampler( module );
+
+    geode::define_fracture_simulation( module );
+    geode::define_simulation_monitor( module );
+    geode::define_simulation_printer( module );
+    geode::define_simulation_runner( module );
+
+    geode::define_distributions( module );
+    geode::define_random_engine( module );
 }
