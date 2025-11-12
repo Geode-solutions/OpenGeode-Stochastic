@@ -34,6 +34,62 @@ namespace geode
             .def( pybind11::init< std::string >() )
             .def( "get", &DistributionType::get )
             .def( "matches", &DistributionType::operator== );
+
+        // UniformClosed<double>
+        pybind11::class_< geode::UniformClosed< double > >( m, "UniformClosed" )
+            .def( pybind11::init<>() )
+            .def_readwrite(
+                "min_value", &geode::UniformClosed< double >::min_value )
+            .def_readwrite(
+                "max_value", &geode::UniformClosed< double >::max_value )
+            .def( "is_valid", &geode::UniformClosed< double >::is_valid )
+            .def( "distribution_type_static",
+                &geode::UniformClosed< double >::distribution_type_static )
+            .def( "distribution_type",
+                &geode::UniformClosed< double >::distribution_type )
+            .def( "string", &geode::UniformClosed< double >::string );
+
+        // UniformClosedOpen<double>
+        pybind11::class_< geode::UniformClosedOpen< double > >(
+            m, "UniformClosedOpen" )
+            .def( pybind11::init<>() )
+            .def_readwrite(
+                "min_value", &geode::UniformClosedOpen< double >::min_value )
+            .def_readwrite(
+                "max_value", &geode::UniformClosedOpen< double >::max_value )
+            .def( "is_valid", &geode::UniformClosedOpen< double >::is_valid )
+            .def( "distribution_type_static",
+                &geode::UniformClosedOpen< double >::distribution_type_static )
+            .def( "distribution_type",
+                &geode::UniformClosedOpen< double >::distribution_type )
+            .def( "string", &geode::UniformClosedOpen< double >::string );
+
+        // Gaussian
+        pybind11::class_< geode::Gaussian >( m, "Gaussian" )
+            .def( pybind11::init<>() )
+            .def_readwrite( "mean", &geode::Gaussian::mean )
+            .def_readwrite(
+                "standard_deviation", &geode::Gaussian::standard_deviation )
+            .def( "is_valid", &geode::Gaussian::is_valid )
+            .def( "distribution_type_static",
+                &geode::Gaussian::distribution_type_static )
+            .def( "distribution_type", &geode::Gaussian::distribution_type )
+            .def( "string", &geode::Gaussian::string );
+
+        // TruncatedGaussian
+        pybind11::class_< geode::TruncatedGaussian >( m, "TruncatedGaussian" )
+            .def( pybind11::init<>() )
+            .def_readwrite( "mean", &geode::TruncatedGaussian::mean )
+            .def_readwrite( "standard_deviation",
+                &geode::TruncatedGaussian::standard_deviation )
+            .def_readwrite( "min_value", &geode::TruncatedGaussian::min_value )
+            .def_readwrite( "max_value", &geode::TruncatedGaussian::max_value )
+            .def( "is_valid", &geode::TruncatedGaussian::is_valid )
+            .def( "distribution_type_static",
+                &geode::TruncatedGaussian::distribution_type_static )
+            .def( "distribution_type",
+                &geode::TruncatedGaussian::distribution_type )
+            .def( "string", &geode::TruncatedGaussian::string );
     }
 
 } // namespace geode
