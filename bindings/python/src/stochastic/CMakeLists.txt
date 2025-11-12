@@ -31,4 +31,7 @@ add_geode_python_binding(
         "stochastic.cpp"
     DEPENDENCIES
         ${PROJECT_NAME}::stochastic
+        OpenGeode::basic
+        OpenGeode::geometry
+        OpenGeode::model
 )
