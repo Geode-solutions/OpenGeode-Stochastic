@@ -123,9 +123,9 @@ namespace
 
         // azimuth
         setB.azimuth.distribution_type =
-            geode::UniformClosed< double >::distribution_type_static();
-        setB.azimuth.min_value = 90.;
-        setB.azimuth.max_value = 100.;
+            geode::VonMises::distribution_type_static();
+        setB.azimuth.mean = 60.;
+        setB.azimuth.standard_deviation = 15.;
 
         // positionning
         setB.p20 = 0.1;
