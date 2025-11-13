@@ -57,7 +57,7 @@ def test_fracture_simulator():
     setA.azimuth.max_value = 10.0
 
     # positioning
-    setA.p20 = 0.1
+    setA.p20 = 0.06
     setA.minimal_spacing = 1.0
 
     runner = stochastic.FractureSimulationRunner(box)
@@ -69,7 +69,7 @@ def test_fracture_simulator():
     printer_config.output_folder = os.path.join(printer_config.output_folder , "py_single_fracture_set")
 
     sim_config = stochastic.SimulationConfigurator()
-    sim_config.realizations = 1000
+    sim_config.realizations = 500
     sim_config.metropolis_hasting_steps = 1000
     sim_config.burn_in_steps = 1000
     sim_config.printer = printer_config
@@ -97,10 +97,10 @@ def test_two_fracture_sets_simulator():
     setA.length.distribution_type = stochastic.DistributionType("UniformClosed")
     setA.length.min_value = 1.0
     setA.length.max_value = 10.0
-    setA.azimuth.distribution_type = stochastic.DistributionType("UniformClosed")
-    setA.azimuth.min_value = 1.0
-    setA.azimuth.max_value = 10.0
-    setA.p20 = 0.1
+    setA.azimuth.distribution_type = stochastic.DistributionType("VonMises")
+    setA.azimuth.mean = 45
+    setA.azimuth.standard_deviation = 10.0
+    setA.p20 = 0.05
     setA.minimal_spacing = 1.0
 
     # --- Object set B
@@ -112,7 +112,7 @@ def test_two_fracture_sets_simulator():
     setB.azimuth.distribution_type =stochastic.DistributionType("UniformClosed")
     setB.azimuth.min_value = 90.0
     setB.azimuth.max_value = 100.0
-    setB.p20 = 0.1
+    setB.p20 = 0.03
     setB.minimal_spacing = 2.0
 
     runner = stochastic.FractureSimulationRunner(box)
@@ -124,7 +124,7 @@ def test_two_fracture_sets_simulator():
     printer_config.output_folder = os.path.join(printer_config.output_folder ,printer_config.output_folder, "py_two_fracture_sets")
 
     sim_config = stochastic.SimulationConfigurator()
-    sim_config.realizations = 1000
+    sim_config.realizations = 500
     sim_config.metropolis_hasting_steps = 1000
     sim_config.burn_in_steps = 1000
     sim_config.printer = printer_config

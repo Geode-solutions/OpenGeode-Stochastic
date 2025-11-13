@@ -41,7 +41,8 @@ namespace geode
         using Distribution = std::variant< UniformClosed< double >,
             UniformClosedOpen< double >,
             Gaussian,
-            TruncatedGaussian >;
+            TruncatedGaussian,
+            VonMises >;
 
         struct DistributionDescription
         {
@@ -84,6 +85,8 @@ namespace geode
 
         static Distribution create_distribution(
             const DistributionDescription& desc );
+        static Distribution create_rad_angle_distribution_from_degree(
+            const DistributionDescription& angle_desc_deg );
 
         static double sample( RandomEngine& engine, const Distribution& dist );
     };

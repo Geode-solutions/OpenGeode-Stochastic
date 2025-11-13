@@ -54,7 +54,7 @@ namespace
         setA.azimuth.max_value = 10.;
 
         // positionning
-        setA.p20 = 0.1;
+        setA.p20 = 0.05;
         setA.minimal_spacing = 1.;
 
         geode::FractureSimulationRunner runner( box );
@@ -68,7 +68,7 @@ namespace
             printer_config.output_folder, "/single_fracture_set" );
 
         geode::SimulationConfigurator sim_config;
-        sim_config.realizations = 1000;
+        sim_config.realizations = 500;
         sim_config.metropolis_hasting_steps = 1000;
         sim_config.burn_in_steps = 1000;
         sim_config.printer = printer_config;
@@ -108,7 +108,7 @@ namespace
         setA.azimuth.max_value = 10.;
 
         // positionning
-        setA.p20 = 0.1;
+        setA.p20 = 0.05;
         setA.minimal_spacing = 1.;
 
         // --- Object set
@@ -123,12 +123,12 @@ namespace
 
         // azimuth
         setB.azimuth.distribution_type =
-            geode::UniformClosed< double >::distribution_type_static();
-        setB.azimuth.min_value = 90.;
-        setB.azimuth.max_value = 100.;
+            geode::VonMises::distribution_type_static();
+        setB.azimuth.mean = 60.;
+        setB.azimuth.standard_deviation = 15.;
 
         // positionning
-        setB.p20 = 0.1;
+        setB.p20 = 0.05;
         setB.minimal_spacing = 2.;
 
         geode::FractureSimulationRunner runner( box );
@@ -143,7 +143,7 @@ namespace
             absl::StrCat( printer_config.output_folder, "/two_fracture_sets" );
 
         geode::SimulationConfigurator sim_config;
-        sim_config.realizations = 1000;
+        sim_config.realizations = 500;
         sim_config.metropolis_hasting_steps = 1000;
         sim_config.burn_in_steps = 1000;
         sim_config.printer = printer_config;

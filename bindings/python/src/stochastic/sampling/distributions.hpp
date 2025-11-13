@@ -87,6 +87,17 @@ namespace geode
                 &TruncatedGaussian::distribution_type_static )
             .def( "distribution_type", &TruncatedGaussian::distribution_type )
             .def( "string", &TruncatedGaussian::string );
+
+        // VonMises
+        pybind11::class_< VonMises >( module, "VonMises" )
+            .def( pybind11::init<>() )
+            .def_readwrite( "mean", &VonMises::mean )
+            .def_readwrite( "concentration", &VonMises::concentration )
+            .def( "is_valid", &VonMises::is_valid )
+            .def_static( "distribution_type_static",
+                &VonMises::distribution_type_static )
+            .def( "distribution_type", &VonMises::distribution_type )
+            .def( "string", &VonMises::string );
     }
 
 } // namespace geode

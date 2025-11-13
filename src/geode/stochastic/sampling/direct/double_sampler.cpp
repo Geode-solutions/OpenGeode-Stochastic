@@ -23,8 +23,11 @@
 
 #include <geode/stochastic/sampling/direct/double_sampler.hpp>
 
+#include <geode/geometry/angle.hpp>
+
 #include <geode/stochastic/common.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
+
 namespace
 {
     struct DistributionParams
@@ -63,6 +66,20 @@ namespace
             "need at least (min,max) or (mean,std)." );
         return p;
     }
+
+    double compute_kappa_von_mises( double standard_deviation_rad )
+    {
+        geode::Logger::info(
+            "[VonMises] approximate concentation (kappa) from with "
+            "1/(std*std)." );
+        OPENGEODE_EXCEPTION( standard_deviation_rad > geode::GLOBAL_EPSILON,
+            "Cannot evaluate the VonMises concentration since standard "
+            "deviation is equal to ",
+            standard_deviation_rad, " (in rad)." );
+
+        return 1.0 / ( standard_deviation_rad * standard_deviation_rad );
+    }
+
 } // namespace
 namespace geode
 {
@@ -117,6 +134,17 @@ namespace geode
                     dist.max_value = p.max;
                     return dist;
                 } },
+            { VonMises::distribution_type_static(),
+                []( const DoubleSampler::DistributionDescription& d ) {
+                    OPENGEODE_EXCEPTION( d.mean && d.standard_deviation,
+                        "[DoubleSampler] - Provide mean and Standard deviation "
+                        "to set up a VonMises Distribution." );
+                    VonMises dist;
+                    dist.mean = *d.mean;
+                    dist.concentration =
+                        compute_kappa_von_mises( *d.standard_deviation );
+                    return dist;
+                } },
         };
 
     DoubleSampler::Distribution DoubleSampler::create_distribution(
@@ -127,6 +155,41 @@ namespace geode
             throw geode::OpenGeodeException( absl::StrCat(
                 "Unknown distribution type: ", desc.distribution_type.get() ) );
         return it->second( desc );
+    }
+
+    DoubleSampler::Distribution
+        DoubleSampler::create_rad_angle_distribution_from_degree(
+            const DistributionDescription& desc_deg )
+    {
+        DistributionDescription desc_rad = desc_deg;
+        if( desc_rad.mean )
+        {
+            auto mean_angle = Angle::create_from_degrees( *( desc_rad.mean ) );
+            desc_rad.mean = mean_angle.normalized_between_0_and_2pi().radians();
+        }
+        if( desc_rad.standard_deviation )
+        {
+            auto std_angle =
+                Angle::create_from_degrees( *( desc_rad.standard_deviation ) );
+            desc_rad.standard_deviation =
+                std_angle.normalized_between_0_and_2pi().radians();
+        }
+        if( desc_rad.min_value )
+        {
+            auto min_angle =
+                Angle::create_from_degrees( *( desc_rad.min_value ) );
+            desc_rad.min_value =
+                min_angle.normalized_between_0_and_2pi().radians();
+        }
+        if( desc_rad.max_value )
+        {
+            auto max_angle =
+                Angle::create_from_degrees( *( desc_rad.max_value ) );
+            desc_rad.max_value =
+                max_angle.normalized_between_0_and_2pi().radians();
+        }
+        // Call the general create_distribution
+        return create_distribution( desc_rad );
     }
 
     double DoubleSampler::sample(
@@ -143,6 +206,8 @@ namespace geode
                     return engine.sample_gaussian( d );
                 if constexpr( std::is_same_v< D, TruncatedGaussian > )
                     return engine.sample_truncated_gaussian( d );
+                if constexpr( std::is_same_v< D, VonMises > )
+                    return engine.sample_von_mises( d );
                 throw OpenGeodeException( "DoubleSampler - Unsupported "
                                           "distribution for double" );
             },

@@ -176,4 +176,34 @@ namespace geode
         }
     };
 
+    struct opengeode_stochastic_stochastic_api VonMises
+    {
+        VonMises() = default;
+
+        // 2D von Mises parameters
+        double mean{ 0.0 }; // mean direction in radians
+        double concentration{ 1.0 }; // kappa (concentration parameter)
+
+        [[nodiscard]] static DistributionType distribution_type_static()
+        {
+            return DistributionType{ "VonMises" };
+        }
+
+        [[nodiscard]] DistributionType distribution_type() const
+        {
+            return distribution_type_static();
+        }
+
+        [[nodiscard]] bool is_valid() const
+        {
+            return concentration >= 0.0 && std::isfinite( mean );
+        }
+
+        std::string string() const
+        {
+            return absl::StrCat( distribution_type().get(), "(mean=", mean,
+                ", kappa=", concentration, ")" );
+        }
+    };
+
 } // namespace geode

@@ -142,6 +142,59 @@ namespace geode
             return 0.;
         }
 
+        double sample_von_mises( const VonMises& law )
+        {
+            OPENGEODE_ASSERT(
+                law.concentration >= 0.0 && std::isfinite( law.mean ),
+                "[VonMises sampling] - Invalid parameters: mean=", law.mean,
+                ", concentration=", law.concentration, "." );
+
+            if( law.concentration < geode::GLOBAL_EPSILON )
+            {
+                UniformClosedOpen< double > uniform_dist;
+                uniform_dist.max_value = 2.0 * M_PI;
+                return sample_uniform( uniform_dist );
+            }
+
+            //  Best & Fisher (1979) algorithm for von Mises sampling
+            const double a =
+                1.0
+                + std::sqrt(
+                    1.0 + 4.0 * law.concentration * law.concentration );
+            const double b =
+                ( a - std::sqrt( 2.0 * a ) ) / ( 2.0 * law.concentration );
+            const double r = ( 1.0 + b * b ) / ( 2.0 * b );
+
+            double theta;
+            UniformClosed< double > uniform_dist;
+            while( true )
+            {
+                double u1 = sample_uniform( uniform_dist );
+                double z = std::cos( M_PI * u1 );
+                double f = ( 1.0 + r * std::abs( z ) ) / ( r + std::abs( z ) );
+                double c = law.concentration * ( r - f );
+                double u2 = sample_uniform( uniform_dist );
+
+                if( u2 < c * ( 2.0 - c ) || u2 <= c * std::exp( 1.0 - c ) )
+                {
+                    theta = std::acos( f );
+                    if( sample_bernoulli( 0.5 ) )
+                    {
+                        theta = -theta;
+                    }
+                    break;
+                }
+            }
+
+            // Shift by mean and normalize to [0, 2π)
+            theta += law.mean;
+            theta = std::fmod( theta, 2.0 * M_PI );
+            if( theta < 0.0 )
+                theta += 2.0 * M_PI;
+
+            return theta;
+        }
+
         double sample_log()
         {
             return std::log(
@@ -219,6 +272,10 @@ namespace geode
         const TruncatedGaussian& law )
     {
         return impl_->sample_truncated_gaussian( law );
+    }
+    double RandomEngine::sample_von_mises( const VonMises& law )
+    {
+        return impl_->sample_von_mises( law );
     }
     double RandomEngine::sample_log()
     {

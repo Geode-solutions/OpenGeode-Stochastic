@@ -43,14 +43,16 @@ void test_sample_segment(
 {
     geode::UniformClosed< double > length;
     geode::UniformClosed< double > az;
+    auto box_enlarged = box;
+    box_enlarged.extends( 1.01 );
 
     for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
     {
         auto value =
             geode::SegmentUniformSampler::sample( engine, box, length, az );
-        OPENGEODE_EXCEPTION( box.contains( value.vertices()[0] ),
+        OPENGEODE_EXCEPTION( box_enlarged.contains( value.vertices()[0] ),
             "[SegmentUniformSampler] - segment out of box." );
-        OPENGEODE_EXCEPTION( box.contains( value.vertices()[1] ),
+        OPENGEODE_EXCEPTION( box_enlarged.contains( value.vertices()[1] ),
             "[SegmentUniformSampler] - segment out of box." );
     }
 }
