@@ -60,6 +60,11 @@ namespace geode
             .def_static( "create_distribution",
                 &DoubleSampler::create_distribution, pybind11::arg( "desc" ),
                 "Create a distribution from a description" )
+            .def_static( "create_rad_angle_distribution_from_degree",
+                &DoubleSampler::create_rad_angle_distribution_from_degree,
+                pybind11::arg( "desc" ),
+                "Create a angle distribution in radian from a description "
+                "provided in degree" )
             .def_static( "sample", &DoubleSampler::sample,
                 pybind11::arg( "engine" ), pybind11::arg( "dist" ),
                 "Sample a value from a distribution using a RandomEngine" );

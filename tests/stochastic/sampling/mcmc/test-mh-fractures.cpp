@@ -54,7 +54,7 @@ namespace
         setA.azimuth.max_value = 10.;
 
         // positionning
-        setA.p20 = 0.1;
+        setA.p20 = 0.05;
         setA.minimal_spacing = 1.;
 
         geode::FractureSimulationRunner runner( box );
@@ -108,7 +108,7 @@ namespace
         setA.azimuth.max_value = 10.;
 
         // positionning
-        setA.p20 = 0.1;
+        setA.p20 = 0.05;
         setA.minimal_spacing = 1.;
 
         // --- Object set
@@ -128,7 +128,7 @@ namespace
         setB.azimuth.standard_deviation = 15.;
 
         // positionning
-        setB.p20 = 0.1;
+        setB.p20 = 0.05;
         setB.minimal_spacing = 2.;
 
         geode::FractureSimulationRunner runner( box );

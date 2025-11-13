@@ -64,6 +64,9 @@ namespace geode
                 &RandomEngine::sample_truncated_gaussian,
                 pybind11::arg( "law" ),
                 "Sample a value from a truncated Gaussian" )
+            .def( "sample_von_mises", &RandomEngine::sample_von_mises,
+                pybind11::arg( "law" ),
+                "Sample a value from a Von Mises-Fisher" )
 
             // Other distributions
             .def( "sample_log", &RandomEngine::sample_log,
