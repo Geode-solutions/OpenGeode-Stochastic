@@ -41,6 +41,7 @@ namespace geode
         {
             if( !is_valid_object( obj ) )
             {
+                Logger::warn( "[ObjectSetSampler] - invalid object proposed." );
                 return LOG_PROB_INVALID;
             }
             return log_pdf_;

@@ -63,6 +63,7 @@ namespace geode
             const auto& extremities = obj.vertices();
             const auto current =
                 static_cast< local_index_t >( engine.sample_bernoulli( 0.5 ) );
+            const auto other = 1 - current;
 
             geode::Sphere< 2 > ball{ extremities[current],
                 ratio * obj.length() };
@@ -71,7 +72,8 @@ namespace geode
             constexpr index_t max_try{ 100 };
             for( const auto try_id : geode::Range{ max_try } )
             {
-                if( box_.contains( new_point ) )
+                if( box_.contains( new_point )
+                    || box_.contains( extremities[other] ) )
                 {
                     OwnerSegment2D new_segment{ obj };
                     new_segment.set_point( current, new_point );
@@ -91,7 +93,7 @@ namespace geode
             const auto& extremities = obj.vertices();
 
             return box_.contains( extremities[0] )
-                   && box_.contains( extremities[1] );
+                   || box_.contains( extremities[1] );
         }
 
     private:

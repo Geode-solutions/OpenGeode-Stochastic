@@ -23,8 +23,11 @@
 
 #include <geode/stochastic/sampling/direct/double_sampler.hpp>
 
+#include <geode/geometry/angle.hpp>
+
 #include <geode/stochastic/common.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
+
 namespace
 {
     struct DistributionParams
@@ -127,6 +130,40 @@ namespace geode
             throw geode::OpenGeodeException( absl::StrCat(
                 "Unknown distribution type: ", desc.distribution_type.get() ) );
         return it->second( desc );
+    }
+
+    DoubleSampler::Distribution DoubleSampler::create_angle_distribution_in_rad(
+        const DistributionDescription& desc_deg )
+    {
+        DistributionDescription desc_rad = desc_deg;
+        if( desc_rad.mean )
+        {
+            auto mean_angle = Angle::create_from_degrees( *( desc_rad.mean ) );
+            desc_rad.mean = mean_angle.normalized_between_0_and_2pi().radians();
+        }
+        if( desc_rad.standard_deviation )
+        {
+            auto std_angle =
+                Angle::create_from_degrees( *( desc_rad.standard_deviation ) );
+            desc_rad.standard_deviation =
+                std_angle.normalized_between_0_and_2pi().radians();
+        }
+        if( desc_rad.min_value )
+        {
+            auto min_angle =
+                Angle::create_from_degrees( *( desc_rad.min_value ) );
+            desc_rad.min_value =
+                min_angle.normalized_between_0_and_2pi().radians();
+        }
+        if( desc_rad.max_value )
+        {
+            auto max_angle =
+                Angle::create_from_degrees( *( desc_rad.max_value ) );
+            desc_rad.max_value =
+                max_angle.normalized_between_0_and_2pi().radians();
+        }
+        // Call the general create_distribution
+        return create_distribution( desc_rad );
     }
 
     double DoubleSampler::sample(

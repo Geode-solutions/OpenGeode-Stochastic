@@ -97,7 +97,8 @@ namespace geode
                 auto length_distribution =
                     DoubleSampler::create_distribution( set_desc.length );
                 auto azimuth_distribution =
-                    DoubleSampler::create_distribution( set_desc.azimuth );
+                    DoubleSampler::create_angle_distribution_in_rad(
+                        set_desc.azimuth );
                 this->set_samplers_.push_back(
                     std::make_unique< UniformSegmentSetSampler >(
                         box_, length_distribution, azimuth_distribution ) );

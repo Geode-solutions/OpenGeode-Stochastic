@@ -84,6 +84,8 @@ namespace geode
 
         static Distribution create_distribution(
             const DistributionDescription& desc );
+        static Distribution create_angle_distribution_in_rad(
+            const DistributionDescription& desc );
 
         static double sample( RandomEngine& engine, const Distribution& dist );
     };
