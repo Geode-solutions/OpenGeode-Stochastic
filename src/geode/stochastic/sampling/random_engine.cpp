@@ -184,7 +184,7 @@ namespace geode
                                   && std::isfinite( law.mean ),
                 "[Gaussian sampling] - Infinite parameters or "
                 "negative standard deviation N(",
-                law.mean, "," law.standard_deviation, ")." );
+                law.mean, ",", law.standard_deviation, ")." );
 
             const double max = law.max_value.value_or(
                 std::numeric_limits< double >::infinity() );
