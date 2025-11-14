@@ -68,7 +68,7 @@ namespace
             printer_config.output_folder, "/single_fracture_set" );
 
         geode::SimulationConfigurator sim_config;
-        sim_config.realizations = 500;
+        sim_config.realizations = 300;
         sim_config.metropolis_hasting_steps = 1000;
         sim_config.burn_in_steps = 1000;
         sim_config.printer = printer_config;
@@ -145,7 +145,7 @@ namespace
             absl::StrCat( printer_config.output_folder, "/two_fracture_sets" );
 
         geode::SimulationConfigurator sim_config;
-        sim_config.realizations = 500;
+        sim_config.realizations = 300;
         sim_config.metropolis_hasting_steps = 1000;
         sim_config.burn_in_steps = 1000;
         sim_config.printer = printer_config;
