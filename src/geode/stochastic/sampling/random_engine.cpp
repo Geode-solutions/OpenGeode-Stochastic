@@ -334,7 +334,7 @@ namespace geode
         double sample_truncated_powerlaw( const TruncatedPowerLaw& law )
         {
             OPENGEODE_ASSERT(
-                alpha > 0, "Power-law exponent alpha must be > 0" );
+                law.alpha > 0, "Power-law exponent alpha must be > 0" );
 
             // Set bounds
             const double xmin = law.min_value.value_or(

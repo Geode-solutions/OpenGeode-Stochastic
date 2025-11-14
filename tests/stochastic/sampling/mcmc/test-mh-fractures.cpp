@@ -97,7 +97,8 @@ namespace
 
         // length
         setA.length.distribution_type =
-            geode::UniformClosed< double >::distribution_type_static();
+            geode::TruncatedPowerLaw::distribution_type_static();
+        setA.length.alpha = 2.;
         setA.length.min_value = 1;
         setA.length.max_value = 10.;
 
