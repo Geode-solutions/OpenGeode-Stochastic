@@ -43,6 +43,14 @@ namespace geode
                 "mean", &DoubleSampler::DistributionDescription::mean )
             .def_readwrite( "standard_deviation",
                 &DoubleSampler::DistributionDescription::standard_deviation )
+            .def_readwrite( "kappa",
+                &DoubleSampler::DistributionDescription::kappa,
+                "Set up kappa which is the concentration parameter for Von "
+                "Mises Distribution law" )
+            .def_readwrite( "alpha",
+                &DoubleSampler::DistributionDescription::alpha,
+                "Set up alpha which is the exponent parameter for power law "
+                "Distribution law" )
             .def( "string", &DoubleSampler::DistributionDescription::string,
                 "Return a detailed description of the Distribution law" )
             .def( "__repr__",

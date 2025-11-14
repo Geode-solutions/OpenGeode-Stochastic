@@ -28,59 +28,6 @@
 #include <geode/stochastic/common.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
 
-namespace
-{
-    struct DistributionParams
-    {
-        double min;
-        double max;
-        double mean;
-        double std;
-    };
-
-    DistributionParams complete_distribution_params(
-        const geode::DoubleSampler::DistributionDescription& d )
-    {
-        DistributionParams p{};
-
-        if( d.min_value && d.max_value )
-        {
-            p.min = *d.min_value;
-            p.max = *d.max_value;
-            p.mean = ( p.min + p.max ) / 2.0;
-            p.std = ( p.max - p.min ) / std::sqrt( 12.0 );
-            return p;
-        }
-
-        if( d.mean && d.standard_deviation )
-        {
-            p.mean = *d.mean;
-            p.std = *d.standard_deviation;
-            p.min = p.mean - std::sqrt( 3.0 ) * p.std;
-            p.max = p.mean + std::sqrt( 3.0 ) * p.std;
-            return p;
-        }
-
-        throw geode::OpenGeodeException(
-            "[DistributionDescripption] Incomplete distribution description: "
-            "need at least (min,max) or (mean,std)." );
-        return p;
-    }
-
-    double compute_kappa_von_mises( double standard_deviation_rad )
-    {
-        geode::Logger::info(
-            "[VonMises] approximate concentation (kappa) from with "
-            "1/(std*std)." );
-        OPENGEODE_EXCEPTION( standard_deviation_rad > geode::GLOBAL_EPSILON,
-            "Cannot evaluate the VonMises concentration since standard "
-            "deviation is equal to ",
-            standard_deviation_rad, " (in rad)." );
-
-        return 1.0 / ( standard_deviation_rad * standard_deviation_rad );
-    }
-
-} // namespace
 namespace geode
 {
     struct DistributionTypeHasher
@@ -101,48 +48,87 @@ namespace geode
         >
         distribution_registry = {
             { UniformClosed< double >::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription& d ) {
-                    auto p = complete_distribution_params( d );
+                []( const DoubleSampler::DistributionDescription& desc ) {
+                    OPENGEODE_EXCEPTION( desc.min_value && desc.max_value,
+                        "[DoubleSampler] - Incomplete description for "
+                        "Uniform distribution need at least min "
+                        "and max values" );
                     UniformClosed< double > dist;
-                    dist.min_value = p.min;
-                    dist.max_value = p.max;
+                    dist.min_value = desc.min_value.value();
+                    dist.max_value = desc.max_value.value();
                     return dist;
                 } },
             { UniformClosedOpen< double >::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription& d ) {
-                    auto p = complete_distribution_params( d );
+                []( const DoubleSampler::DistributionDescription& desc ) {
+                    OPENGEODE_EXCEPTION( desc.min_value && desc.max_value,
+                        "[DoubleSampler] - Incomplete description for "
+                        "Uniform distribution need at least min "
+                        "and max values" );
                     UniformClosedOpen< double > dist;
-                    dist.min_value = p.min;
-                    dist.max_value = p.max;
+                    dist.min_value = desc.min_value.value();
+                    dist.max_value = desc.max_value.value();
                     return dist;
                 } },
             { Gaussian::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription& d ) {
-                    auto p = complete_distribution_params( d );
+                []( const DoubleSampler::DistributionDescription& desc ) {
+                    OPENGEODE_EXCEPTION( desc.mean && desc.standard_deviation,
+                        "[DoubleSampler] - Incomplete description for "
+                        "Gaussian distribution need at least mean "
+                        "and standard deviation values" );
                     Gaussian dist;
-                    dist.mean = p.mean;
-                    dist.standard_deviation = p.std;
+                    dist.mean = desc.mean.value();
+                    dist.standard_deviation = desc.standard_deviation.value();
                     return dist;
                 } },
             { TruncatedGaussian::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription& d ) {
-                    auto p = complete_distribution_params( d );
+                []( const DoubleSampler::DistributionDescription& desc ) {
+                    OPENGEODE_EXCEPTION( desc.mean && desc.standard_deviation,
+                        "[DoubleSampler] - Incomplete description for "
+                        "Truncated Gaussian distribution need at least mean "
+                        "and standard deviation values" );
                     TruncatedGaussian dist;
-                    dist.mean = p.mean;
-                    dist.standard_deviation = p.std;
-                    dist.min_value = p.min;
-                    dist.max_value = p.max;
+                    dist.mean = desc.mean.value();
+                    dist.standard_deviation = desc.standard_deviation.value();
+                    dist.min_value = desc.min_value;
+                    dist.max_value = desc.max_value;
+
                     return dist;
                 } },
             { VonMises::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription& d ) {
-                    OPENGEODE_EXCEPTION( d.mean && d.standard_deviation,
-                        "[DoubleSampler] - Provide mean and Standard deviation "
-                        "to set up a VonMises Distribution." );
+                []( const DoubleSampler::DistributionDescription& desc ) {
+                    OPENGEODE_EXCEPTION( desc.mean && desc.kappa,
+                        "[DoubleSampler] - Incomplete description for "
+                        "Von Mises distribution need at least mean "
+                        "and concentration (kappa) values" );
                     VonMises dist;
-                    dist.mean = *d.mean;
-                    dist.concentration =
-                        compute_kappa_von_mises( *d.standard_deviation );
+                    dist.mean = desc.mean.value();
+                    dist.concentration = desc.kappa.value();
+                    return dist;
+                } },
+            { TruncatedLogNormal::distribution_type_static(),
+                []( const DoubleSampler::DistributionDescription& desc ) {
+                    OPENGEODE_EXCEPTION( desc.mean && desc.standard_deviation,
+                        "[DoubleSampler] - Incomplete description for "
+                        "TruncatedLogNormal distribution need mean "
+                        "and standard deviation values of the underlying "
+                        "normal distribution." );
+                    TruncatedLogNormal dist;
+                    dist.mean = desc.mean.value();
+                    dist.standard_deviation = desc.standard_deviation.value();
+                    dist.min_value = desc.min_value;
+                    dist.max_value = desc.max_value;
+                    return dist;
+                } },
+            { TruncatedPowerLaw::distribution_type_static(),
+                []( const DoubleSampler::DistributionDescription& desc ) {
+                    OPENGEODE_EXCEPTION( desc.alpha,
+                        "[DoubleSampler] - Incomplete description for "
+                        "TruncatedPowerLaw distribution need power law "
+                        "exponent (alpha)." );
+                    TruncatedPowerLaw dist;
+                    dist.alpha = desc.alpha.value();
+                    dist.min_value = desc.min_value;
+                    dist.max_value = desc.max_value;
                     return dist;
                 } },
         };
@@ -208,6 +194,10 @@ namespace geode
                     return engine.sample_truncated_gaussian( d );
                 if constexpr( std::is_same_v< D, VonMises > )
                     return engine.sample_von_mises( d );
+                if constexpr( std::is_same_v< D, TruncatedLogNormal > )
+                    return engine.sample_truncated_lognormal( d );
+                if constexpr( std::is_same_v< D, TruncatedPowerLaw > )
+                    return engine.sample_truncated_powerlaw( d );
                 throw OpenGeodeException( "DoubleSampler - Unsupported "
                                           "distribution for double" );
             },

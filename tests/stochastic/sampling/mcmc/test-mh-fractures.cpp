@@ -117,15 +117,16 @@ namespace
 
         // length
         setB.length.distribution_type =
-            geode::UniformClosed< double >::distribution_type_static();
+            geode::TruncatedLogNormal::distribution_type_static();
         setB.length.min_value = 1;
-        setB.length.max_value = 10.;
-
+        setB.length.max_value = 50.;
+        setB.length.mean = 1;
+        setB.length.standard_deviation = 1.;
         // azimuth
         setB.azimuth.distribution_type =
             geode::VonMises::distribution_type_static();
         setB.azimuth.mean = 60.;
-        setB.azimuth.standard_deviation = 15.;
+        setB.azimuth.kappa = 1.;
 
         // positionning
         setB.p20 = 0.05;

@@ -50,7 +50,11 @@ namespace geode
 
         double sample_gaussian( const Gaussian& law );
         double sample_truncated_gaussian( const TruncatedGaussian& law );
+
         double sample_von_mises( const VonMises& law );
+
+        double sample_truncated_lognormal( const TruncatedLogNormal& law );
+        double sample_truncated_powerlaw( const TruncatedPowerLaw& law );
 
         double sample_log();
 

@@ -206,4 +206,134 @@ namespace geode
         }
     };
 
+    struct TruncatedLogNormal
+    {
+        TruncatedLogNormal() = default;
+
+        // Parameters of the underlying normal distribution
+        double mean{ 0.0 };
+        double standard_deviation{ 1.0 };
+
+        std::optional< double > min_value;
+        std::optional< double > max_value;
+
+        [[nodiscard]] static DistributionType distribution_type_static()
+        {
+            return DistributionType{ "TruncatedLogNormal" };
+        }
+
+        [[nodiscard]] DistributionType distribution_type() const
+        {
+            return distribution_type_static();
+        }
+
+        bool is_valid() const
+        {
+            if( standard_deviation <= 0 || std::isfinite( standard_deviation )
+                || std::isfinite( mean ) )
+            {
+                geode::Logger::error(
+                    "[Truncated TruncatedLogNormal] - check mean and "
+                    "standard deviation N(",
+                    mean, ",", standard_deviation, ")." );
+                return false;
+            }
+            const auto max =
+                max_value.value_or( std::numeric_limits< double >::infinity() );
+            const auto min = min_value.value_or( 0. );
+
+            if( min_value >= max_value )
+            {
+                geode::Logger::error( "[Truncated TruncatedLogNormal] - check "
+                                      "range boundaries definintion [",
+                    min, ",", max, "]." );
+                return false;
+            }
+            return true;
+        }
+
+        std::string string() const
+        {
+            std::string min_str = min_value.has_value()
+                                      ? std::to_string( min_value.value() )
+                                      : "0.";
+
+            std::string max_str = max_value.has_value()
+                                      ? std::to_string( max_value.value() )
+                                      : "+inf";
+            return absl::StrCat( distribution_type().get(), "(", mean,
+                standard_deviation, ") in [", min_str, ",", max_str, "]" );
+        }
+    };
+
+    struct TruncatedPowerLaw
+    {
+        TruncatedPowerLaw() = default;
+
+        // Power-law exponent
+        double alpha{ 2.0 }; // default value > 0
+
+        // Optional truncation bounds
+        std::optional< double > min_value;
+        std::optional< double > max_value;
+
+        [[nodiscard]] static DistributionType distribution_type_static()
+        {
+            return DistributionType{ "TruncatedPowerLaw" };
+        }
+
+        [[nodiscard]] DistributionType distribution_type() const
+        {
+            return distribution_type_static();
+        }
+
+        // Check if the parameters are valid
+        bool is_valid() const
+        {
+            if( alpha <= 0.0 || !std::isfinite( alpha ) )
+            {
+                geode::Logger::error(
+                    "[TruncatedPowerLaw] - exponent alpha must be > 0: alpha=",
+                    alpha );
+                return false;
+            }
+
+            const double xmin =
+                min_value.value_or( std::numeric_limits< double >::min() );
+            const double xmax =
+                max_value.value_or( std::numeric_limits< double >::infinity() );
+
+            if( xmin <= 0.0 )
+            {
+                geode::Logger::error(
+                    "[TruncatedPowerLaw] - min_value must be positive: ",
+                    xmin );
+                return false;
+            }
+
+            if( xmin >= xmax )
+            {
+                geode::Logger::error(
+                    "[TruncatedPowerLaw] - min_value >= max_value: [", xmin,
+                    ",", xmax, "]" );
+                return false;
+            }
+
+            return true;
+        }
+
+        // String representation
+        std::string string() const
+        {
+            const std::string min_str =
+                min_value.has_value() ? std::to_string( min_value.value() )
+                                      : "ε";
+            const std::string max_str =
+                max_value.has_value() ? std::to_string( max_value.value() )
+                                      : "+inf";
+
+            return absl::StrCat( distribution_type().get(), "(alpha=", alpha,
+                ") in [", min_str, ",", max_str, "]" );
+        }
+    };
 } // namespace geode
