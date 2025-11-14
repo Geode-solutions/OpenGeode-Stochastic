@@ -64,11 +64,19 @@ namespace geode
                 &RandomEngine::sample_truncated_gaussian,
                 pybind11::arg( "law" ),
                 "Sample a value from a truncated Gaussian" )
+
+            // Other distributions
             .def( "sample_von_mises", &RandomEngine::sample_von_mises,
                 pybind11::arg( "law" ),
                 "Sample a value from a Von Mises-Fisher" )
-
-            // Other distributions
+            .def( "sample_truncated_lognormal",
+                &RandomEngine::sample_truncated_lognormal,
+                pybind11::arg( "law" ),
+                "Sample a value from a Truncated Log Normal" )
+            .def( "sample_truncated_powerlaw",
+                &RandomEngine::sample_truncated_powerlaw,
+                pybind11::arg( "law" ),
+                "Sample a value from a Truncated Power Law" )
             .def( "sample_log", &RandomEngine::sample_log,
                 "Return a logarithmically uniform random value" )
             .def( "sample_bernoulli", &RandomEngine::sample_bernoulli,

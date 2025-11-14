@@ -98,6 +98,36 @@ namespace geode
                 &VonMises::distribution_type_static )
             .def( "distribution_type", &VonMises::distribution_type )
             .def( "string", &VonMises::string );
+
+        // TruncatedLogNormal
+        pybind11::class_< TruncatedLogNormal >( module, "TruncatedLogNormal" )
+            .def( pybind11::init<>() )
+            .def_readwrite( "mean", &TruncatedLogNormal::mean,
+                "Mean value of the underlying normal distribution" )
+            .def_readwrite( "standard_deviation",
+                &TruncatedLogNormal::standard_deviation,
+                "Standard deviation value of the underlying normal "
+                "distribution" )
+            .def_readwrite( "min_value", &TruncatedLogNormal::min_value )
+            .def_readwrite( "max_value", &TruncatedLogNormal::max_value )
+            .def( "is_valid", &TruncatedLogNormal::is_valid )
+            .def_static( "distribution_type_static",
+                &TruncatedLogNormal::distribution_type_static )
+            .def( "distribution_type", &TruncatedLogNormal::distribution_type )
+            .def( "string", &TruncatedLogNormal::string );
+
+        // TruncatedPowerLaw
+        pybind11::class_< TruncatedPowerLaw >( module, "TruncatedPowerLaw" )
+            .def( pybind11::init<>() )
+            .def_readwrite( "alpha", &TruncatedPowerLaw::alpha,
+                "Alpha value of the power law" )
+            .def_readwrite( "min_value", &TruncatedPowerLaw::min_value )
+            .def_readwrite( "max_value", &TruncatedPowerLaw::max_value )
+            .def( "is_valid", &TruncatedPowerLaw::is_valid )
+            .def_static( "distribution_type_static",
+                &TruncatedPowerLaw::distribution_type_static )
+            .def( "distribution_type", &TruncatedPowerLaw::distribution_type )
+            .def( "string", &TruncatedPowerLaw::string );
     }
 
 } // namespace geode

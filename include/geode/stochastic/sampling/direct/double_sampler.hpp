@@ -42,7 +42,9 @@ namespace geode
             UniformClosedOpen< double >,
             Gaussian,
             TruncatedGaussian,
-            VonMises >;
+            VonMises,
+            TruncatedLogNormal,
+            TruncatedPowerLaw >;
 
         struct DistributionDescription
         {
@@ -53,6 +55,10 @@ namespace geode
             std::optional< double > max_value;
             std::optional< double > mean;
             std::optional< double > standard_deviation;
+            std::optional< double >
+                kappa; // concentration parameter for VonMises distribution
+            std::optional< double >
+                alpha; // exponent parameter for power law distribution
 
             std::string string() const
             {
@@ -78,6 +84,18 @@ namespace geode
                 {
                     absl::StrAppend( &message,
                         "\n\t - std value: ", standard_deviation.value() );
+                }
+                if( kappa.has_value() )
+                {
+                    absl::StrAppend( &message,
+                        "\n\t - kappa (von mises concentration) value: ",
+                        kappa.value() );
+                }
+                if( alpha.has_value() )
+                {
+                    absl::StrAppend( &message,
+                        "\n\t - alpha (power law exponent) value: ",
+                        alpha.value() );
                 }
                 return message;
             }

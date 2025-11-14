@@ -99,16 +99,18 @@ def test_two_fracture_sets_simulator():
     setA.length.max_value = 10.0
     setA.azimuth.distribution_type = stochastic.DistributionType("VonMises")
     setA.azimuth.mean = 45
-    setA.azimuth.standard_deviation = 10.0
+    setA.azimuth.kappa = 1.0
     setA.p20 = 0.05
     setA.minimal_spacing = 1.0
 
     # --- Object set B
     setB = stochastic.FractureSetDescription()
     setB.name = "B"
-    setB.length.distribution_type =stochastic.DistributionType("UniformClosed")
+    setB.length.distribution_type =stochastic.DistributionType("TruncatedLogNormal")
     setB.length.min_value = 1.0
-    setB.length.max_value = 10.0
+    setB.length.max_value = 50.0
+    setB.length.mean = 1.0
+    setB.length.standard_deviation = 1.0
     setB.azimuth.distribution_type =stochastic.DistributionType("UniformClosed")
     setB.azimuth.min_value = 90.0
     setB.azimuth.max_value = 100.0

@@ -41,6 +41,80 @@
 
 namespace
 {
+    double normal_cdf( double x )
+    {
+        return 0.5 * std::erfc( -x / std::sqrt( 2.0 ) );
+    }
+
+    // NormalQuantile based on Peter J. Acklam's inverse normal CDF
+    // approximation. Original algorithm released to the public domain.
+    // Reference:
+    // https://web.archive.org/web/20150910005011/http://home.online.no/~pjacklam
+    double normal_quantile( double p )
+    {
+        OPENGEODE_EXCEPTION( p >= 0.0 && p <= 1.0,
+            "[normal_quantile] - p must be in (0,1). Check the consistencies "
+            "between min,mean and max values." );
+
+        static const double a1 = -3.969683028665376e+01;
+        static const double a2 = 2.209460984245205e+02;
+        static const double a3 = -2.759285104469687e+02;
+        static const double a4 = 1.383577518672690e+02;
+        static const double a5 = -3.066479806614716e+01;
+        static const double a6 = 2.506628277459239e+00;
+
+        static const double b1 = -5.447609879822406e+01;
+        static const double b2 = 1.615858368580409e+02;
+        static const double b3 = -1.556989798598866e+02;
+        static const double b4 = 6.680131188771972e+01;
+        static const double b5 = -1.328068155288572e+01;
+
+        static const double c1 = -7.784894002430293e-03;
+        static const double c2 = -3.223964580411365e-01;
+        static const double c3 = -2.400758277161838e+00;
+        static const double c4 = -2.549732539343734e+00;
+        static const double c5 = 4.374664141464968e+00;
+        static const double c6 = 2.938163982698783e+00;
+
+        static const double d1 = 7.784695709041462e-03;
+        static const double d2 = 3.224671290700398e-01;
+        static const double d3 = 2.445134137142996e+00;
+        static const double d4 = 3.754408661907416e+00;
+
+        const double plow = 0.02425;
+        const double phigh = 1 - plow;
+
+        double q, r;
+        if( p < plow )
+        {
+            // lower tail
+            q = std::sqrt( -2 * std::log( p ) );
+            return ( ( ( ( ( c1 * q + c2 ) * q + c3 ) * q + c4 ) * q + c5 ) * q
+                       + c6 )
+                   / ( ( ( ( d1 * q + d2 ) * q + d3 ) * q + d4 ) * q + 1 );
+        }
+        else if( p > phigh )
+        {
+            // upper tail
+            q = std::sqrt( -2 * std::log( 1 - p ) );
+            return -( ( ( ( ( c1 * q + c2 ) * q + c3 ) * q + c4 ) * q + c5 ) * q
+                       + c6 )
+                   / ( ( ( ( d1 * q + d2 ) * q + d3 ) * q + d4 ) * q + 1 );
+        }
+        else
+        {
+            // central region
+            q = p - 0.5;
+            r = q * q;
+            return ( ( ( ( ( a1 * r + a2 ) * r + a3 ) * r + a4 ) * r + a5 ) * r
+                       + a6 )
+                   * q
+                   / ( ( ( ( ( b1 * r + b2 ) * r + b3 ) * r + b4 ) * r + b5 )
+                           * r
+                       + 1 );
+        }
+    }
+
     std::seed_seq create_seed_seq( uint64_t seed )
     {
         std::vector< uint32_t > seed_data = { static_cast< uint32_t >(
@@ -108,38 +182,41 @@ namespace geode
             OPENGEODE_ASSERT( law.standard_deviation > 0
                                   && std::isfinite( law.standard_deviation )
                                   && std::isfinite( law.mean ),
-                "[Truncated Gaussian sampling] - Infinite "
-                "parameters or negative standard deviation N(",
-                law.mean, law.standard_deviation, ")." );
-            const auto max = law.max_value.value_or(
+                "[Gaussian sampling] - Infinite parameters or "
+                "negative standard deviation N(",
+                law.mean, ",", law.standard_deviation, ")." );
+
+            const double max = law.max_value.value_or(
                 std::numeric_limits< double >::infinity() );
-            const auto min = law.min_value.value_or(
+            const double min = law.min_value.value_or(
                 -std::numeric_limits< double >::infinity() );
 
             OPENGEODE_ASSERT( min < max,
-                "[Truncated Gaussian sampling] - Wrong truncation range ", min,
+                "[Gaussian sampling] - Wrong truncation range ", min,
                 " is not < than ", max, "." );
-            OPENGEODE_ASSERT(
-                min < law.mean + 6.0 * law.standard_deviation
-                    && max > law.mean - 6.0 * law.standard_deviation,
-                "[Truncated Gaussian sampling] - Truncation range is too far "
-                "from mean." );
 
-            constexpr index_t MAX_ATTEMPTS = 10000;
-            for( const auto attempt : geode::Range( MAX_ATTEMPTS ) )
-            {
-                geode_unused( attempt );
-                auto value = absl::gaussian_distribution< double >(
-                    law.mean, law.standard_deviation )( rand_gen_ );
-                if( value >= min && value <= max )
-                {
-                    return value;
-                }
-            }
-            OPENGEODE_ASSERT_NOT_REACHED(
-                "[Truncated Gaussian sampling] - number of attemps > ",
-                MAX_ATTEMPTS );
-            return 0.;
+            // Standardize bounds
+            const double alpha = ( min - law.mean ) / law.standard_deviation;
+            const double beta = ( max - law.mean ) / law.standard_deviation;
+
+            // Compute CDF of bounds, handling infinite alpha/beta
+            double F_min = std::isfinite( alpha ) ? normal_cdf( alpha ) : 0.0;
+            double F_max = std::isfinite( beta ) ? normal_cdf( beta ) : 1.0;
+
+            // Clamp to avoid exact 0 or 1 (normal_quantile cannot handle them)
+            F_min = std::max( F_min, geode::GLOBAL_EPSILON );
+            F_max = std::min( F_max, 1.0 - geode::GLOBAL_EPSILON );
+
+            OPENGEODE_EXCEPTION( F_min < F_max,
+                "[Gaussian sampling] - truncation "
+                "range is extreme please check inputs" );
+
+            // Sample uniform in [F_min, F_max]
+            std::uniform_real_distribution< double > uniform( F_min, F_max );
+            const double u = uniform( rand_gen_ );
+
+            // Map through inverse CDF
+            return law.mean + law.standard_deviation * normal_quantile( u );
         }
 
         double sample_von_mises( const VonMises& law )
@@ -149,6 +226,8 @@ namespace geode
                 "[VonMises sampling] - Invalid parameters: mean=", law.mean,
                 ", concentration=", law.concentration, "." );
 
+            // Uniform approximation for very small concentration (nearly
+            // uniform)
             if( law.concentration < geode::GLOBAL_EPSILON )
             {
                 UniformClosedOpen< double > uniform_dist;
@@ -156,7 +235,21 @@ namespace geode
                 return sample_uniform( uniform_dist );
             }
 
-            //  Best & Fisher (1979) algorithm for von Mises sampling
+            // Normal approximation for very large concentration
+            const double LARGE_KAPPA = 1e3; // threshold, can be tuned
+            if( law.concentration > LARGE_KAPPA )
+            {
+                // Variance of approximate normal around mean
+                const double stddev = 1.0 / std::sqrt( law.concentration );
+                std::normal_distribution< double > normal_dist(
+                    law.mean, stddev );
+                double theta = normal_dist( rand_gen_ );
+                // Wrap to [0, 2π)
+                return std::fmod( theta + 2.0 * M_PI, 2.0 * M_PI );
+            }
+
+            // Best & Fisher (1979) rejection algorithm for moderate
+            // concentration
             const double a =
                 1.0
                 + std::sqrt(
@@ -179,20 +272,104 @@ namespace geode
                 {
                     theta = std::acos( f );
                     if( sample_bernoulli( 0.5 ) )
-                    {
                         theta = -theta;
-                    }
                     break;
                 }
             }
 
-            // Shift by mean and normalize to [0, 2π)
+            // Shift by mean and wrap to [0, 2π)
             theta += law.mean;
-            theta = std::fmod( theta, 2.0 * M_PI );
-            if( theta < 0.0 )
-                theta += 2.0 * M_PI;
+            theta = std::fmod( theta + 2.0 * M_PI, 2.0 * M_PI );
 
             return theta;
+        }
+
+        double sample_truncated_lognormal( const TruncatedLogNormal& law )
+        {
+            // Basic sanity checks
+            OPENGEODE_ASSERT( law.standard_deviation > 0
+                                  && std::isfinite( law.standard_deviation )
+                                  && std::isfinite( law.mean ),
+                "[Truncated LogNormal sampling] - Infinite parameters or "
+                "negative standard deviation N(",
+                law.mean, ", ", law.standard_deviation, ")." );
+
+            // Determine min and max, respecting optional values
+            const double min_val = law.min_value.value_or( 0.0 );
+            const double max_val = law.max_value.value_or(
+                std::numeric_limits< double >::infinity() );
+
+            OPENGEODE_ASSERT( min_val < max_val,
+                "[Truncated LogNormal sampling] - Wrong truncation range ",
+                min_val, " is not < than ", max_val, "." );
+
+            // Transform to standard normal space
+            const double zmin =
+                ( std::log( min_val ) - law.mean ) / law.standard_deviation;
+            const double zmax =
+                ( std::isfinite( max_val )
+                        ? ( std::log( max_val ) - law.mean )
+                              / law.standard_deviation
+                        : std::numeric_limits< double >::infinity() );
+
+            // Compute CDF bounds, handling infinite zmin/zmax
+            double F_min =
+                std::max( normal_cdf( zmin ), geode::GLOBAL_EPSILON );
+            double F_max =
+                std::min( normal_cdf( zmax ), 1.0 - geode::GLOBAL_EPSILON );
+
+            OPENGEODE_EXCEPTION( F_min < F_max,
+                "[Truncated LogNormal sampling] - truncation "
+                "range is extreme please chack inputs" );
+
+            // Sample uniform in [Fmin, Fmax]
+            std::uniform_real_distribution< double > uniform( F_min, F_max );
+            const double u = uniform( rand_gen_ );
+
+            // Map through inverse CDF and exponentiate
+            const double z = normal_quantile( u );
+            return std::exp( law.mean + law.standard_deviation * z );
+        }
+
+        double sample_truncated_powerlaw( const TruncatedPowerLaw& law )
+        {
+            OPENGEODE_ASSERT(
+                law.alpha > 0, "Power-law exponent alpha must be > 0" );
+
+            // Set bounds
+            const double xmin = law.min_value.value_or(
+                geode::GLOBAL_EPSILON ); // default 1.0 if unspecified
+            const double xmax = law.max_value.value_or(
+                std::numeric_limits< double >::infinity() );
+
+            OPENGEODE_ASSERT( xmin < xmax, "Truncated power-law: min >= max" );
+
+            // Sample uniform
+            std::uniform_real_distribution< double > uniform( 0.0, 1.0 );
+            const double u = uniform( rand_gen_ );
+
+            // Inverse CDF
+            if( std::abs( law.alpha - 1.0 ) > geode::GLOBAL_EPSILON )
+            {
+                double xmin_pow = std::pow( xmin, 1.0 - law.alpha );
+                double xmax_pow =
+                    std::isfinite( xmax )
+                        ? std::pow( xmax, 1.0 - law.alpha )
+                        : std::numeric_limits< double >::infinity();
+                if( !std::isfinite( xmax_pow ) )
+                {
+                    return std::pow( xmin_pow + u, 1.0 / ( 1.0 - law.alpha ) );
+                }
+                return std::pow( u * ( xmax_pow - xmin_pow ) + xmin_pow,
+                    1.0 / ( 1.0 - law.alpha ) );
+            }
+            else
+            {
+                // alpha == 1
+                const double xmax_eff =
+                    std::isfinite( xmax ) ? xmax : xmin * geode::GLOBAL_EPSILON;
+                return xmin * std::pow( xmax_eff / xmin, u );
+            }
         }
 
         double sample_log()
@@ -276,6 +453,16 @@ namespace geode
     double RandomEngine::sample_von_mises( const VonMises& law )
     {
         return impl_->sample_von_mises( law );
+    }
+    double RandomEngine::sample_truncated_lognormal(
+        const TruncatedLogNormal& law )
+    {
+        return impl_->sample_truncated_lognormal( law );
+    }
+    double RandomEngine::sample_truncated_powerlaw(
+        const TruncatedPowerLaw& law )
+    {
+        return impl_->sample_truncated_powerlaw( law );
     }
     double RandomEngine::sample_log()
     {

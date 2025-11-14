@@ -68,7 +68,7 @@ namespace
             printer_config.output_folder, "/single_fracture_set" );
 
         geode::SimulationConfigurator sim_config;
-        sim_config.realizations = 500;
+        sim_config.realizations = 300;
         sim_config.metropolis_hasting_steps = 1000;
         sim_config.burn_in_steps = 1000;
         sim_config.printer = printer_config;
@@ -97,7 +97,8 @@ namespace
 
         // length
         setA.length.distribution_type =
-            geode::UniformClosed< double >::distribution_type_static();
+            geode::TruncatedPowerLaw::distribution_type_static();
+        setA.length.alpha = 2.;
         setA.length.min_value = 1;
         setA.length.max_value = 10.;
 
@@ -117,15 +118,16 @@ namespace
 
         // length
         setB.length.distribution_type =
-            geode::UniformClosed< double >::distribution_type_static();
+            geode::TruncatedLogNormal::distribution_type_static();
         setB.length.min_value = 1;
-        setB.length.max_value = 10.;
-
+        setB.length.max_value = 50.;
+        setB.length.mean = 1;
+        setB.length.standard_deviation = 1.;
         // azimuth
         setB.azimuth.distribution_type =
             geode::VonMises::distribution_type_static();
         setB.azimuth.mean = 60.;
-        setB.azimuth.standard_deviation = 15.;
+        setB.azimuth.kappa = 1.;
 
         // positionning
         setB.p20 = 0.05;
@@ -143,7 +145,7 @@ namespace
             absl::StrCat( printer_config.output_folder, "/two_fracture_sets" );
 
         geode::SimulationConfigurator sim_config;
-        sim_config.realizations = 500;
+        sim_config.realizations = 300;
         sim_config.metropolis_hasting_steps = 1000;
         sim_config.burn_in_steps = 1000;
         sim_config.printer = printer_config;
