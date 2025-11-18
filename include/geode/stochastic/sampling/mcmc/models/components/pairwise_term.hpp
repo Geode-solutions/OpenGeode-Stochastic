@@ -143,35 +143,22 @@ namespace geode
         double statistic( const ObjectSets< ObjectType >& state ) const override
         {
             double sum = 0.0;
-            this->for_each_targeted_object( state, [&]( const ObjectId&
-                                                           obj_id ) {
-                const auto& cur_obj = state.get_object( obj_id );
-                const auto neighbors =
-                    state.get_all_object(); // state.neighbors( obj_id, 1.1 );
-                for( const auto& neigh_obj_id : neighbors )
-                {
-                    // if( neigh_obj_id.set_id < obj_id.set_id )
-                    //{
-                    //     continue;
-                    // }
-                    // if( neigh_obj_id.set_id == obj_id.set_id
-                    //     && neigh_obj_id.index <= obj_id.index )
-                    //{
-                    //     continue;
-                    // }
-
-                    if( neigh_obj_id == obj_id )
-                    {
-                        continue;
-                    }
+            this->for_each_targeted_object(
+                state, [&]( const ObjectId& obj_id ) {
+                    const auto& cur_obj = state.get_object( obj_id );
                     ObjectRef< ObjectType > object{ cur_obj, obj_id.set_id };
-                    ObjectRef< ObjectType > neigh_object{
-                        state.get_object( neigh_obj_id ), neigh_obj_id.set_id
-                    };
+                    const auto neighbors = state.neighbors( obj_id,
+                        interaction_->neighborhood_searching_distance() );
+                    for( const auto& neigh_obj_id : neighbors )
+                    {
+                        ObjectRef< ObjectType > neigh_object{
+                            state.get_object( neigh_obj_id ),
+                            neigh_obj_id.set_id
+                        };
 
-                    sum += interaction_->evaluate( object, neigh_object );
-                }
-            } );
+                        sum += interaction_->evaluate( object, neigh_object );
+                    }
+                } );
             return sum / 2.;
         }
 
