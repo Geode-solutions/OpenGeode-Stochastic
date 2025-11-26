@@ -50,7 +50,7 @@ namespace
     {
     public:
         PoissonSimulationRunner( const geode::BoundingBox2D& box )
-            : box_( box ) {};
+            : box_( box ){};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {
@@ -97,7 +97,7 @@ namespace
                             geode::DensityTerm< geode::Point2D > >(
                             absl::StrCat( energy_desc.name, "_density" ),
                             energy_desc.density,
-                            absl::flat_hash_set< geode::uuid >{ set_id } ) ) );
+                            std::vector< geode::uuid >{ set_id } ) ) );
 
                 this->ordered_target_statistics_.push_back(
                     energy_desc.target_count );

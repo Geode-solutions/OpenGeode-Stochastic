@@ -37,7 +37,7 @@ namespace geode
     public:
         explicit PairwiseTerm( std::string_view name,
             double gamma,
-            absl::flat_hash_set< uuid > targeted_set_ids,
+            std::vector< uuid > targeted_set_ids,
             std::unique_ptr< PairwiseInteraction< ObjectType > > interaction )
             : EnergyTerm< ObjectType >(
                   name, gamma, std::move( targeted_set_ids ) ),
@@ -59,8 +59,9 @@ namespace geode
                 return 0.0;
             }
             double delta = 0.0;
-            const auto neighbors = state.neighbors( new_object.object,
-                interaction_->neighborhood_searching_distance() );
+            const auto neighbors =
+                state.neighbors( new_object.object, this->targeted_set_ids(),
+                    interaction_->neighborhood_searching_distance() );
             for( const auto& neigh_id : neighbors )
             {
                 geode::ObjectRef< ObjectType > neigh_object{
@@ -83,8 +84,9 @@ namespace geode
             ObjectRef< ObjectType > object_to_remove{
                 state.get_object( object_id ), object_id.set_id
             };
-            const auto neighbors = state.neighbors(
-                object_id, interaction_->neighborhood_searching_distance() );
+            const auto neighbors =
+                state.neighbors( object_id, this->targeted_set_ids(),
+                    interaction_->neighborhood_searching_distance() );
             for( auto neigh_id : neighbors )
             {
                 ObjectRef< ObjectType > neigh_object{
@@ -111,8 +113,9 @@ namespace geode
             ObjectRef< ObjectType > object_to_remove{
                 state.get_object( old_object_id ), old_object_id.set_id
             };
-            const auto old_neighbors = state.neighbors( old_object_id,
-                interaction_->neighborhood_searching_distance() );
+            const auto old_neighbors =
+                state.neighbors( old_object_id, this->targeted_set_ids(),
+                    interaction_->neighborhood_searching_distance() );
             for( auto neigh_id : old_neighbors )
             {
                 ObjectRef< ObjectType > neigh_object{
@@ -123,8 +126,9 @@ namespace geode
             }
 
             // Add new object's interactions
-            const auto new_neighbors = state.neighbors( new_object.object,
-                interaction_->neighborhood_searching_distance() );
+            const auto new_neighbors =
+                state.neighbors( new_object.object, this->targeted_set_ids(),
+                    interaction_->neighborhood_searching_distance() );
             for( auto neigh_id : new_neighbors )
             {
                 if( old_object_id == neigh_id )
@@ -147,10 +151,20 @@ namespace geode
                 state, [&]( const ObjectId& obj_id ) {
                     const auto& cur_obj = state.get_object( obj_id );
                     ObjectRef< ObjectType > object{ cur_obj, obj_id.set_id };
-                    const auto neighbors = state.neighbors( obj_id,
-                        interaction_->neighborhood_searching_distance() );
+                    const auto neighbors =
+                        state.neighbors( obj_id, this->targeted_set_ids(),
+                            interaction_->neighborhood_searching_distance() );
                     for( const auto& neigh_obj_id : neighbors )
                     {
+                        if( neigh_obj_id.set_id < obj_id.set_id )
+                        {
+                            continue;
+                        }
+                        if( neigh_obj_id.set_id == obj_id.set_id
+                            && neigh_obj_id.index <= obj_id.index )
+                        {
+                            continue;
+                        }
                         ObjectRef< ObjectType > neigh_object{
                             state.get_object( neigh_obj_id ),
                             neigh_obj_id.set_id
@@ -159,7 +173,7 @@ namespace geode
                         sum += interaction_->evaluate( object, neigh_object );
                     }
                 } );
-            return sum / 2.;
+            return sum;
         }
 
     private:

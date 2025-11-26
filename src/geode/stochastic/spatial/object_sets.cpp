@@ -123,20 +123,25 @@ namespace geode
 
     template < typename Type >
     std::vector< ObjectId > ObjectSets< Type >::neighbors(
-        const ObjectId& object_id, double searching_distance ) const
+        const ObjectId& object_id,
+        const std::vector< uuid >& targeted_set_ids,
+        double searching_distance ) const
     {
         auto box = object_bounding_box( get_object( object_id ) );
         box.extends( searching_distance * 2. );
-        return neighborhood_.get_all_neighbor_ids( box, object_id );
+        return neighborhood_.get_all_neighbor_ids(
+            box, targeted_set_ids, object_id );
     }
 
     template < typename Type >
-    std::vector< ObjectId > ObjectSets< Type >::neighbors(
-        const Type& object, double searching_distance ) const
+    std::vector< ObjectId > ObjectSets< Type >::neighbors( const Type& object,
+        const std::vector< uuid >& targeted_set_ids,
+        double searching_distance ) const
     {
         auto box = object_bounding_box( object );
         box.extends( searching_distance * 2. );
-        return neighborhood_.get_all_neighbor_ids( box, std::nullopt );
+        return neighborhood_.get_all_neighbor_ids(
+            box, targeted_set_ids, std::nullopt );
     }
 
     template < typename Type >

@@ -64,6 +64,7 @@ namespace geode
 
         std::vector< ObjectId > get_all_neighbor_ids(
             const BoundingBox< dimension >& box,
+            const std::vector< uuid >& targeted_set_ids,
             std::optional< ObjectId > exclude_self_id ) const;
 
     private:

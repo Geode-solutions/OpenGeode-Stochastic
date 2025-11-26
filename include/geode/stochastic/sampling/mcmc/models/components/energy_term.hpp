@@ -88,10 +88,11 @@ namespace geode
     public:
         explicit EnergyTerm( std::string_view name,
             double param,
-            absl::flat_hash_set< uuid >&& targeted_set_ids )
+            std::vector< uuid >&& targeted_set_ids )
             : energy_scale_{ param },
               targeted_set_ids_{ std::move( targeted_set_ids ) }
         {
+            std::sort( targeted_set_ids_.begin(), targeted_set_ids_.end() );
             IdentifierBuilder builder( *this );
             builder.set_name( name );
         }
@@ -103,7 +104,7 @@ namespace geode
             return energy_scale_.parameter();
         }
 
-        const absl::flat_hash_set< uuid >& targeted_set_ids() const
+        const std::vector< uuid >& targeted_set_ids() const
         {
             return targeted_set_ids_;
         }
@@ -147,7 +148,8 @@ namespace geode
     protected:
         bool is_targeted_set( const uuid& set_id ) const
         {
-            return targeted_set_ids_.find( set_id ) != targeted_set_ids_.end();
+            return std::binary_search(
+                targeted_set_ids_.begin(), targeted_set_ids_.end(), set_id );
         }
 
         template < typename Func >
@@ -166,6 +168,6 @@ namespace geode
 
     private:
         detail::EnergyScale energy_scale_;
-        absl::flat_hash_set< uuid > targeted_set_ids_;
+        std::vector< uuid > targeted_set_ids_;
     };
 } // namespace geode

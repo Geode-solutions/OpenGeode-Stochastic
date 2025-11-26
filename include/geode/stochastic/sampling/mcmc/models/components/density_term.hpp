@@ -35,7 +35,7 @@ namespace geode
     public:
         explicit DensityTerm( std::string_view name,
             double lambda,
-            absl::flat_hash_set< uuid > targeted_set_ids )
+            std::vector< uuid > targeted_set_ids )
             : EnergyTerm< ObjectType >(
                   name, lambda, std::move( targeted_set_ids ) )
         {

@@ -117,8 +117,7 @@ namespace geode
                     this->energy_terms_collection_.add_energy_term(
                         std::make_unique< DensityTerm< OwnerSegment2D > >(
                             absl::StrCat( set_desc.name, "_density" ),
-                            set_desc.p20,
-                            absl::flat_hash_set< uuid >{ set_id } ) ) );
+                            set_desc.p20, std::vector< uuid >{ set_id } ) ) );
                 // spacing
                 if( set_desc.minimal_spacing < GLOBAL_EPSILON )
                 {
@@ -133,7 +132,7 @@ namespace geode
                     this->energy_terms_collection_.add_energy_term(
                         std::make_unique< PairwiseTerm< OwnerSegment2D > >(
                             absl::StrCat( set_desc.name, "_min_spacing" ), 0.,
-                            absl::flat_hash_set< uuid >{ set_id },
+                            std::vector< uuid >{ set_id },
                             std::move( interaction ) ) ) );
             }
 
