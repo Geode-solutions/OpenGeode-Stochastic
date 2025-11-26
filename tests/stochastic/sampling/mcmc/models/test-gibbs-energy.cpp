@@ -31,30 +31,21 @@
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 
-namespace
+void test_gibbs_energy()
 {
-    geode::ObjectSets< geode::Point2D > create_object_set(
-        const geode::uuid& set_id )
-    {
-        geode::Point2D p1{ { 0., 0. } };
-        geode::Point2D p2{ { 1., 1. } };
+    geode::ObjectSets< geode::Point2D > pattern;
+    const auto set_id = pattern.add_set( "default_name" );
+    geode::Point2D p1{ { 0., 0. } };
+    geode::Point2D p2{ { 1., 1. } };
+    pattern.add_object( std::move( p1 ), set_id );
+    pattern.add_object( std::move( p2 ), set_id );
 
-        geode::ObjectSets< geode::Point2D > pattern;
-        pattern.add_object( std::move( p1 ), set_id );
-        pattern.add_object( std::move( p2 ), set_id );
-
-        return pattern;
-    }
-} // namespace
-
-void test_gibbs_energy( const geode::uuid& set_id )
-{
     geode::EnergyTermCollection< geode::Point2D > energy_terms;
 
     // Add intensity term
     energy_terms.add_energy_term(
         std::make_unique< geode::DensityTerm< geode::Point2D > >(
-            "intensity", 0.5, absl::flat_hash_set< geode::uuid >{ set_id } ) );
+            "intensity", 0.5, std::vector< geode::uuid >{ set_id } ) );
 
     // Add pairwise term with trivial interaction: always counts 1 for each pair
     auto interaction =
@@ -63,15 +54,13 @@ void test_gibbs_energy( const geode::uuid& set_id )
 
     energy_terms.add_energy_term(
         std::make_unique< geode::PairwiseTerm< geode::Point2D > >(
-            "interaction", 0.8, absl::flat_hash_set< geode::uuid >{ set_id },
+            "interaction", 0.8, std::vector< geode::uuid >{ set_id },
             std::move( interaction ) ) );
 
     OPENGEODE_EXCEPTION( energy_terms.size() == 2,
         "[test gibbs] Wrong number of components after adding terms." );
 
     geode::GibbsEnergy< geode::Point2D > gibbs_energy( energy_terms );
-
-    auto pattern = create_object_set( set_id );
 
     // Check total log-energy is finite
     double total_energy = gibbs_energy.total_log_energy( pattern );
@@ -99,7 +88,7 @@ void test_gibbs_energy( const geode::uuid& set_id )
 
     // Clear components and verify
     energy_terms.clear();
-    OPENGEODE_EXCEPTION( energy_terms.size() == 2,
+    OPENGEODE_EXCEPTION( energy_terms.size() == 0,
         "[test gibbs] Components not cleared properly." );
 }
 
@@ -108,9 +97,9 @@ int main()
     try
     {
         geode::StochasticLibrary::initialize();
-        geode::uuid set_id;
-
-        // test_gibbs_energy( set_id );
+        test_gibbs_energy();
+        geode::Logger::info( "MH TEST GIBBS ENERGY SUCCESS" );
+        return 0;
     }
     catch( ... )
     {

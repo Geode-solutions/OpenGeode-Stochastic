@@ -109,14 +109,13 @@ namespace
             for( const auto& density_desc : density_descriptors_ )
             {
                 const auto set_id = name_to_uuid.at( density_desc.name );
-
                 this->ordered_energy_terms_.push_back(
                     this->energy_terms_collection_.add_energy_term(
                         std::make_unique<
                             geode::DensityTerm< geode::Point2D > >(
                             absl::StrCat( density_desc.name, "_density" ),
                             density_desc.density,
-                            absl::flat_hash_set< geode::uuid >{ set_id } ) ) );
+                            std::vector< geode::uuid >{ set_id } ) ) );
 
                 this->ordered_target_statistics_.push_back(
                     density_desc.target_count );
@@ -125,10 +124,10 @@ namespace
             // Step 3: create pairwise interaction terms
             for( const auto& interaction_desc : interaction_descriptors_ )
             {
-                absl::flat_hash_set< geode::uuid > set_ids;
+                std::vector< geode::uuid > set_ids;
                 for( const auto& name : interaction_desc.names )
                 {
-                    set_ids.emplace( name_to_uuid.at( name ) );
+                    set_ids.emplace_back( name_to_uuid.at( name ) );
                 }
 
                 auto interaction = std::make_unique<
@@ -274,7 +273,7 @@ namespace
         std::array< double, 3 > nb_points02{ 14, 21, 40.0 };
         std::array< double, 3 > nb_points03{ 11, 16, 30. };
         std::array< double, 3 > nb_interactions01{ 0, 15, 95 };
-        std::array< double, 3 > nb_interactions02{ 16, 41, 171 };
+        std::array< double, 3 > nb_interactions02{ 8, 20, 85 };
 
         for( const auto config : geode::Range{ gamma_values.size() } )
         {

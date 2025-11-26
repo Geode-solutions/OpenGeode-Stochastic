@@ -70,12 +70,14 @@ namespace geode
         void remove_object( const ObjectId& object_id );
 
         // Object neighbor search by ObjectId (always excludes self)
-        std::vector< ObjectId > neighbors(
-            const ObjectId& object_id, double searching_distance ) const;
+        std::vector< ObjectId > neighbors( const ObjectId& object_id,
+            const std::vector< uuid >& targeted_set_ids,
+            double searching_distance ) const;
         // Object neighbor search by arbitrary object (return self if in the
         // object_set)
-        std::vector< ObjectId > neighbors(
-            const Type& object, double searching_distance ) const;
+        std::vector< ObjectId > neighbors( const Type& object,
+            const std::vector< uuid >& targeted_set_ids,
+            double searching_distance ) const;
 
         std::string string() const;
 

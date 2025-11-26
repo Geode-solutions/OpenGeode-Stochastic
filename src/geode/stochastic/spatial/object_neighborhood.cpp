@@ -90,12 +90,19 @@ namespace geode
     std::vector< ObjectId >
         ObjectNeighborhood< dimension >::get_all_neighbor_ids(
             const BoundingBox< dimension >& box,
+            const std::vector< uuid >& targeted_set_ids,
             std::optional< ObjectId > exclude_self_id ) const
     {
         auto [min_bound, max_bound] = bounding_box_bounds< dimension >( box );
         std::vector< ObjectId > res;
         tree_.Search( min_bound.data(), max_bound.data(),
-            [&res, &exclude_self_id]( const ObjectId& cur_id ) -> bool {
+            [&res, &exclude_self_id, &targeted_set_ids](
+                const ObjectId& cur_id ) -> bool {
+                if( !std::binary_search( targeted_set_ids.begin(),
+                        targeted_set_ids.end(), cur_id.set_id ) )
+                {
+                    return true;
+                }
                 if( exclude_self_id && exclude_self_id.value() == cur_id )
                 {
                     return true;
