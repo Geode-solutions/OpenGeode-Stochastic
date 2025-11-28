@@ -40,6 +40,7 @@ add_geode_library(
         "spatial/object_neighborhood.hpp"
         "spatial/object_helpers.hpp"
         "spatial/pairwise_interactions.hpp"
+        "spatial/spatial_domain.hpp"
         "spatial/details/RTree.hpp"
         "sampling/direct/object_set_sampler/object_set_sampler.hpp"
         "sampling/direct/object_set_sampler/point_set_sampler.hpp"

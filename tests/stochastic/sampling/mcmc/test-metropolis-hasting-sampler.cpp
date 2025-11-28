@@ -159,10 +159,11 @@ int main()
         geode::BoundingBox2D box;
         box.add_point( min_point );
         box.add_point( max_point );
+        geode::SpatialDomain domain( box, 0. );
 
         geode::ObjectSets< geode::Point2D > state;
         const auto set_id = state.add_set( "default_name" );
-        geode::UniformPointSetSampler< 2 > sampler( box );
+        geode::UniformPointSetSampler< 2 > sampler( domain );
 
         double birth_prob = 0.3;
         double death_prob = 0.1;

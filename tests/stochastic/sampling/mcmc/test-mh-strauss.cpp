@@ -61,7 +61,8 @@ namespace
         : public geode::SimulationRunner< geode::Point2D >
     {
     public:
-        StraussSimulationRunner( const geode::BoundingBox2D& box ) : box_( box )
+        StraussSimulationRunner( const geode::SpatialDomain< 2 >& domain )
+            : geode::SimulationRunner< geode::Point2D >( domain )
         {
         }
 
@@ -98,7 +99,7 @@ namespace
 
                 this->set_samplers_.push_back(
                     std::make_unique< geode::UniformPointSetSampler< 2 > >(
-                        box_ ) );
+                        this->domain_ ) );
 
                 geode::add_birth_death_change_moves( this->set_samplers_.back(),
                     *proposal_kernel, set_id, set_desc.birth_ratio,
@@ -184,7 +185,6 @@ namespace
         }
 
     private:
-        geode::BoundingBox2D box_;
         std::vector< SetDescription > set_descriptors_;
         std::vector< PoissonDensityDescription > density_descriptors_;
         std::vector< PairwiseInteractionDescription > interaction_descriptors_;
@@ -201,6 +201,8 @@ namespace
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
         box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
+        // todo change!!
+        geode::SpatialDomain domain( box, 0. );
 
         std::array< double, 5 > gamma_values{ 0, 0.3, 0.5, 0.7, 1.0 };
         std::array< double, 5 > nb_points{ 22.6, 27.4, 31.3, 36.1, 50. };
@@ -230,7 +232,7 @@ namespace
             // geode::PairwiseInteraction::SCOPE::INTRA;
             intraA.target_interaction_count = nb_interactions[config];
 
-            StraussSimulationRunner runner( box );
+            StraussSimulationRunner runner( domain );
             runner.add_set_descriptor( setA );
             runner.add_density_descriptor( densityA );
             runner.add_interaction_descriptor( intraA );
@@ -267,6 +269,8 @@ namespace
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
         box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
+        // todo change!!
+        geode::SpatialDomain domain( box, 0. );
 
         std::array< double, 3 > gamma_values{ 0, 0.5, 1.0 };
         std::array< double, 3 > nb_points01{ 3.5, 5, 10.0 };
@@ -295,7 +299,7 @@ namespace
             PairwiseInteractionDescription intra02{ { "set02" }, 1., 2.,
                 nb_interactions02[config] };
 
-            StraussSimulationRunner runner( box );
+            StraussSimulationRunner runner( domain );
             runner.add_set_descriptor( set01 );
             runner.add_set_descriptor( set02 );
             runner.add_set_descriptor( set03 );

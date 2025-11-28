@@ -32,6 +32,7 @@
 #include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
 #include <geode/stochastic/spatial/pairwise_interactions.hpp>
+#include <geode/stochastic/spatial/spatial_domain.hpp>
 
 namespace geode
 {
@@ -72,7 +73,10 @@ namespace geode
     class FractureSimulationRunner : public SimulationRunner< OwnerSegment2D >
     {
     public:
-        FractureSimulationRunner( const BoundingBox2D& box ) : box_( box ) {}
+        FractureSimulationRunner( const SpatialDomain< 2 >& domain )
+            : SimulationRunner< OwnerSegment2D >( domain )
+        {
+        }
 
         void add_fracture_set_descriptor(
             const FractureSetDescription& descriptor )
@@ -101,7 +105,7 @@ namespace geode
                         set_desc.azimuth );
                 this->set_samplers_.push_back(
                     std::make_unique< UniformSegmentSetSampler >(
-                        box_, length_distribution, azimuth_distribution ) );
+                        domain_, length_distribution, azimuth_distribution ) );
 
                 add_birth_death_change_moves( this->set_samplers_.back(),
                     *proposal_kernel, set_id, set_desc.birth_ratio,
@@ -159,7 +163,6 @@ namespace geode
         }
 
     private:
-        BoundingBox2D box_;
         std::vector< FractureSetDescription > set_descriptors_;
     };
 

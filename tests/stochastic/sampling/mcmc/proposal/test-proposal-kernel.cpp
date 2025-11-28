@@ -56,8 +56,9 @@ namespace
         geode::BoundingBox2D box;
         box.add_point( min_point );
         box.add_point( max_point );
+        geode::SpatialDomain domain( box, 0. );
 
-        geode::UniformPointSetSampler< 2 > sampler( box );
+        geode::UniformPointSetSampler< 2 > sampler( domain );
 
         // Create classical birth-death-change kernel
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
