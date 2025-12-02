@@ -33,6 +33,11 @@
 
 void test_gibbs_energy()
 {
+    geode::BoundingBox2D box;
+    box.add_point( geode::Point2D{ { -1.0, -1.0 } } );
+    box.add_point( geode::Point2D{ { 1.0, 1.0 } } );
+    geode::SpatialDomain domain( box, 0.5 );
+
     geode::ObjectSets< geode::Point2D > pattern;
     const auto set_id = pattern.add_set( "default_name" );
     geode::Point2D p1{ { 0., 0. } };
@@ -45,7 +50,7 @@ void test_gibbs_energy()
     // Add intensity term
     energy_terms.add_energy_term(
         std::make_unique< geode::DensityTerm< geode::Point2D > >(
-            "intensity", 0.5, std::vector< geode::uuid >{ set_id } ) );
+            "intensity", 0.5, std::vector< geode::uuid >{ set_id }, domain ) );
 
     // Add pairwise term with trivial interaction: always counts 1 for each pair
     auto interaction =
@@ -55,7 +60,7 @@ void test_gibbs_energy()
     energy_terms.add_energy_term(
         std::make_unique< geode::PairwiseTerm< geode::Point2D > >(
             "interaction", 0.8, std::vector< geode::uuid >{ set_id },
-            std::move( interaction ) ) );
+            std::move( interaction ), domain ) );
 
     OPENGEODE_EXCEPTION( energy_terms.size() == 2,
         "[test gibbs] Wrong number of components after adding terms." );

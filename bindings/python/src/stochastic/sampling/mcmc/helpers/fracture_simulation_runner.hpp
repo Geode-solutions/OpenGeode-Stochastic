@@ -53,7 +53,7 @@ namespace geode
         pybind11::class_< FractureSimulationRunner,
             std::shared_ptr< FractureSimulationRunner > >(
             module, "FractureSimulationRunner" )
-            .def( pybind11::init< const BoundingBox2D& >(),
+            .def( pybind11::init< const SpatialDomain< 2 >& >(),
                 pybind11::arg( "box" ) )
             .def( "add_fracture_set_descriptor",
                 &FractureSimulationRunner::add_fracture_set_descriptor,

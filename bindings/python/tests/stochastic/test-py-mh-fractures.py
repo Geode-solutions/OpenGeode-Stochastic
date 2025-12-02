@@ -41,6 +41,7 @@ def test_fracture_simulator():
     box = og.BoundingBox2D()
     box.add_point(og.Point2D([0.0, 0.0]))
     box.add_point(og.Point2D([100.0, 100.0]))
+    domain = stochastic.SpatialDomain2D(box,10.)
 
     # --- Object set
     setA = stochastic.FractureSetDescription()
@@ -60,7 +61,7 @@ def test_fracture_simulator():
     setA.p20 = 0.06
     setA.minimal_spacing = 1.0
 
-    runner = stochastic.FractureSimulationRunner(box)
+    runner = stochastic.FractureSimulationRunner(domain)
     runner.add_fracture_set_descriptor(setA)
     runner.initialize()
 
@@ -90,7 +91,7 @@ def test_two_fracture_sets_simulator():
     box = og.BoundingBox2D()
     box.add_point(og.Point2D([0.0, 0.0]))
     box.add_point(og.Point2D([100.0, 100.0]))
-
+    domain = stochastic.SpatialDomain2D(box,10.)
     # --- Object set A
     setA = stochastic.FractureSetDescription()
     setA.name = "A"
@@ -117,7 +118,7 @@ def test_two_fracture_sets_simulator():
     setB.p20 = 0.03
     setB.minimal_spacing = 2.0
 
-    runner = stochastic.FractureSimulationRunner(box)
+    runner = stochastic.FractureSimulationRunner(domain)
     runner.add_fracture_set_descriptor(setA)
     runner.add_fracture_set_descriptor(setB)
     runner.initialize()

@@ -49,8 +49,8 @@ namespace
         : public geode::SimulationRunner< geode::Point2D >
     {
     public:
-        PoissonSimulationRunner( const geode::BoundingBox2D& box )
-            : box_( box ) {};
+        PoissonSimulationRunner( const geode::SpatialDomain< 2 >& domain )
+            : geode::SimulationRunner< geode::Point2D >( domain ) {};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {
@@ -79,7 +79,7 @@ namespace
 
                 this->set_samplers_.push_back(
                     std::make_unique< geode::UniformPointSetSampler< 2 > >(
-                        box_ ) );
+                        domain_ ) );
 
                 geode::add_birth_death_change_moves( this->set_samplers_.back(),
                     *proposal_kernel, set_id, set_desc.birth_ratio,
@@ -97,7 +97,8 @@ namespace
                             geode::DensityTerm< geode::Point2D > >(
                             absl::StrCat( energy_desc.name, "_density" ),
                             energy_desc.density,
-                            std::vector< geode::uuid >{ set_id } ) ) );
+                            std::vector< geode::uuid >{ set_id },
+                            this->domain_ ) ) );
 
                 this->ordered_target_statistics_.push_back(
                     energy_desc.target_count );
@@ -163,6 +164,7 @@ namespace
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
         box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
+        geode::SpatialDomain domain( box, 0. );
 
         std::array< double, 4 > birth_ratio{ 0.1, 0.5, 2., 4. };
         std::array< double, 4 > change_ratio{ 0., 1., 1., 0. };
@@ -182,7 +184,7 @@ namespace
             densityA.density = 0.3;
             densityA.target_count = 30.0;
 
-            PoissonSimulationRunner runner( box );
+            PoissonSimulationRunner runner( domain );
             runner.add_set_descriptor( setA );
             runner.add_density_descriptor( densityA );
             runner.initialize();
@@ -216,6 +218,7 @@ namespace
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
         box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
+        geode::SpatialDomain domain( box, 0. );
 
         // --- Set descriptions
         SetDescription set01{ "set01", 2.0, 3.0, 1.0 };
@@ -227,7 +230,7 @@ namespace
         PoissonDensityDescription density02{ "set02", 0.4, 40.0 };
         PoissonDensityDescription density03{ "set03", 0.3, 30.0 };
 
-        PoissonSimulationRunner runner( box );
+        PoissonSimulationRunner runner( domain );
         runner.add_set_descriptor( set01 );
         runner.add_set_descriptor( set02 );
         runner.add_set_descriptor( set03 );

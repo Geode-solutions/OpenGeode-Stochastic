@@ -30,6 +30,8 @@
 #include <geode/stochastic/common.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 
+#include <geode/stochastic/spatial/spatial_domain.hpp>
+
 #include <optional>
 
 namespace geode
@@ -88,9 +90,11 @@ namespace geode
     public:
         explicit EnergyTerm( std::string_view name,
             double param,
-            std::vector< uuid >&& targeted_set_ids )
+            std::vector< uuid >&& targeted_set_ids,
+            const SpatialDomain< ObjectType::dim >& domain )
             : energy_scale_{ param },
-              targeted_set_ids_{ std::move( targeted_set_ids ) }
+              targeted_set_ids_{ std::move( targeted_set_ids ) },
+              domain_( domain )
         {
             std::sort( targeted_set_ids_.begin(), targeted_set_ids_.end() );
             IdentifierBuilder builder( *this );
@@ -152,6 +156,18 @@ namespace geode
                 targeted_set_ids_.begin(), targeted_set_ids_.end(), set_id );
         }
 
+        bool is_anchored_in_domain( const ObjectType& obj ) const
+        {
+            return SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
+                domain_, obj );
+        }
+
+        bool intersects_domain( const ObjectType& obj ) const
+        {
+            return SpatialDomainChecker< ObjectType >::intersects_domain(
+                domain_, obj );
+        }
+
         template < typename Func >
         void for_each_targeted_object(
             const ObjectSets< ObjectType >& state, Func&& do_apply ) const
@@ -169,5 +185,6 @@ namespace geode
     private:
         detail::EnergyScale energy_scale_;
         std::vector< uuid > targeted_set_ids_;
+        const SpatialDomain< ObjectType::dim > domain_;
     };
 } // namespace geode

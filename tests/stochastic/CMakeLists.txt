@@ -43,6 +43,14 @@ add_geode_test(
 )
 
 add_geode_test(
+    SOURCE "spatial/test-spatial-domain.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
     SOURCE "sampling/direct/test-ball-sampler.cpp"
     DEPENDENCIES
         OpenGeode::basic
@@ -98,7 +106,7 @@ add_geode_test(
 )
 
 add_geode_test(
-    SOURCE "sampling/mcmc/models/components/test-intensity-term.cpp"
+    SOURCE "sampling/mcmc/models/components/test-density-term.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry

@@ -36,7 +36,8 @@ namespace
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
         box.add_point( geode::Point2D{ { 100.0, 100.0 } } );
-
+        // todo change
+        geode::SpatialDomain domain( box, 0. );
         // --- Object set
         geode::FractureSetDescription setA;
         setA.name = "A";
@@ -57,7 +58,7 @@ namespace
         setA.p20 = 0.05;
         setA.minimal_spacing = 1.;
 
-        geode::FractureSimulationRunner runner( box );
+        geode::FractureSimulationRunner runner( domain );
         runner.add_fracture_set_descriptor( setA );
 
         runner.initialize();
@@ -90,6 +91,8 @@ namespace
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
         box.add_point( geode::Point2D{ { 100.0, 100.0 } } );
+        // todo change
+        geode::SpatialDomain domain( box, 0. );
 
         // --- Object set
         geode::FractureSetDescription setA;
@@ -133,7 +136,7 @@ namespace
         setB.p20 = 0.05;
         setB.minimal_spacing = 2.;
 
-        geode::FractureSimulationRunner runner( box );
+        geode::FractureSimulationRunner runner( domain );
         runner.add_fracture_set_descriptor( setA );
         runner.add_fracture_set_descriptor( setB );
 

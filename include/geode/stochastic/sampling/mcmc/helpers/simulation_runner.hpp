@@ -27,6 +27,7 @@
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_printer.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
+#include <geode/stochastic/spatial/spatial_domain.hpp>
 
 #include <absl/strings/str_join.h>
 
@@ -62,7 +63,8 @@ namespace geode
     class SimulationRunner
     {
     public:
-        SimulationRunner() = default;
+        SimulationRunner( const SpatialDomain< ObjectType::dim >& domain )
+            : domain_( domain ) {};
         virtual ~SimulationRunner() = default;
 
         virtual void initialize() = 0;
@@ -153,6 +155,7 @@ namespace geode
         }
 
     protected:
+        SpatialDomain< ObjectType::dim > domain_;
         std::vector< std::unique_ptr< geode::ObjectSetSampler< ObjectType > > >
             set_samplers_;
 
