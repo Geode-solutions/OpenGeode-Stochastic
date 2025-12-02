@@ -38,9 +38,10 @@ namespace geode
         explicit PairwiseTerm( std::string_view name,
             double gamma,
             std::vector< uuid > targeted_set_ids,
-            std::unique_ptr< PairwiseInteraction< ObjectType > > interaction )
+            std::unique_ptr< PairwiseInteraction< ObjectType > > interaction,
+            const SpatialDomain< ObjectType::dim >& domain )
             : EnergyTerm< ObjectType >(
-                  name, gamma, std::move( targeted_set_ids ) ),
+                  name, gamma, std::move( targeted_set_ids ), domain ),
               interaction_( std::move( interaction ) )
         {
         }
@@ -67,8 +68,11 @@ namespace geode
                 geode::ObjectRef< ObjectType > neigh_object{
                     state.get_object( neigh_id ), neigh_id.set_id
                 };
-
-                delta += interaction_->evaluate( new_object, neigh_object );
+                if( this->is_anchored_in_domain( new_object.object )
+                    || this->is_anchored_in_domain( neigh_object.object ) )
+                {
+                    delta += interaction_->evaluate( new_object, neigh_object );
+                }
             }
             return this->contribution( delta );
         }
@@ -92,8 +96,12 @@ namespace geode
                 ObjectRef< ObjectType > neigh_object{
                     state.get_object( neigh_id ), neigh_id.set_id
                 };
-                delta +=
-                    interaction_->evaluate( object_to_remove, neigh_object );
+                if( this->is_anchored_in_domain( object_to_remove.object )
+                    || this->is_anchored_in_domain( neigh_object.object ) )
+                {
+                    delta += interaction_->evaluate(
+                        object_to_remove, neigh_object );
+                }
             }
             return this->contribution( -delta );
         }
@@ -121,8 +129,12 @@ namespace geode
                 ObjectRef< ObjectType > neigh_object{
                     state.get_object( neigh_id ), neigh_id.set_id
                 };
-                delta -=
-                    interaction_->evaluate( object_to_remove, neigh_object );
+                if( this->is_anchored_in_domain( object_to_remove.object )
+                    || this->is_anchored_in_domain( neigh_object.object ) )
+                {
+                    delta -= interaction_->evaluate(
+                        object_to_remove, neigh_object );
+                }
             }
 
             // Add new object's interactions
@@ -138,9 +150,12 @@ namespace geode
                 ObjectRef< ObjectType > neigh_object{
                     state.get_object( neigh_id ), neigh_id.set_id
                 };
-                delta += interaction_->evaluate( new_object, neigh_object );
+                if( this->is_anchored_in_domain( new_object.object )
+                    || this->is_anchored_in_domain( neigh_object.object ) )
+                {
+                    delta += interaction_->evaluate( new_object, neigh_object );
+                }
             }
-
             return this->contribution( delta );
         }
 
@@ -150,18 +165,17 @@ namespace geode
             this->for_each_targeted_object(
                 state, [&]( const ObjectId& obj_id ) {
                     const auto& cur_obj = state.get_object( obj_id );
+                    if( !this->is_anchored_in_domain( cur_obj ) )
+                    {
+                        return;
+                    }
                     ObjectRef< ObjectType > object{ cur_obj, obj_id.set_id };
                     const auto neighbors =
                         state.neighbors( obj_id, this->targeted_set_ids(),
                             interaction_->neighborhood_searching_distance() );
                     for( const auto& neigh_obj_id : neighbors )
                     {
-                        if( neigh_obj_id.set_id < obj_id.set_id )
-                        {
-                            continue;
-                        }
-                        if( neigh_obj_id.set_id == obj_id.set_id
-                            && neigh_obj_id.index <= obj_id.index )
+                        if( !is_new_pair( cur_obj, obj_id, neigh_obj_id ) )
                         {
                             continue;
                         }
@@ -174,6 +188,27 @@ namespace geode
                     }
                 } );
             return sum;
+        }
+
+    private:
+        bool is_new_pair( const ObjectType& obj,
+            const ObjectId& obj_id,
+            const ObjectId& neigh_obj_id ) const
+        {
+            if( !this->is_anchored_in_domain( obj ) )
+            {
+                return true;
+            }
+            if( neigh_obj_id.set_id < obj_id.set_id )
+            {
+                return false;
+            }
+            if( neigh_obj_id.set_id == obj_id.set_id
+                && neigh_obj_id.index <= obj_id.index )
+            {
+                return false;
+            }
+            return true;
         }
 
     private:

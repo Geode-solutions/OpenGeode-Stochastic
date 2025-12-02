@@ -175,7 +175,8 @@ int main()
         // Add intensity term
         energy_terms.add_energy_term(
             std::make_unique< geode::DensityTerm< geode::Point2D > >(
-                "intensity", 0.5, std::vector< geode::uuid >{ set_id } ) );
+                "intensity", 0.5, std::vector< geode::uuid >{ set_id },
+                domain ) );
 
         geode::MetropolisHastings< geode::Point2D > mh(
             energy_terms, std::move( kernel ) );

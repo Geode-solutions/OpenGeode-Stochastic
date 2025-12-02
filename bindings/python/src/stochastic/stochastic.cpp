@@ -33,12 +33,15 @@
 
 #include "sampling/distributions.hpp"
 #include "sampling/random_engine.hpp"
+#include "spatial/spatial_domain.hpp"
 
 PYBIND11_MODULE( opengeode_stochastic_py_stochastic, module )
 {
     module.doc() = "OpenGeode-Stochastic Python binding";
     pybind11::class_< geode::StochasticLibrary >( module, "StochasticLibrary" )
         .def( "initialize", &geode::StochasticLibrary::initialize );
+
+    geode::define_spatial_domain( module );
 
     geode::define_distributions( module );
     geode::define_random_engine( module );

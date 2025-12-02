@@ -28,6 +28,7 @@ add_geode_python_binding(
         "sampling/direct/double_sampler.hpp"
         "sampling/random_engine.hpp"
         "sampling/distributions.hpp"
+        "spatial/spatial_domain.hpp"
         "stochastic.cpp"
     DEPENDENCIES
         ${PROJECT_NAME}::stochastic

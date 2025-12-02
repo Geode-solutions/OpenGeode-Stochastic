@@ -116,7 +116,8 @@ namespace
                             geode::DensityTerm< geode::Point2D > >(
                             absl::StrCat( density_desc.name, "_density" ),
                             density_desc.density,
-                            std::vector< geode::uuid >{ set_id } ) ) );
+                            std::vector< geode::uuid >{ set_id },
+                            this->domain_ ) ) );
 
                 this->ordered_target_statistics_.push_back(
                     density_desc.target_count );
@@ -144,7 +145,7 @@ namespace
                                 absl::StrJoin( interaction_desc.names, "_" ),
                                 "_interaction" ),
                             interaction_desc.strength, set_ids,
-                            std::move( interaction ) ) ) );
+                            std::move( interaction ), this->domain_ ) ) );
 
                 this->ordered_target_statistics_.push_back(
                     interaction_desc.target_interaction_count );
@@ -202,11 +203,11 @@ namespace
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
         box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
         // todo change!!
-        geode::SpatialDomain domain( box, 0. );
+        geode::SpatialDomain domain( box, 1. );
 
         std::array< double, 5 > gamma_values{ 0, 0.3, 0.5, 0.7, 1.0 };
-        std::array< double, 5 > nb_points{ 22.6, 27.4, 31.3, 36.1, 50. };
-        std::array< double, 5 > nb_interactions{ 0, 4, 8, 14, 36 };
+        std::array< double, 5 > nb_points{ 19.5, 24.4, 31.3, 36.1, 50. };
+        std::array< double, 5 > nb_interactions{ 0, 4, 8, 15, 43 };
 
         for( const auto config : geode::Range{ gamma_values.size() } )
         {
