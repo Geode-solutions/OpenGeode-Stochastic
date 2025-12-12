@@ -117,32 +117,32 @@ namespace
         auto f1 = set.add_fixed_object( geode::Point2D{ { 1., 1. } } );
         // ici u0 est changé? doije retourner l indice?
 
-        OPENGEODE_ASSERT( set.nb_fixed_objects() == 2 );
-        OPENGEODE_ASSERT( set.nb_fixed_objects() == 1 );
-        OPENGEODE_ASSERT( f0 == 0 && f1 == 1 );
+        OPENGEODE_EXCEPTION( set.nb_fixed_objects() == 2 );
+        OPENGEODE_EXCEPTION( set.nb_fixed_objects() == 1 );
+        OPENGEODE_EXCEPTION( f0 == 0 && f1 == 1 );
 
         // Add 2 free objects
         auto u1 = set.add_free_object( geode::Point2D{ { 2., 2. } } );
         auto u2 = set.add_free_object( geode::Point2D{ { 3., 3. } } );
 
-        OPENGEODE_ASSERT( set.nb_fixed_objects() == 2 );
-        OPENGEODE_ASSERT( set.nb_free_objects() == 3 );
-        OPENGEODE_ASSERT( u1 == 3 && u2 == 4 );
+        OPENGEODE_EXCEPTION( set.nb_fixed_objects() == 2 );
+        OPENGEODE_EXCEPTION( set.nb_free_objects() == 3 );
+        OPENGEODE_EXCEPTION( u1 == 3 && u2 == 4 );
 
         // Remove first fixed object
         set.remove_object( 0 );
 
         // Invariant
-        OPENGEODE_ASSERT( set.nb_fixed_objects() == 1 );
-        OPENGEODE_ASSERT( set.nb_free_objects() == 3 );
-        OPENGEODE_ASSERT( set.nb_objects() == 4 );
+        OPENGEODE_EXCEPTION( set.nb_fixed_objects() == 1 );
+        OPENGEODE_EXCEPTION( set.nb_free_objects() == 3 );
+        OPENGEODE_EXCEPTION( set.nb_objects() == 4 );
 
         // Remove a free object
         set.remove_free_object( 2 );
 
-        OPENGEODE_ASSERT( set.nb_fixed_objects() == 1 );
-        OPENGEODE_ASSERT( set.nb_free_objects() == 2 );
-        OPENGEODE_ASSERT( set.nb_objects() == 3 );
+        OPENGEODE_EXCEPTION( set.nb_fixed_objects() == 1 );
+        OPENGEODE_EXCEPTION( set.nb_free_objects() == 2 );
+        OPENGEODE_EXCEPTION( set.nb_objects() == 3 );
     }
 } // namespace
 
