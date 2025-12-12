@@ -69,7 +69,7 @@ namespace geode
         ObjectId add_free_object( Type&& object, const uuid& set_id );
         void update_free_object( const ObjectId& object_id, Type&& object );
         void remove_free_object( const ObjectId& object_id );
-        void remove_object( const ObjectId& object_id );
+        void remove_fixed_object( const ObjectId& object_id );
 
         // Object neighbor search by ObjectId (always excludes self)
         std::vector< ObjectId > neighbors( const ObjectId& object_id,
@@ -85,6 +85,7 @@ namespace geode
 
     private:
         ObjectSet< Type >& get_set( const uuid& set_id );
+        void update_neighborhood_remove_context( const ObjectId& object_id );
 
     private:
         absl::flat_hash_map< uuid, ObjectSet< Type > > sets_;

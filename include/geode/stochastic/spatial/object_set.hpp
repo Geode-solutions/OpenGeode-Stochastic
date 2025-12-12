@@ -40,12 +40,11 @@ namespace geode
         const Type& get_object( index_t index ) const;
 
         index_t add_fixed_object( Type&& object );
+        void remove_fixed_object( index_t index );
 
         index_t add_free_object( Type&& object );
         void update_free_object( index_t index, Type&& object );
         void remove_free_object( index_t index );
-
-        void remove_object( index_t index );
 
         index_t nb_objects() const;
         index_t nb_fixed_objects() const;
@@ -55,6 +54,9 @@ namespace geode
         bool is_fixed( index_t index ) const;
 
         std::string string() const;
+
+    private:
+        void do_remove_object( index_t index );
 
     private:
         std::vector< Type > objects_;

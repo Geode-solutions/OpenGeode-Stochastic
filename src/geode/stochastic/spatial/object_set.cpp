@@ -80,11 +80,20 @@ namespace geode
     {
         OPENGEODE_EXCEPTION( index >= first_free_object_,
             "[ObjectSet] - cannot remove fixed object." );
-        remove_object( index );
+        do_remove_object( index );
     }
 
     template < typename Type >
-    void ObjectSet< Type >::remove_object( index_t index )
+    void ObjectSet< Type >::remove_fixed_object( index_t index )
+    {
+        OPENGEODE_EXCEPTION( index < first_free_object_,
+            "[ObjectSet] - cannot remove free object." );
+        do_remove_object( index );
+        first_free_object_--;
+    }
+
+    template < typename Type >
+    void ObjectSet< Type >::do_remove_object( index_t index )
     {
         const index_t last = objects_.size() - 1;
         OPENGEODE_EXCEPTION(

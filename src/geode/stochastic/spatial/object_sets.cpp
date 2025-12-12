@@ -133,11 +133,21 @@ namespace geode
         auto& set = get_set( object_id.set_id );
         OPENGEODE_EXCEPTION( !set.is_fixed( object_id.index ),
             "[ObjectSet]- Object to remove is fixed." );
-        remove_object( object_id );
+        update_neighborhood_remove_context( object_id );
+        set.remove_free_object( object_id.index );
     }
-
     template < typename Type >
-    void ObjectSets< Type >::remove_object( const ObjectId& object_id )
+    void ObjectSets< Type >::remove_fixed_object( const ObjectId& object_id )
+    {
+        auto& set = get_set( object_id.set_id );
+        OPENGEODE_EXCEPTION( set.is_fixed( object_id.index ),
+            "[ObjectSet]- Object to remove is free." );
+        update_neighborhood_remove_context( object_id );
+        set.remove_fixed_object( object_id.index );
+    }
+    template < typename Type >
+    void ObjectSets< Type >::update_neighborhood_remove_context(
+        const ObjectId& object_id )
     {
         auto& set = get_set( object_id.set_id );
         OPENGEODE_EXCEPTION( object_id.index < set.nb_objects(),
@@ -153,7 +163,6 @@ namespace geode
             auto box_to_move = object_bounding_box( last_obj );
             neighborhood_.update( box_to_move, last_id, object_id );
         }
-        set.remove_object( object_id.index );
     }
 
     template < typename Type >

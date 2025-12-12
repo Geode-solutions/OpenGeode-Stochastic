@@ -84,7 +84,7 @@ namespace
             "[TestObjectSets] - Expected 2 objects after free removal" );
 
         // Now remove the last remaining free object using remove_object()
-        sets.remove_object( { 1, set_id } );
+        sets.remove_free_object( { 1, set_id } );
 
         OPENGEODE_EXCEPTION( sets.nb_objects_in_set( set_id ) == 1,
             "[TestObjectSets] - Expected 1 object after second removal" );
