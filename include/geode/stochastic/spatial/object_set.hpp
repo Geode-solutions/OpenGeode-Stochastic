@@ -39,16 +39,25 @@ namespace geode
         void set_name( std::string_view name );
         const Type& get_object( index_t index ) const;
 
-        index_t add_object( Type&& object );
-        void update_object( index_t index, Type&& object );
+        index_t add_fixed_object( Type&& object );
+
+        index_t add_free_object( Type&& object );
+        void update_free_object( index_t index, Type&& object );
+        void remove_free_object( index_t index );
+
         void remove_object( index_t index );
 
-        index_t size() const;
+        index_t nb_objects() const;
+        index_t nb_fixed_objects() const;
+        index_t nb_free_objects() const;
+
         bool empty() const;
+        bool is_fixed( index_t index ) const;
 
         std::string string() const;
 
     private:
         std::vector< Type > objects_;
+        index_t first_free_object_{ 0 };
     };
 } // namespace geode

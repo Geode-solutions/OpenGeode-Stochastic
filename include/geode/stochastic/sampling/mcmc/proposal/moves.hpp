@@ -138,18 +138,19 @@ namespace geode
         virtual std::string string() const = 0;
 
     protected:
-        std::optional< geode::index_t > draw_a_sample_id(
+        std::optional< geode::index_t > draw_a_free_sample_id(
             const ObjectSet< ObjectType >& set, RandomEngine& engine ) const
         {
-            if( set.empty() )
+            const auto max_obj_id = set.nb_free_objects();
+            if( max_obj_id == 0 )
             {
                 return std::nullopt;
             }
-            const auto max_obj_id = set.size();
             geode::UniformClosed< index_t > uniform_closed_index_t;
             uniform_closed_index_t.min_value = 0;
             uniform_closed_index_t.max_value = max_obj_id - 1;
-            return engine.sample_uniform( uniform_closed_index_t );
+            return set.nb_fixed_objects()
+                   + engine.sample_uniform( uniform_closed_index_t );
         }
 
     protected:
@@ -212,7 +213,7 @@ namespace geode
             birth.proposal_probabilities.log_forward_prob =
                 log_p_birth_ + this->sampler_.log_pdf( new_obj );
             birth.proposal_probabilities.log_backward_prob =
-                log_p_death_ - std::log( set.size() + 1.0 );
+                log_p_death_ - std::log( set.nb_objects() + 1.0 );
             return birth;
         }
 
@@ -220,7 +221,7 @@ namespace geode
             const ObjectSet< ObjectType >& set, RandomEngine& engine ) const
         {
             MoveResult< ObjectType > death;
-            death.old_object_id = this->draw_a_sample_id( set, engine );
+            death.old_object_id = this->draw_a_free_sample_id( set, engine );
             if( !death.old_object_id.has_value() )
             {
                 return death;
@@ -228,7 +229,7 @@ namespace geode
             const auto cur_object_id = death.old_object_id.value();
             death.type = MoveType::Death;
             death.proposal_probabilities.log_forward_prob =
-                log_p_death_ - std::log( set.size() );
+                log_p_death_ - std::log( set.nb_free_objects() );
             death.proposal_probabilities.log_backward_prob =
                 log_p_birth_
                 + this->sampler_.log_pdf( set.get_object( cur_object_id ) );
@@ -256,7 +257,7 @@ namespace geode
             RandomEngine& engine ) const override
         {
             MoveResult< ObjectType > change;
-            change.old_object_id = this->draw_a_sample_id( set, engine );
+            change.old_object_id = this->draw_a_free_sample_id( set, engine );
             if( !change.old_object_id.has_value() )
             {
                 return change;

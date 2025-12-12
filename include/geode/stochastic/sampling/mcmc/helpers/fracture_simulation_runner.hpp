@@ -34,6 +34,8 @@
 #include <geode/stochastic/spatial/pairwise_interactions.hpp>
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
+#include <geode/geometry/basic_objects/segment.hpp>
+
 namespace geode
 {
     struct FractureSetDescription
@@ -45,6 +47,7 @@ namespace geode
 
         // positionning
         double p20;
+        std::vector< std::array< geode::Point2D, 2 > > observed_fractures;
         // double p21;
         double minimal_spacing{ 0. };
 
@@ -96,6 +99,13 @@ namespace geode
             for( const auto& set_desc : set_descriptors_ )
             {
                 const auto set_id = this->object_sets_.add_set( set_desc.name );
+                for( const auto& fixed_object : set_desc.observed_fractures )
+                {
+                    this->object_sets_.add_fixed_object(
+                        geode::OwnerSegment2D{
+                            fixed_object[0], fixed_object[1] },
+                        set_id );
+                }
                 name_to_uuid[set_desc.name] = set_id;
 
                 auto length_distribution =

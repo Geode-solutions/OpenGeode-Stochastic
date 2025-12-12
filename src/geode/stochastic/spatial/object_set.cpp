@@ -46,36 +46,72 @@ namespace geode
     }
 
     template < typename Type >
-    index_t ObjectSet< Type >::add_object( Type&& object )
+    index_t ObjectSet< Type >::add_fixed_object( Type&& object )
+    {
+        auto new_fixed_object_id = first_free_object_;
+        first_free_object_++;
+        objects_.push_back( std::move( object ) );
+        if( new_fixed_object_id != objects_.size() - 1 )
+        {
+            std::swap( objects_[new_fixed_object_id], objects_.back() );
+        }
+        return new_fixed_object_id;
+    }
+
+    template < typename Type >
+    index_t ObjectSet< Type >::add_free_object( Type&& object )
     {
         objects_.push_back( std::move( object ) );
         return objects_.size() - 1;
     }
 
     template < typename Type >
-    void ObjectSet< Type >::update_object( index_t index, Type&& object )
+    void ObjectSet< Type >::update_free_object( index_t index, Type&& object )
     {
+        OPENGEODE_EXCEPTION( index >= first_free_object_,
+            "[ObjectSet] - cannot update fixed object." );
         OPENGEODE_EXCEPTION( index < objects_.size(),
             "[ObjectSet] - object index out of range." );
         objects_[index] = std::move( object );
     }
 
     template < typename Type >
+    void ObjectSet< Type >::remove_free_object( index_t index )
+    {
+        OPENGEODE_EXCEPTION( index >= first_free_object_,
+            "[ObjectSet] - cannot remove fixed object." );
+        remove_object( index );
+    }
+
+    template < typename Type >
     void ObjectSet< Type >::remove_object( index_t index )
     {
-        OPENGEODE_EXCEPTION( index < objects_.size(),
-            "[ObjectSet] - object index out of range." );
-        if( index != objects_.size() - 1 )
+        const index_t last = objects_.size() - 1;
+        OPENGEODE_EXCEPTION(
+            index <= last, "[ObjectSet] - object index out of range." );
+        if( index != last )
         {
-            objects_[index] = std::move( objects_.back() );
+            std::swap( objects_[index], objects_[last] );
         }
         objects_.pop_back();
     }
 
     template < typename Type >
-    index_t ObjectSet< Type >::size() const
+    index_t ObjectSet< Type >::nb_objects() const
     {
         return objects_.size();
+    }
+
+    template < typename Type >
+    index_t ObjectSet< Type >::nb_fixed_objects() const
+    {
+        return first_free_object_;
+    }
+
+    template < typename Type >
+    index_t ObjectSet< Type >::nb_free_objects() const
+    {
+        return objects_.size() - first_free_object_;
     }
 
     template < typename Type >
@@ -85,10 +121,18 @@ namespace geode
     }
 
     template < typename Type >
+    bool ObjectSet< Type >::is_fixed( index_t index ) const
+    {
+        return index < first_free_object_;
+    }
+
+    template < typename Type >
     std::string ObjectSet< Type >::string() const
     {
         return absl::StrCat( "ObjectSet ", this->name(), " (",
-            this->id().string(), ") contains ", size(), " objects" );
+            this->id().string(), ") contains ", nb_objects(),
+            " objects (fixed: ", nb_fixed_objects(),
+            " - free: ", nb_free_objects(), ")" );
     }
 
     // Explicit template instantiation

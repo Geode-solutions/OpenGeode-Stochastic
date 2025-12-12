@@ -21,7 +21,7 @@ namespace geode
     const Type& ObjectSets< Type >::get_object( const ObjectId& object ) const
     {
         auto& set = get_set( object.set_id );
-        OPENGEODE_EXCEPTION( object.index < set.size(),
+        OPENGEODE_EXCEPTION( object.index < set.nb_objects(),
             "[ObjectSet]- object index out of range." );
         return set.get_object( object.index );
     }
@@ -33,7 +33,7 @@ namespace geode
         result.reserve( nb_objects() );
         for( const auto& [set_id, objs] : sets_ )
         {
-            for( const auto obj_id : geode::Range{ objs.size() } )
+            for( const auto obj_id : geode::Range{ objs.nb_objects() } )
             {
                 result.push_back( { obj_id, set_id } );
             }
@@ -50,7 +50,7 @@ namespace geode
     template < typename Type >
     index_t ObjectSets< Type >::nb_objects_in_set( const uuid& set_id ) const
     {
-        return get_set( set_id ).size();
+        return get_set( set_id ).nb_objects();
     }
 
     template < typename Type >
@@ -60,7 +60,7 @@ namespace geode
         for( const auto& [set_id, objs] : sets_ )
         {
             geode_unused( set_id );
-            nb_objects += objs.size();
+            nb_objects += objs.nb_objects();
         }
         return nb_objects;
     }
@@ -78,39 +78,74 @@ namespace geode
     }
 
     template < typename Type >
-    ObjectId ObjectSets< Type >::add_object( Type&& object, const uuid& set_id )
+    ObjectId ObjectSets< Type >::add_fixed_object(
+        Type&& object, const uuid& set_id )
     {
         auto& set = get_set( set_id );
-        ObjectId new_object_id{ static_cast< index_t >( set.size() ), set_id };
+        auto new_fixed_id = set.add_fixed_object( std::move( object ) );
+
+        ObjectId fixed_object_id{ new_fixed_id, set_id };
+        auto fixed_object = get_object( fixed_object_id );
+        auto fixed_object_box = object_bounding_box( fixed_object );
+
+        ObjectId last_object_id{
+            static_cast< geode::index_t >( set.nb_objects() - 1 ), set_id
+        };
+        auto free_object = get_object( last_object_id );
+        auto free_object_box = object_bounding_box( free_object );
+
+        neighborhood_.update(
+            free_object_box, fixed_object_box, fixed_object_id );
+        neighborhood_.add( free_object_box, last_object_id );
+
+        return fixed_object_id;
+    }
+
+    template < typename Type >
+    ObjectId ObjectSets< Type >::add_free_object(
+        Type&& object, const uuid& set_id )
+    {
+        auto& set = get_set( set_id );
+        ObjectId new_object_id{ static_cast< index_t >( set.nb_objects() ),
+            set_id };
         neighborhood_.add( object_bounding_box( object ), new_object_id );
-        set.add_object( std::move( object ) );
+        set.add_free_object( std::move( object ) );
         return new_object_id;
     }
 
     template < typename Type >
-    void ObjectSets< Type >::update_object(
+    void ObjectSets< Type >::update_free_object(
         const ObjectId& old_object_id, Type&& new_object )
     {
         auto& set = get_set( old_object_id.set_id );
-        OPENGEODE_EXCEPTION( old_object_id.index < set.size(),
+        OPENGEODE_EXCEPTION( old_object_id.index < set.nb_objects(),
             "[ObjectSet]- index of object to update out of range." );
         auto old_box =
             object_bounding_box( set.get_object( old_object_id.index ) );
         auto new_box = object_bounding_box( new_object );
         neighborhood_.update( old_box, new_box, old_object_id );
-        set.update_object( old_object_id.index, std::move( new_object ) );
+        set.update_free_object( old_object_id.index, std::move( new_object ) );
+    }
+
+    template < typename Type >
+    void ObjectSets< Type >::remove_free_object( const ObjectId& object_id )
+    {
+        auto& set = get_set( object_id.set_id );
+        OPENGEODE_EXCEPTION( !set.is_fixed( object_id.index ),
+            "[ObjectSet]- Object to remove is fixed." );
+        remove_object( object_id );
     }
 
     template < typename Type >
     void ObjectSets< Type >::remove_object( const ObjectId& object_id )
     {
         auto& set = get_set( object_id.set_id );
-        OPENGEODE_EXCEPTION( object_id.index < set.size(),
+        OPENGEODE_EXCEPTION( object_id.index < set.nb_objects(),
             "[ObjectSet]- index of object to remove out of range." );
         const auto& obj_to_remove = set.get_object( object_id.index );
         neighborhood_.remove( object_bounding_box( obj_to_remove ), object_id );
 
-        ObjectId last_id{ static_cast< geode::index_t >( set.size() - 1 ),
+        ObjectId last_id{ static_cast< geode::index_t >( set.nb_objects() - 1 ),
             object_id.set_id };
         if( object_id != last_id )
         {

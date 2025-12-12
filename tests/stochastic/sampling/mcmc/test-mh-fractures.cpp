@@ -41,7 +41,10 @@ namespace
         // --- Object set
         geode::FractureSetDescription setA;
         setA.name = "A";
-
+        setA.observed_fractures.push_back( { geode::Point2D{ { 0.0, 15. } },
+            geode::Point2D{ { 15., 15. } } } );
+        setA.observed_fractures.push_back( { geode::Point2D{ { 1.0, 11. } },
+            geode::Point2D{ { 11., 20. } } } );
         // length
         setA.length.distribution_type =
             geode::UniformClosed< double >::distribution_type_static();
@@ -62,7 +65,7 @@ namespace
         runner.add_fracture_set_descriptor( setA );
 
         runner.initialize();
-
+        OPENGEODE_ASSERT( runner.state_realization().nb_fixed_objects() == 2 );
         // run simulation
         geode::SimulationPrinterConfigurator printer_config;
         printer_config.output_folder = absl::StrCat(
@@ -77,6 +80,7 @@ namespace
         auto statistic_monitoring = runner.run( engine, sim_config );
         runner.check_statistics( statistic_monitoring );
 
+        OPENGEODE_ASSERT( runner.state_realization().nb_fixed_objects() == 2 );
         geode::Logger::info( "--> SUCCESS!" );
     }
 

@@ -42,8 +42,8 @@ void test_gibbs_energy()
     const auto set_id = pattern.add_set( "default_name" );
     geode::Point2D p1{ { 0., 0. } };
     geode::Point2D p2{ { 1., 1. } };
-    pattern.add_object( std::move( p1 ), set_id );
-    pattern.add_object( std::move( p2 ), set_id );
+    pattern.add_free_object( std::move( p1 ), set_id );
+    pattern.add_free_object( std::move( p2 ), set_id );
 
     geode::EnergyTermCollection< geode::Point2D > energy_terms;
 

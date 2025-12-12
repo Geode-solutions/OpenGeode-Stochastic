@@ -88,6 +88,9 @@ namespace
         for( const auto count : geode::Range{ N } )
         {
             auto result = mh.step( state, engine );
+            // Invariant: fixed object must remain
+            OPENGEODE_ASSERT( state.nb_fixed( set_id ) == 2 );
+
             OPENGEODE_EXCEPTION(
                 result.decision == geode::MHDecision::Accepted
                     || result.decision == geode::MHDecision::Rejected,
@@ -181,9 +184,9 @@ int main()
         geode::MetropolisHastings< geode::Point2D > mh(
             energy_terms, std::move( kernel ) );
 
-        state.add_object( geode::Point2D{ { 1., 1. } }, set_id );
-        state.add_object( geode::Point2D{ { 2., 2. } }, set_id );
-        state.add_object( geode::Point2D{ { 3., 3. } }, set_id );
+        state.add_fixed_object( geode::Point2D{ { 1., 1. } }, set_id );
+        state.add_free_object( geode::Point2D{ { 2., 2. } }, set_id );
+        state.add_fixed_object( geode::Point2D{ { 3., 3. } }, set_id );
 
         test_steps( mh, state );
         test_beta_setter( mh );

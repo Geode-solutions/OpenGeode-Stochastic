@@ -36,9 +36,9 @@ geode::uuid init_object_set( geode::ObjectSets< geode::Point2D >& pattern )
     geode::Point2D p3{ { 1.3, 1.3 } }; // buffer
 
     auto set_id = pattern.add_set( "default_name" );
-    pattern.add_object( std::move( p1 ), set_id );
-    pattern.add_object( std::move( p2 ), set_id );
-    pattern.add_object( std::move( p3 ), set_id );
+    pattern.add_free_object( std::move( p1 ), set_id );
+    pattern.add_free_object( std::move( p2 ), set_id );
+    pattern.add_free_object( std::move( p3 ), set_id );
 
     return set_id;
 }
