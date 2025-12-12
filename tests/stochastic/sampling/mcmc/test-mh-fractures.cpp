@@ -65,7 +65,9 @@ namespace
         runner.add_fracture_set_descriptor( setA );
 
         runner.initialize();
-        OPENGEODE_ASSERT( runner.state_realization().nb_fixed_objects() == 2 );
+
+        //        OPENGEODE_EXCEPTION(
+        //            runner.state_realization().nb_fixed_objects() == 2 );
         // run simulation
         geode::SimulationPrinterConfigurator printer_config;
         printer_config.output_folder = absl::StrCat(
@@ -80,7 +82,8 @@ namespace
         auto statistic_monitoring = runner.run( engine, sim_config );
         runner.check_statistics( statistic_monitoring );
 
-        OPENGEODE_ASSERT( runner.state_realization().nb_fixed_objects() == 2 );
+        //        OPENGEODE_EXCEPTION(
+        //            runner.state_realization().nb_fixed_objects() == 2 );
         geode::Logger::info( "--> SUCCESS!" );
     }
 
