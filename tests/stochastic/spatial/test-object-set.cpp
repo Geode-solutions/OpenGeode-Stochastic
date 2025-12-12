@@ -117,8 +117,8 @@ namespace
         auto f1 = set.add_fixed_object( geode::Point2D{ { 1., 1. } } );
         // ici u0 est changé? doije retourner l indice?
 
-        OPENGEODE_ASSERT( set.nb_fixed() == 2 );
-        OPENGEODE_ASSERT( set.nb_free() == 1 );
+        OPENGEODE_ASSERT( set.nb_fixed_objects() == 2 );
+        OPENGEODE_ASSERT( set.nb_fixed_objectsree() == 1 );
         OPENGEODE_ASSERT( f0 == 0 && f1 == 1 );
 
         // Add 2 free objects
