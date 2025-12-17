@@ -35,14 +35,17 @@ namespace geode
     struct ObjectId
     {
         index_t index;
+        bool fixed;
         uuid set_id;
         bool operator==( const ObjectId& other ) const noexcept
         {
-            return index == other.index && set_id == other.set_id;
+            return index == other.index && fixed == other.fixed
+                   && set_id == other.set_id;
         }
         bool operator!=( const ObjectId& other ) const noexcept
         {
-            return index != other.index || set_id != other.set_id;
+            return index != other.index || fixed != other.fixed
+                   || set_id != other.set_id;
         }
     };
 

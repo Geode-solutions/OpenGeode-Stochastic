@@ -149,8 +149,7 @@ namespace geode
             geode::UniformClosed< index_t > uniform_closed_index_t;
             uniform_closed_index_t.min_value = 0;
             uniform_closed_index_t.max_value = max_obj_id - 1;
-            return set.nb_fixed_objects()
-                   + engine.sample_uniform( uniform_closed_index_t );
+            return engine.sample_uniform( uniform_closed_index_t );
         }
 
     protected:
@@ -232,7 +231,8 @@ namespace geode
                 log_p_death_ - std::log( set.nb_free_objects() );
             death.proposal_probabilities.log_backward_prob =
                 log_p_birth_
-                + this->sampler_.log_pdf( set.get_object( cur_object_id ) );
+                + this->sampler_.log_pdf(
+                    set.get_free_object( cur_object_id ) );
             return death;
         }
 
@@ -264,7 +264,7 @@ namespace geode
             }
             change.type = MoveType::Change;
             const auto& object_to_change =
-                set.get_object( change.old_object_id.value() );
+                set.get_free_object( change.old_object_id.value() );
             change.new_object =
                 this->sampler_.change( object_to_change, engine );
             change.proposal_probabilities.log_forward_prob =

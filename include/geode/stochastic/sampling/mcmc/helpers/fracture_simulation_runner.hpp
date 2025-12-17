@@ -101,10 +101,10 @@ namespace geode
                 const auto set_id = this->object_sets_.add_set( set_desc.name );
                 for( const auto& fixed_object : set_desc.observed_fractures )
                 {
-                    this->object_sets_.add_fixed_object(
+                    this->object_sets_.add_object(
                         geode::OwnerSegment2D{
                             fixed_object[0], fixed_object[1] },
-                        set_id );
+                        set_id, true );
                 }
                 name_to_uuid[set_desc.name] = set_id;
 

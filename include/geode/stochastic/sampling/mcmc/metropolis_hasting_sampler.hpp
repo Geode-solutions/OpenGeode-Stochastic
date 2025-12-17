@@ -192,9 +192,9 @@ namespace geode
                 gibbs_energy_.delta_log_add( state, new_object );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
                 []( auto& state, auto& proposal ) {
-                    state.add_free_object(
+                    state.add_object(
                         std::move( proposal.proposed_move.new_object.value() ),
-                        proposal.set_id );
+                        proposal.set_id, false );
                 } );
         };
 

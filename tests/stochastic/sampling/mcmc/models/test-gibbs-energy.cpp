@@ -42,8 +42,8 @@ void test_gibbs_energy()
     const auto set_id = pattern.add_set( "default_name" );
     geode::Point2D p1{ { 0., 0. } };
     geode::Point2D p2{ { 1., 1. } };
-    pattern.add_free_object( std::move( p1 ), set_id );
-    pattern.add_free_object( std::move( p2 ), set_id );
+    pattern.add_object( std::move( p1 ), set_id, false );
+    pattern.add_object( std::move( p2 ), set_id, false );
 
     geode::EnergyTermCollection< geode::Point2D > energy_terms;
 
@@ -79,7 +79,7 @@ void test_gibbs_energy()
     OPENGEODE_EXCEPTION( std::isfinite( delta_add ),
         "[test gibbs] Delta add should be finite." );
 
-    geode::ObjectId obj_id{ 0, set_id };
+    geode::ObjectId obj_id{ 0, false, set_id };
     // Remove point test
     double delta_remove = gibbs_energy.delta_log_remove( pattern, obj_id );
     OPENGEODE_EXCEPTION( std::isfinite( delta_remove ),

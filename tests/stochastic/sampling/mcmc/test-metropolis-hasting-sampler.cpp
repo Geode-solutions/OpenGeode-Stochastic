@@ -183,9 +183,9 @@ int main()
         geode::MetropolisHastings< geode::Point2D > mh(
             energy_terms, std::move( kernel ) );
 
-        state.add_fixed_object( geode::Point2D{ { 1., 1. } }, set_id );
-        state.add_free_object( geode::Point2D{ { 2., 2. } }, set_id );
-        state.add_fixed_object( geode::Point2D{ { 3., 3. } }, set_id );
+        state.add_object( geode::Point2D{ { 1., 1. } }, set_id, true );
+        state.add_object( geode::Point2D{ { 2., 2. } }, set_id, false );
+        state.add_object( geode::Point2D{ { 3., 3. } }, set_id, true );
 
         test_steps( mh, state );
         // OPENGEODE_EXCEPTION( state.get_set( set_id ).nb_fixed_objects() == 2

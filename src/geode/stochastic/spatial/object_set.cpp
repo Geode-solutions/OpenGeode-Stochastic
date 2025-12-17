@@ -37,102 +37,80 @@ namespace geode
         IdentifierBuilder builder( *this );
         builder.set_name( name );
     }
+
     template < typename Type >
-    const Type& ObjectSet< Type >::get_object( index_t index ) const
+    const Type& ObjectSet< Type >::get_fixed_object( index_t index ) const
     {
-        OPENGEODE_EXCEPTION( index < objects_.size(),
-            "[ObjectSet] - object index out of range." );
-        return objects_[index];
+        OPENGEODE_EXCEPTION( index < fixed_objects_.size(),
+            "[ObjectSet] - index for fixed object out of range." );
+        return fixed_objects_[index];
+    }
+
+    template < typename Type >
+    const Type& ObjectSet< Type >::get_free_object( index_t index ) const
+    {
+        OPENGEODE_EXCEPTION( index < free_objects_.size(),
+            "[ObjectSet] - index for free object out of range." );
+        return free_objects_[index];
     }
 
     template < typename Type >
     index_t ObjectSet< Type >::add_fixed_object( Type&& object )
     {
-        auto new_fixed_object_id = first_free_object_;
-        first_free_object_++;
-        objects_.push_back( std::move( object ) );
-        if( new_fixed_object_id != objects_.size() - 1 )
-        {
-            std::swap( objects_[new_fixed_object_id], objects_.back() );
-        }
-        return new_fixed_object_id;
+        fixed_objects_.push_back( std::move( object ) );
+        return fixed_objects_.size() - 1;
     }
 
     template < typename Type >
     index_t ObjectSet< Type >::add_free_object( Type&& object )
     {
-        objects_.push_back( std::move( object ) );
-        return objects_.size() - 1;
+        free_objects_.push_back( std::move( object ) );
+        return free_objects_.size() - 1;
     }
 
     template < typename Type >
     void ObjectSet< Type >::update_free_object( index_t index, Type&& object )
     {
-        OPENGEODE_EXCEPTION( index >= first_free_object_,
-            "[ObjectSet] - cannot update fixed object." );
-        OPENGEODE_EXCEPTION( index < objects_.size(),
-            "[ObjectSet] - object index out of range." );
-        objects_[index] = std::move( object );
+        OPENGEODE_EXCEPTION( index < free_objects_.size(),
+            "[ObjectSet] - free object index out of range." );
+        free_objects_[index] = std::move( object );
     }
 
     template < typename Type >
     void ObjectSet< Type >::remove_free_object( index_t index )
     {
-        OPENGEODE_EXCEPTION( index >= first_free_object_,
-            "[ObjectSet] - cannot remove fixed object." );
-        do_remove_object( index );
-    }
-
-    template < typename Type >
-    void ObjectSet< Type >::remove_fixed_object( index_t index )
-    {
-        OPENGEODE_EXCEPTION( index < first_free_object_,
-            "[ObjectSet] - cannot remove free object." );
-        do_remove_object( index );
-        first_free_object_--;
-    }
-
-    template < typename Type >
-    void ObjectSet< Type >::do_remove_object( index_t index )
-    {
-        const index_t last = objects_.size() - 1;
+        const index_t last = free_objects_.size() - 1;
         OPENGEODE_EXCEPTION(
-            index <= last, "[ObjectSet] - object index out of range." );
+            index <= last, "[ObjectSet] - free object index out of range." );
         if( index != last )
         {
-            std::swap( objects_[index], objects_[last] );
+            std::swap( free_objects_[index], free_objects_[last] );
         }
-        objects_.pop_back();
+        free_objects_.pop_back();
     }
 
     template < typename Type >
     index_t ObjectSet< Type >::nb_objects() const
     {
-        return objects_.size();
+        return free_objects_.size() + fixed_objects_.size();
     }
 
     template < typename Type >
     index_t ObjectSet< Type >::nb_fixed_objects() const
     {
-        return first_free_object_;
+        return fixed_objects_.size();
     }
 
     template < typename Type >
     index_t ObjectSet< Type >::nb_free_objects() const
     {
-        return objects_.size() - first_free_object_;
+        return free_objects_.size();
     }
 
     template < typename Type >
     bool ObjectSet< Type >::empty() const
     {
-        return objects_.empty();
-    }
-
-    template < typename Type >
-    bool ObjectSet< Type >::is_fixed( index_t index ) const
-    {
-        return index < first_free_object_;
+        return free_objects_.empty() && fixed_objects_.empty();
     }
 
     template < typename Type >

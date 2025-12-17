@@ -36,11 +36,11 @@ namespace
             sets.nb_sets() == 2, "[TestObjectSets] - Expected 2 sets" );
 
         const auto obj_a =
-            sets.add_free_object( geode::Point2D{ { 0.0, 0.0 } }, set_id1 );
+            sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id1, false );
         const auto obj_b =
-            sets.add_free_object( geode::Point2D{ { 1.0, 1.0 } }, set_id1 );
+            sets.add_object( geode::Point2D{ { 1.0, 1.0 } }, set_id1, false );
         const auto obj_c =
-            sets.add_free_object( geode::Point2D{ { 5.0, 5.0 } }, set_id2 );
+            sets.add_object( geode::Point2D{ { 5.0, 5.0 } }, set_id2, false );
 
         OPENGEODE_EXCEPTION( sets.nb_objects_in_set( set_id1 ) == 2,
             "[TestObjectSets] - Set 1 should have 2 objects" );
@@ -60,7 +60,7 @@ namespace
         const auto set_id = sets.add_set( "default_name" );
 
         const auto obj =
-            sets.add_free_object( geode::Point2D{ { 1.0, 1.0 } }, set_id );
+            sets.add_object( geode::Point2D{ { 1.0, 1.0 } }, set_id, false );
 
         sets.update_free_object( obj, geode::Point2D{ { 9.0, 9.0 } } );
 
@@ -74,17 +74,17 @@ namespace
         ObjectSets< geode::Point2D > sets;
         const auto set_id = sets.add_set( "default_name" );
 
-        sets.add_free_object( geode::Point2D{ { 0.0, 0.0 } }, set_id );
-        sets.add_free_object( geode::Point2D{ { 1.0, 1.0 } }, set_id );
-        sets.add_free_object( geode::Point2D{ { 2.0, 2.0 } }, set_id );
+        sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id, false );
+        sets.add_object( geode::Point2D{ { 1.0, 1.0 } }, set_id, false );
+        sets.add_object( geode::Point2D{ { 2.0, 2.0 } }, set_id, false );
 
-        sets.remove_free_object( { 1, set_id } );
+        sets.remove_free_object( { 1, false, set_id } );
 
         OPENGEODE_EXCEPTION( sets.nb_objects_in_set( set_id ) == 2,
             "[TestObjectSets] - Expected 2 objects after free removal" );
 
         // Now remove the last remaining free object using remove_object()
-        sets.remove_free_object( { 1, set_id } );
+        sets.remove_free_object( { 1, false, set_id } );
 
         OPENGEODE_EXCEPTION( sets.nb_objects_in_set( set_id ) == 1,
             "[TestObjectSets] - Expected 1 object after second removal" );
@@ -95,8 +95,8 @@ namespace
         const auto idA = sets.add_set( "A" );
         const auto idB = sets.add_set( "B" );
 
-        sets.add_free_object( geode::Point2D{ { 0.0, 0.0 } }, idA );
-        sets.add_free_object( geode::Point2D{ { 1.0, 1.0 } }, idB );
+        sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, idA, false );
+        sets.add_object( geode::Point2D{ { 1.0, 1.0 } }, idB, false );
 
         const auto all = sets.get_all_object();
 
@@ -110,11 +110,11 @@ namespace
         const auto set_id = sets.add_set( "default_name" );
 
         const auto obj0 =
-            sets.add_free_object( geode::Point2D{ { 0.0, 0.0 } }, set_id );
+            sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id, false );
         const auto obj1 =
-            sets.add_free_object( geode::Point2D{ { 1.0, 0.0 } }, set_id );
+            sets.add_object( geode::Point2D{ { 1.0, 0.0 } }, set_id, false );
         const auto obj2 =
-            sets.add_free_object( geode::Point2D{ { 5.0, 0.0 } }, set_id );
+            sets.add_object( geode::Point2D{ { 5.0, 0.0 } }, set_id, false );
 
         std::vector< uuid > targeted_set_ids{ set_id };
         const auto near_neighbors =
@@ -132,9 +132,9 @@ namespace
         ObjectSets< geode::Point2D > sets;
         const auto set_id = sets.add_set( "default_name" );
 
-        sets.add_free_object( geode::Point2D{ { 0.0, 0.0 } }, set_id );
-        sets.add_free_object( geode::Point2D{ { 1.0, 0.0 } }, set_id );
-        sets.add_fixed_object( geode::Point2D{ { 3.0, 0.0 } }, set_id );
+        sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id, false );
+        sets.add_object( geode::Point2D{ { 1.0, 0.0 } }, set_id, false );
+        sets.add_object( geode::Point2D{ { 3.0, 0.0 } }, set_id, true );
 
         const geode::Point2D query{ { 0.5, 0.0 } };
         std::vector< uuid > targeted_set_ids{ set_id };
@@ -148,8 +148,8 @@ namespace
     {
         ObjectSets< geode::Point2D > sets;
         const auto set_id = sets.add_set( "default_name" );
-        sets.add_free_object( geode::Point2D{ { 0.0, 0.0 } }, set_id );
-        sets.add_free_object( geode::Point2D{ { 1.0, 1.0 } }, set_id );
+        sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id, false );
+        sets.add_object( geode::Point2D{ { 1.0, 1.0 } }, set_id, false );
 
         const auto desc = sets.string();
         OPENGEODE_EXCEPTION( desc.find( "objects" ) != std::string::npos,

@@ -175,9 +175,9 @@ namespace geode
             for( const auto& targeted_set_id : targeted_set_ids_ )
             {
                 for( const auto id :
-                    geode::Range{ state.nb_objects_in_set( targeted_set_id ) } )
+                    state.get_objects_in_set( targeted_set_id ) )
                 {
-                    do_apply( ObjectId{ id, targeted_set_id } );
+                    do_apply( id );
                 }
             }
         }

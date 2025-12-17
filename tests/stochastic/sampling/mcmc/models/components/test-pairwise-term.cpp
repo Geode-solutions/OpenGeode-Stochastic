@@ -36,9 +36,9 @@ geode::uuid init_object_set( geode::ObjectSets< geode::Point2D >& pattern )
     geode::Point2D p3{ { 1.3, 1.3 } }; // buffer
 
     auto set_id = pattern.add_set( "default_name" );
-    pattern.add_free_object( std::move( p1 ), set_id );
-    pattern.add_free_object( std::move( p2 ), set_id );
-    pattern.add_free_object( std::move( p3 ), set_id );
+    pattern.add_object( std::move( p1 ), set_id, false );
+    pattern.add_object( std::move( p2 ), set_id, false );
+    pattern.add_object( std::move( p3 ), set_id, false );
 
     return set_id;
 }
@@ -88,14 +88,14 @@ void test_pairwise_term( double gamma,
         "[PairwiseTerm] delta_log_add buffer wrong" );
 
     // --- delta_change VOI → VOI
-    geode::ObjectId obj_id{ 0, set_id }; // p1
+    geode::ObjectId obj_id{ 0, false, set_id }; // p1
     delta = term.delta_log_change( pattern, obj_id, p4_ref );
     // p1 replaced by p4: interacts with p2 → add 1 interaction
     OPENGEODE_EXCEPTION( delta == term.contribution( 1 ),
         "[PairwiseTerm] delta_log_change VOI->VOI wrong" );
 
     // --- delta_change buffer → VOI
-    geode::ObjectId old_buffer{ 2, set_id }; // p3
+    geode::ObjectId old_buffer{ 2, false, set_id }; // p3
     delta = term.delta_log_change( pattern, old_buffer, p4_ref );
     // old buffer interactions removed (-p3 pairs (-1)), new VOI interactions
     // added
@@ -156,14 +156,14 @@ void test_pairwise_term_zero_gamma( double gamma,
         "gamma<epsilon should be infinite" );
 
     // --- delta_change VOI → VOI
-    geode::ObjectId obj_id{ 0, set_id };
+    geode::ObjectId obj_id{ 0, false, set_id };
     delta = term.delta_log_change( pattern, obj_id, p4_ref );
     OPENGEODE_EXCEPTION( std::isinf( delta ),
         "[PairwiseTerm] delta_log_change VOI->VOI with "
         "gamma<epsilon should be infinite" );
 
     // --- delta_change buffer → VOI
-    geode::ObjectId old_buffer{ 2, set_id };
+    geode::ObjectId old_buffer{ 2, false, set_id };
     delta = term.delta_log_change( pattern, old_buffer, p4_ref );
     OPENGEODE_EXCEPTION( std::isinf( delta ),
         "[PairwiseTerm] delta_log_change buffer->VOI with "
