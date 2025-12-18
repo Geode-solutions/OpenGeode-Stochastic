@@ -46,6 +46,7 @@ def test_fracture_simulator():
     # --- Object set
     setA = stochastic.FractureSetDescription()
     setA.name = "A"
+    setA.add_observed_fracture(og.Point2D([10.0, 10.0]), og.Point2D([20.0, 20.0]))
 
     # length
     setA.length.distribution_type =stochastic.DistributionType("UniformClosed")

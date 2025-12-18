@@ -39,8 +39,8 @@ namespace
         geode::Point2D p2{ { 1., 1. } };
 
         auto set_id = pattern.add_set( "default_name" );
-        pattern.add_object( std::move( p1 ), set_id );
-        pattern.add_object( std::move( p2 ), set_id );
+        pattern.add_object( std::move( p1 ), set_id, false );
+        pattern.add_object( std::move( p2 ), set_id, false );
 
         return set_id;
     }

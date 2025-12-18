@@ -33,9 +33,9 @@ geode::uuid init_object_set( geode::ObjectSets< geode::Point2D >& pattern )
     geode::Point2D p_buffer{ { 1.3, 0.1 } };
 
     auto set_id = pattern.add_set( "default_name" );
-    pattern.add_object( std::move( p1 ), set_id );
-    pattern.add_object( std::move( p2 ), set_id );
-    pattern.add_object( std::move( p_buffer ), set_id ); // buffer last
+    pattern.add_object( std::move( p1 ), set_id, false );
+    pattern.add_object( std::move( p2 ), set_id, false );
+    pattern.add_object( std::move( p_buffer ), set_id, false ); // buffer last
 
     return set_id;
 }
@@ -85,7 +85,7 @@ void run_density_test( double lambda,
         delta == 0., "[DensityTerm] delta_log_add outside VOI wrong" );
 
     // --- Delta remove anchored object
-    geode::ObjectId obj_id{ 0, set_id };
+    geode::ObjectId obj_id{ 0, false, set_id };
     delta = term.delta_log_remove( pattern, obj_id );
     OPENGEODE_EXCEPTION(
         delta == expected_remove, "[DensityTerm] delta_log_remove wrong" );
@@ -104,7 +104,7 @@ void run_density_test( double lambda,
         delta == 0., "[DensityTerm] delta_log_change anchored→anchored wrong" );
 
     // --- Delta change buffer → anchored
-    geode::ObjectId buffer_id{ 2, set_id };
+    geode::ObjectId buffer_id{ 2, false, set_id };
     delta = term.delta_log_change( pattern, buffer_id, ref_inside );
     OPENGEODE_EXCEPTION( delta == expected_add,
         "[DensityTerm] delta_log_change buffer→anchored wrong" );

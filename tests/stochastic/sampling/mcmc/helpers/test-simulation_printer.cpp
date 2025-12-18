@@ -106,9 +106,9 @@ namespace
         geode::ObjectSets< geode::Point2D > object_sets;
         const auto set_id = object_sets.add_set( "default_name" );
 
-        object_sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id );
-        object_sets.add_object( geode::Point2D{ { 1.0, 0.0 } }, set_id );
-        object_sets.add_object( geode::Point2D{ { 3.0, 0.0 } }, set_id );
+        object_sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id, false );
+        object_sets.add_object( geode::Point2D{ { 1.0, 0.0 } }, set_id, false );
+        object_sets.add_object( geode::Point2D{ { 3.0, 0.0 } }, set_id, false );
 
         geode::SimulationPrinter printer( config );
         printer.print_object_sets( object_sets, 0 );

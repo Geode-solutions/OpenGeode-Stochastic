@@ -46,7 +46,8 @@ namespace geode
         {
             OPENGEODE_EXCEPTION( proposed_move.old_object_id.has_value(),
                 "[Proposal] Proposal has no old_object_id" );
-            return ObjectId{ proposed_move.old_object_id.value(), set_id };
+            return ObjectId{ proposed_move.old_object_id.value(), false,
+                set_id };
         };
 
         std::string string() const

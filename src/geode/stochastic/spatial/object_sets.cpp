@@ -21,9 +21,11 @@ namespace geode
     const Type& ObjectSets< Type >::get_object( const ObjectId& object ) const
     {
         auto& set = get_set( object.set_id );
-        OPENGEODE_EXCEPTION( object.index < set.size(),
-            "[ObjectSet]- object index out of range." );
-        return set.get_object( object.index );
+        if( object.fixed )
+        {
+            return set.get_fixed_object( object.index );
+        }
+        return set.get_free_object( object.index );
     }
 
     template < typename Type >
@@ -33,10 +35,32 @@ namespace geode
         result.reserve( nb_objects() );
         for( const auto& [set_id, objs] : sets_ )
         {
-            for( const auto obj_id : geode::Range{ objs.size() } )
+            for( const auto obj_id : geode::Range{ objs.nb_fixed_objects() } )
             {
-                result.push_back( { obj_id, set_id } );
+                result.push_back( { obj_id, true, set_id } );
             }
+            for( const auto obj_id : geode::Range{ objs.nb_free_objects() } )
+            {
+                result.push_back( { obj_id, false, set_id } );
+            }
+        }
+        return result;
+    }
+
+    template < typename Type >
+    std::vector< ObjectId > ObjectSets< Type >::get_objects_in_set(
+        const uuid& set_id ) const
+    {
+        const auto& set = get_set( set_id );
+        std::vector< ObjectId > result;
+        result.reserve( set.nb_objects() );
+        for( const auto obj_id : geode::Range{ set.nb_fixed_objects() } )
+        {
+            result.push_back( { obj_id, true, set_id } );
+        }
+        for( const auto obj_id : geode::Range{ set.nb_free_objects() } )
+        {
+            result.push_back( { obj_id, false, set_id } );
         }
         return result;
     }
@@ -50,7 +74,7 @@ namespace geode
     template < typename Type >
     index_t ObjectSets< Type >::nb_objects_in_set( const uuid& set_id ) const
     {
-        return get_set( set_id ).size();
+        return get_set( set_id ).nb_objects();
     }
 
     template < typename Type >
@@ -60,7 +84,7 @@ namespace geode
         for( const auto& [set_id, objs] : sets_ )
         {
             geode_unused( set_id );
-            nb_objects += objs.size();
+            nb_objects += objs.nb_objects();
         }
         return nb_objects;
     }
@@ -78,47 +102,60 @@ namespace geode
     }
 
     template < typename Type >
-    ObjectId ObjectSets< Type >::add_object( Type&& object, const uuid& set_id )
+    ObjectId ObjectSets< Type >::add_object(
+        Type&& object, const uuid& set_id, bool fixed )
     {
         auto& set = get_set( set_id );
-        ObjectId new_object_id{ static_cast< index_t >( set.size() ), set_id };
-        neighborhood_.add( object_bounding_box( object ), new_object_id );
-        set.add_object( std::move( object ) );
-        return new_object_id;
+        auto object_box = object_bounding_box( object );
+
+        if( fixed )
+        {
+            auto new_fixed_id = set.add_fixed_object( std::move( object ) );
+            ObjectId fixed_object_id{ new_fixed_id, true, set_id };
+            neighborhood_.add( object_box, fixed_object_id );
+            return fixed_object_id;
+        }
+        auto new_free_id = set.add_free_object( std::move( object ) );
+        ObjectId free_object_id{ new_free_id, false, set_id };
+        neighborhood_.add( object_box, free_object_id );
+        return free_object_id;
     }
 
     template < typename Type >
-    void ObjectSets< Type >::update_object(
+    void ObjectSets< Type >::update_free_object(
         const ObjectId& old_object_id, Type&& new_object )
     {
+        OPENGEODE_EXCEPTION(
+            !old_object_id.fixed, "[ObjectSet]- cannot modify fixed object." );
         auto& set = get_set( old_object_id.set_id );
-        OPENGEODE_EXCEPTION( old_object_id.index < set.size(),
+        OPENGEODE_EXCEPTION( old_object_id.index < set.nb_objects(),
             "[ObjectSet]- index of object to update out of range." );
-        auto old_box =
-            object_bounding_box( set.get_object( old_object_id.index ) );
+        auto old_box = object_bounding_box( get_object( old_object_id ) );
         auto new_box = object_bounding_box( new_object );
         neighborhood_.update( old_box, new_box, old_object_id );
-        set.update_object( old_object_id.index, std::move( new_object ) );
+        set.update_free_object( old_object_id.index, std::move( new_object ) );
     }
 
     template < typename Type >
-    void ObjectSets< Type >::remove_object( const ObjectId& object_id )
+    void ObjectSets< Type >::remove_free_object( const ObjectId& object_id )
     {
         auto& set = get_set( object_id.set_id );
-        OPENGEODE_EXCEPTION( object_id.index < set.size(),
-            "[ObjectSet]- index of object to remove out of range." );
-        const auto& obj_to_remove = set.get_object( object_id.index );
+        OPENGEODE_EXCEPTION(
+            !object_id.fixed, "[ObjectSet]- Cannot remove fixed object." );
+        const auto& obj_to_remove = get_object( object_id );
         neighborhood_.remove( object_bounding_box( obj_to_remove ), object_id );
 
-        ObjectId last_id{ static_cast< geode::index_t >( set.size() - 1 ),
-            object_id.set_id };
-        if( object_id != last_id )
+        ObjectId last_free_id{ static_cast< geode::index_t >(
+                                   set.nb_free_objects() - 1 ),
+            false, object_id.set_id };
+        if( object_id != last_free_id )
         {
-            const auto& last_obj = set.get_object( last_id.index );
-            auto box_to_move = object_bounding_box( last_obj );
-            neighborhood_.update( box_to_move, last_id, object_id );
+            const auto& last_free_obj =
+                set.get_free_object( last_free_id.index );
+            auto box_to_move = object_bounding_box( last_free_obj );
+            neighborhood_.update( box_to_move, last_free_id, object_id );
         }
-        set.remove_object( object_id.index );
+        set.remove_free_object( object_id.index );
     }
 
     template < typename Type >

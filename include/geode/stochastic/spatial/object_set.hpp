@@ -37,18 +37,25 @@ namespace geode
         ObjectSet& operator=( ObjectSet&& ) noexcept = default;
 
         void set_name( std::string_view name );
-        const Type& get_object( index_t index ) const;
+        const Type& get_fixed_object( index_t index ) const;
+        const Type& get_free_object( index_t index ) const;
 
-        index_t add_object( Type&& object );
-        void update_object( index_t index, Type&& object );
-        void remove_object( index_t index );
+        index_t add_fixed_object( Type&& object );
 
-        index_t size() const;
+        index_t add_free_object( Type&& object );
+        void update_free_object( index_t index, Type&& object );
+        void remove_free_object( index_t index );
+
+        index_t nb_objects() const;
+        index_t nb_fixed_objects() const;
+        index_t nb_free_objects() const;
+
         bool empty() const;
 
         std::string string() const;
 
     private:
-        std::vector< Type > objects_;
+        std::vector< Type > fixed_objects_;
+        std::vector< Type > free_objects_;
     };
 } // namespace geode

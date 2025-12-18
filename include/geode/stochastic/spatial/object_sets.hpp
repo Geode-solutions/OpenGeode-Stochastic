@@ -59,15 +59,16 @@ namespace geode
         const ObjectSet< Type >& get_set( const uuid& set_id ) const;
         const Type& get_object( const ObjectId& object_id ) const;
         std::vector< ObjectId > get_all_object() const;
+        std::vector< ObjectId > get_objects_in_set( const uuid& set_id ) const;
 
         index_t nb_sets() const;
         index_t nb_objects_in_set( const uuid& set_id ) const;
         index_t nb_objects() const;
 
         uuid add_set( std::string_view name );
-        ObjectId add_object( Type&& object, const uuid& set_id );
-        void update_object( const ObjectId& object_id, Type&& object );
-        void remove_object( const ObjectId& object_id );
+        ObjectId add_object( Type&& object, const uuid& set_id, bool fixed );
+        void update_free_object( const ObjectId& object_id, Type&& object );
+        void remove_free_object( const ObjectId& object_id );
 
         // Object neighbor search by ObjectId (always excludes self)
         std::vector< ObjectId > neighbors( const ObjectId& object_id,
@@ -83,6 +84,8 @@ namespace geode
 
     private:
         ObjectSet< Type >& get_set( const uuid& set_id );
+        //  void update_neighborhood_remove_context( const ObjectId& object_id
+        //  );
 
     private:
         absl::flat_hash_map< uuid, ObjectSet< Type > > sets_;
