@@ -60,6 +60,11 @@ namespace geode
             module, "FractureSimulationRunner" )
             .def( pybind11::init< const SpatialDomain< 2 >& >(),
                 pybind11::arg( "box" ) )
+            .def( "add_x_node_monitoring",
+                &FractureSimulationRunner::add_x_node_monitoring,
+                pybind11::arg( "double" ),
+                "Add a monitoring value for x node, value should be "
+                "in[0.,1.]." )
             .def( "add_fracture_set_descriptor",
                 &FractureSimulationRunner::add_fracture_set_descriptor,
                 pybind11::arg( "descriptor" ),
@@ -71,6 +76,9 @@ namespace geode
                 &FractureSimulationRunner::check_statistics,
                 pybind11::arg( "statistic_monitoring" ),
                 "Check computed statistics after simulation." )
+            .def( "string", &FractureSimulationRunner::string,
+                "Return a detailed description of the simulation "
+                "configurator." )
             // Explicit overload bindings
             //            .def( "run",
             //                static_cast< const ObjectSets< OwnerSegment2D >& (

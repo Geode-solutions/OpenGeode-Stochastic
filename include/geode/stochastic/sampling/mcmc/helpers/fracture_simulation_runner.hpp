@@ -59,6 +59,13 @@ namespace geode
         std::string string() const
         {
             auto message = absl::StrCat( "FractureSetDescription: ", name );
+            for( const auto& fixed_object : observed_fractures )
+            {
+                absl::StrAppend( &message,
+                    "\n\t --> observation (x,y,z)start: ",
+                    fixed_object[0].string(),
+                    " (x,y,z)end: ", fixed_object[1].string() );
+            }
             absl::StrAppend(
                 &message, "\n\t --> length distribution: ", length.string() );
             absl::StrAppend(
@@ -81,6 +88,13 @@ namespace geode
         {
         }
 
+        void add_x_node_monitoring( double beta_x_node )
+        {
+            OPENGEODE_EXCEPTION( beta_x_node <= 1.0 && beta_x_node >= 0.,
+                "[FractureSimulationRunner] x node should be inhibitated "
+                "please provise a value in [0., 1.]." );
+            beta_x_node_ = beta_x_node;
+        }
         void add_fracture_set_descriptor(
             const FractureSetDescription& descriptor )
         {
@@ -134,23 +148,43 @@ namespace geode
                             set_desc.p20, std::vector< uuid >{ set_id },
                             this->domain_ ) ) );
                 // spacing
-                if( set_desc.minimal_spacing < GLOBAL_EPSILON )
+                if( set_desc.minimal_spacing > GLOBAL_EPSILON )
                 {
-                    continue;
+                    auto interaction = std::make_unique<
+                        EuclideanCutoffInteraction< OwnerSegment2D > >(
+                        set_desc.minimal_spacing,
+                        PairwiseInteraction<
+                            OwnerSegment2D >::SCOPE::same_set );
+
+                    this->ordered_energy_terms_.push_back(
+                        this->energy_terms_collection_.add_energy_term(
+                            std::make_unique< PairwiseTerm< OwnerSegment2D > >(
+                                absl::StrCat( set_desc.name, "_min_spacing" ),
+                                0., std::vector< uuid >{ set_id },
+                                std::move( interaction ), this->domain_ ) ) );
+                }
+            }
+            // x node monitoring
+            if( std::abs( beta_x_node_ - 1. ) > GLOBAL_EPSILON )
+            {
+                std::vector< uuid > set_uuids;
+                set_uuids.reserve( name_to_uuid.size() );
+                for( const auto& [name, id] : name_to_uuid )
+                {
+                    set_uuids.push_back( id );
                 }
                 auto interaction = std::make_unique<
                     EuclideanCutoffInteraction< OwnerSegment2D > >(
-                    set_desc.minimal_spacing,
-                    PairwiseInteraction< OwnerSegment2D >::SCOPE::same_set );
+                    0., PairwiseInteraction<
+                            OwnerSegment2D >::SCOPE::different_set );
 
                 this->ordered_energy_terms_.push_back(
                     this->energy_terms_collection_.add_energy_term(
                         std::make_unique< PairwiseTerm< OwnerSegment2D > >(
-                            absl::StrCat( set_desc.name, "_min_spacing" ), 0.,
-                            std::vector< uuid >{ set_id },
-                            std::move( interaction ), this->domain_ ) ) );
+                            absl::StrCat( "inter_set_x_nodes" ), beta_x_node_,
+                            set_uuids, std::move( interaction ),
+                            this->domain_ ) ) );
             }
-
             this->mh_sampler_ =
                 std::make_unique< MetropolisHastings< OwnerSegment2D > >(
                     this->energy_terms_collection_,
@@ -173,8 +207,32 @@ namespace geode
             }
         }
 
+        std::string string() const
+        {
+            auto message =
+                absl::StrCat( "Fracture Simulation Runner description" );
+            for( const auto& desc : set_descriptors_ )
+            {
+                absl::StrAppend( &message, "\n\t ", desc.string() );
+            }
+            if( std::abs( beta_x_node_ - 1. ) > GLOBAL_EPSILON )
+            {
+                absl::StrAppend( &message,
+                    "\n\t --> x node monitioring (beta inhibition value): ",
+                    beta_x_node_ );
+            }
+            else
+            {
+                absl::StrAppend(
+                    &message, "\n\t --> x node monitioring : no inhibition." );
+            }
+            return message;
+        }
+
     private:
         std::vector< FractureSetDescription > set_descriptors_;
+        // x node monitoring
+        double beta_x_node_{ 1. };
     };
 
 } // namespace geode
