@@ -26,75 +26,59 @@
 
 #include <geode/stochastic/sampling/mcmc/models/components/energy_term.hpp>
 
-namespace geode
-{
-    template < typename ObjectType, typename ObjectContributionFunc >
-    class SingleObjectTerm : public EnergyTerm< ObjectType >
-    {
-    public:
-        explicit SingleObjectTerm( std::string_view name,
-            double lambda,
-            absl::flat_hash_set< uuid > targeted_set_ids,
-            ObjectContributionFunc contribution_func )
-            : EnergyTerm< ObjectType >( name, lambda, targeted_set_ids ),
-              contribution_func_( std::move( contribution_func ) )
-        {
-        }
+namespace geode {
+template <typename ObjectType, typename ObjectContributionFunc>
+class SingleObjectTerm : public EnergyTerm<ObjectType> {
+public:
+  explicit SingleObjectTerm(std::string_view name, double lambda,
+                            absl::flat_hash_set<uuid> targeted_set_ids,
+                            ObjectContributionFunc contribution_func)
+      : EnergyTerm<ObjectType>(name, lambda, targeted_set_ids),
+        contribution_func_(std::move(contribution_func)) {}
 
-        double total_log( const ObjectSets< ObjectType >& state ) const override
-        {
-            auto total = this->statistic( state );
-            return this->contribution( total );
-        }
+  double total_log(const ObjectSets<ObjectType> &state) const override {
+    auto total = this->statistic(state);
+    return this->contribution(total);
+  }
 
-        double delta_log_add( const ObjectSets< ObjectType >& /*state*/,
-            const ObjectType& new_object,
-            const uuid& new_object_set_id ) const override
-        {
-            if( !this->is_targeted_set( new_object_set_id ) )
-            {
-                return 0.0;
-            }
-            return this->contribution( contribution_func_( new_object ) );
-        }
+  double delta_log_add(const ObjectSets<ObjectType> & /*state*/,
+                       const ObjectType &new_object,
+                       const uuid &new_object_set_id) const override {
+    if (!this->is_targeted_set(new_object_set_id)) {
+      return 0.0;
+    }
+    return this->contribution(contribution_func_(new_object));
+  }
 
-        double delta_log_remove( const ObjectSets< ObjectType >& state,
-            ObjectId object_id ) const override
-        {
-            if( !this->is_targeted_set( object_id.set_id ) )
-            {
-                return 0.0;
-            }
-            return this->contribution(
-                -contribution_func_( state.get_object( object_id ) ) );
-        }
+  double delta_log_remove(const ObjectSets<ObjectType> &state,
+                          ObjectId object_id) const override {
+    if (!this->is_targeted_set(object_id.set_id)) {
+      return 0.0;
+    }
+    return this->contribution(-contribution_func_(state.get_object(object_id)));
+  }
 
-        double delta_log_change( const ObjectSets< ObjectType >& state,
-            ObjectId old_object_id,
-            const ObjectType& new_object,
-            const uuid& new_object_set_id ) const override
-        {
-            if( this->is_targeted_set( old_object_id.set_id )
-                && this->is_targeted_set( new_object_set_id ) )
-            {
-                return 0.0;
-            }
-            auto delta =
-                contribution_func_( new_object )
-                - contribution_func_( state.get_object( old_object_id ) );
-            return this->contribution( delta );
-        }
+  double delta_log_change(const ObjectSets<ObjectType> &state,
+                          ObjectId old_object_id, const ObjectType &new_object,
+                          const uuid &new_object_set_id) const override {
+    if (this->is_targeted_set(old_object_id.set_id) &&
+        this->is_targeted_set(new_object_set_id)) {
+      return 0.0;
+    }
+    auto delta = contribution_func_(new_object) -
+                 contribution_func_(state.get_object(old_object_id));
+    return this->contribution(delta);
+  }
 
-        double statistic( const ObjectSets< ObjectType >& state ) const override
-        {
-            double total = 0.0;
-            this->for_each_targeted_object( state, [&]( const ObjectId& id ) {
-                total += contribution_func_( state.get_object( id ) );
-            } );
-            return total;
-        }
+  double statistic(const ObjectSets<ObjectType> &state) const override {
+    double total = 0.0;
+    this->for_each_targeted_object(state, [&](const ObjectId &id) {
+      total += contribution_func_(state.get_object(id));
+    });
+    return total;
+  }
 
-    private:
-        ObjectContributionFunc contribution_func_;
-    };
+private:
+  ObjectContributionFunc contribution_func_;
+};
 } // namespace geode

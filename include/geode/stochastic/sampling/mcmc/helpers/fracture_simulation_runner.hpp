@@ -36,145 +36,119 @@
 
 #include <geode/geometry/basic_objects/segment.hpp>
 
-namespace geode
-{
-    struct FractureSetDescription
-    {
-        std::string name;
+namespace geode {
+struct FractureSetDescription {
+  std::string name;
 
-        DoubleSampler::DistributionDescription length;
-        DoubleSampler::DistributionDescription azimuth;
+  DoubleSampler::DistributionDescription length;
+  DoubleSampler::DistributionDescription azimuth;
 
-        // positionning
-        double p20;
-        std::vector< std::array< geode::Point2D, 2 > > observed_fractures;
-        // double p21;
-        double minimal_spacing{ 0. };
+  // positionning
+  double p20;
+  std::vector<std::array<geode::Point2D, 2>> observed_fractures;
+  // double p21;
+  double minimal_spacing{0.};
 
-        // mh dynamique
-        double birth_ratio{ 1.0 };
-        double death_ratio{ 1.0 };
-        double change_ratio{ 1.0 };
+  // mh dynamique
+  double birth_ratio{1.0};
+  double death_ratio{1.0};
+  double change_ratio{1.0};
 
-        std::string string() const
-        {
-            auto message = absl::StrCat( "FractureSetDescription: ", name );
-            absl::StrAppend(
-                &message, "\n\t --> length distribution: ", length.string() );
-            absl::StrAppend(
-                &message, "\n\t --> azimuth distribution: ", azimuth.string() );
-            absl::StrAppend( &message, "\n\t --> targeted p20: ", p20 );
-            absl::StrAppend(
-                &message, "\n\t --> minimal spacing: ", minimal_spacing );
-            absl::StrAppend( &message,
-                "\n\t --> MH move ratio - birth/death/change (", birth_ratio,
-                " / ", death_ratio, " / ", change_ratio, ")" );
-            return message;
-        }
-    };
+  std::string string() const {
+    auto message = absl::StrCat("FractureSetDescription: ", name);
+    absl::StrAppend(&message,
+                    "\n\t --> length distribution: ", length.string());
+    absl::StrAppend(&message,
+                    "\n\t --> azimuth distribution: ", azimuth.string());
+    absl::StrAppend(&message, "\n\t --> targeted p20: ", p20);
+    absl::StrAppend(&message, "\n\t --> minimal spacing: ", minimal_spacing);
+    absl::StrAppend(&message, "\n\t --> MH move ratio - birth/death/change (",
+                    birth_ratio, " / ", death_ratio, " / ", change_ratio, ")");
+    return message;
+  }
+};
 
-    class FractureSimulationRunner : public SimulationRunner< OwnerSegment2D >
-    {
-    public:
-        FractureSimulationRunner( const SpatialDomain< 2 >& domain )
-            : SimulationRunner< OwnerSegment2D >( domain )
-        {
-        }
+class FractureSimulationRunner : public SimulationRunner<OwnerSegment2D> {
+public:
+  FractureSimulationRunner(const SpatialDomain<2> &domain)
+      : SimulationRunner<OwnerSegment2D>(domain) {}
 
-        void add_fracture_set_descriptor(
-            const FractureSetDescription& descriptor )
-        {
-            set_descriptors_.push_back( descriptor );
-        }
+  void add_fracture_set_descriptor(const FractureSetDescription &descriptor) {
+    set_descriptors_.push_back(descriptor);
+  }
 
-        void initialize() override
-        {
-            auto proposal_kernel =
-                std::make_unique< ProposalKernel< OwnerSegment2D > >();
+  void initialize() override {
+    auto proposal_kernel = std::make_unique<ProposalKernel<OwnerSegment2D>>();
 
-            // Mapping set names -> UUID
-            std::unordered_map< std::string, uuid > name_to_uuid;
+    // Mapping set names -> UUID
+    std::unordered_map<std::string, uuid> name_to_uuid;
 
-            // Step 1: create object sets and samplers
-            for( const auto& set_desc : set_descriptors_ )
-            {
-                const auto set_id = this->object_sets_.add_set( set_desc.name );
-                for( const auto& fixed_object : set_desc.observed_fractures )
-                {
-                    this->object_sets_.add_object(
-                        geode::OwnerSegment2D{
-                            fixed_object[0], fixed_object[1] },
-                        set_id, true );
-                }
-                name_to_uuid[set_desc.name] = set_id;
+    // Step 1: create object sets and samplers
+    for (const auto &set_desc : set_descriptors_) {
+      const auto set_id = this->object_sets_.add_set(set_desc.name);
+      for (const auto &fixed_object : set_desc.observed_fractures) {
+        this->object_sets_.add_object(
+            geode::OwnerSegment2D{fixed_object[0], fixed_object[1]}, set_id,
+            true);
+      }
+      name_to_uuid[set_desc.name] = set_id;
 
-                auto length_distribution =
-                    DoubleSampler::create_distribution( set_desc.length );
-                auto azimuth_distribution =
-                    DoubleSampler::create_rad_angle_distribution_from_degree(
-                        set_desc.azimuth );
-                this->set_samplers_.push_back(
-                    std::make_unique< UniformSegmentSetSampler >(
-                        domain_, length_distribution, azimuth_distribution ) );
+      auto length_distribution =
+          DoubleSampler::create_distribution(set_desc.length);
+      auto azimuth_distribution =
+          DoubleSampler::create_rad_angle_distribution_from_degree(
+              set_desc.azimuth);
+      this->set_samplers_.push_back(std::make_unique<UniformSegmentSetSampler>(
+          domain_, length_distribution, azimuth_distribution));
 
-                add_birth_death_change_moves( this->set_samplers_.back(),
-                    *proposal_kernel, set_id, set_desc.birth_ratio,
-                    set_desc.death_ratio, set_desc.change_ratio );
-            }
+      add_birth_death_change_moves(this->set_samplers_.back(), *proposal_kernel,
+                                   set_id, set_desc.birth_ratio,
+                                   set_desc.death_ratio, set_desc.change_ratio);
+    }
 
-            // Step 2: create density energy terms
-            for( const auto& set_desc : set_descriptors_ )
-            {
-                const auto set_id = name_to_uuid.at( set_desc.name );
-                // p20
-                this->ordered_energy_terms_.push_back(
-                    this->energy_terms_collection_.add_energy_term(
-                        std::make_unique< DensityTerm< OwnerSegment2D > >(
-                            absl::StrCat( set_desc.name, "_density" ),
-                            set_desc.p20, std::vector< uuid >{ set_id },
-                            this->domain_ ) ) );
-                // spacing
-                if( set_desc.minimal_spacing < GLOBAL_EPSILON )
-                {
-                    continue;
-                }
-                auto interaction = std::make_unique<
-                    EuclideanCutoffInteraction< OwnerSegment2D > >(
-                    set_desc.minimal_spacing,
-                    PairwiseInteraction< OwnerSegment2D >::SCOPE::same_set );
+    // Step 2: create density energy terms
+    for (const auto &set_desc : set_descriptors_) {
+      const auto set_id = name_to_uuid.at(set_desc.name);
+      // p20
+      this->ordered_energy_terms_.push_back(
+          this->energy_terms_collection_.add_energy_term(
+              std::make_unique<DensityTerm<OwnerSegment2D>>(
+                  absl::StrCat(set_desc.name, "_density"), set_desc.p20,
+                  std::vector<uuid>{set_id}, this->domain_)));
+      // spacing
+      if (set_desc.minimal_spacing < GLOBAL_EPSILON) {
+        continue;
+      }
+      auto interaction =
+          std::make_unique<EuclideanCutoffInteraction<OwnerSegment2D>>(
+              set_desc.minimal_spacing,
+              PairwiseInteraction<OwnerSegment2D>::SCOPE::same_set);
 
-                this->ordered_energy_terms_.push_back(
-                    this->energy_terms_collection_.add_energy_term(
-                        std::make_unique< PairwiseTerm< OwnerSegment2D > >(
-                            absl::StrCat( set_desc.name, "_min_spacing" ), 0.,
-                            std::vector< uuid >{ set_id },
-                            std::move( interaction ), this->domain_ ) ) );
-            }
+      this->ordered_energy_terms_.push_back(
+          this->energy_terms_collection_.add_energy_term(
+              std::make_unique<PairwiseTerm<OwnerSegment2D>>(
+                  absl::StrCat(set_desc.name, "_min_spacing"), 0.,
+                  std::vector<uuid>{set_id}, std::move(interaction),
+                  this->domain_)));
+    }
 
-            this->mh_sampler_ =
-                std::make_unique< MetropolisHastings< OwnerSegment2D > >(
-                    this->energy_terms_collection_,
-                    std::move( proposal_kernel ) );
-        }
+    this->mh_sampler_ = std::make_unique<MetropolisHastings<OwnerSegment2D>>(
+        this->energy_terms_collection_, std::move(proposal_kernel));
+  }
 
-        void check_statistics(
-            const StatisticsMonitor& statistic_monitoring ) const
-        {
-            const auto& computed_means = statistic_monitoring.means();
+  void check_statistics(const StatisticsMonitor &statistic_monitoring) const {
+    const auto &computed_means = statistic_monitoring.means();
 
-            for( const auto stat_id :
-                Range{ this->energy_terms_collection_.size() } )
-            {
-                const auto& term = energy_terms_collection_.get(
-                    ordered_energy_terms_[stat_id] );
-                Logger::info( "[MH test] Statistic value ",
-                    computed_means[stat_id],
-                    " for energy term: ", term.name().data() );
-            }
-        }
+    for (const auto stat_id : Range{this->energy_terms_collection_.size()}) {
+      const auto &term =
+          energy_terms_collection_.get(ordered_energy_terms_[stat_id]);
+      Logger::info("[MH test] Statistic value ", computed_means[stat_id],
+                   " for energy term: ", term.name().data());
+    }
+  }
 
-    private:
-        std::vector< FractureSetDescription > set_descriptors_;
-    };
+private:
+  std::vector<FractureSetDescription> set_descriptors_;
+};
 
 } // namespace geode

@@ -23,67 +23,59 @@
 
 #include <geode/stochastic/sampling/mcmc/helpers/fracture_simulation_runner.hpp>
 
-namespace geode
-{
-    void define_fracture_simulation( pybind11::module& module )
-    {
-        using namespace geode;
+namespace geode {
+void define_fracture_simulation(pybind11::module &module) {
+  using namespace geode;
 
-        pybind11::class_< FractureSetDescription >(
-            module, "FractureSetDescription" )
-            .def( pybind11::init<>() )
-            .def_readwrite( "name", &FractureSetDescription::name )
-            .def_readwrite( "length", &FractureSetDescription::length )
-            .def_readwrite( "azimuth", &FractureSetDescription::azimuth )
-            .def_readwrite( "p20", &FractureSetDescription::p20 )
-            .def( "add_observed_fracture",
-                []( FractureSetDescription& self, const geode::Point2D& a,
-                    const geode::Point2D& b ) {
-                    self.observed_fractures.push_back( { a, b } );
-                } )
-            .def_readwrite(
-                "minimal_spacing", &FractureSetDescription::minimal_spacing )
-            .def_readwrite(
-                "birth_ratio", &FractureSetDescription::birth_ratio )
-            .def_readwrite(
-                "death_ratio", &FractureSetDescription::death_ratio )
-            .def_readwrite(
-                "change_ratio", &FractureSetDescription::change_ratio )
-            .def( "string", &FractureSetDescription::string,
-                "Return a detailed description of the fracture set" )
-            .def( "__repr__", []( const FractureSetDescription& self ) {
-                return "<FractureSetDescription name='" + self.name + "'>";
-            } );
+  pybind11::class_<FractureSetDescription>(module, "FractureSetDescription")
+      .def(pybind11::init<>())
+      .def_readwrite("name", &FractureSetDescription::name)
+      .def_readwrite("length", &FractureSetDescription::length)
+      .def_readwrite("azimuth", &FractureSetDescription::azimuth)
+      .def_readwrite("p20", &FractureSetDescription::p20)
+      .def("add_observed_fracture",
+           [](FractureSetDescription &self, const geode::Point2D &a,
+              const geode::Point2D &b) {
+             self.observed_fractures.push_back({a, b});
+           })
+      .def_readwrite("minimal_spacing",
+                     &FractureSetDescription::minimal_spacing)
+      .def_readwrite("birth_ratio", &FractureSetDescription::birth_ratio)
+      .def_readwrite("death_ratio", &FractureSetDescription::death_ratio)
+      .def_readwrite("change_ratio", &FractureSetDescription::change_ratio)
+      .def("string", &FractureSetDescription::string,
+           "Return a detailed description of the fracture set")
+      .def("__repr__", [](const FractureSetDescription &self) {
+        return "<FractureSetDescription name='" + self.name + "'>";
+      });
 
-        pybind11::class_< FractureSimulationRunner,
-            std::shared_ptr< FractureSimulationRunner > >(
-            module, "FractureSimulationRunner" )
-            .def( pybind11::init< const SpatialDomain< 2 >& >(),
-                pybind11::arg( "box" ) )
-            .def( "add_fracture_set_descriptor",
-                &FractureSimulationRunner::add_fracture_set_descriptor,
-                pybind11::arg( "descriptor" ),
-                "Add a fracture set configuration to the simulation." )
-            .def( "initialize", &FractureSimulationRunner::initialize,
-                "Initialize internal samplers, energy terms, and proposal "
-                "kernels." )
-            .def( "check_statistics",
-                &FractureSimulationRunner::check_statistics,
-                pybind11::arg( "statistic_monitoring" ),
-                "Check computed statistics after simulation." )
-            // Explicit overload bindings
-            //            .def( "run",
-            //                static_cast< const ObjectSets< OwnerSegment2D >& (
-            //                    FractureSimulationRunner::*) ( RandomEngine&,
-            //                    index_t ) >( &FractureSimulationRunner::run ),
-            //                pybind11::arg( "engine" ), pybind11::arg( "steps"
-            //                ), "Run simulation for a fixed number of steps." )
-            .def( "run",
-                static_cast< StatisticsMonitor ( FractureSimulationRunner::* )(
-                    RandomEngine&, const SimulationConfigurator& ) >(
-                    &FractureSimulationRunner::run ),
-                pybind11::arg( "engine" ), pybind11::arg( "config" ),
-                "Run the simulation and return statistics monitoring "
-                "results." );
-    }
+  pybind11::class_<FractureSimulationRunner,
+                   std::shared_ptr<FractureSimulationRunner>>(
+      module, "FractureSimulationRunner")
+      .def(pybind11::init<const SpatialDomain<2> &>(), pybind11::arg("box"))
+      .def("add_fracture_set_descriptor",
+           &FractureSimulationRunner::add_fracture_set_descriptor,
+           pybind11::arg("descriptor"),
+           "Add a fracture set configuration to the simulation.")
+      .def("initialize", &FractureSimulationRunner::initialize,
+           "Initialize internal samplers, energy terms, and proposal "
+           "kernels.")
+      .def("check_statistics", &FractureSimulationRunner::check_statistics,
+           pybind11::arg("statistic_monitoring"),
+           "Check computed statistics after simulation.")
+      // Explicit overload bindings
+      //            .def( "run",
+      //                static_cast< const ObjectSets< OwnerSegment2D >& (
+      //                    FractureSimulationRunner::*) ( RandomEngine&,
+      //                    index_t ) >( &FractureSimulationRunner::run ),
+      //                pybind11::arg( "engine" ), pybind11::arg( "steps"
+      //                ), "Run simulation for a fixed number of steps." )
+      .def("run",
+           static_cast<StatisticsMonitor (FractureSimulationRunner::*)(
+               RandomEngine &, const SimulationConfigurator &)>(
+               &FractureSimulationRunner::run),
+           pybind11::arg("engine"), pybind11::arg("config"),
+           "Run the simulation and return statistics monitoring "
+           "results.");
+}
 } // namespace geode

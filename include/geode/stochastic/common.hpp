@@ -28,10 +28,9 @@
 #include <geode/basic/logger.hpp>
 #include <geode/stochastic/opengeode_stochastic_stochastic_export.hpp>
 
-namespace geode
-{
-    OPENGEODE_LIBRARY( opengeode_stochastic_stochastic_api, Stochastic );
+namespace geode {
+OPENGEODE_LIBRARY(opengeode_stochastic_stochastic_api, Stochastic);
 
-    static constexpr double LOG_PROB_INVALID =
-        -std::numeric_limits< double >::infinity();
+static constexpr double LOG_PROB_INVALID =
+    -std::numeric_limits<double>::infinity();
 } // namespace geode

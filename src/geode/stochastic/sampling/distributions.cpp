@@ -26,106 +26,96 @@
 
 #include <limits>
 
-namespace geode
-{
-    //    template < typename Type >
-    //    bool UniformClosed< Type >::is_valid() const
-    //    {
-    //        if( min_value < max_value )
-    //        {
-    //            return true;
-    //        }
-    //        if( min_value == max_value )
-    //        {
-    //            geode::Logger::warn(
-    //                "[Uniform Closed] - check range boundaries definintion [",
-    //                min_value, ",", max_value, "]." );
-    //            return true;
-    //        }
-    //        geode::Logger::error(
-    //            "[Uniform Closed] - check range boundaries definintion [",
-    //            min_value, ",", max_value, "]." );
-    //        return false;
-    //    }
-    //    template opengeode_stochastic_stochastic_api struct UniformClosed<
-    //        index_t >;
-    //    template opengeode_stochastic_stochastic_api struct UniformClosed<
-    //        local_index_t >;
-    //    template opengeode_stochastic_stochastic_api struct UniformClosed<
-    //        signed_index_t >;
-    //    template opengeode_stochastic_stochastic_api struct UniformClosed<
-    //    float >; template opengeode_stochastic_stochastic_api struct
-    //    UniformClosed< double >;
-    //
-    //
-    //    template < typename Type >
-    //    bool UniformClosedOpen< Type >::is_valid() const
-    //    {
-    //        if( min_value < max_value )
-    //        {
-    //            return true;
-    //        }
-    //        geode::Logger::error(
-    //            "[Uniform ClosedOpen] - check range boundaries definintion [",
-    //            min_value, ",", max_value, "]." );
-    //        return false;
-    //    }
-    //    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
-    //        index_t >;
-    //    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
-    //        local_index_t >;
-    //    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
-    //        signed_index_t >;
-    //    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
-    //        float >;
-    //    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
-    //        double >;
+namespace geode {
+//    template < typename Type >
+//    bool UniformClosed< Type >::is_valid() const
+//    {
+//        if( min_value < max_value )
+//        {
+//            return true;
+//        }
+//        if( min_value == max_value )
+//        {
+//            geode::Logger::warn(
+//                "[Uniform Closed] - check range boundaries definintion [",
+//                min_value, ",", max_value, "]." );
+//            return true;
+//        }
+//        geode::Logger::error(
+//            "[Uniform Closed] - check range boundaries definintion [",
+//            min_value, ",", max_value, "]." );
+//        return false;
+//    }
+//    template opengeode_stochastic_stochastic_api struct UniformClosed<
+//        index_t >;
+//    template opengeode_stochastic_stochastic_api struct UniformClosed<
+//        local_index_t >;
+//    template opengeode_stochastic_stochastic_api struct UniformClosed<
+//        signed_index_t >;
+//    template opengeode_stochastic_stochastic_api struct UniformClosed<
+//    float >; template opengeode_stochastic_stochastic_api struct
+//    UniformClosed< double >;
+//
+//
+//    template < typename Type >
+//    bool UniformClosedOpen< Type >::is_valid() const
+//    {
+//        if( min_value < max_value )
+//        {
+//            return true;
+//        }
+//        geode::Logger::error(
+//            "[Uniform ClosedOpen] - check range boundaries definintion [",
+//            min_value, ",", max_value, "]." );
+//        return false;
+//    }
+//    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
+//        index_t >;
+//    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
+//        local_index_t >;
+//    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
+//        signed_index_t >;
+//    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
+//        float >;
+//    template opengeode_stochastic_stochastic_api struct UniformClosedOpen<
+//        double >;
 
-    bool Gaussian::is_valid() const
-    {
-        if( standard_deviation > 0 && std::isfinite( standard_deviation )
-            && std::isfinite( mean ) )
-        {
-            return true;
-        }
-        geode::Logger::error(
-            "[Gaussian] - check mean and standard deviation N(", mean, ",",
-            standard_deviation, ")." );
-        return false;
-    }
+bool Gaussian::is_valid() const {
+  if (standard_deviation > 0 && std::isfinite(standard_deviation) &&
+      std::isfinite(mean)) {
+    return true;
+  }
+  geode::Logger::error("[Gaussian] - check mean and standard deviation N(",
+                       mean, ",", standard_deviation, ").");
+  return false;
+}
 
-    bool TruncatedGaussian::is_valid() const
-    {
-        if( standard_deviation <= 0 || std::isfinite( standard_deviation )
-            || std::isfinite( mean ) )
-        {
-            geode::Logger::error(
-                "[Truncated Gaussian] - check mean and standard deviation N(",
-                mean, ",", standard_deviation, ")." );
-            return false;
-        }
-        const auto max =
-            max_value.value_or( std::numeric_limits< double >::infinity() );
-        const auto min =
-            min_value.value_or( -std::numeric_limits< double >::infinity() );
+bool TruncatedGaussian::is_valid() const {
+  if (standard_deviation <= 0 || std::isfinite(standard_deviation) ||
+      std::isfinite(mean)) {
+    geode::Logger::error(
+        "[Truncated Gaussian] - check mean and standard deviation N(", mean,
+        ",", standard_deviation, ").");
+    return false;
+  }
+  const auto max = max_value.value_or(std::numeric_limits<double>::infinity());
+  const auto min = min_value.value_or(-std::numeric_limits<double>::infinity());
 
-        if( min >= max )
-        {
-            geode::Logger::error( "[Truncated Gaussian] - check "
-                                  "range boundaries definintion [",
-                min, ",", max, "]." );
-            return false;
-        }
+  if (min >= max) {
+    geode::Logger::error("[Truncated Gaussian] - check "
+                         "range boundaries definintion [",
+                         min, ",", max, "].");
+    return false;
+  }
 
-        if( min < mean + 6.0 * standard_deviation
-            && max > mean - 6.0 * standard_deviation )
-        {
-            geode::Logger::error( "[Truncated Gaussian] - Truncation "
-                                  "range is too far from mean. N(",
-                mean, ",", standard_deviation, ") is defined in [", min, ",",
-                max, "]." );
-            return false;
-        }
-        return true;
-    }
+  if (min < mean + 6.0 * standard_deviation &&
+      max > mean - 6.0 * standard_deviation) {
+    geode::Logger::error("[Truncated Gaussian] - Truncation "
+                         "range is too far from mean. N(",
+                         mean, ",", standard_deviation, ") is defined in [",
+                         min, ",", max, "].");
+    return false;
+  }
+  return true;
+}
 } // namespace geode

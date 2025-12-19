@@ -26,61 +26,48 @@
 #include <geode/geometry/basic_objects/segment.hpp>
 #include <geode/geometry/distance.hpp>
 
-namespace
-{
-    template < geode::index_t dimension >
-    double compute_euclidean_distance( const geode::Point< dimension >& point1,
-        const geode::Point< dimension >& point2 )
-    {
-        return geode::point_point_distance( point1, point2 );
-    }
-    template < geode::index_t dimension >
-    double compute_euclidean_distance( const geode::Segment< dimension >& seg1,
-        const geode::Segment< dimension >& seg2 )
-    {
-        return std::get< 0 >( geode::segment_segment_distance( seg1, seg2 ) );
-    }
+namespace {
+template <geode::index_t dimension>
+double compute_euclidean_distance(const geode::Point<dimension> &point1,
+                                  const geode::Point<dimension> &point2) {
+  return geode::point_point_distance(point1, point2);
+}
+template <geode::index_t dimension>
+double compute_euclidean_distance(const geode::Segment<dimension> &seg1,
+                                  const geode::Segment<dimension> &seg2) {
+  return std::get<0>(geode::segment_segment_distance(seg1, seg2));
+}
 } // namespace
-namespace geode
-{
-    template < typename Type >
-    EuclideanCutoffInteraction< Type >::EuclideanCutoffInteraction(
-        double cutoff_distance )
-        : PairwiseInteraction< Type >(), cutoff_distance_( cutoff_distance )
-    {
-    }
+namespace geode {
+template <typename Type>
+EuclideanCutoffInteraction<Type>::EuclideanCutoffInteraction(
+    double cutoff_distance)
+    : PairwiseInteraction<Type>(), cutoff_distance_(cutoff_distance) {}
 
-    template < typename Type >
-    EuclideanCutoffInteraction< Type >::EuclideanCutoffInteraction(
-        double cutoff_distance,
-        typename PairwiseInteraction< Type >::SCOPE scope )
-        : PairwiseInteraction< Type >( scope ),
-          cutoff_distance_( cutoff_distance )
-    {
-    }
+template <typename Type>
+EuclideanCutoffInteraction<Type>::EuclideanCutoffInteraction(
+    double cutoff_distance, typename PairwiseInteraction<Type>::SCOPE scope)
+    : PairwiseInteraction<Type>(scope), cutoff_distance_(cutoff_distance) {}
 
-    template < typename Type >
-    double EuclideanCutoffInteraction< Type >::neighborhood_searching_distance()
-        const
-    {
-        return cutoff_distance_;
-    }
+template <typename Type>
+double
+EuclideanCutoffInteraction<Type>::neighborhood_searching_distance() const {
+  return cutoff_distance_;
+}
 
-    template < typename Type >
-    double EuclideanCutoffInteraction< Type >::compute(
-        const ObjectRef< Type >& object_a,
-        const ObjectRef< Type >& object_b ) const
-    {
-        auto dist = compute_euclidean_distance< Type::dim >(
-            object_a.object, object_b.object );
-        return dist <= cutoff_distance_ ? 1.0 : 0.0;
-    }
+template <typename Type>
+double EuclideanCutoffInteraction<Type>::compute(
+    const ObjectRef<Type> &object_a, const ObjectRef<Type> &object_b) const {
+  auto dist =
+      compute_euclidean_distance<Type::dim>(object_a.object, object_b.object);
+  return dist <= cutoff_distance_ ? 1.0 : 0.0;
+}
 
-    template class opengeode_stochastic_stochastic_api
-        EuclideanCutoffInteraction< Point< 2 > >;
-    template class opengeode_stochastic_stochastic_api
-        EuclideanCutoffInteraction< Point< 3 > >;
+template class opengeode_stochastic_stochastic_api
+    EuclideanCutoffInteraction<Point<2>>;
+template class opengeode_stochastic_stochastic_api
+    EuclideanCutoffInteraction<Point<3>>;
 
-    template class opengeode_stochastic_stochastic_api
-        EuclideanCutoffInteraction< OwnerSegment< 2 > >;
+template class opengeode_stochastic_stochastic_api
+    EuclideanCutoffInteraction<OwnerSegment<2>>;
 } // namespace geode

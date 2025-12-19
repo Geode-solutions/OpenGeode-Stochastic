@@ -26,25 +26,21 @@
 
 #include <variant>
 
-namespace geode
-{
-    FORWARD_DECLARATION_DIMENSION_CLASS( BoundingBox );
-    FORWARD_DECLARATION_DIMENSION_CLASS( Sphere );
-    FORWARD_DECLARATION_DIMENSION_CLASS( Point );
-    class RandomEngine;
+namespace geode {
+FORWARD_DECLARATION_DIMENSION_CLASS(BoundingBox);
+FORWARD_DECLARATION_DIMENSION_CLASS(Sphere);
+FORWARD_DECLARATION_DIMENSION_CLASS(Point);
+class RandomEngine;
 } // namespace geode
 
-namespace geode
-{
+namespace geode {
 
-    struct PointUniformSampler
-    {
-        template < index_t dimension >
-        using Object =
-            std::variant< BoundingBox< dimension >, Sphere< dimension > >;
+struct PointUniformSampler {
+  template <index_t dimension>
+  using Object = std::variant<BoundingBox<dimension>, Sphere<dimension>>;
 
-        template < index_t dimension >
-        static Point< dimension > sample(
-            RandomEngine& engine, const Object< dimension >& object );
-    };
+  template <index_t dimension>
+  static Point<dimension> sample(RandomEngine &engine,
+                                 const Object<dimension> &object);
+};
 } // namespace geode

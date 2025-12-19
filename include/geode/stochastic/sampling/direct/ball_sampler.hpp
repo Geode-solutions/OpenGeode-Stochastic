@@ -27,28 +27,24 @@
 #include <geode/basic/pimpl.hpp>
 #include <geode/stochastic/common.hpp>
 
-namespace geode
-{
-    class RandomEngine;
-    FORWARD_DECLARATION_DIMENSION_CLASS( Sphere );
-    FORWARD_DECLARATION_DIMENSION_CLASS( Point );
+namespace geode {
+class RandomEngine;
+FORWARD_DECLARATION_DIMENSION_CLASS(Sphere);
+FORWARD_DECLARATION_DIMENSION_CLASS(Point);
 } // namespace geode
 
-namespace geode
-{
+namespace geode {
 
-    template < index_t dimension >
-    class BallSampler
-    {
-    public:
-        BallSampler( const Sphere< dimension >& ball );
-        ~BallSampler();
+template <index_t dimension> class BallSampler {
+public:
+  BallSampler(const Sphere<dimension> &ball);
+  ~BallSampler();
 
-        Point< dimension > sample_uniform( RandomEngine& engine );
+  Point<dimension> sample_uniform(RandomEngine &engine);
 
-    private:
-        IMPLEMENTATION_MEMBER( impl_ );
-    };
-    ALIAS_2D_AND_3D( BallSampler );
+private:
+  IMPLEMENTATION_MEMBER(impl_);
+};
+ALIAS_2D_AND_3D(BallSampler);
 
 } // namespace geode

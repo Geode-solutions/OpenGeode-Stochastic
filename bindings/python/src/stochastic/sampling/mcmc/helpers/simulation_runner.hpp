@@ -24,29 +24,24 @@
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_printer.hpp>
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_runner.hpp>
 
-namespace geode
-{
-    void define_simulation_runner( pybind11::module& module )
-    {
-        pybind11::class_< SimulationConfigurator >(
-            module, "SimulationConfigurator" )
-            .def( pybind11::init<>() )
-            .def_readwrite( "realizations",
-                &SimulationConfigurator::realizations,
-                "Number of realizations to generate" )
-            .def_readwrite( "metropolis_hasting_steps",
-                &SimulationConfigurator::metropolis_hasting_steps,
-                "Number of Metropolis-Hastings steps per realization" )
-            .def_readwrite( "burn_in_steps",
-                &SimulationConfigurator::burn_in_steps,
-                "Number of burn-in steps before recording realizations" )
-            .def_readwrite( "printer", &SimulationConfigurator::printer,
-                "Optional SimulationPrinter for output" )
-            .def( "string", &SimulationConfigurator::string,
-                "Return a detailed description of the simulation configurator" )
-            .def( "__repr__", []( const SimulationConfigurator& self ) {
-                return "<SimulationConfigurator realizations="
-                       + std::to_string( self.realizations ) + ">";
-            } );
-    }
+namespace geode {
+void define_simulation_runner(pybind11::module &module) {
+  pybind11::class_<SimulationConfigurator>(module, "SimulationConfigurator")
+      .def(pybind11::init<>())
+      .def_readwrite("realizations", &SimulationConfigurator::realizations,
+                     "Number of realizations to generate")
+      .def_readwrite("metropolis_hasting_steps",
+                     &SimulationConfigurator::metropolis_hasting_steps,
+                     "Number of Metropolis-Hastings steps per realization")
+      .def_readwrite("burn_in_steps", &SimulationConfigurator::burn_in_steps,
+                     "Number of burn-in steps before recording realizations")
+      .def_readwrite("printer", &SimulationConfigurator::printer,
+                     "Optional SimulationPrinter for output")
+      .def("string", &SimulationConfigurator::string,
+           "Return a detailed description of the simulation configurator")
+      .def("__repr__", [](const SimulationConfigurator &self) {
+        return "<SimulationConfigurator realizations=" +
+               std::to_string(self.realizations) + ">";
+      });
+}
 } // namespace geode

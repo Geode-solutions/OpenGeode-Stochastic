@@ -36,80 +36,69 @@
 
 const int NUMBER_OF_SAMPLES = 10000;
 
-template < geode::index_t dimension >
-void test_sample_ball(
-    geode::RandomEngine& engine, const geode::Sphere< dimension >& ball )
-{
-    for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
-    {
-        auto value =
-            geode::PointUniformSampler::sample< dimension >( engine, ball );
-        OPENGEODE_EXCEPTION( geode::point_point_distance( value, ball.origin() )
-                                 <= ball.radius() + geode::GLOBAL_EPSILON,
-            "[PointUniformSampler] - point too far from ball center." );
-    }
+template <geode::index_t dimension>
+void test_sample_ball(geode::RandomEngine &engine,
+                      const geode::Sphere<dimension> &ball) {
+  for (const auto i : geode::Range{NUMBER_OF_SAMPLES}) {
+    auto value = geode::PointUniformSampler::sample<dimension>(engine, ball);
+    OPENGEODE_EXCEPTION(
+        geode::point_point_distance(value, ball.origin()) <=
+            ball.radius() + geode::GLOBAL_EPSILON,
+        "[PointUniformSampler] - point too far from ball center.");
+  }
 }
 
-template < geode::index_t dimension >
-void test_sample_bounding_box(
-    geode::RandomEngine& engine, const geode::BoundingBox< dimension >& box )
-{
-    for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
-    {
-        auto value =
-            geode::PointUniformSampler::sample< dimension >( engine, box );
-        OPENGEODE_EXCEPTION( box.contains( value ),
-            "[PointUniformSampler] - point out of box." );
-    }
+template <geode::index_t dimension>
+void test_sample_bounding_box(geode::RandomEngine &engine,
+                              const geode::BoundingBox<dimension> &box) {
+  for (const auto i : geode::Range{NUMBER_OF_SAMPLES}) {
+    auto value = geode::PointUniformSampler::sample<dimension>(engine, box);
+    OPENGEODE_EXCEPTION(box.contains(value),
+                        "[PointUniformSampler] - point out of box.");
+  }
 }
-void test_point_sampling2D()
-{
-    geode::RandomEngine random_engine;
+void test_point_sampling2D() {
+  geode::RandomEngine random_engine;
 
-    geode::Point2D center_point{ { 10., 100. } };
-    geode::Sphere2D ball{ center_point, 1.3 };
-    test_sample_ball< 2 >( random_engine, ball );
+  geode::Point2D center_point{{10., 100.}};
+  geode::Sphere2D ball{center_point, 1.3};
+  test_sample_ball<2>(random_engine, ball);
 
-    geode::Point2D min_point{ { 0.1, 0.8 } };
-    geode::Point2D max_point{ { 1.2, 1. } };
+  geode::Point2D min_point{{0.1, 0.8}};
+  geode::Point2D max_point{{1.2, 1.}};
 
-    geode::BoundingBox2D box;
-    box.add_point( min_point );
-    box.add_point( max_point );
-    test_sample_bounding_box< 2 >( random_engine, box );
+  geode::BoundingBox2D box;
+  box.add_point(min_point);
+  box.add_point(max_point);
+  test_sample_bounding_box<2>(random_engine, box);
 }
 
-void test_point_sampling3D()
-{
-    geode::RandomEngine random_engine;
+void test_point_sampling3D() {
+  geode::RandomEngine random_engine;
 
-    geode::Point3D center_point{ { 10., 100., -100. } };
-    geode::Sphere3D ball{ center_point, 21.5 };
-    test_sample_ball< 3 >( random_engine, ball );
+  geode::Point3D center_point{{10., 100., -100.}};
+  geode::Sphere3D ball{center_point, 21.5};
+  test_sample_ball<3>(random_engine, ball);
 
-    geode::Point3D min_point{ { 0.1, 0.1, 0.1 } };
-    geode::Point3D max_point{ { 0.2, 0.2, 0.2 } };
+  geode::Point3D min_point{{0.1, 0.1, 0.1}};
+  geode::Point3D max_point{{0.2, 0.2, 0.2}};
 
-    geode::BoundingBox3D box;
-    box.add_point( min_point );
-    box.add_point( max_point );
-    test_sample_bounding_box< 3 >( random_engine, box );
+  geode::BoundingBox3D box;
+  box.add_point(min_point);
+  box.add_point(max_point);
+  test_sample_bounding_box<3>(random_engine, box);
 }
 
-int main()
-{
-    try
-    {
-        geode::StochasticLibrary::initialize();
+int main() {
+  try {
+    geode::StochasticLibrary::initialize();
 
-        test_point_sampling2D();
-        test_point_sampling3D();
+    test_point_sampling2D();
+    test_point_sampling3D();
 
-        geode::Logger::info( "TEST SUCCESS" );
-        return 0;
-    }
-    catch( ... )
-    {
-        return geode::geode_lippincott();
-    }
+    geode::Logger::info("TEST SUCCESS");
+    return 0;
+  } catch (...) {
+    return geode::geode_lippincott();
+  }
 }

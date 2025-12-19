@@ -27,28 +27,24 @@
 #include <geode/basic/pimpl.hpp>
 #include <geode/stochastic/common.hpp>
 
-namespace geode
-{
-    class RandomEngine;
-    FORWARD_DECLARATION_DIMENSION_CLASS( BoundingBox );
-    FORWARD_DECLARATION_DIMENSION_CLASS( Point );
+namespace geode {
+class RandomEngine;
+FORWARD_DECLARATION_DIMENSION_CLASS(BoundingBox);
+FORWARD_DECLARATION_DIMENSION_CLASS(Point);
 } // namespace geode
 
-namespace geode
-{
+namespace geode {
 
-    template < index_t dimension >
-    class BoundingBoxSampler
-    {
-    public:
-        explicit BoundingBoxSampler( const BoundingBox< dimension >& box );
-        ~BoundingBoxSampler();
+template <index_t dimension> class BoundingBoxSampler {
+public:
+  explicit BoundingBoxSampler(const BoundingBox<dimension> &box);
+  ~BoundingBoxSampler();
 
-        Point< dimension > sample_uniform( RandomEngine& engine );
+  Point<dimension> sample_uniform(RandomEngine &engine);
 
-    private:
-        IMPLEMENTATION_MEMBER( impl_ );
-    };
-    ALIAS_1D_AND_2D_AND_3D( BoundingBoxSampler );
+private:
+  IMPLEMENTATION_MEMBER(impl_);
+};
+ALIAS_1D_AND_2D_AND_3D(BoundingBoxSampler);
 
 } // namespace geode
