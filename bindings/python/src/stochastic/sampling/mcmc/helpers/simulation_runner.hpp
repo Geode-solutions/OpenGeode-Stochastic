@@ -43,7 +43,8 @@ namespace geode
             .def_readwrite( "printer", &SimulationConfigurator::printer,
                 "Optional SimulationPrinter for output" )
             .def( "string", &SimulationConfigurator::string,
-                "Return a detailed description of the simulation configurator" )
+                "Return a detailed description of the object set simulation "
+                "configurator" )
             .def( "__repr__", []( const SimulationConfigurator& self ) {
                 return "<SimulationConfigurator realizations="
                        + std::to_string( self.realizations ) + ">";

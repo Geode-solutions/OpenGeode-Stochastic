@@ -122,6 +122,7 @@ def test_two_fracture_sets_simulator():
     runner = stochastic.FractureSimulationRunner(domain)
     runner.add_fracture_set_descriptor(setA)
     runner.add_fracture_set_descriptor(setB)
+    runner.add_x_node_monitoring(0.3)
     runner.initialize()
 
     printer_config = stochastic.SimulationPrinterConfigurator()

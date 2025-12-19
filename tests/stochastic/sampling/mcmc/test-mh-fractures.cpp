@@ -146,6 +146,7 @@ namespace
         geode::FractureSimulationRunner runner( domain );
         runner.add_fracture_set_descriptor( setA );
         runner.add_fracture_set_descriptor( setB );
+        runner.add_x_node_monitoring( 0.3 );
 
         runner.initialize();
 
