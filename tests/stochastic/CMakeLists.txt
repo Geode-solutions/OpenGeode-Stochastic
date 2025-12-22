@@ -114,6 +114,14 @@ add_geode_test(
 )
 
 add_geode_test(
+    SOURCE "sampling/mcmc/models/components/test-intensity-term.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
     SOURCE "sampling/mcmc/models/components/test-pairwise-term.cpp"
     DEPENDENCIES
         OpenGeode::basic

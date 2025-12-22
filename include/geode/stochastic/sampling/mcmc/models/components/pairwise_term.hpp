@@ -68,8 +68,13 @@ namespace geode
                 geode::ObjectRef< ObjectType > neigh_object{
                     state.get_object( neigh_id ), neigh_id.set_id
                 };
-                if( this->is_anchored_in_domain( new_object.object )
-                    || this->is_anchored_in_domain( neigh_object.object ) )
+                // is that reallythe good test?
+                // intersect?
+                if( SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
+                        this->domain(), new_object.object )
+                    || SpatialDomainChecker<
+                        ObjectType >::is_anchored_in_domain( this->domain(),
+                        neigh_object.object ) )
                 {
                     delta += interaction_->evaluate( new_object, neigh_object );
                 }
@@ -96,8 +101,11 @@ namespace geode
                 ObjectRef< ObjectType > neigh_object{
                     state.get_object( neigh_id ), neigh_id.set_id
                 };
-                if( this->is_anchored_in_domain( object_to_remove.object )
-                    || this->is_anchored_in_domain( neigh_object.object ) )
+                if( SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
+                        this->domain(), object_to_remove.object )
+                    || SpatialDomainChecker<
+                        ObjectType >::is_anchored_in_domain( this->domain(),
+                        neigh_object.object ) )
                 {
                     delta += interaction_->evaluate(
                         object_to_remove, neigh_object );
@@ -129,8 +137,11 @@ namespace geode
                 ObjectRef< ObjectType > neigh_object{
                     state.get_object( neigh_id ), neigh_id.set_id
                 };
-                if( this->is_anchored_in_domain( object_to_remove.object )
-                    || this->is_anchored_in_domain( neigh_object.object ) )
+                if( SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
+                        this->domain(), object_to_remove.object )
+                    || SpatialDomainChecker<
+                        ObjectType >::is_anchored_in_domain( this->domain(),
+                        neigh_object.object ) )
                 {
                     delta -= interaction_->evaluate(
                         object_to_remove, neigh_object );
@@ -150,8 +161,11 @@ namespace geode
                 ObjectRef< ObjectType > neigh_object{
                     state.get_object( neigh_id ), neigh_id.set_id
                 };
-                if( this->is_anchored_in_domain( new_object.object )
-                    || this->is_anchored_in_domain( neigh_object.object ) )
+                if( SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
+                        this->domain(), new_object.object )
+                    || SpatialDomainChecker<
+                        ObjectType >::is_anchored_in_domain( this->domain(),
+                        neigh_object.object ) )
                 {
                     delta += interaction_->evaluate( new_object, neigh_object );
                 }
@@ -162,31 +176,31 @@ namespace geode
         double statistic( const ObjectSets< ObjectType >& state ) const override
         {
             double sum = 0.0;
-            this->for_each_targeted_object(
-                state, [&]( const ObjectId& obj_id ) {
-                    const auto& cur_obj = state.get_object( obj_id );
-                    if( !this->is_anchored_in_domain( cur_obj ) )
+            this->for_each_targeted_object( state, [&]( const ObjectId&
+                                                           obj_id ) {
+                const auto& cur_obj = state.get_object( obj_id );
+                if( !SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
+                        this->domain(), cur_obj ) )
+                {
+                    return;
+                }
+                ObjectRef< ObjectType > object{ cur_obj, obj_id.set_id };
+                const auto neighbors =
+                    state.neighbors( obj_id, this->targeted_set_ids(),
+                        interaction_->neighborhood_searching_distance() );
+                for( const auto& neigh_obj_id : neighbors )
+                {
+                    if( !is_new_pair( cur_obj, obj_id, neigh_obj_id ) )
                     {
-                        return;
+                        continue;
                     }
-                    ObjectRef< ObjectType > object{ cur_obj, obj_id.set_id };
-                    const auto neighbors =
-                        state.neighbors( obj_id, this->targeted_set_ids(),
-                            interaction_->neighborhood_searching_distance() );
-                    for( const auto& neigh_obj_id : neighbors )
-                    {
-                        if( !is_new_pair( cur_obj, obj_id, neigh_obj_id ) )
-                        {
-                            continue;
-                        }
-                        ObjectRef< ObjectType > neigh_object{
-                            state.get_object( neigh_obj_id ),
-                            neigh_obj_id.set_id
-                        };
+                    ObjectRef< ObjectType > neigh_object{
+                        state.get_object( neigh_obj_id ), neigh_obj_id.set_id
+                    };
 
-                        sum += interaction_->evaluate( object, neigh_object );
-                    }
-                } );
+                    sum += interaction_->evaluate( object, neigh_object );
+                }
+            } );
             return sum;
         }
 
@@ -195,7 +209,8 @@ namespace geode
             const ObjectId& obj_id,
             const ObjectId& neigh_obj_id ) const
         {
-            if( !this->is_anchored_in_domain( obj ) )
+            if( !SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
+                    this->domain(), obj ) )
             {
                 return true;
             }

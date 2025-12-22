@@ -24,79 +24,121 @@
 
 #include <geode/stochastic/spatial/object_sets.hpp>
 
-#include <geode/stochastic/sampling/mcmc/models/components/energy_term.hpp>
+#include <geode/stochastic/sampling/mcmc/models/components/single_object_term.hpp>
+
+double length_inside_box( const geode::Point2D& p0,
+    const geode::Point2D& p1,
+    const geode::BoundingBox2D& box )
+{
+    double dx = p1.value( 0 ) - p0.value( 0 );
+    double dy = p1.value( 1 ) - p0.value( 1 );
+
+    double t_min = 0.0;
+    double t_max = 1.0;
+
+    auto update_interval = [&]( double p, double q_min, double q_max ) -> bool {
+        if( p == 0.0 )
+        {
+            // Segment parallel to axis
+            return ( q_min <= 0.0 && 0.0 <= q_max );
+        }
+
+        double t1 = q_min / p;
+        double t2 = q_max / p;
+        if( t1 > t2 )
+            std::swap( t1, t2 );
+
+        t_min = std::max( t_min, t1 );
+        t_max = std::min( t_max, t2 );
+
+        return t_min <= t_max;
+    };
+
+    // X axis
+    if( !update_interval( dx, box.min().value( 0 ) - p0.value( 0 ),
+            box.max().value( 0 ) - p0.value( 0 ) ) )
+    {
+        return 0.0;
+    }
+
+    // Y axis
+    if( !update_interval( dy, box.min().value( 1 ) - p0.value( 1 ),
+            box.max().value( 1 ) - p0.value( 1 ) ) )
+    {
+        return 0.0;
+    }
+
+    if( t_max <= t_min )
+    {
+        return 0.0;
+    }
+
+    double clipped_dx = dx * ( t_max - t_min );
+    double clipped_dy = dy * ( t_max - t_min );
+
+    return std::sqrt( clipped_dx * clipped_dx + clipped_dy * clipped_dy );
+}
 
 namespace geode
 {
-    /// ObjectCountTerm
     template < typename ObjectType >
-    class DensityTerm : public EnergyTerm< ObjectType >
+    class DensityTerm : public SingleObjectTerm< ObjectType,
+                            std::function< double( const ObjectType&,
+                                const SpatialDomain< ObjectType::dim >& ) > >
     {
     public:
         explicit DensityTerm( std::string_view name,
             double lambda,
             std::vector< uuid > targeted_set_ids,
             const SpatialDomain< ObjectType::dim >& domain )
-            : EnergyTerm< ObjectType >(
-                  name, lambda, std::move( targeted_set_ids ), domain )
+            : SingleObjectTerm< ObjectType,
+                  std::function< double( const ObjectType&,
+                      const SpatialDomain< ObjectType::dim >& ) > >(
+                  name,
+                  lambda,
+                  std::move( targeted_set_ids ),
+                  1.0, // scale by domain area to get density per unit
+                  []( const ObjectType& obj,
+                      const SpatialDomain< ObjectType::dim >& domain ) {
+                      if( SpatialDomainChecker<
+                              ObjectType >::is_anchored_in_domain( domain,
+                              obj ) )
+                      {
+                          return 1.0;
+                      }
+                      return 0.0;
+                  }, // contribution = 1 anchoredin domain
+                  domain )
         {
         }
+    };
 
-        double total_log( const ObjectSets< ObjectType >& state ) const override
+    class IntensityTerm
+        : public SingleObjectTerm< OwnerSegment2D,
+              std::function< double( const OwnerSegment2D&,
+                  const SpatialDomain< OwnerSegment2D::dim >& ) > >
+    {
+    public:
+        explicit IntensityTerm( std::string_view name,
+            double lambda,
+            std::vector< uuid > targeted_set_ids,
+            double caracteristic_length,
+            const SpatialDomain< OwnerSegment2D::dim >& domain )
+            : SingleObjectTerm< OwnerSegment2D,
+                  std::function< double( const OwnerSegment2D&,
+                      const SpatialDomain< OwnerSegment2D::dim >& ) > >(
+                  name,
+                  lambda,
+                  std::move( targeted_set_ids ),
+                  1.0 / caracteristic_length,
+                  []( const OwnerSegment2D& segment,
+                      const SpatialDomain< OwnerSegment2D::dim >& domain ) {
+                      auto seg_extremities = segment.vertices();
+                      return length_inside_box( seg_extremities[0],
+                          seg_extremities[1], domain.box() );
+                  },
+                  domain )
         {
-            const auto n = this->statistic( state );
-            return this->contribution( n );
-        }
-
-        double delta_log_add( const ObjectSets< ObjectType >& /*state*/,
-            const ObjectRef< ObjectType >& new_object ) const override
-        {
-            if( !this->is_targeted_set( new_object.set_id )
-                || !this->is_anchored_in_domain( new_object.object ) )
-            {
-                return 0.0;
-            }
-            return this->contribution( 1.0 );
-        }
-
-        double delta_log_remove( const ObjectSets< ObjectType >& state,
-            const ObjectId& object_id ) const override
-        {
-            if( !this->is_targeted_set( object_id.set_id )
-                || !this->is_anchored_in_domain(
-                    state.get_object( object_id ) ) )
-            {
-                return 0.0;
-            }
-            return this->contribution( -1.0 );
-        }
-
-        double delta_log_change( const ObjectSets< ObjectType >& state,
-            const ObjectId& old_object_id,
-            const ObjectRef< ObjectType >& new_object ) const override
-        {
-            auto old_in = this->is_anchored_in_domain(
-                state.get_object( old_object_id ) );
-            auto new_in = this->is_anchored_in_domain( new_object.object );
-            if( old_in == new_in )
-            {
-                return 0.0;
-            }
-            return this->contribution( new_in ? 1.0 : -1.0 );
-        }
-
-        double statistic( const ObjectSets< ObjectType >& state ) const override
-        {
-            double sum = 0.0;
-            this->for_each_targeted_object(
-                state, [&]( const ObjectId& obj_id ) {
-                    if( this->is_anchored_in_domain(
-                            state.get_object( obj_id ) ) )
-                    {
-                        sum += 1.0;
-                    }
-                } );
-            return sum;
         }
     };
 } // namespace geode

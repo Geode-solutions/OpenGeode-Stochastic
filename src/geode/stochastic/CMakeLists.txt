@@ -56,6 +56,7 @@ add_geode_library(
         "sampling/mcmc/helpers/simulation_monitor.hpp"
         "sampling/mcmc/models/components/pairwise_term.hpp"
         "sampling/mcmc/models/components/density_term.hpp"
+        "sampling/mcmc/models/components/single_object_term.hpp"
         "sampling/mcmc/models/components/energy_term.hpp"
         "sampling/mcmc/models/energy_term_collection.hpp"
         "sampling/mcmc/models/gibbs_energy.hpp"

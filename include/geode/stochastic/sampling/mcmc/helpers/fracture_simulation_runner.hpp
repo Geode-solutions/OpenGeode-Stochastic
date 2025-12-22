@@ -48,7 +48,7 @@ namespace geode
         // positionning
         double p20;
         std::vector< std::array< geode::Point2D, 2 > > observed_fractures;
-        // double p21;
+        double p21{ 1. };
         double minimal_spacing{ 0. };
 
         // mh dynamique
@@ -147,6 +147,17 @@ namespace geode
                             absl::StrCat( set_desc.name, "_density" ),
                             set_desc.p20, std::vector< uuid >{ set_id },
                             this->domain_ ) ) );
+                // intentisty
+                if( std::fabs( set_desc.p21 - 1. ) > GLOBAL_EPSILON )
+                {
+                    this->ordered_energy_terms_.push_back(
+                        this->energy_terms_collection_.add_energy_term(
+                            std::make_unique< IntensityTerm >(
+                                absl::StrCat( set_desc.name, "_intensity" ),
+                                set_desc.p21, std::vector< uuid >{ set_id },
+                                0.5 * this->domain_.smallest_length(),
+                                this->domain_ ) ) );
+                }
                 // spacing
                 if( set_desc.minimal_spacing > GLOBAL_EPSILON )
                 {

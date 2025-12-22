@@ -156,17 +156,17 @@ namespace geode
                 targeted_set_ids_.begin(), targeted_set_ids_.end(), set_id );
         }
 
-        bool is_anchored_in_domain( const ObjectType& obj ) const
+        const SpatialDomain< ObjectType::dim >& domain() const
         {
-            return SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
-                domain_, obj );
+            return domain_;
         }
 
-        bool intersects_domain( const ObjectType& obj ) const
-        {
-            return SpatialDomainChecker< ObjectType >::intersects_domain(
-                domain_, obj );
-        }
+        //        bool intersects_domain( const ObjectType& obj ) const
+        //        {
+        //            return SpatialDomainChecker< ObjectType
+        //            >::intersects_domain(
+        //                domain_, obj );
+        //        }
 
         template < typename Func >
         void for_each_targeted_object(
@@ -185,6 +185,6 @@ namespace geode
     private:
         detail::EnergyScale energy_scale_;
         std::vector< uuid > targeted_set_ids_;
-        const SpatialDomain< ObjectType::dim > domain_;
+        const SpatialDomain< ObjectType::dim >& domain_;
     };
 } // namespace geode
