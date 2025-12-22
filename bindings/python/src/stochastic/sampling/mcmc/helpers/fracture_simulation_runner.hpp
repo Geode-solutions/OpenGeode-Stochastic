@@ -36,6 +36,7 @@ namespace geode
             .def_readwrite( "length", &FractureSetDescription::length )
             .def_readwrite( "azimuth", &FractureSetDescription::azimuth )
             .def_readwrite( "p20", &FractureSetDescription::p20 )
+            .def_readwrite( "p20", &FractureSetDescription::p21 )
             .def( "add_observed_fracture",
                 []( FractureSetDescription& self, const geode::Point2D& a,
                     const geode::Point2D& b ) {

@@ -60,6 +60,7 @@ def test_fracture_simulator():
 
     # positioning
     setA.p20 = 0.06
+    setA.p21 = 10
     setA.minimal_spacing = 1.0
 
     runner = stochastic.FractureSimulationRunner(domain)
