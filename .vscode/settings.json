@@ -2,8 +2,24 @@
     "C_Cpp.default.cppStandard": "c++11",
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/include",
-        "${workspaceFolder}/build",
-        "${workspaceFolder:OpenGeode}/build/opengeode/install/include"
+        "${workspaceFolder}/build/include",
+        "${workspaceFolder:OpenGeode}/build/opengeode/include",
+        "${workspaceFolder:OpenGeode}/build/third_party/abseil/install/include",
+        "${workspaceFolder:OpenGeode}/build/third_party/bitsery/install/include",
+        "${workspaceFolder:OpenGeode}/build/third_party/gdal/install/include",
+        "${workspaceFolder:OpenGeode}/build/third_party/pybind11/install/include",
+        "${workspaceFolder:OpenGeode}/build/third_party/asyncplusplus/install/include"
+    ],
+    "C_Cpp.default.browse.path": [
+        "${workspaceFolder}/include",
+        "${workspaceFolder}/src",
+        "${workspaceFolder}/build/include",
+        "${workspaceFolder:OpenGeode}/build/opengeode/include",
+        "${workspaceFolder:OpenGeode}/build/third_party/abseil/install/include",
+        "${workspaceFolder:OpenGeode}/build/third_party/bitsery/install/include",
+        "${workspaceFolder:OpenGeode}/build/third_party/gdal/install/include",
+        "${workspaceFolder:OpenGeode}/build/third_party/pybind11/install/include",
+        "${workspaceFolder:OpenGeode}/build/third_party/asyncplusplus/install/include"
     ],
     "files.watcherExclude": {
         "${workspaceFolder}/build/**": true
