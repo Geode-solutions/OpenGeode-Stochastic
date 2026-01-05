@@ -20,7 +20,7 @@
  * SOFTWARE.
  *
  */
-#include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
+#include <geode/stochastic/sampling/mcmc/models/components/intensity_term.hpp>
 
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
@@ -161,22 +161,5 @@ int main()
     catch( ... )
     {
         return geode::geode_lippincott();
-    }
-
-    try
-    {
-        geode::StochasticLibrary::initialize();
-        geode::uuid set_id;
-        auto domain = init_domain();
-
-        geode::DensityTerm< geode::Point2D > term(
-            "zero", -geode::GLOBAL_EPSILON, { set_id }, domain );
-        geode::Logger::info( "TEST FAILED" );
-        return 1;
-    }
-    catch( geode::OpenGeodeException& expt )
-    {
-        geode::Logger::info( "TEST SUCCESS" );
-        return 0;
     }
 }
