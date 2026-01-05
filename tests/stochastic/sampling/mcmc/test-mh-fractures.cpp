@@ -59,6 +59,7 @@ namespace
 
         // positionning
         setA.p20 = 0.05;
+        setA.p21 = 200;
         setA.minimal_spacing = 1.;
 
         geode::FractureSimulationRunner runner( domain );

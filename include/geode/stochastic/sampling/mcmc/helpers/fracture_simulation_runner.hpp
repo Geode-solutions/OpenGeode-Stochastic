@@ -29,6 +29,7 @@
 #include <geode/stochastic/sampling/direct/object_set_sampler/segment_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_runner.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
+#include <geode/stochastic/sampling/mcmc/models/components/intensity_term.hpp>
 #include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
 #include <geode/stochastic/spatial/pairwise_interactions.hpp>
@@ -48,7 +49,7 @@ namespace geode
         // positionning
         double p20;
         std::vector< std::array< geode::Point2D, 2 > > observed_fractures;
-        // double p21;
+        double p21{ 1. };
         double minimal_spacing{ 0. };
 
         // mh dynamique
@@ -107,7 +108,8 @@ namespace geode
                 std::make_unique< ProposalKernel< OwnerSegment2D > >();
 
             // Mapping set names -> UUID
-            std::unordered_map< std::string, uuid > name_to_uuid;
+            //           std::unordered_map< std::string, uuid >
+            //           set_name_to_uuid_;
 
             // Step 1: create object sets and samplers
             for( const auto& set_desc : set_descriptors_ )
@@ -120,7 +122,7 @@ namespace geode
                             fixed_object[0], fixed_object[1] },
                         set_id, true );
                 }
-                name_to_uuid[set_desc.name] = set_id;
+                set_name_to_uuid_[set_desc.name] = set_id;
 
                 auto length_distribution =
                     DoubleSampler::create_distribution( set_desc.length );
@@ -139,52 +141,12 @@ namespace geode
             // Step 2: create density energy terms
             for( const auto& set_desc : set_descriptors_ )
             {
-                const auto set_id = name_to_uuid.at( set_desc.name );
-                // p20
-                this->ordered_energy_terms_.push_back(
-                    this->energy_terms_collection_.add_energy_term(
-                        std::make_unique< DensityTerm< OwnerSegment2D > >(
-                            absl::StrCat( set_desc.name, "_density" ),
-                            set_desc.p20, std::vector< uuid >{ set_id },
-                            this->domain_ ) ) );
-                // spacing
-                if( set_desc.minimal_spacing > GLOBAL_EPSILON )
-                {
-                    auto interaction = std::make_unique<
-                        EuclideanCutoffInteraction< OwnerSegment2D > >(
-                        set_desc.minimal_spacing,
-                        PairwiseInteraction<
-                            OwnerSegment2D >::SCOPE::same_set );
-
-                    this->ordered_energy_terms_.push_back(
-                        this->energy_terms_collection_.add_energy_term(
-                            std::make_unique< PairwiseTerm< OwnerSegment2D > >(
-                                absl::StrCat( set_desc.name, "_min_spacing" ),
-                                0., std::vector< uuid >{ set_id },
-                                std::move( interaction ), this->domain_ ) ) );
-                }
+                set_density_term( set_desc );
+                set_intensity_term( set_desc );
+                set_minimal_spacing_term( set_desc );
             }
-            // x node monitoring
-            if( std::fabs( beta_x_node_ - 1. ) > GLOBAL_EPSILON )
-            {
-                std::vector< uuid > set_uuids;
-                set_uuids.reserve( name_to_uuid.size() );
-                for( const auto& [name, id] : name_to_uuid )
-                {
-                    set_uuids.push_back( id );
-                }
-                auto interaction = std::make_unique<
-                    EuclideanCutoffInteraction< OwnerSegment2D > >(
-                    0., PairwiseInteraction<
-                            OwnerSegment2D >::SCOPE::different_set );
+            set_x_intersection_term();
 
-                this->ordered_energy_terms_.push_back(
-                    this->energy_terms_collection_.add_energy_term(
-                        std::make_unique< PairwiseTerm< OwnerSegment2D > >(
-                            absl::StrCat( "inter_set_x_nodes" ), beta_x_node_,
-                            set_uuids, std::move( interaction ),
-                            this->domain_ ) ) );
-            }
             this->mh_sampler_ =
                 std::make_unique< MetropolisHastings< OwnerSegment2D > >(
                     this->energy_terms_collection_,
@@ -230,7 +192,79 @@ namespace geode
         }
 
     private:
+        void set_density_term( const FractureSetDescription& set_desc )
+        {
+            const auto set_id = set_name_to_uuid_.at( set_desc.name );
+            this->ordered_energy_terms_.push_back(
+                this->energy_terms_collection_.add_energy_term(
+                    std::make_unique< DensityTerm< OwnerSegment2D > >(
+                        absl::StrCat( set_desc.name, "_density" ), set_desc.p20,
+                        std::vector< uuid >{ set_id }, this->domain_ ) ) );
+        }
+
+        void set_intensity_term( const FractureSetDescription& set_desc )
+        {
+            if( std::fabs( set_desc.p21 - 1. ) < GLOBAL_EPSILON )
+            {
+                return;
+            }
+            const auto set_id = set_name_to_uuid_.at( set_desc.name );
+            this->ordered_energy_terms_.push_back(
+                this->energy_terms_collection_.add_energy_term(
+                    std::make_unique< IntensityTerm >(
+                        absl::StrCat( set_desc.name, "_intensity" ),
+                        set_desc.p21, std::vector< uuid >{ set_id },
+                        0.5 * this->domain_.smallest_length(),
+                        this->domain_ ) ) );
+        }
+
+        void set_minimal_spacing_term( const FractureSetDescription& set_desc )
+        {
+            if( set_desc.minimal_spacing < GLOBAL_EPSILON )
+            {
+                return;
+            }
+            const auto set_id = set_name_to_uuid_.at( set_desc.name );
+            auto interaction = std::make_unique<
+                EuclideanCutoffInteraction< OwnerSegment2D > >(
+                set_desc.minimal_spacing,
+                PairwiseInteraction< OwnerSegment2D >::SCOPE::same_set );
+
+            this->ordered_energy_terms_.push_back(
+                this->energy_terms_collection_.add_energy_term(
+                    std::make_unique< PairwiseTerm< OwnerSegment2D > >(
+                        absl::StrCat( set_desc.name, "_min_spacing" ), 0.,
+                        std::vector< uuid >{ set_id }, std::move( interaction ),
+                        this->domain_ ) ) );
+        }
+
+        void set_x_intersection_term()
+        {
+            if( std::fabs( beta_x_node_ - 1. ) > GLOBAL_EPSILON )
+            {
+                std::vector< uuid > set_uuids;
+                set_uuids.reserve( set_name_to_uuid_.size() );
+                for( const auto& [name, id] : set_name_to_uuid_ )
+                {
+                    set_uuids.push_back( id );
+                }
+                auto interaction = std::make_unique<
+                    EuclideanCutoffInteraction< OwnerSegment2D > >(
+                    0., PairwiseInteraction<
+                            OwnerSegment2D >::SCOPE::different_set );
+
+                this->ordered_energy_terms_.push_back(
+                    this->energy_terms_collection_.add_energy_term(
+                        std::make_unique< PairwiseTerm< OwnerSegment2D > >(
+                            absl::StrCat( "inter_set_x_nodes" ), beta_x_node_,
+                            set_uuids, std::move( interaction ),
+                            this->domain_ ) ) );
+            }
+        }
+
+    private:
         std::vector< FractureSetDescription > set_descriptors_;
+        std::unordered_map< std::string, uuid > set_name_to_uuid_;
         // x node monitoring
         double beta_x_node_{ 1. };
     };
