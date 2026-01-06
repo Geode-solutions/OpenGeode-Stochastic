@@ -25,7 +25,7 @@
 
 namespace geode
 {
-    void define_simulation_printer( pybind11::module& module )
+    void define_simulation_printer( pybind11::module &module )
     {
         pybind11::class_< SimulationPrinterConfigurator >(
             module, "SimulationPrinterConfigurator" )
@@ -46,7 +46,7 @@ namespace geode
                 &SimulationPrinterConfigurator::realisations_print_frequency )
             .def_readwrite(
                 "output_folder", &SimulationPrinterConfigurator::output_folder )
-            .def( "__repr__", []( const SimulationPrinterConfigurator& self ) {
+            .def( "__repr__", []( const SimulationPrinterConfigurator &self ) {
                 return "<SimulationPrinterConfigurator output_folder='"
                        + self.output_folder + "'>";
             } );

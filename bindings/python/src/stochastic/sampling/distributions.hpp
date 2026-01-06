@@ -26,7 +26,7 @@
 namespace geode
 {
 
-    void define_distributions( pybind11::module& module )
+    void define_distributions( pybind11::module &module )
     {
         // DistributionType
         pybind11::class_< DistributionType >( module, "DistributionType" )

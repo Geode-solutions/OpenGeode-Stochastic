@@ -26,7 +26,7 @@
 namespace
 {
     template < geode::index_t dimension >
-    void declare_spatial_domain( pybind11::module& module )
+    void declare_spatial_domain( pybind11::module &module )
     {
         using Domain = geode::SpatialDomain< dimension >;
         using BBox = geode::BoundingBox< dimension >;
@@ -35,7 +35,7 @@ namespace
             "SpatialDomain" + std::to_string( dimension ) + "D";
 
         pybind11::class_< Domain >( module, pyclass_name.c_str() )
-            .def( pybind11::init< const BBox&, double >(),
+            .def( pybind11::init< const BBox &, double >(),
                 pybind11::arg( "domain" ), pybind11::arg( "buffer_size" ),
                 R"doc(
                 Create a spatial domain composed of:
@@ -52,7 +52,7 @@ namespace
 } // namespace
 namespace geode
 {
-    void define_spatial_domain( pybind11::module& module )
+    void define_spatial_domain( pybind11::module &module )
     {
         declare_spatial_domain< 2 >( module );
         declare_spatial_domain< 3 >( module );

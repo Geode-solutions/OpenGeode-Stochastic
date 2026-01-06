@@ -25,7 +25,7 @@
 
 namespace geode
 {
-    void define_simulation_monitor( pybind11::module& module )
+    void define_simulation_monitor( pybind11::module &module )
     {
         pybind11::class_< geode::StatisticsMonitor >(
             module, "StatisticsMonitor" )
@@ -43,7 +43,7 @@ namespace geode
             .def_property_readonly( "variances",
                 &geode::StatisticsMonitor::variances,
                 "Return the computed variances for each energy term" )
-            .def( "__repr__", []( const geode::StatisticsMonitor& self ) {
+            .def( "__repr__", []( const geode::StatisticsMonitor &self ) {
                 return "<StatisticsMonitor count="
                        + std::to_string( self.statiscal_count() ) + ">";
             } );

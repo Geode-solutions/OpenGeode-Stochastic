@@ -25,7 +25,7 @@
 
 namespace geode
 {
-    void define_double_sampler( pybind11::module& module )
+    void define_double_sampler( pybind11::module &module )
     {
         // Bind DistributionDescription
         pybind11::class_< DoubleSampler::DistributionDescription >(
@@ -54,7 +54,7 @@ namespace geode
             .def( "string", &DoubleSampler::DistributionDescription::string,
                 "Return a detailed description of the Distribution law" )
             .def( "__repr__",
-                []( const DoubleSampler::DistributionDescription& d ) {
+                []( const DoubleSampler::DistributionDescription &d ) {
                     return "<DoubleDistributionDescription name=" + d.name
                            + ">";
                 } );

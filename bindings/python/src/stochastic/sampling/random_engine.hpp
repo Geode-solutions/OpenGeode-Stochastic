@@ -25,7 +25,7 @@
 
 namespace geode
 {
-    void define_random_engine( pybind11::module& module )
+    void define_random_engine( pybind11::module &module )
     {
         pybind11::class_< RandomEngine >( module, "RandomEngine" )
             .def( pybind11::init<>() )
@@ -41,7 +41,7 @@ namespace geode
             // Uniform sampling (double)
             .def(
                 "sample_uniform_closed",
-                []( RandomEngine& self, const UniformClosed< double >& law ) {
+                []( RandomEngine &self, const UniformClosed< double > &law ) {
                     return self.sample_uniform( law );
                 },
                 pybind11::arg( "law" ),
@@ -49,8 +49,8 @@ namespace geode
 
             .def(
                 "sample_uniform_closed_open",
-                []( RandomEngine& self,
-                    const UniformClosedOpen< double >& law ) {
+                []( RandomEngine &self,
+                    const UniformClosedOpen< double > &law ) {
                     return self.sample_uniform( law );
                 },
                 pybind11::arg( "law" ),
@@ -83,7 +83,7 @@ namespace geode
                 pybind11::arg( "probability_of_success" ),
                 "Sample a boolean with given success probability" )
 
-            .def( "__repr__", []( const RandomEngine& ) {
+            .def( "__repr__", []( const RandomEngine & ) {
                 return "<RandomEngine>";
             } );
     }

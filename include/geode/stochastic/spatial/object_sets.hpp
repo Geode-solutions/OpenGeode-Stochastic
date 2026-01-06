@@ -84,8 +84,6 @@ namespace geode
 
     private:
         ObjectSet< Type >& get_set( const uuid& set_id );
-        //  void update_neighborhood_remove_context( const ObjectId& object_id
-        //  );
 
     private:
         absl::flat_hash_map< uuid, ObjectSet< Type > > sets_;

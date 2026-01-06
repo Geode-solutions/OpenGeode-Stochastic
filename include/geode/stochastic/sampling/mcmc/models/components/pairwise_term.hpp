@@ -68,7 +68,7 @@ namespace geode
                 geode::ObjectRef< ObjectType > neigh_object{
                     state.get_object( neigh_id ), neigh_id.set_id
                 };
-                // is that reallythe good test?
+                // is that really the good test?
                 // intersect?
                 if( SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
                         this->domain(), new_object.object )
