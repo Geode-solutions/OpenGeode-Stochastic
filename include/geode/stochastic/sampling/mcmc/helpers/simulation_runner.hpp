@@ -31,115 +31,140 @@
 
 #include <absl/strings/str_join.h>
 
-namespace geode {
-struct SimulationConfigurator {
-  index_t realizations{1000};
-  index_t metropolis_hasting_steps{1000};
-  index_t burn_in_steps{1000};
+namespace geode
+{
+    struct SimulationConfigurator
+    {
+        index_t realizations{ 1000 };
+        index_t metropolis_hasting_steps{ 1000 };
+        index_t burn_in_steps{ 1000 };
 
-  std::optional<SimulationPrinterConfigurator> printer{std::nullopt};
+        std::optional< SimulationPrinterConfigurator > printer{ std::nullopt };
 
-  std::string string() const {
-    auto message = absl::StrCat("SimulationConfigurator: ");
-    absl::StrAppend(&message, "\n\t --> ", realizations,
-                    " metropolis hasting realizations");
-    absl::StrAppend(&message, "\n\t --> ", metropolis_hasting_steps,
-                    " metropolis hasting steps");
-    absl::StrAppend(&message, "\n\t --> ", burn_in_steps, " burnin steps");
-    if (printer.has_value()) {
-      absl::StrAppend(&message, "\n\t --> Simulation Printer: \n",
-                      printer.value().string());
-    }
-    return message;
-  }
-};
+        std::string string() const
+        {
+            auto message = absl::StrCat( "SimulationConfigurator: " );
+            absl::StrAppend( &message, "\n\t --> ", realizations,
+                " metropolis hasting realizations" );
+            absl::StrAppend( &message, "\n\t --> ", metropolis_hasting_steps,
+                " metropolis hasting steps" );
+            absl::StrAppend(
+                &message, "\n\t --> ", burn_in_steps, " burnin steps" );
+            if( printer.has_value() )
+            {
+                absl::StrAppend( &message, "\n\t --> Simulation Printer: \n",
+                    printer.value().string() );
+            }
+            return message;
+        }
+    };
 
-template <typename ObjectType> class SimulationRunner {
-public:
-  SimulationRunner(const SpatialDomain<ObjectType::dim> &domain)
-      : domain_(domain) {};
-  virtual ~SimulationRunner() = default;
+    template < typename ObjectType >
+    class SimulationRunner
+    {
+    public:
+        SimulationRunner( const SpatialDomain< ObjectType::dim > &domain )
+            : domain_( domain ) {};
+        virtual ~SimulationRunner() = default;
 
-  virtual void initialize() = 0;
+        virtual void initialize() = 0;
 
-  const ObjectSets<ObjectType> &run(RandomEngine &engine, const index_t steps) {
-    mh_sampler_->walk(object_sets_, engine, steps);
-    return object_sets_;
-  }
+        const ObjectSets< ObjectType > &run(
+            RandomEngine &engine, const index_t steps )
+        {
+            mh_sampler_->walk( object_sets_, engine, steps );
+            return object_sets_;
+        }
 
-  StatisticsMonitor run(RandomEngine &engine,
-                        const SimulationConfigurator &config) {
-    if (config.burn_in_steps > 0) {
-      mh_sampler_->walk(object_sets_, engine, config.burn_in_steps);
-    }
+        StatisticsMonitor run(
+            RandomEngine &engine, const SimulationConfigurator &config )
+        {
+            if( config.burn_in_steps > 0 )
+            {
+                mh_sampler_->walk( object_sets_, engine, config.burn_in_steps );
+            }
 
-    // Initialize monitoring
-    StatisticsMonitor stats_monitor(energy_terms_collection_.size());
-    std::unique_ptr<SimulationPrinter> printer;
+            // Initialize monitoring
+            StatisticsMonitor stats_monitor( energy_terms_collection_.size() );
+            std::unique_ptr< SimulationPrinter > printer;
 
-    if (config.printer.has_value()) {
-      printer = std::make_unique<SimulationPrinter>(config.printer.value());
-    }
+            if( config.printer.has_value() )
+            {
+                printer = std::make_unique< SimulationPrinter >(
+                    config.printer.value() );
+            }
 
-    for (const auto realization : Range{config.realizations}) {
-      mh_sampler_->walk(object_sets_, engine, config.metropolis_hasting_steps);
+            for( const auto realization : Range{ config.realizations } )
+            {
+                mh_sampler_->walk(
+                    object_sets_, engine, config.metropolis_hasting_steps );
 
-      const auto stats = state_statistics();
-      stats_monitor.add_realization(stats);
+                const auto stats = state_statistics();
+                stats_monitor.add_realization( stats );
 
-      if (printer) {
-        printer->print_statistics(stats, model_energy_term_names());
-        printer->print_object_sets(object_sets_, realization);
-      }
-    }
+                if( printer )
+                {
+                    printer->print_statistics(
+                        stats, model_energy_term_names() );
+                    printer->print_object_sets( object_sets_, realization );
+                }
+            }
 
-    if (printer) {
-      printer->print_statistics_summary(stats_monitor,
-                                        model_energy_term_names());
-    }
+            if( printer )
+            {
+                printer->print_statistics_summary(
+                    stats_monitor, model_energy_term_names() );
+            }
 
-    return stats_monitor;
-  }
+            return stats_monitor;
+        }
 
-  const ObjectSets<ObjectType> &state_realization() const {
-    return object_sets_;
-  }
+        const ObjectSets< ObjectType > &state_realization() const
+        {
+            return object_sets_;
+        }
 
-  std::vector<double> state_statistics() const {
-    std::vector<double> statistic_values;
-    statistic_values.reserve(ordered_energy_terms_.size());
+        std::vector< double > state_statistics() const
+        {
+            std::vector< double > statistic_values;
+            statistic_values.reserve( ordered_energy_terms_.size() );
 
-    for (const auto &energy_term_uuid : ordered_energy_terms_) {
-      const auto &term = energy_terms_collection_.get(energy_term_uuid);
-      statistic_values.push_back(term.statistic(object_sets_));
-    }
+            for( const auto &energy_term_uuid : ordered_energy_terms_ )
+            {
+                const auto &term =
+                    energy_terms_collection_.get( energy_term_uuid );
+                statistic_values.push_back( term.statistic( object_sets_ ) );
+            }
 
-    return statistic_values;
-  }
+            return statistic_values;
+        }
 
-  std::string model_energy_term_names() const {
-    std::vector<std::string> term_names;
-    term_names.reserve(ordered_energy_terms_.size());
+        std::string model_energy_term_names() const
+        {
+            std::vector< std::string > term_names;
+            term_names.reserve( ordered_energy_terms_.size() );
 
-    for (const auto &energy_term_uuid : ordered_energy_terms_) {
-      const auto &term = energy_terms_collection_.get(energy_term_uuid);
-      term_names.push_back(term.name().data());
-    }
+            for( const auto &energy_term_uuid : ordered_energy_terms_ )
+            {
+                const auto &term =
+                    energy_terms_collection_.get( energy_term_uuid );
+                term_names.push_back( term.name().data() );
+            }
 
-    return absl::StrCat(absl::StrJoin(term_names, " ; "), "\n");
-  }
+            return absl::StrCat( absl::StrJoin( term_names, " ; " ), "\n" );
+        }
 
-protected:
-  SpatialDomain<ObjectType::dim> domain_;
-  std::vector<std::unique_ptr<geode::ObjectSetSampler<ObjectType>>>
-      set_samplers_;
+    protected:
+        SpatialDomain< ObjectType::dim > domain_;
+        std::vector< std::unique_ptr< geode::ObjectSetSampler< ObjectType > > >
+            set_samplers_;
 
-  std::vector<geode::uuid> ordered_energy_terms_;
-  std::vector<double> ordered_target_statistics_;
+        std::vector< geode::uuid > ordered_energy_terms_;
+        std::vector< double > ordered_target_statistics_;
 
-  EnergyTermCollection<ObjectType> energy_terms_collection_;
-  std::unique_ptr<geode::MetropolisHastings<ObjectType>> mh_sampler_;
+        EnergyTermCollection< ObjectType > energy_terms_collection_;
+        std::unique_ptr< geode::MetropolisHastings< ObjectType > > mh_sampler_;
 
-  ObjectSets<ObjectType> object_sets_;
-};
+        ObjectSets< ObjectType > object_sets_;
+    };
 } // namespace geode

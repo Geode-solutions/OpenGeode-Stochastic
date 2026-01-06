@@ -34,45 +34,53 @@
 
 const int NUMBER_OF_SAMPLES = 10000;
 
-template <geode::index_t dimension>
-void test_sample_ball(geode::RandomEngine &engine,
-                      const geode::Sphere<dimension> &ball) {
-  geode::BallSampler<dimension> spec_ball{ball};
+template < geode::index_t dimension >
+void test_sample_ball(
+    geode::RandomEngine &engine, const geode::Sphere< dimension > &ball )
+{
+    geode::BallSampler< dimension > spec_ball{ ball };
 
-  for (const auto i : geode::Range{NUMBER_OF_SAMPLES}) {
-    auto value = spec_ball.sample_uniform(engine);
-    OPENGEODE_EXCEPTION(geode::point_point_distance(value, ball.origin()) <=
-                            ball.radius() + geode::GLOBAL_EPSILON,
-                        "[Point Ball sampler] - point too far from center.");
-  }
+    for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
+    {
+        auto value = spec_ball.sample_uniform( engine );
+        OPENGEODE_EXCEPTION( geode::point_point_distance( value, ball.origin() )
+                                 <= ball.radius() + geode::GLOBAL_EPSILON,
+            "[Point Ball sampler] - point too far from center." );
+    }
 }
 
-void test_ball_sampling2D() {
-  geode::RandomEngine random_engine;
+void test_ball_sampling2D()
+{
+    geode::RandomEngine random_engine;
 
-  geode::Point2D center_point{{10., 100.}};
-  geode::Sphere2D ball{center_point, 0.5};
-  test_sample_ball<2>(random_engine, ball);
+    geode::Point2D center_point{ { 10., 100. } };
+    geode::Sphere2D ball{ center_point, 0.5 };
+    test_sample_ball< 2 >( random_engine, ball );
 }
 
-void test_ball_sampling3D() {
-  geode::RandomEngine random_engine;
+void test_ball_sampling3D()
+{
+    geode::RandomEngine random_engine;
 
-  geode::Point3D center_point{{10., 100., -100.}};
-  geode::Sphere3D ball{center_point, 10};
-  test_sample_ball<3>(random_engine, ball);
+    geode::Point3D center_point{ { 10., 100., -100. } };
+    geode::Sphere3D ball{ center_point, 10 };
+    test_sample_ball< 3 >( random_engine, ball );
 }
 
-int main() {
-  try {
-    geode::StochasticLibrary::initialize();
+int main()
+{
+    try
+    {
+        geode::StochasticLibrary::initialize();
 
-    test_ball_sampling2D();
-    test_ball_sampling3D();
+        test_ball_sampling2D();
+        test_ball_sampling3D();
 
-    geode::Logger::info("TEST SUCCESS");
-    return 0;
-  } catch (...) {
-    return geode::geode_lippincott();
-  }
+        geode::Logger::info( "TEST SUCCESS" );
+        return 0;
+    }
+    catch( ... )
+    {
+        return geode::geode_lippincott();
+    }
 }

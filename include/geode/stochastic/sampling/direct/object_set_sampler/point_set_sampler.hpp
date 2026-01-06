@@ -30,60 +30,70 @@
 #include <geode/stochastic/sampling/direct/point_uniform_sampler.hpp>
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
-namespace geode {
-template <index_t dimension>
-class UniformPointSetSampler : public ObjectSetSampler<Point<dimension>> {
-public:
-  UniformPointSetSampler(const SpatialDomain<dimension> &domain)
-      : ObjectSetSampler<Point<dimension>>{}, domain_(domain) {
-    auto volume = domain_.extended_n_volume();
-    OPENGEODE_EXCEPTION(volume != 0.,
-                        "[PointSetSampler] - Undefined Extended Bounding "
-                        "Box (volume ==0).");
-    this->log_pdf_ = -std::log(volume);
-    step_move_ = define_step_for_move();
-    OPENGEODE_EXCEPTION(
-        step_move_ > 0.,
-        "[PointSetSampler] - Undefined step length for move (value == ",
-        step_move_, ").");
-  }
+namespace geode
+{
+    template < index_t dimension >
+    class UniformPointSetSampler : public ObjectSetSampler< Point< dimension > >
+    {
+    public:
+        UniformPointSetSampler( const SpatialDomain< dimension > &domain )
+            : ObjectSetSampler< Point< dimension > >{}, domain_( domain )
+        {
+            auto volume = domain_.extended_n_volume();
+            OPENGEODE_EXCEPTION( volume != 0.,
+                "[PointSetSampler] - Undefined Extended Bounding "
+                "Box (volume ==0)." );
+            this->log_pdf_ = -std::log( volume );
+            step_move_ = define_step_for_move();
+            OPENGEODE_EXCEPTION( step_move_ > 0.,
+                "[PointSetSampler] - Undefined step length for move (value == ",
+                step_move_, ")." );
+        }
 
-  Point<dimension> sample(RandomEngine &engine) const override {
-    return PointUniformSampler::sample<dimension>(engine,
-                                                  domain_.extended_box());
-  }
+        Point< dimension > sample( RandomEngine &engine ) const override
+        {
+            return PointUniformSampler::sample< dimension >(
+                engine, domain_.extended_box() );
+        }
 
-  Point<dimension> change(const Point<dimension> &obj,
-                          RandomEngine &engine) const override {
-    geode::Sphere<dimension> ball{obj, step_move_};
+        Point< dimension > change(
+            const Point< dimension > &obj, RandomEngine &engine ) const override
+        {
+            geode::Sphere< dimension > ball{ obj, step_move_ };
 
-    auto new_point = PointUniformSampler::sample<dimension>(engine, ball);
-    constexpr index_t max_try{100};
-    for (const auto try_id : geode::Range{max_try}) {
-      if (domain_.extended_contains(new_point)) {
-        return new_point;
-      }
-      new_point = PointUniformSampler::sample<dimension>(engine, ball);
-    }
-    throw OpenGeodeException(
-        absl::StrCat("[PointSampler] - Cannot find a point in the "
-                     "extended domain"));
-    return obj;
-  }
+            auto new_point =
+                PointUniformSampler::sample< dimension >( engine, ball );
+            constexpr index_t max_try{ 100 };
+            for( const auto try_id : geode::Range{ max_try } )
+            {
+                if( domain_.extended_contains( new_point ) )
+                {
+                    return new_point;
+                }
+                new_point =
+                    PointUniformSampler::sample< dimension >( engine, ball );
+            }
+            throw OpenGeodeException(
+                absl::StrCat( "[PointSampler] - Cannot find a point in the "
+                              "extended domain" ) );
+            return obj;
+        }
 
-private:
-  double define_step_for_move() {
-    double ratio = 0.1;
-    return ratio * domain_.smallest_length();
-  }
+    private:
+        double define_step_for_move()
+        {
+            double ratio = 0.1;
+            return ratio * domain_.smallest_length();
+        }
 
-  bool is_valid_object(const Point<dimension> &obj) const override {
-    return domain_.extended_contains(obj);
-  }
+        bool is_valid_object( const Point< dimension > &obj ) const override
+        {
+            return domain_.extended_contains( obj );
+        }
 
-private:
-  const SpatialDomain<dimension> &domain_;
-  double step_move_{0.};
-};
+    private:
+        const SpatialDomain< dimension > &domain_;
+        double step_move_{ 0. };
+    };
 
 } // namespace geode

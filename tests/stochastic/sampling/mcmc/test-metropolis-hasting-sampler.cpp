@@ -27,156 +27,178 @@
 #include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
 #include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
-namespace {
-void test_acceptance_prob_helper() {
-  // log_accept >= 0 → prob = 1
-  OPENGEODE_EXCEPTION(
-      geode::MetropolisHastings<geode::Point2D>::acceptance_prob_helper(0.5) ==
-          1.0,
-      "[MH test] acceptance_prob_helper wrong for positive log_accept.");
+namespace
+{
+    void test_acceptance_prob_helper()
+    {
+        // log_accept >= 0 → prob = 1
+        OPENGEODE_EXCEPTION(
+            geode::MetropolisHastings< geode::Point2D >::acceptance_prob_helper(
+                0.5 )
+                == 1.0,
+            "[MH test] acceptance_prob_helper wrong for positive log_accept." );
 
-  // very negative → prob = 0
-  OPENGEODE_EXCEPTION(
-      geode::MetropolisHastings<geode::Point2D>::acceptance_prob_helper(
-          -800.0) == 0.0,
-      "[MH test] acceptance_prob_helper wrong for extreme negative.");
+        // very negative → prob = 0
+        OPENGEODE_EXCEPTION(
+            geode::MetropolisHastings< geode::Point2D >::acceptance_prob_helper(
+                -800.0 )
+                == 0.0,
+            "[MH test] acceptance_prob_helper wrong for extreme negative." );
 
-  // moderate negative → exp(log_accept)
-  double val =
-      geode::MetropolisHastings<geode::Point2D>::acceptance_prob_helper(-1.0);
-  OPENGEODE_EXCEPTION(std::abs(val - std::exp(-1.0)) < 1e-12,
-                      "[MH test] acceptance_prob_helper wrong for -1.0.");
-}
-
-void test_beta_setter(geode::MetropolisHastings<geode::Point2D> &mh) {
-  mh.set_beta(0.5);
-  OPENGEODE_EXCEPTION(mh.beta() == 0.5, "[MH test] beta not set correctly.");
-
-  bool exception_thrown = false;
-  try {
-    mh.set_beta(-1.0);
-  } catch (...) {
-    exception_thrown = true;
-  }
-  OPENGEODE_EXCEPTION(exception_thrown,
-                      "[MH test] negative beta did not throw.");
-}
-
-void test_steps(const geode::MetropolisHastings<geode::Point2D> &mh,
-                geode::ObjectSets<geode::Point2D> &state) {
-  geode::RandomEngine engine;
-
-  geode::index_t stat_sum{0};
-  constexpr geode::index_t N{100000};
-
-  geode::index_t accepted_birth{0};
-  geode::index_t accepted_death{0};
-  geode::index_t accepted_change{0};
-  geode::index_t nb_accepted{0};
-
-  for (const auto count : geode::Range{N}) {
-    auto result = mh.step(state, engine);
-    // Invariant: fixed object must remain
-
-    OPENGEODE_EXCEPTION(result.decision == geode::MHDecision::Accepted ||
-                            result.decision == geode::MHDecision::Rejected,
-                        "[MH test] decision should be Accepted or Rejected.");
-
-    // Log each step (optional: comment out if too verbose)
-    //            geode::Logger::info( "Step: ", count,
-    //                " move_type= ", static_cast< int >(
-    //                result.move_type ), " decision= ", result.decision
-    //                == geode::MHDecision::Accepted ? "Accepted"
-    //                                                               :
-    //                                                               "Rejected",
-    //                " delta_log_energy = ", result.delta_log_energy,
-    //                " log_accept = ", result.log_accept,
-    //                " state_size = ", state.size() );
-
-    // Keep track of accepted moves by type
-    if (result.decision == geode::MHDecision::Accepted) {
-      nb_accepted++;
-      switch (result.move_type) {
-      case geode::MoveType::Birth:
-        accepted_birth++;
-        break;
-      case geode::MoveType::Death:
-        accepted_death++;
-        break;
-      case geode::MoveType::Change:
-        accepted_change++;
-        break;
-      default:
-        break;
-      }
+        // moderate negative → exp(log_accept)
+        double val =
+            geode::MetropolisHastings< geode::Point2D >::acceptance_prob_helper(
+                -1.0 );
+        OPENGEODE_EXCEPTION( std::abs( val - std::exp( -1.0 ) ) < 1e-12,
+            "[MH test] acceptance_prob_helper wrong for -1.0." );
     }
-    // should be change... only pone group here
-    stat_sum += state.nb_objects();
 
-    if (count % 1000 == 0) {
-      geode::Logger::info("Progress: ", count, "  ", N, " Mean objects =  ",
-                          static_cast<double>(stat_sum) /
-                              static_cast<double>(count),
-                          " nb accepted = ", nb_accepted, " Accepted(B/D/C) = ",
-                          static_cast<double>(accepted_birth) /
-                              static_cast<double>(nb_accepted),
-                          "  ",
-                          static_cast<double>(accepted_death) /
-                              static_cast<double>(nb_accepted),
-                          "  ",
-                          static_cast<double>(accepted_change) /
-                              static_cast<double>(nb_accepted));
+    void test_beta_setter( geode::MetropolisHastings< geode::Point2D > &mh )
+    {
+        mh.set_beta( 0.5 );
+        OPENGEODE_EXCEPTION(
+            mh.beta() == 0.5, "[MH test] beta not set correctly." );
+
+        bool exception_thrown = false;
+        try
+        {
+            mh.set_beta( -1.0 );
+        }
+        catch( ... )
+        {
+            exception_thrown = true;
+        }
+        OPENGEODE_EXCEPTION(
+            exception_thrown, "[MH test] negative beta did not throw." );
     }
-  }
-}
+
+    void test_steps( const geode::MetropolisHastings< geode::Point2D > &mh,
+        geode::ObjectSets< geode::Point2D > &state )
+    {
+        geode::RandomEngine engine;
+
+        geode::index_t stat_sum{ 0 };
+        constexpr geode::index_t N{ 100000 };
+
+        geode::index_t accepted_birth{ 0 };
+        geode::index_t accepted_death{ 0 };
+        geode::index_t accepted_change{ 0 };
+        geode::index_t nb_accepted{ 0 };
+
+        for( const auto count : geode::Range{ N } )
+        {
+            auto result = mh.step( state, engine );
+            // Invariant: fixed object must remain
+
+            OPENGEODE_EXCEPTION(
+                result.decision == geode::MHDecision::Accepted
+                    || result.decision == geode::MHDecision::Rejected,
+                "[MH test] decision should be Accepted or Rejected." );
+
+            // Log each step (optional: comment out if too verbose)
+            //            geode::Logger::info( "Step: ", count,
+            //                " move_type= ", static_cast< int >(
+            //                result.move_type ), " decision= ", result.decision
+            //                == geode::MHDecision::Accepted ? "Accepted"
+            //                                                               :
+            //                                                               "Rejected",
+            //                " delta_log_energy = ", result.delta_log_energy,
+            //                " log_accept = ", result.log_accept,
+            //                " state_size = ", state.size() );
+
+            // Keep track of accepted moves by type
+            if( result.decision == geode::MHDecision::Accepted )
+            {
+                nb_accepted++;
+                switch( result.move_type )
+                {
+                    case geode::MoveType::Birth:
+                        accepted_birth++;
+                        break;
+                    case geode::MoveType::Death:
+                        accepted_death++;
+                        break;
+                    case geode::MoveType::Change:
+                        accepted_change++;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            // should be change... only pone group here
+            stat_sum += state.nb_objects();
+
+            if( count % 1000 == 0 )
+            {
+                geode::Logger::info( "Progress: ", count, "  ", N,
+                    " Mean objects =  ",
+                    static_cast< double >( stat_sum )
+                        / static_cast< double >( count ),
+                    " nb accepted = ", nb_accepted, " Accepted(B/D/C) = ",
+                    static_cast< double >( accepted_birth )
+                        / static_cast< double >( nb_accepted ),
+                    "  ",
+                    static_cast< double >( accepted_death )
+                        / static_cast< double >( nb_accepted ),
+                    "  ",
+                    static_cast< double >( accepted_change )
+                        / static_cast< double >( nb_accepted ) );
+            }
+        }
+    }
 
 } // namespace
 
-int main() {
-  try {
-    geode::StochasticLibrary::initialize();
+int main()
+{
+    try
+    {
+        geode::StochasticLibrary::initialize();
 
-    geode::Point2D min_point{{0., 0.}};
-    geode::Point2D max_point{{10., 10.}};
+        geode::Point2D min_point{ { 0., 0. } };
+        geode::Point2D max_point{ { 10., 10. } };
 
-    geode::BoundingBox2D box;
-    box.add_point(min_point);
-    box.add_point(max_point);
-    geode::SpatialDomain domain(box, 0.);
+        geode::BoundingBox2D box;
+        box.add_point( min_point );
+        box.add_point( max_point );
+        geode::SpatialDomain domain( box, 0. );
 
-    geode::ObjectSets<geode::Point2D> state;
-    const auto set_id = state.add_set("default_name");
-    geode::UniformPointSetSampler<2> sampler(domain);
+        geode::ObjectSets< geode::Point2D > state;
+        const auto set_id = state.add_set( "default_name" );
+        geode::UniformPointSetSampler< 2 > sampler( domain );
 
-    double birth_prob = 0.3;
-    double death_prob = 0.1;
-    auto kernel = geode::create_birth_death_change_kernel<geode::Point2D>(
-        set_id, sampler, birth_prob, death_prob);
+        double birth_prob = 0.3;
+        double death_prob = 0.1;
+        auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
+            set_id, sampler, birth_prob, death_prob );
 
-    geode::EnergyTermCollection<geode::Point2D> energy_terms;
+        geode::EnergyTermCollection< geode::Point2D > energy_terms;
 
-    // Add intensity term
-    energy_terms.add_energy_term(
-        std::make_unique<geode::DensityTerm<geode::Point2D>>(
-            "intensity", 0.5, std::vector<geode::uuid>{set_id}, domain));
+        // Add intensity term
+        energy_terms.add_energy_term(
+            std::make_unique< geode::DensityTerm< geode::Point2D > >(
+                "intensity", 0.5, std::vector< geode::uuid >{ set_id },
+                domain ) );
 
-    geode::MetropolisHastings<geode::Point2D> mh(energy_terms,
-                                                 std::move(kernel));
+        geode::MetropolisHastings< geode::Point2D > mh(
+            energy_terms, std::move( kernel ) );
 
-    state.add_object(geode::Point2D{{1., 1.}}, set_id, true);
-    state.add_object(geode::Point2D{{2., 2.}}, set_id, false);
-    state.add_object(geode::Point2D{{3., 3.}}, set_id, true);
+        state.add_object( geode::Point2D{ { 1., 1. } }, set_id, true );
+        state.add_object( geode::Point2D{ { 2., 2. } }, set_id, false );
+        state.add_object( geode::Point2D{ { 3., 3. } }, set_id, true );
 
-    test_steps(mh, state);
-    // OPENGEODE_EXCEPTION( state.get_set( set_id ).nb_fixed_objects() == 2
-    // );
+        test_steps( mh, state );
+        // OPENGEODE_EXCEPTION( state.get_set( set_id ).nb_fixed_objects() == 2
+        // );
 
-    test_beta_setter(mh);
-    test_acceptance_prob_helper();
+        test_beta_setter( mh );
+        test_acceptance_prob_helper();
 
-    geode::Logger::info("MH TEST SUCCESS");
-    return 0;
-  } catch (...) {
-    return geode::geode_lippincott();
-  }
+        geode::Logger::info( "MH TEST SUCCESS" );
+        return 0;
+    }
+    catch( ... )
+    {
+        return geode::geode_lippincott();
+    }
 }

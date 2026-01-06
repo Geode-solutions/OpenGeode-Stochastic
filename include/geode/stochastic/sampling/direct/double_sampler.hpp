@@ -28,66 +28,85 @@
 
 #include <variant>
 
-namespace geode {
-class RandomEngine;
+namespace geode
+{
+    class RandomEngine;
 } // namespace geode
 
-namespace geode {
+namespace geode
+{
 
-struct opengeode_stochastic_stochastic_api DoubleSampler {
-  using Distribution =
-      std::variant<UniformClosed<double>, UniformClosedOpen<double>, Gaussian,
-                   TruncatedGaussian, VonMises, TruncatedLogNormal,
-                   TruncatedPowerLaw>;
+    struct opengeode_stochastic_stochastic_api DoubleSampler
+    {
+        using Distribution = std::variant< UniformClosed< double >,
+            UniformClosedOpen< double >,
+            Gaussian,
+            TruncatedGaussian,
+            VonMises,
+            TruncatedLogNormal,
+            TruncatedPowerLaw >;
 
-  struct DistributionDescription {
-    std::string name{"default_distribution"};
-    DistributionType distribution_type;
+        struct DistributionDescription
+        {
+            std::string name{ "default_distribution" };
+            DistributionType distribution_type;
 
-    std::optional<double> min_value;
-    std::optional<double> max_value;
-    std::optional<double> mean;
-    std::optional<double> standard_deviation;
-    std::optional<double>
-        kappa; // concentration parameter for VonMises distribution
-    std::optional<double>
-        alpha; // exponent parameter for power law distribution
+            std::optional< double > min_value;
+            std::optional< double > max_value;
+            std::optional< double > mean;
+            std::optional< double > standard_deviation;
+            std::optional< double >
+                kappa; // concentration parameter for VonMises distribution
+            std::optional< double >
+                alpha; // exponent parameter for power law distribution
 
-    std::string string() const {
-      auto message = absl::StrCat("Distribution - ", name);
-      absl::StrAppend(&message,
-                      "\n\t - distribution type: ", distribution_type.get());
-      if (min_value.has_value()) {
-        absl::StrAppend(&message, "\n\t - min value: ", min_value.value());
-      }
-      if (max_value.has_value()) {
-        absl::StrAppend(&message, "\n\t - max value: ", max_value.value());
-      }
-      if (mean.has_value()) {
-        absl::StrAppend(&message, "\n\t - mean value: ", mean.value());
-      }
-      if (standard_deviation.has_value()) {
-        absl::StrAppend(&message,
-                        "\n\t - std value: ", standard_deviation.value());
-      }
-      if (kappa.has_value()) {
-        absl::StrAppend(
-            &message,
-            "\n\t - kappa (von mises concentration) value: ", kappa.value());
-      }
-      if (alpha.has_value()) {
-        absl::StrAppend(&message, "\n\t - alpha (power law exponent) value: ",
-                        alpha.value());
-      }
-      return message;
-    }
-  };
+            std::string string() const
+            {
+                auto message = absl::StrCat( "Distribution - ", name );
+                absl::StrAppend( &message,
+                    "\n\t - distribution type: ", distribution_type.get() );
+                if( min_value.has_value() )
+                {
+                    absl::StrAppend(
+                        &message, "\n\t - min value: ", min_value.value() );
+                }
+                if( max_value.has_value() )
+                {
+                    absl::StrAppend(
+                        &message, "\n\t - max value: ", max_value.value() );
+                }
+                if( mean.has_value() )
+                {
+                    absl::StrAppend(
+                        &message, "\n\t - mean value: ", mean.value() );
+                }
+                if( standard_deviation.has_value() )
+                {
+                    absl::StrAppend( &message,
+                        "\n\t - std value: ", standard_deviation.value() );
+                }
+                if( kappa.has_value() )
+                {
+                    absl::StrAppend( &message,
+                        "\n\t - kappa (von mises concentration) value: ",
+                        kappa.value() );
+                }
+                if( alpha.has_value() )
+                {
+                    absl::StrAppend( &message,
+                        "\n\t - alpha (power law exponent) value: ",
+                        alpha.value() );
+                }
+                return message;
+            }
+        };
 
-  static Distribution create_distribution(const DistributionDescription &desc);
-  static Distribution create_rad_angle_distribution_from_degree(
-      const DistributionDescription &angle_desc_deg);
+        static Distribution create_distribution(
+            const DistributionDescription &desc );
+        static Distribution create_rad_angle_distribution_from_degree(
+            const DistributionDescription &angle_desc_deg );
 
-  static double sample(RandomEngine &engine, const Distribution &dist);
-};
+        static double sample( RandomEngine &engine, const Distribution &dist );
+    };
 
 } // namespace geode

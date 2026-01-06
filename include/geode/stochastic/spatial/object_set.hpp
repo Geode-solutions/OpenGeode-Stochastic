@@ -26,33 +26,36 @@
 #include <geode/basic/identifier.hpp>
 #include <geode/stochastic/common.hpp>
 
-namespace geode {
-template <typename Type> class ObjectSet : public Identifier {
-public:
-  ObjectSet() noexcept = default;
-  ObjectSet(ObjectSet &&) noexcept = default;
-  ObjectSet &operator=(ObjectSet &&) noexcept = default;
+namespace geode
+{
+    template < typename Type >
+    class ObjectSet : public Identifier
+    {
+    public:
+        ObjectSet() noexcept = default;
+        ObjectSet( ObjectSet && ) noexcept = default;
+        ObjectSet &operator=( ObjectSet && ) noexcept = default;
 
-  void set_name(std::string_view name);
-  const Type &get_fixed_object(index_t index) const;
-  const Type &get_free_object(index_t index) const;
+        void set_name( std::string_view name );
+        const Type &get_fixed_object( index_t index ) const;
+        const Type &get_free_object( index_t index ) const;
 
-  index_t add_fixed_object(Type &&object);
+        index_t add_fixed_object( Type &&object );
 
-  index_t add_free_object(Type &&object);
-  void update_free_object(index_t index, Type &&object);
-  void remove_free_object(index_t index);
+        index_t add_free_object( Type &&object );
+        void update_free_object( index_t index, Type &&object );
+        void remove_free_object( index_t index );
 
-  index_t nb_objects() const;
-  index_t nb_fixed_objects() const;
-  index_t nb_free_objects() const;
+        index_t nb_objects() const;
+        index_t nb_fixed_objects() const;
+        index_t nb_free_objects() const;
 
-  bool empty() const;
+        bool empty() const;
 
-  std::string string() const;
+        std::string string() const;
 
-private:
-  std::vector<Type> fixed_objects_;
-  std::vector<Type> free_objects_;
-};
+    private:
+        std::vector< Type > fixed_objects_;
+        std::vector< Type > free_objects_;
+    };
 } // namespace geode

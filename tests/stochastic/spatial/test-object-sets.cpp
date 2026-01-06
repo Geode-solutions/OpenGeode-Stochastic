@@ -23,149 +23,161 @@
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 
-namespace {
-using namespace geode;
-void test_add_sets_and_objects() {
-  ObjectSets<geode::Point2D> sets;
-  const auto set_id1 = sets.add_set("default_name");
-  const auto set_id2 = sets.add_set("default_name");
+namespace
+{
+    using namespace geode;
+    void test_add_sets_and_objects()
+    {
+        ObjectSets< geode::Point2D > sets;
+        const auto set_id1 = sets.add_set( "default_name" );
+        const auto set_id2 = sets.add_set( "default_name" );
 
-  OPENGEODE_EXCEPTION(sets.nb_sets() == 2,
-                      "[TestObjectSets] - Expected 2 sets");
+        OPENGEODE_EXCEPTION(
+            sets.nb_sets() == 2, "[TestObjectSets] - Expected 2 sets" );
 
-  const auto obj_a =
-      sets.add_object(geode::Point2D{{0.0, 0.0}}, set_id1, false);
-  const auto obj_b =
-      sets.add_object(geode::Point2D{{1.0, 1.0}}, set_id1, false);
-  const auto obj_c =
-      sets.add_object(geode::Point2D{{5.0, 5.0}}, set_id2, false);
+        const auto obj_a =
+            sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id1, false );
+        const auto obj_b =
+            sets.add_object( geode::Point2D{ { 1.0, 1.0 } }, set_id1, false );
+        const auto obj_c =
+            sets.add_object( geode::Point2D{ { 5.0, 5.0 } }, set_id2, false );
 
-  OPENGEODE_EXCEPTION(sets.nb_objects_in_set(set_id1) == 2,
-                      "[TestObjectSets] - Set 1 should have 2 objects");
-  OPENGEODE_EXCEPTION(sets.nb_objects_in_set(set_id2) == 1,
-                      "[TestObjectSets] - Set 2 should have 1 object");
-  OPENGEODE_EXCEPTION(sets.nb_objects() == 3,
-                      "[TestObjectSets] - Total object count mismatch");
+        OPENGEODE_EXCEPTION( sets.nb_objects_in_set( set_id1 ) == 2,
+            "[TestObjectSets] - Set 1 should have 2 objects" );
+        OPENGEODE_EXCEPTION( sets.nb_objects_in_set( set_id2 ) == 1,
+            "[TestObjectSets] - Set 2 should have 1 object" );
+        OPENGEODE_EXCEPTION( sets.nb_objects() == 3,
+            "[TestObjectSets] - Total object count mismatch" );
 
-  const auto &point = sets.get_object(obj_b);
-  const auto expected = geode::Point2D{{1.0, 1.0}};
-  OPENGEODE_EXCEPTION(point == expected,
-                      "[TestObjectSets] - Wrong object value retrieved");
-}
-void test_update_free_object() {
-  ObjectSets<geode::Point2D> sets;
-  const auto set_id = sets.add_set("default_name");
+        const auto &point = sets.get_object( obj_b );
+        const auto expected = geode::Point2D{ { 1.0, 1.0 } };
+        OPENGEODE_EXCEPTION( point == expected,
+            "[TestObjectSets] - Wrong object value retrieved" );
+    }
+    void test_update_free_object()
+    {
+        ObjectSets< geode::Point2D > sets;
+        const auto set_id = sets.add_set( "default_name" );
 
-  const auto obj = sets.add_object(geode::Point2D{{1.0, 1.0}}, set_id, false);
+        const auto obj =
+            sets.add_object( geode::Point2D{ { 1.0, 1.0 } }, set_id, false );
 
-  sets.update_free_object(obj, geode::Point2D{{9.0, 9.0}});
+        sets.update_free_object( obj, geode::Point2D{ { 9.0, 9.0 } } );
 
-  const auto &updated = sets.get_object(obj);
-  auto result = geode::Point2D{{9.0, 9.0}};
-  OPENGEODE_EXCEPTION(updated == result,
-                      "[TestObjectSets] - Updating free object failed");
-}
-void test_remove_objects() {
-  ObjectSets<geode::Point2D> sets;
-  const auto set_id = sets.add_set("default_name");
+        const auto &updated = sets.get_object( obj );
+        auto result = geode::Point2D{ { 9.0, 9.0 } };
+        OPENGEODE_EXCEPTION( updated == result,
+            "[TestObjectSets] - Updating free object failed" );
+    }
+    void test_remove_objects()
+    {
+        ObjectSets< geode::Point2D > sets;
+        const auto set_id = sets.add_set( "default_name" );
 
-  sets.add_object(geode::Point2D{{0.0, 0.0}}, set_id, false);
-  sets.add_object(geode::Point2D{{1.0, 1.0}}, set_id, false);
-  sets.add_object(geode::Point2D{{2.0, 2.0}}, set_id, false);
+        sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id, false );
+        sets.add_object( geode::Point2D{ { 1.0, 1.0 } }, set_id, false );
+        sets.add_object( geode::Point2D{ { 2.0, 2.0 } }, set_id, false );
 
-  sets.remove_free_object({1, false, set_id});
+        sets.remove_free_object( { 1, false, set_id } );
 
-  OPENGEODE_EXCEPTION(
-      sets.nb_objects_in_set(set_id) == 2,
-      "[TestObjectSets] - Expected 2 objects after free removal");
+        OPENGEODE_EXCEPTION( sets.nb_objects_in_set( set_id ) == 2,
+            "[TestObjectSets] - Expected 2 objects after free removal" );
 
-  // Now remove the last remaining free object using remove_object()
-  sets.remove_free_object({1, false, set_id});
+        // Now remove the last remaining free object using remove_object()
+        sets.remove_free_object( { 1, false, set_id } );
 
-  OPENGEODE_EXCEPTION(
-      sets.nb_objects_in_set(set_id) == 1,
-      "[TestObjectSets] - Expected 1 object after second removal");
-}
-void test_get_all_objects() {
-  ObjectSets<geode::Point2D> sets;
-  const auto idA = sets.add_set("A");
-  const auto idB = sets.add_set("B");
+        OPENGEODE_EXCEPTION( sets.nb_objects_in_set( set_id ) == 1,
+            "[TestObjectSets] - Expected 1 object after second removal" );
+    }
+    void test_get_all_objects()
+    {
+        ObjectSets< geode::Point2D > sets;
+        const auto idA = sets.add_set( "A" );
+        const auto idB = sets.add_set( "B" );
 
-  sets.add_object(geode::Point2D{{0.0, 0.0}}, idA, false);
-  sets.add_object(geode::Point2D{{1.0, 1.0}}, idB, false);
+        sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, idA, false );
+        sets.add_object( geode::Point2D{ { 1.0, 1.0 } }, idB, false );
 
-  const auto all = sets.get_all_object();
+        const auto all = sets.get_all_object();
 
-  OPENGEODE_EXCEPTION(all.size() == 2,
-                      "[TestObjectSets] - get_all_objects size mismatch");
-}
+        OPENGEODE_EXCEPTION( all.size() == 2,
+            "[TestObjectSets] - get_all_objects size mismatch" );
+    }
 
-void test_neighbors_by_object_id() {
-  ObjectSets<geode::Point2D> sets;
-  const auto set_id = sets.add_set("default_name");
+    void test_neighbors_by_object_id()
+    {
+        ObjectSets< geode::Point2D > sets;
+        const auto set_id = sets.add_set( "default_name" );
 
-  const auto obj0 = sets.add_object(geode::Point2D{{0.0, 0.0}}, set_id, false);
-  const auto obj1 = sets.add_object(geode::Point2D{{1.0, 0.0}}, set_id, false);
-  const auto obj2 = sets.add_object(geode::Point2D{{5.0, 0.0}}, set_id, false);
+        const auto obj0 =
+            sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id, false );
+        const auto obj1 =
+            sets.add_object( geode::Point2D{ { 1.0, 0.0 } }, set_id, false );
+        const auto obj2 =
+            sets.add_object( geode::Point2D{ { 5.0, 0.0 } }, set_id, false );
 
-  std::vector<uuid> targeted_set_ids{set_id};
-  const auto near_neighbors = sets.neighbors(obj0, targeted_set_ids, 2.0);
+        std::vector< uuid > targeted_set_ids{ set_id };
+        const auto near_neighbors =
+            sets.neighbors( obj0, targeted_set_ids, 2.0 );
 
-  OPENGEODE_EXCEPTION(
-      near_neighbors.size() == 1,
-      "[TestObjectSets] - Expected exactly one neighbor near obj0");
-  OPENGEODE_EXCEPTION(near_neighbors[0].set_id == obj1.set_id &&
-                          near_neighbors[0].index == obj1.index,
-                      "[TestObjectSets] - Wrong neighbor identified for obj0");
-}
+        OPENGEODE_EXCEPTION( near_neighbors.size() == 1,
+            "[TestObjectSets] - Expected exactly one neighbor near obj0" );
+        OPENGEODE_EXCEPTION( near_neighbors[0].set_id == obj1.set_id
+                                 && near_neighbors[0].index == obj1.index,
+            "[TestObjectSets] - Wrong neighbor identified for obj0" );
+    }
 
-void test_neighbors_by_object_value() {
-  ObjectSets<geode::Point2D> sets;
-  const auto set_id = sets.add_set("default_name");
+    void test_neighbors_by_object_value()
+    {
+        ObjectSets< geode::Point2D > sets;
+        const auto set_id = sets.add_set( "default_name" );
 
-  sets.add_object(geode::Point2D{{0.0, 0.0}}, set_id, false);
-  sets.add_object(geode::Point2D{{1.0, 0.0}}, set_id, false);
-  sets.add_object(geode::Point2D{{3.0, 0.0}}, set_id, true);
+        sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id, false );
+        sets.add_object( geode::Point2D{ { 1.0, 0.0 } }, set_id, false );
+        sets.add_object( geode::Point2D{ { 3.0, 0.0 } }, set_id, true );
 
-  const geode::Point2D query{{0.5, 0.0}};
-  std::vector<uuid> targeted_set_ids{set_id};
-  const auto nearby = sets.neighbors(query, targeted_set_ids, 1.0);
+        const geode::Point2D query{ { 0.5, 0.0 } };
+        std::vector< uuid > targeted_set_ids{ set_id };
+        const auto nearby = sets.neighbors( query, targeted_set_ids, 1.0 );
 
-  OPENGEODE_EXCEPTION(
-      nearby.size() == 2,
-      "[TestObjectSets] - Expected 2 neighbors near query object");
-}
+        OPENGEODE_EXCEPTION( nearby.size() == 2,
+            "[TestObjectSets] - Expected 2 neighbors near query object" );
+    }
 
-void test_string_representation() {
-  ObjectSets<geode::Point2D> sets;
-  const auto set_id = sets.add_set("default_name");
-  sets.add_object(geode::Point2D{{0.0, 0.0}}, set_id, false);
-  sets.add_object(geode::Point2D{{1.0, 1.0}}, set_id, false);
+    void test_string_representation()
+    {
+        ObjectSets< geode::Point2D > sets;
+        const auto set_id = sets.add_set( "default_name" );
+        sets.add_object( geode::Point2D{ { 0.0, 0.0 } }, set_id, false );
+        sets.add_object( geode::Point2D{ { 1.0, 1.0 } }, set_id, false );
 
-  const auto desc = sets.string();
-  OPENGEODE_EXCEPTION(
-      desc.find("objects") != std::string::npos,
-      "[TestObjectSets] - string() output should mention objects");
-}
+        const auto desc = sets.string();
+        OPENGEODE_EXCEPTION( desc.find( "objects" ) != std::string::npos,
+            "[TestObjectSets] - string() output should mention objects" );
+    }
 } // namespace
 
-int main() {
-  try {
-    geode::Logger::info("TEST ObjectSets");
-    geode::StochasticLibrary::initialize();
-    geode::Logger::set_level(geode::Logger::LEVEL::debug);
+int main()
+{
+    try
+    {
+        geode::Logger::info( "TEST ObjectSets" );
+        geode::StochasticLibrary::initialize();
+        geode::Logger::set_level( geode::Logger::LEVEL::debug );
 
-    test_add_sets_and_objects();
-    test_update_free_object();
-    test_remove_objects();
-    test_get_all_objects();
-    test_neighbors_by_object_id();
-    test_neighbors_by_object_value();
-    test_string_representation();
+        test_add_sets_and_objects();
+        test_update_free_object();
+        test_remove_objects();
+        test_get_all_objects();
+        test_neighbors_by_object_id();
+        test_neighbors_by_object_value();
+        test_string_representation();
 
-    geode::Logger::info("TEST ObjectSets SUCCESS");
-    return 0;
-  } catch (...) {
-    return geode::geode_lippincott();
-  }
+        geode::Logger::info( "TEST ObjectSets SUCCESS" );
+        return 0;
+    }
+    catch( ... )
+    {
+        return geode::geode_lippincott();
+    }
 }
