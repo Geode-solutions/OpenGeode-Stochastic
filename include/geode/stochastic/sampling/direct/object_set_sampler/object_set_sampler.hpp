@@ -26,31 +26,26 @@
 #include <geode/stochastic/sampling/random_engine.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 
-namespace geode
-{
-    template < typename Type >
-    class ObjectSetSampler
-    {
-    public:
-        [[nodiscard]] virtual Type sample( RandomEngine& engine ) const = 0;
+namespace geode {
+template <typename Type> class ObjectSetSampler {
+public:
+  [[nodiscard]] virtual Type sample(RandomEngine &engine) const = 0;
 
-        [[nodiscard]] virtual Type change(
-            const Type& object, RandomEngine& engine ) const = 0;
+  [[nodiscard]] virtual Type change(const Type &object,
+                                    RandomEngine &engine) const = 0;
 
-        [[nodiscard]] double log_pdf( const Type& obj ) const
-        {
-            if( !is_valid_object( obj ) )
-            {
-                Logger::warn( "[ObjectSetSampler] - invalid object proposed." );
-                return LOG_PROB_INVALID;
-            }
-            return log_pdf_;
-        }
+  [[nodiscard]] double log_pdf(const Type &obj) const {
+    if (!is_valid_object(obj)) {
+      Logger::warn("[ObjectSetSampler] - invalid object proposed.");
+      return LOG_PROB_INVALID;
+    }
+    return log_pdf_;
+  }
 
-    protected:
-        virtual bool is_valid_object( const Type& obj ) const = 0;
+protected:
+  virtual bool is_valid_object(const Type &obj) const = 0;
 
-    protected:
-        double log_pdf_{ LOG_PROB_INVALID };
-    };
+protected:
+  double log_pdf_{LOG_PROB_INVALID};
+};
 } // namespace geode

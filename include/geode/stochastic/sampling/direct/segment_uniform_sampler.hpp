@@ -27,21 +27,18 @@
 #include <geode/stochastic/sampling/direct/double_sampler.hpp>
 #include <geode/stochastic/sampling/direct/point_uniform_sampler.hpp>
 
-namespace geode
-{
-    FORWARD_DECLARATION_DIMENSION_CLASS( OwnerSegment );
-    ALIAS_2D( OwnerSegment );
-    class RandomEngine;
+namespace geode {
+FORWARD_DECLARATION_DIMENSION_CLASS(OwnerSegment);
+ALIAS_2D(OwnerSegment);
+class RandomEngine;
 } // namespace geode
 
-namespace geode
-{
+namespace geode {
 
-    struct opengeode_stochastic_stochastic_api SegmentUniformSampler
-    {
-        static OwnerSegment2D sample( RandomEngine& engine,
-            const PointUniformSampler::Object< 2 >& object,
-            const DoubleSampler::Distribution& length,
-            const DoubleSampler::Distribution& azimuth );
-    };
+struct opengeode_stochastic_stochastic_api SegmentUniformSampler {
+  static OwnerSegment2D sample(RandomEngine &engine,
+                               const PointUniformSampler::Object<2> &object,
+                               const DoubleSampler::Distribution &length,
+                               const DoubleSampler::Distribution &azimuth);
+};
 } // namespace geode

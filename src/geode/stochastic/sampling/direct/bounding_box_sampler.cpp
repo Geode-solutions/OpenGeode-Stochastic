@@ -30,53 +30,42 @@
 #include <geode/geometry/bounding_box.hpp>
 #include <geode/geometry/point.hpp>
 
-namespace geode
-{
-    template < index_t dimension >
-    class BoundingBoxSampler< dimension >::Impl
-    {
-    public:
-        Impl( const BoundingBox< dimension >& box )
-        {
-            for( const auto dim : LRange( dimension ) )
-            {
-                dist_coordinates[dim].min_value = box.min().value( dim );
-                dist_coordinates[dim].max_value = box.max().value( dim );
-            }
-        }
-        Point< dimension > sample_uniform( RandomEngine& engine )
-        {
-            geode::Point< dimension > point;
-            for( const auto dim : geode::Range( dimension ) )
-            {
-                point.set_value(
-                    dim, engine.sample_uniform( dist_coordinates[dim] ) );
-            }
-            return point;
-        }
-
-    private:
-        std::array< UniformClosed< double >, dimension > dist_coordinates;
-    };
-
-    template < index_t dimension >
-    BoundingBoxSampler< dimension >::BoundingBoxSampler(
-        const BoundingBox< dimension >& box )
-        : impl_{ box }
-    {
+namespace geode {
+template <index_t dimension> class BoundingBoxSampler<dimension>::Impl {
+public:
+  Impl(const BoundingBox<dimension> &box) {
+    for (const auto dim : LRange(dimension)) {
+      dist_coordinates[dim].min_value = box.min().value(dim);
+      dist_coordinates[dim].max_value = box.max().value(dim);
     }
-
-    template < index_t dimension >
-    BoundingBoxSampler< dimension >::~BoundingBoxSampler() = default;
-
-    template < index_t dimension >
-    Point< dimension > BoundingBoxSampler< dimension >::sample_uniform(
-        RandomEngine& engine )
-    {
-        return impl_->sample_uniform( engine );
+  }
+  Point<dimension> sample_uniform(RandomEngine &engine) {
+    geode::Point<dimension> point;
+    for (const auto dim : geode::Range(dimension)) {
+      point.set_value(dim, engine.sample_uniform(dist_coordinates[dim]));
     }
+    return point;
+  }
 
-    template class opengeode_stochastic_stochastic_api BoundingBoxSampler< 1 >;
-    template class opengeode_stochastic_stochastic_api BoundingBoxSampler< 2 >;
-    template class opengeode_stochastic_stochastic_api BoundingBoxSampler< 3 >;
+private:
+  std::array<UniformClosed<double>, dimension> dist_coordinates;
+};
+
+template <index_t dimension>
+BoundingBoxSampler<dimension>::BoundingBoxSampler(
+    const BoundingBox<dimension> &box)
+    : impl_{box} {}
+
+template <index_t dimension>
+BoundingBoxSampler<dimension>::~BoundingBoxSampler() = default;
+
+template <index_t dimension>
+Point<dimension>
+BoundingBoxSampler<dimension>::sample_uniform(RandomEngine &engine) {
+  return impl_->sample_uniform(engine);
+}
+
+template class opengeode_stochastic_stochastic_api BoundingBoxSampler<1>;
+template class opengeode_stochastic_stochastic_api BoundingBoxSampler<2>;
+template class opengeode_stochastic_stochastic_api BoundingBoxSampler<3>;
 } // namespace geode

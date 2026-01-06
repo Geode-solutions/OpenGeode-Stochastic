@@ -23,164 +23,156 @@
 
 #include <geode/stochastic/sampling/mcmc/helpers/fracture_simulation_runner.hpp>
 
-namespace
-{
-    void test_fracture_simulator()
-    {
-        geode::Logger::info( "TEST - MH SINGLE SET FRACTURE SIMULATOR (with "
-                             "intra-set interactions)" );
+namespace {
+void test_fracture_simulator() {
+  geode::Logger::info("TEST - MH SINGLE SET FRACTURE SIMULATOR (with "
+                      "intra-set interactions)");
 
-        geode::RandomEngine engine;
-        engine.set_seed( "@mh-test-single-Fracture-set@" );
+  geode::RandomEngine engine;
+  engine.set_seed("@mh-test-single-Fracture-set@");
 
-        geode::BoundingBox2D box;
-        box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
-        box.add_point( geode::Point2D{ { 100.0, 100.0 } } );
-        // todo change
-        geode::SpatialDomain domain( box, 0. );
-        // --- Object set
-        geode::FractureSetDescription setA;
-        setA.name = "A";
-        setA.observed_fractures.push_back( { geode::Point2D{ { 0.0, 15. } },
-            geode::Point2D{ { 15., 15. } } } );
-        setA.observed_fractures.push_back( { geode::Point2D{ { 1.0, 11. } },
-            geode::Point2D{ { 11., 20. } } } );
-        // length
-        setA.length.distribution_type =
-            geode::UniformClosed< double >::distribution_type_static();
-        setA.length.min_value = 1;
-        setA.length.max_value = 10.;
+  geode::BoundingBox2D box;
+  box.add_point(geode::Point2D{{0.0, 0.0}});
+  box.add_point(geode::Point2D{{100.0, 100.0}});
+  // todo change
+  geode::SpatialDomain domain(box, 0.);
+  // --- Object set
+  geode::FractureSetDescription setA;
+  setA.name = "A";
+  setA.observed_fractures.push_back(
+      {geode::Point2D{{0.0, 15.}}, geode::Point2D{{15., 15.}}});
+  setA.observed_fractures.push_back(
+      {geode::Point2D{{1.0, 11.}}, geode::Point2D{{11., 20.}}});
+  // length
+  setA.length.distribution_type =
+      geode::UniformClosed<double>::distribution_type_static();
+  setA.length.min_value = 1;
+  setA.length.max_value = 10.;
 
-        // azimuth
-        setA.azimuth.distribution_type =
-            geode::UniformClosed< double >::distribution_type_static();
-        setA.azimuth.min_value = 1;
-        setA.azimuth.max_value = 10.;
+  // azimuth
+  setA.azimuth.distribution_type =
+      geode::UniformClosed<double>::distribution_type_static();
+  setA.azimuth.min_value = 1;
+  setA.azimuth.max_value = 10.;
 
         // positionning
         setA.p20 = 0.05;
         setA.p21 = 200;
         setA.minimal_spacing = 1.;
 
-        geode::FractureSimulationRunner runner( domain );
-        runner.add_fracture_set_descriptor( setA );
+  geode::FractureSimulationRunner runner(domain);
+  runner.add_fracture_set_descriptor(setA);
 
-        runner.initialize();
+  runner.initialize();
 
-        //        OPENGEODE_EXCEPTION(
-        //            runner.state_realization().nb_fixed_objects() == 2 );
-        // run simulation
-        geode::SimulationPrinterConfigurator printer_config;
-        printer_config.output_folder = absl::StrCat(
-            printer_config.output_folder, "/single_fracture_set" );
+  //        OPENGEODE_EXCEPTION(
+  //            runner.state_realization().nb_fixed_objects() == 2 );
+  // run simulation
+  geode::SimulationPrinterConfigurator printer_config;
+  printer_config.output_folder =
+      absl::StrCat(printer_config.output_folder, "/single_fracture_set");
 
-        geode::SimulationConfigurator sim_config;
-        sim_config.realizations = 300;
-        sim_config.metropolis_hasting_steps = 1000;
-        sim_config.burn_in_steps = 1000;
-        sim_config.printer = printer_config;
+  geode::SimulationConfigurator sim_config;
+  sim_config.realizations = 300;
+  sim_config.metropolis_hasting_steps = 1000;
+  sim_config.burn_in_steps = 1000;
+  sim_config.printer = printer_config;
 
-        auto statistic_monitoring = runner.run( engine, sim_config );
-        runner.check_statistics( statistic_monitoring );
+  auto statistic_monitoring = runner.run(engine, sim_config);
+  runner.check_statistics(statistic_monitoring);
 
-        //        OPENGEODE_EXCEPTION(
-        //            runner.state_realization().nb_fixed_objects() == 2 );
-        geode::Logger::info( "--> SUCCESS!" );
-    }
+  //        OPENGEODE_EXCEPTION(
+  //            runner.state_realization().nb_fixed_objects() == 2 );
+  geode::Logger::info("--> SUCCESS!");
+}
 
-    void test_two_fracture_sets_simulator()
-    {
-        geode::Logger::info( "TEST - MH TWO SET FRACTURE SIMULATOR (with "
-                             "intra-set interactions)" );
+void test_two_fracture_sets_simulator() {
+  geode::Logger::info("TEST - MH TWO SET FRACTURE SIMULATOR (with "
+                      "intra-set interactions)");
 
-        geode::RandomEngine engine;
-        engine.set_seed( "@mh-test-single-Fracture-set@" );
+  geode::RandomEngine engine;
+  engine.set_seed("@mh-test-single-Fracture-set@");
 
-        geode::BoundingBox2D box;
-        box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
-        box.add_point( geode::Point2D{ { 100.0, 100.0 } } );
-        // todo change
-        geode::SpatialDomain domain( box, 0. );
+  geode::BoundingBox2D box;
+  box.add_point(geode::Point2D{{0.0, 0.0}});
+  box.add_point(geode::Point2D{{100.0, 100.0}});
+  // todo change
+  geode::SpatialDomain domain(box, 0.);
 
-        // --- Object set
-        geode::FractureSetDescription setA;
-        setA.name = "A";
+  // --- Object set
+  geode::FractureSetDescription setA;
+  setA.name = "A";
 
-        // length
-        setA.length.distribution_type =
-            geode::TruncatedPowerLaw::distribution_type_static();
-        setA.length.alpha = 2.;
-        setA.length.min_value = 1;
-        setA.length.max_value = 10.;
+  // length
+  setA.length.distribution_type =
+      geode::TruncatedPowerLaw::distribution_type_static();
+  setA.length.alpha = 2.;
+  setA.length.min_value = 1;
+  setA.length.max_value = 10.;
 
-        // azimuth
-        setA.azimuth.distribution_type =
-            geode::UniformClosed< double >::distribution_type_static();
-        setA.azimuth.min_value = 1;
-        setA.azimuth.max_value = 10.;
+  // azimuth
+  setA.azimuth.distribution_type =
+      geode::UniformClosed<double>::distribution_type_static();
+  setA.azimuth.min_value = 1;
+  setA.azimuth.max_value = 10.;
 
-        // positionning
-        setA.p20 = 0.05;
-        setA.minimal_spacing = 1.;
+  // positionning
+  setA.p20 = 0.05;
+  setA.minimal_spacing = 1.;
 
-        // --- Object set
-        geode::FractureSetDescription setB;
-        setB.name = "B";
+  // --- Object set
+  geode::FractureSetDescription setB;
+  setB.name = "B";
 
-        // length
-        setB.length.distribution_type =
-            geode::TruncatedLogNormal::distribution_type_static();
-        setB.length.min_value = 1;
-        setB.length.max_value = 50.;
-        setB.length.mean = 1;
-        setB.length.standard_deviation = 1.;
-        // azimuth
-        setB.azimuth.distribution_type =
-            geode::VonMises::distribution_type_static();
-        setB.azimuth.mean = 60.;
-        setB.azimuth.kappa = 1.;
+  // length
+  setB.length.distribution_type =
+      geode::TruncatedLogNormal::distribution_type_static();
+  setB.length.min_value = 1;
+  setB.length.max_value = 50.;
+  setB.length.mean = 1;
+  setB.length.standard_deviation = 1.;
+  // azimuth
+  setB.azimuth.distribution_type = geode::VonMises::distribution_type_static();
+  setB.azimuth.mean = 60.;
+  setB.azimuth.kappa = 1.;
 
-        // positionning
-        setB.p20 = 0.05;
-        setB.minimal_spacing = 2.;
+  // positionning
+  setB.p20 = 0.05;
+  setB.minimal_spacing = 2.;
 
         geode::FractureSimulationRunner runner( domain );
         runner.add_fracture_set_descriptor( setA );
         runner.add_fracture_set_descriptor( setB );
         runner.add_x_node_monitoring( 0.3 );
 
-        runner.initialize();
+  runner.initialize();
 
-        // run simulation
-        geode::SimulationPrinterConfigurator printer_config;
-        printer_config.output_folder =
-            absl::StrCat( printer_config.output_folder, "/two_fracture_sets" );
+  // run simulation
+  geode::SimulationPrinterConfigurator printer_config;
+  printer_config.output_folder =
+      absl::StrCat(printer_config.output_folder, "/two_fracture_sets");
 
-        geode::SimulationConfigurator sim_config;
-        sim_config.realizations = 300;
-        sim_config.metropolis_hasting_steps = 1000;
-        sim_config.burn_in_steps = 1000;
-        sim_config.printer = printer_config;
+  geode::SimulationConfigurator sim_config;
+  sim_config.realizations = 300;
+  sim_config.metropolis_hasting_steps = 1000;
+  sim_config.burn_in_steps = 1000;
+  sim_config.printer = printer_config;
 
-        auto statistic_monitoring = runner.run( engine, sim_config );
-        runner.check_statistics( statistic_monitoring );
+  auto statistic_monitoring = runner.run(engine, sim_config);
+  runner.check_statistics(statistic_monitoring);
 
-        geode::Logger::info( "--> SUCCESS!" );
-    }
+  geode::Logger::info("--> SUCCESS!");
+}
 } // namespace
 
-int main()
-{
-    try
-    {
-        geode::StochasticLibrary::initialize();
-        geode::Logger::set_level( geode::Logger::LEVEL::debug );
-        test_fracture_simulator();
-        test_two_fracture_sets_simulator();
-        return 0;
-    }
-    catch( ... )
-    {
-        return geode::geode_lippincott();
-    }
+int main() {
+  try {
+    geode::StochasticLibrary::initialize();
+    geode::Logger::set_level(geode::Logger::LEVEL::debug);
+    test_fracture_simulator();
+    test_two_fracture_sets_simulator();
+    return 0;
+  } catch (...) {
+    return geode::geode_lippincott();
+  }
 }

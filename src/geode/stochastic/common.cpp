@@ -26,14 +26,12 @@
 #include <geode/basic/library.hpp>
 #include <geode/geometry/common.hpp>
 
-namespace geode
-{
-    OPENGEODE_LIBRARY_IMPLEMENTATION( Stochastic )
-    {
-        /* Here the functions to call when initializing the library
-         * For exemple: registers, ...
-         */
-        geode::OpenGeodeBasicLibrary::initialize();
-        geode::OpenGeodeGeometryLibrary::initialize();
-    }
+namespace geode {
+OPENGEODE_LIBRARY_IMPLEMENTATION(Stochastic) {
+  /* Here the functions to call when initializing the library
+   * For exemple: registers, ...
+   */
+  geode::OpenGeodeBasicLibrary::initialize();
+  geode::OpenGeodeGeometryLibrary::initialize();
+}
 } // namespace geode

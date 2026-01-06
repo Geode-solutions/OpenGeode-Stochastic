@@ -37,14 +37,12 @@
 
 #include <geode/geometry/basic_objects/segment.hpp>
 
-namespace geode
-{
-    struct FractureSetDescription
-    {
-        std::string name;
+namespace geode {
+struct FractureSetDescription {
+  std::string name;
 
-        DoubleSampler::DistributionDescription length;
-        DoubleSampler::DistributionDescription azimuth;
+  DoubleSampler::DistributionDescription length;
+  DoubleSampler::DistributionDescription azimuth;
 
         // positionning
         double p20;
@@ -52,10 +50,10 @@ namespace geode
         double p21{ 1. };
         double minimal_spacing{ 0. };
 
-        // mh dynamique
-        double birth_ratio{ 1.0 };
-        double death_ratio{ 1.0 };
-        double change_ratio{ 1.0 };
+  // mh dynamique
+  double birth_ratio{1.0};
+  double death_ratio{1.0};
+  double change_ratio{1.0};
 
         std::string string() const
         {
@@ -81,13 +79,10 @@ namespace geode
         }
     };
 
-    class FractureSimulationRunner : public SimulationRunner< OwnerSegment2D >
-    {
-    public:
-        FractureSimulationRunner( const SpatialDomain< 2 >& domain )
-            : SimulationRunner< OwnerSegment2D >( domain )
-        {
-        }
+class FractureSimulationRunner : public SimulationRunner<OwnerSegment2D> {
+public:
+  FractureSimulationRunner(const SpatialDomain<2> &domain)
+      : SimulationRunner<OwnerSegment2D>(domain) {}
 
         void add_x_node_monitoring( double beta_x_node )
         {
@@ -102,10 +97,8 @@ namespace geode
             set_descriptors_.push_back( descriptor );
         }
 
-        void initialize() override
-        {
-            auto proposal_kernel =
-                std::make_unique< ProposalKernel< OwnerSegment2D > >();
+  void initialize() override {
+    auto proposal_kernel = std::make_unique<ProposalKernel<OwnerSegment2D>>();
 
             // Mapping set names -> UUID
             //           std::unordered_map< std::string, uuid >
@@ -124,19 +117,18 @@ namespace geode
                 }
                 set_name_to_uuid_[set_desc.name] = set_id;
 
-                auto length_distribution =
-                    DoubleSampler::create_distribution( set_desc.length );
-                auto azimuth_distribution =
-                    DoubleSampler::create_rad_angle_distribution_from_degree(
-                        set_desc.azimuth );
-                this->set_samplers_.push_back(
-                    std::make_unique< UniformSegmentSetSampler >(
-                        domain_, length_distribution, azimuth_distribution ) );
+      auto length_distribution =
+          DoubleSampler::create_distribution(set_desc.length);
+      auto azimuth_distribution =
+          DoubleSampler::create_rad_angle_distribution_from_degree(
+              set_desc.azimuth);
+      this->set_samplers_.push_back(std::make_unique<UniformSegmentSetSampler>(
+          domain_, length_distribution, azimuth_distribution));
 
-                add_birth_death_change_moves( this->set_samplers_.back(),
-                    *proposal_kernel, set_id, set_desc.birth_ratio,
-                    set_desc.death_ratio, set_desc.change_ratio );
-            }
+      add_birth_death_change_moves(this->set_samplers_.back(), *proposal_kernel,
+                                   set_id, set_desc.birth_ratio,
+                                   set_desc.death_ratio, set_desc.change_ratio);
+    }
 
             // Step 2: create density energy terms
             for( const auto& set_desc : set_descriptors_ )
@@ -147,27 +139,20 @@ namespace geode
             }
             set_x_intersection_term();
 
-            this->mh_sampler_ =
-                std::make_unique< MetropolisHastings< OwnerSegment2D > >(
-                    this->energy_terms_collection_,
-                    std::move( proposal_kernel ) );
-        }
+    this->mh_sampler_ = std::make_unique<MetropolisHastings<OwnerSegment2D>>(
+        this->energy_terms_collection_, std::move(proposal_kernel));
+  }
 
-        void check_statistics(
-            const StatisticsMonitor& statistic_monitoring ) const
-        {
-            const auto& computed_means = statistic_monitoring.means();
+  void check_statistics(const StatisticsMonitor &statistic_monitoring) const {
+    const auto &computed_means = statistic_monitoring.means();
 
-            for( const auto stat_id :
-                Range{ this->energy_terms_collection_.size() } )
-            {
-                const auto& term = energy_terms_collection_.get(
-                    ordered_energy_terms_[stat_id] );
-                Logger::info( "[MH test] Statistic value ",
-                    computed_means[stat_id],
-                    " for energy term: ", term.name().data() );
-            }
-        }
+    for (const auto stat_id : Range{this->energy_terms_collection_.size()}) {
+      const auto &term =
+          energy_terms_collection_.get(ordered_energy_terms_[stat_id]);
+      Logger::info("[MH test] Statistic value ", computed_means[stat_id],
+                   " for energy term: ", term.name().data());
+    }
+  }
 
         std::string string() const
         {

@@ -28,63 +28,50 @@
 #include <geode/stochastic/sampling/direct/object_set_sampler/object_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/proposal_kernel.hpp>
 
-namespace geode
-{
-    template < typename ObjectType >
-    void add_birth_death_change_moves(
-        std::unique_ptr< geode::ObjectSetSampler< ObjectType > >& sampler,
-        geode::ProposalKernel< ObjectType >& kernel,
-        const uuid& set_id,
-        double birth_ratio,
-        double death_ratio,
-        double change_ratio )
-    {
-        const auto total_ratio = birth_ratio + death_ratio;
-        OPENGEODE_EXCEPTION(
-            total_ratio > 0., "BIRTH+DEATH ratio must be positive" );
+namespace geode {
+template <typename ObjectType>
+void add_birth_death_change_moves(
+    std::unique_ptr<geode::ObjectSetSampler<ObjectType>> &sampler,
+    geode::ProposalKernel<ObjectType> &kernel, const uuid &set_id,
+    double birth_ratio, double death_ratio, double change_ratio) {
+  const auto total_ratio = birth_ratio + death_ratio;
+  OPENGEODE_EXCEPTION(total_ratio > 0., "BIRTH+DEATH ratio must be positive");
 
-        const auto p_birth = birth_ratio / total_ratio;
-        kernel.add_move(
-            set_id, std::make_unique< geode::BirthDeathMove< ObjectType > >(
-                        *sampler, total_ratio, p_birth ) );
+  const auto p_birth = birth_ratio / total_ratio;
+  kernel.add_move(set_id, std::make_unique<geode::BirthDeathMove<ObjectType>>(
+                              *sampler, total_ratio, p_birth));
 
-        if( change_ratio > 0. )
-        {
-            kernel.add_move(
-                set_id, std::make_unique< geode::ChangeMove< ObjectType > >(
-                            *sampler, change_ratio ) );
-        }
-    }
+  if (change_ratio > 0.) {
+    kernel.add_move(set_id, std::make_unique<geode::ChangeMove<ObjectType>>(
+                                *sampler, change_ratio));
+  }
+}
 
-    template < typename ObjectType >
-    std::unique_ptr< ProposalKernel< ObjectType > > create_birth_death_kernel(
-        const uuid& set_id,
-        const ObjectSetSampler< ObjectType >& sampler,
-        double birth_prob )
-    {
-        auto kernel = std::make_unique< ProposalKernel< ObjectType > >();
-        kernel->add_move(
-            { set_id, std::make_unique< BirthDeathMove< ObjectType > >(
-                          sampler, 1., birth_prob ) } );
-        return kernel;
-    }
+template <typename ObjectType>
+std::unique_ptr<ProposalKernel<ObjectType>>
+create_birth_death_kernel(const uuid &set_id,
+                          const ObjectSetSampler<ObjectType> &sampler,
+                          double birth_prob) {
+  auto kernel = std::make_unique<ProposalKernel<ObjectType>>();
+  kernel->add_move({set_id, std::make_unique<BirthDeathMove<ObjectType>>(
+                                sampler, 1., birth_prob)});
+  return kernel;
+}
 
-    template < typename ObjectType >
-    std::unique_ptr< ProposalKernel< ObjectType > >
-        create_birth_death_change_kernel( const uuid& set_id,
-            const ObjectSetSampler< ObjectType >& sampler,
-            double birth_prob,
-            double death_prob )
-    {
-        auto birth_death_prob = birth_prob + death_prob;
-        OPENGEODE_EXCEPTION( birth_death_prob < 1.,
-            "[Proposal Kernel] - changes should be allowed." );
-        auto kernel = std::make_unique< ProposalKernel< ObjectType > >();
-        kernel->add_move(
-            set_id, std::make_unique< BirthDeathMove< ObjectType > >( sampler,
-                        birth_death_prob, birth_prob / birth_death_prob ) );
-        kernel->add_move( set_id, std::make_unique< ChangeMove< ObjectType > >(
-                                      sampler, 1. - birth_death_prob ) );
-        return kernel;
-    }
+template <typename ObjectType>
+std::unique_ptr<ProposalKernel<ObjectType>>
+create_birth_death_change_kernel(const uuid &set_id,
+                                 const ObjectSetSampler<ObjectType> &sampler,
+                                 double birth_prob, double death_prob) {
+  auto birth_death_prob = birth_prob + death_prob;
+  OPENGEODE_EXCEPTION(birth_death_prob < 1.,
+                      "[Proposal Kernel] - changes should be allowed.");
+  auto kernel = std::make_unique<ProposalKernel<ObjectType>>();
+  kernel->add_move(
+      set_id, std::make_unique<BirthDeathMove<ObjectType>>(
+                  sampler, birth_death_prob, birth_prob / birth_death_prob));
+  kernel->add_move(set_id, std::make_unique<ChangeMove<ObjectType>>(
+                               sampler, 1. - birth_death_prob));
+  return kernel;
+}
 } // namespace geode

@@ -23,21 +23,18 @@
 
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
-namespace
-{
-    template < geode::index_t dimension >
-    void declare_spatial_domain( pybind11::module& module )
-    {
-        using Domain = geode::SpatialDomain< dimension >;
-        using BBox = geode::BoundingBox< dimension >;
+namespace {
+template <geode::index_t dimension>
+void declare_spatial_domain(pybind11::module &module) {
+  using Domain = geode::SpatialDomain<dimension>;
+  using BBox = geode::BoundingBox<dimension>;
 
-        const auto pyclass_name =
-            "SpatialDomain" + std::to_string( dimension ) + "D";
+  const auto pyclass_name = "SpatialDomain" + std::to_string(dimension) + "D";
 
-        pybind11::class_< Domain >( module, pyclass_name.c_str() )
-            .def( pybind11::init< const BBox&, double >(),
-                pybind11::arg( "domain" ), pybind11::arg( "buffer_size" ),
-                R"doc(
+  pybind11::class_<Domain>(module, pyclass_name.c_str())
+      .def(pybind11::init<const BBox &, double>(), pybind11::arg("domain"),
+           pybind11::arg("buffer_size"),
+           R"doc(
                 Create a spatial domain composed of:
 
                 - a core domain (the VOI)
@@ -47,14 +44,12 @@ namespace
                 Arguments:
                     domain (BoundingBox): main domain / VOI
                     buffer_size (float): buffer thickness
-            )doc" );
-    }
+            )doc");
+}
 } // namespace
-namespace geode
-{
-    void define_spatial_domain( pybind11::module& module )
-    {
-        declare_spatial_domain< 2 >( module );
-        declare_spatial_domain< 3 >( module );
-    }
+namespace geode {
+void define_spatial_domain(pybind11::module &module) {
+  declare_spatial_domain<2>(module);
+  declare_spatial_domain<3>(module);
+}
 } // namespace geode

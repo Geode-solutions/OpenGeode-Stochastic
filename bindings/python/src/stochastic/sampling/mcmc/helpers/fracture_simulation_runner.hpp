@@ -23,11 +23,9 @@
 
 #include <geode/stochastic/sampling/mcmc/helpers/fracture_simulation_runner.hpp>
 
-namespace geode
-{
-    void define_fracture_simulation( pybind11::module& module )
-    {
-        using namespace geode;
+namespace geode {
+void define_fracture_simulation(pybind11::module &module) {
+  using namespace geode;
 
         pybind11::class_< FractureSetDescription >(
             module, "FractureSetDescription" )

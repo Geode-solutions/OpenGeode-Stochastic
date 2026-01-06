@@ -29,38 +29,35 @@
 
 #include <geode/basic/pimpl.hpp>
 
-namespace geode
-{
-    class opengeode_stochastic_stochastic_api RandomEngine
-    {
-        OPENGEODE_DISABLE_COPY_AND_MOVE( RandomEngine );
+namespace geode {
+class opengeode_stochastic_stochastic_api RandomEngine {
+  OPENGEODE_DISABLE_COPY_AND_MOVE(RandomEngine);
 
-    public:
-        explicit RandomEngine();
-        ~RandomEngine();
+public:
+  explicit RandomEngine();
+  ~RandomEngine();
 
-        void set_seed( uint64_t number );
-        void set_seed( std::string_view word );
+  void set_seed(uint64_t number);
+  void set_seed(std::string_view word);
 
-        template < typename Type >
-        Type sample_uniform( const UniformClosed< Type >& law );
+  template <typename Type> Type sample_uniform(const UniformClosed<Type> &law);
 
-        template < typename Type >
-        Type sample_uniform( const UniformClosedOpen< Type >& law );
+  template <typename Type>
+  Type sample_uniform(const UniformClosedOpen<Type> &law);
 
-        double sample_gaussian( const Gaussian& law );
-        double sample_truncated_gaussian( const TruncatedGaussian& law );
+  double sample_gaussian(const Gaussian &law);
+  double sample_truncated_gaussian(const TruncatedGaussian &law);
 
-        double sample_von_mises( const VonMises& law );
+  double sample_von_mises(const VonMises &law);
 
-        double sample_truncated_lognormal( const TruncatedLogNormal& law );
-        double sample_truncated_powerlaw( const TruncatedPowerLaw& law );
+  double sample_truncated_lognormal(const TruncatedLogNormal &law);
+  double sample_truncated_powerlaw(const TruncatedPowerLaw &law);
 
-        double sample_log();
+  double sample_log();
 
-        bool sample_bernoulli( double probability_of_success );
+  bool sample_bernoulli(double probability_of_success);
 
-    private:
-        IMPLEMENTATION_MEMBER( impl_ );
-    };
+private:
+  IMPLEMENTATION_MEMBER(impl_);
+};
 } // namespace geode
