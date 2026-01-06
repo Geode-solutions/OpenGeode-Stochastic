@@ -32,31 +32,38 @@
 #include <geode/geometry/bounding_box.hpp>
 #include <geode/geometry/point.hpp>
 
-namespace geode {
+namespace geode
+{
 
-template <index_t dimension>
-Point<dimension> PointUniformSampler::sample(RandomEngine &engine,
-                                             const Object<dimension> &object) {
-  return std::visit(
-      [&engine](auto &&obj) {
-        using OBJ = std::decay_t<decltype(obj)>;
-        if constexpr (std::is_same_v<OBJ, BoundingBox<dimension>>) {
-          BoundingBoxSampler<dimension> sampler{obj};
-          return sampler.sample_uniform(engine);
-        }
-        if constexpr (std::is_same_v<OBJ, Sphere<dimension>>) {
-          BallSampler<dimension> sampler{obj};
-          return sampler.sample_uniform(engine);
-        }
-        throw OpenGeodeException("PointUniformSampler - Unsupported object "
-                                 "for point sampling");
-      },
-      object);
-}
+    template < index_t dimension >
+    Point< dimension > PointUniformSampler::sample(
+        RandomEngine& engine, const Object< dimension >& object )
+    {
+        return std::visit(
+            [&engine]( auto&& obj ) {
+                using OBJ = std::decay_t< decltype( obj ) >;
+                if constexpr( std::is_same_v< OBJ, BoundingBox< dimension > > )
+                {
+                    BoundingBoxSampler< dimension > sampler{ obj };
+                    return sampler.sample_uniform( engine );
+                }
+                if constexpr( std::is_same_v< OBJ, Sphere< dimension > > )
+                {
+                    BallSampler< dimension > sampler{ obj };
+                    return sampler.sample_uniform( engine );
+                }
+                throw OpenGeodeException(
+                    "PointUniformSampler - Unsupported object "
+                    "for point sampling" );
+            },
+            object );
+    }
 
-template Point<2> opengeode_stochastic_stochastic_api
-PointUniformSampler::sample<2>(RandomEngine &engine, const Object<2> &object);
-template Point<3> opengeode_stochastic_stochastic_api
-PointUniformSampler::sample<3>(RandomEngine &engine, const Object<3> &object);
+    template Point< 2 >
+        opengeode_stochastic_stochastic_api PointUniformSampler::sample< 2 >(
+            RandomEngine& engine, const Object< 2 >& object );
+    template Point< 3 >
+        opengeode_stochastic_stochastic_api PointUniformSampler::sample< 3 >(
+            RandomEngine& engine, const Object< 3 >& object );
 
 } // namespace geode

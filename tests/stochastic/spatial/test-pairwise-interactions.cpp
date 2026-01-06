@@ -25,62 +25,67 @@
 #include <geode/geometry/point.hpp>
 
 #include <geode/stochastic/spatial/pairwise_interactions.hpp>
-namespace {
-void test_interaction() {
-  geode::EuclideanCutoffInteraction<geode::Point2D> interaction(2.0);
+namespace
+{
+    void test_interaction()
+    {
+        geode::EuclideanCutoffInteraction< geode::Point2D > interaction( 2.0 );
 
-  geode::Point2D p1{{0., 0.}};
-  geode::Point2D p2{{1., 1.}}; // distance = 1.44 < 2.0
-  geode::uuid id{};
+        geode::Point2D p1{ { 0., 0. } };
+        geode::Point2D p2{ { 1., 1. } }; // distance = 1.44 < 2.0
+        geode::uuid id{};
 
-  double result =
-      interaction.evaluate(geode::ObjectRef<geode::Point2D>{p1, id},
-                           geode::ObjectRef<geode::Point2D>{p2, id});
-  OPENGEODE_EXCEPTION(
-      result == 1.0,
-      "[EuclideanCutoffInteraction] Failed for inside cutoff case.");
-}
-void test_no_interaction() {
-  geode::EuclideanCutoffInteraction<geode::Point2D> interaction(2.0);
+        double result =
+            interaction.evaluate( geode::ObjectRef< geode::Point2D >{ p1, id },
+                geode::ObjectRef< geode::Point2D >{ p2, id } );
+        OPENGEODE_EXCEPTION( result == 1.0,
+            "[EuclideanCutoffInteraction] Failed for inside cutoff case." );
+    }
+    void test_no_interaction()
+    {
+        geode::EuclideanCutoffInteraction< geode::Point2D > interaction( 2.0 );
 
-  geode::Point2D p1{{0., 0.}};
-  geode::Point2D p2{{3., 0.}}; // distance = 3.0 > 2.0
-  geode::uuid id{};
+        geode::Point2D p1{ { 0., 0. } };
+        geode::Point2D p2{ { 3., 0. } }; // distance = 3.0 > 2.0
+        geode::uuid id{};
 
-  double result =
-      interaction.evaluate(geode::ObjectRef<geode::Point2D>{p1, id},
-                           geode::ObjectRef<geode::Point2D>{p2, id});
-  OPENGEODE_EXCEPTION(
-      result == 0.0,
-      "[EuclideanCutoffInteraction] Failed for outside cutoff case.");
-}
-void test_limit_interaction() {
-  geode::EuclideanCutoffInteraction<geode::Point2D> interaction(2.0);
+        double result =
+            interaction.evaluate( geode::ObjectRef< geode::Point2D >{ p1, id },
+                geode::ObjectRef< geode::Point2D >{ p2, id } );
+        OPENGEODE_EXCEPTION( result == 0.0,
+            "[EuclideanCutoffInteraction] Failed for outside cutoff case." );
+    }
+    void test_limit_interaction()
+    {
+        geode::EuclideanCutoffInteraction< geode::Point2D > interaction( 2.0 );
 
-  geode::Point2D p1{{0., 0.}};
-  geode::Point2D p2{{2., 0.}}; // distance = 2.0 == cutoff
-  geode::uuid id{};
+        geode::Point2D p1{ { 0., 0. } };
+        geode::Point2D p2{ { 2., 0. } }; // distance = 2.0 == cutoff
+        geode::uuid id{};
 
-  double result =
-      interaction.evaluate(geode::ObjectRef<geode::Point2D>{p1, id},
-                           geode::ObjectRef<geode::Point2D>{p2, id});
-  OPENGEODE_EXCEPTION(
-      result == 1.0,
-      "[EuclideanCutoffInteraction] Failed for exact cutoff case.");
-}
+        double result =
+            interaction.evaluate( geode::ObjectRef< geode::Point2D >{ p1, id },
+                geode::ObjectRef< geode::Point2D >{ p2, id } );
+        OPENGEODE_EXCEPTION( result == 1.0,
+            "[EuclideanCutoffInteraction] Failed for exact cutoff case." );
+    }
 } // namespace
 
-int main() {
-  try {
-    geode::StochasticLibrary::initialize();
+int main()
+{
+    try
+    {
+        geode::StochasticLibrary::initialize();
 
-    test_interaction();
-    test_no_interaction();
-    test_limit_interaction();
+        test_interaction();
+        test_no_interaction();
+        test_limit_interaction();
 
-    geode::Logger::info("TEST SUCCESS");
-    return 0;
-  } catch (...) {
-    return geode::geode_lippincott();
-  }
+        geode::Logger::info( "TEST SUCCESS" );
+        return 0;
+    }
+    catch( ... )
+    {
+        return geode::geode_lippincott();
+    }
 }

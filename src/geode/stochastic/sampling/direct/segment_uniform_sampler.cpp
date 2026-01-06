@@ -30,28 +30,32 @@
 #include <geode/geometry/basic_objects/segment.hpp>
 #include <geode/geometry/vector.hpp>
 
-namespace {
-geode::Vector2D direction_from_azimuth_angle(const geode::Angle &azimuth) {
-  return geode::Vector2D({azimuth.sin(), azimuth.cos()});
-}
+namespace
+{
+    geode::Vector2D direction_from_azimuth_angle( const geode::Angle& azimuth )
+    {
+        return geode::Vector2D( { azimuth.sin(), azimuth.cos() } );
+    }
 } // namespace
-namespace geode {
+namespace geode
+{
 
-OwnerSegment2D
-SegmentUniformSampler::sample(RandomEngine &engine,
-                              const PointUniformSampler::Object<2> &object,
-                              const DoubleSampler::Distribution &length,
-                              const DoubleSampler::Distribution &azimuth_rad) {
-  auto point1 = PointUniformSampler::sample(engine, object);
+    OwnerSegment2D SegmentUniformSampler::sample( RandomEngine& engine,
+        const PointUniformSampler::Object< 2 >& object,
+        const DoubleSampler::Distribution& length,
+        const DoubleSampler::Distribution& azimuth_rad )
+    {
+        auto point1 = PointUniformSampler::sample( engine, object );
 
-  auto segment_length = DoubleSampler::sample(engine, length);
-  auto segment_azimuth =
-      Angle::create_from_radians(DoubleSampler::sample(engine, azimuth_rad));
+        auto segment_length = DoubleSampler::sample( engine, length );
+        auto segment_azimuth = Angle::create_from_radians(
+            DoubleSampler::sample( engine, azimuth_rad ) );
 
-  auto point2 =
-      point1 + direction_from_azimuth_angle(segment_azimuth) * segment_length;
+        auto point2 =
+            point1
+            + direction_from_azimuth_angle( segment_azimuth ) * segment_length;
 
-  return OwnerSegment2D{point1, point2};
-}
+        return OwnerSegment2D{ point1, point2 };
+    }
 
 } // namespace geode

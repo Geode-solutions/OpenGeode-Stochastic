@@ -38,41 +38,49 @@
 
 const int NUMBER_OF_SAMPLES = 10000;
 
-void test_sample_segment(geode::RandomEngine &engine,
-                         const geode::BoundingBox<2> &box) {
-  geode::UniformClosed<double> length;
-  geode::UniformClosed<double> az;
-  auto box_enlarged = box;
-  box_enlarged.extends(1.01);
+void test_sample_segment(
+    geode::RandomEngine& engine, const geode::BoundingBox< 2 >& box )
+{
+    geode::UniformClosed< double > length;
+    geode::UniformClosed< double > az;
+    auto box_enlarged = box;
+    box_enlarged.extends( 1.01 );
 
-  for (const auto i : geode::Range{NUMBER_OF_SAMPLES}) {
-    auto value = geode::SegmentUniformSampler::sample(engine, box, length, az);
-    OPENGEODE_EXCEPTION(box_enlarged.contains(value.vertices()[0]),
-                        "[SegmentUniformSampler] - segment out of box.");
-    OPENGEODE_EXCEPTION(box_enlarged.contains(value.vertices()[1]),
-                        "[SegmentUniformSampler] - segment out of box.");
-  }
+    for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
+    {
+        auto value =
+            geode::SegmentUniformSampler::sample( engine, box, length, az );
+        OPENGEODE_EXCEPTION( box_enlarged.contains( value.vertices()[0] ),
+            "[SegmentUniformSampler] - segment out of box." );
+        OPENGEODE_EXCEPTION( box_enlarged.contains( value.vertices()[1] ),
+            "[SegmentUniformSampler] - segment out of box." );
+    }
 }
-void test_segment_sampling2D() {
-  geode::RandomEngine random_engine;
+void test_segment_sampling2D()
+{
+    geode::RandomEngine random_engine;
 
-  geode::Point2D min_point{{0.1, 0.8}};
-  geode::Point2D max_point{{1.2, 1.}};
-  geode::BoundingBox2D box;
-  box.add_point(min_point);
-  box.add_point(max_point);
-  test_sample_segment(random_engine, box);
+    geode::Point2D min_point{ { 0.1, 0.8 } };
+    geode::Point2D max_point{ { 1.2, 1. } };
+    geode::BoundingBox2D box;
+    box.add_point( min_point );
+    box.add_point( max_point );
+    test_sample_segment( random_engine, box );
 }
 
-int main() {
-  try {
-    geode::StochasticLibrary::initialize();
+int main()
+{
+    try
+    {
+        geode::StochasticLibrary::initialize();
 
-    test_segment_sampling2D();
+        test_segment_sampling2D();
 
-    geode::Logger::info("TEST SUCCESS");
-    return 0;
-  } catch (...) {
-    return geode::geode_lippincott();
-  }
+        geode::Logger::info( "TEST SUCCESS" );
+        return 0;
+    }
+    catch( ... )
+    {
+        return geode::geode_lippincott();
+    }
 }

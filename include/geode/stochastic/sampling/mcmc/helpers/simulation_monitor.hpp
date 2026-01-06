@@ -25,46 +25,60 @@
 #include <geode/basic/range.hpp>
 #include <geode/stochastic/common.hpp>
 
-namespace geode {
+namespace geode
+{
 
-class StatisticsMonitor {
-public:
-  StatisticsMonitor(StatisticsMonitor &&) = default;
-  StatisticsMonitor(const StatisticsMonitor &) = default;
-  StatisticsMonitor &operator=(StatisticsMonitor &&) noexcept = default;
-  StatisticsMonitor &operator=(const StatisticsMonitor &) noexcept = default;
+    class StatisticsMonitor
+    {
+    public:
+        StatisticsMonitor( StatisticsMonitor&& ) = default;
+        StatisticsMonitor( const StatisticsMonitor& ) = default;
+        StatisticsMonitor& operator=( StatisticsMonitor&& ) noexcept = default;
+        StatisticsMonitor& operator=(
+            const StatisticsMonitor& ) noexcept = default;
 
-  StatisticsMonitor(const index_t nb_energy_terms) {
-    means_.resize(nb_energy_terms, 0.0);
-    variances_.resize(nb_energy_terms, 0.0);
-  }
+        StatisticsMonitor( const index_t nb_energy_terms )
+        {
+            means_.resize( nb_energy_terms, 0.0 );
+            variances_.resize( nb_energy_terms, 0.0 );
+        }
 
-  void add_realization(const std::vector<double> &values) {
-    OPENGEODE_EXCEPTION(
-        values.size() == means_.size(),
-        "[StatisticsMonitor] - Mismatch between realization size and "
-        "expected number of statistics.");
-    ++count_;
-    for (size_t i = 0; i < values.size(); ++i) {
-      double delta = values[i] - means_[i];
-      means_[i] += delta / count_;
-      if (count_ > 1)
-        variances_[i] =
-            ((count_ - 2) * variances_[i] + delta * (values[i] - means_[i])) /
-            (count_ - 1);
-    }
-  }
+        void add_realization( const std::vector< double >& values )
+        {
+            OPENGEODE_EXCEPTION( values.size() == means_.size(),
+                "[StatisticsMonitor] - Mismatch between realization size and "
+                "expected number of statistics." );
+            ++count_;
+            for( size_t i = 0; i < values.size(); ++i )
+            {
+                double delta = values[i] - means_[i];
+                means_[i] += delta / count_;
+                if( count_ > 1 )
+                    variances_[i] = ( ( count_ - 2 ) * variances_[i]
+                                        + delta * ( values[i] - means_[i] ) )
+                                    / ( count_ - 1 );
+            }
+        }
 
-  const index_t statiscal_count() const { return count_; }
+        const index_t statiscal_count() const
+        {
+            return count_;
+        }
 
-  const std::vector<double> &means() const { return means_; }
+        const std::vector< double >& means() const
+        {
+            return means_;
+        }
 
-  const std::vector<double> &variances() const { return variances_; }
+        const std::vector< double >& variances() const
+        {
+            return variances_;
+        }
 
-private:
-  std::vector<double> means_;
-  std::vector<double> variances_;
-  index_t count_{0};
-};
+    private:
+        std::vector< double > means_;
+        std::vector< double > variances_;
+        index_t count_{ 0 };
+    };
 
 } // namespace geode

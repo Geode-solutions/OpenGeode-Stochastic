@@ -34,65 +34,74 @@
 
 const int NUMBER_OF_SAMPLES = 10000;
 
-template <geode::index_t dimension>
-void test_sample_bounding_box(geode::RandomEngine &engine,
-                              const geode::BoundingBox<dimension> &box) {
-  geode::BoundingBoxSampler<dimension> spec_box{box};
+template < geode::index_t dimension >
+void test_sample_bounding_box(
+    geode::RandomEngine& engine, const geode::BoundingBox< dimension >& box )
+{
+    geode::BoundingBoxSampler< dimension > spec_box{ box };
 
-  for (const auto i : geode::Range{NUMBER_OF_SAMPLES}) {
-    auto value = spec_box.sample_uniform(engine);
-    OPENGEODE_EXCEPTION(box.contains(value),
-                        "[Point Box sampler] - point out of box.");
-  }
+    for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
+    {
+        auto value = spec_box.sample_uniform( engine );
+        OPENGEODE_EXCEPTION(
+            box.contains( value ), "[Point Box sampler] - point out of box." );
+    }
 }
 
-void test_box_sampling1D() {
-  geode::RandomEngine random_engine;
+void test_box_sampling1D()
+{
+    geode::RandomEngine random_engine;
 
-  geode::Point1D min_point{{0.}};
-  geode::Point1D max_point{{10.}};
+    geode::Point1D min_point{ { 0. } };
+    geode::Point1D max_point{ { 10. } };
 
-  geode::BoundingBox1D box;
-  box.add_point(min_point);
-  box.add_point(max_point);
-  test_sample_bounding_box<1>(random_engine, box);
+    geode::BoundingBox1D box;
+    box.add_point( min_point );
+    box.add_point( max_point );
+    test_sample_bounding_box< 1 >( random_engine, box );
 }
 
-void test_box_sampling2D() {
-  geode::RandomEngine random_engine;
+void test_box_sampling2D()
+{
+    geode::RandomEngine random_engine;
 
-  geode::Point2D min_point{{0., 0.}};
-  geode::Point2D max_point{{10., 100.}};
+    geode::Point2D min_point{ { 0., 0. } };
+    geode::Point2D max_point{ { 10., 100. } };
 
-  geode::BoundingBox2D box;
-  box.add_point(min_point);
-  box.add_point(max_point);
-  test_sample_bounding_box<2>(random_engine, box);
+    geode::BoundingBox2D box;
+    box.add_point( min_point );
+    box.add_point( max_point );
+    test_sample_bounding_box< 2 >( random_engine, box );
 }
 
-void test_box_sampling3D() {
-  geode::RandomEngine random_engine;
+void test_box_sampling3D()
+{
+    geode::RandomEngine random_engine;
 
-  geode::Point3D min_point{{0., 0., 0.}};
-  geode::Point3D max_point{{10., 100., -100.}};
+    geode::Point3D min_point{ { 0., 0., 0. } };
+    geode::Point3D max_point{ { 10., 100., -100. } };
 
-  geode::BoundingBox3D box;
-  box.add_point(min_point);
-  box.add_point(max_point);
-  test_sample_bounding_box<3>(random_engine, box);
+    geode::BoundingBox3D box;
+    box.add_point( min_point );
+    box.add_point( max_point );
+    test_sample_bounding_box< 3 >( random_engine, box );
 }
 
-int main() {
-  try {
-    geode::StochasticLibrary::initialize();
+int main()
+{
+    try
+    {
+        geode::StochasticLibrary::initialize();
 
-    test_box_sampling1D();
-    test_box_sampling2D();
-    test_box_sampling3D();
+        test_box_sampling1D();
+        test_box_sampling2D();
+        test_box_sampling3D();
 
-    geode::Logger::info("TEST SUCCESS");
-    return 0;
-  } catch (...) {
-    return geode::geode_lippincott();
-  }
+        geode::Logger::info( "TEST SUCCESS" );
+        return 0;
+    }
+    catch( ... )
+    {
+        return geode::geode_lippincott();
+    }
 }

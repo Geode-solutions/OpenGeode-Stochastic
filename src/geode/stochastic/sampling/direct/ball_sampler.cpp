@@ -30,64 +30,80 @@
 #include <geode/geometry/basic_objects/sphere.hpp>
 #include <geode/geometry/point.hpp>
 
-namespace {
-geode::Point2D
-sample_point_in_ball(geode::RandomEngine &engine,
-                     const geode::UniformClosed<double> &uniform_dist,
-                     const geode::Point2D &center, double radius) {
-  geode::Point2D point;
-  double r = radius * std::sqrt(engine.sample_uniform<double>(uniform_dist));
-  double theta = (2.0 * M_PI) * engine.sample_uniform<double>(uniform_dist);
-  point.set_value(0, center.value(0) + r * cos(theta));
-  point.set_value(1, center.value(1) + r * sin(theta));
-  return point;
-}
+namespace
+{
+    geode::Point2D sample_point_in_ball( geode::RandomEngine& engine,
+        const geode::UniformClosed< double >& uniform_dist,
+        const geode::Point2D& center,
+        double radius )
+    {
+        geode::Point2D point;
+        double r =
+            radius
+            * std::sqrt( engine.sample_uniform< double >( uniform_dist ) );
+        double theta =
+            ( 2.0 * M_PI ) * engine.sample_uniform< double >( uniform_dist );
+        point.set_value( 0, center.value( 0 ) + r * cos( theta ) );
+        point.set_value( 1, center.value( 1 ) + r * sin( theta ) );
+        return point;
+    }
 
-geode::Point3D
-sample_point_in_ball(geode::RandomEngine &engine,
-                     const geode::UniformClosed<double> &uniform_dist,
-                     const geode::Point3D &center, double radius) {
-  geode::Point3D point;
-  auto u = 2.0 * engine.sample_uniform<double>(uniform_dist) - 1.0;
-  auto v = std::sqrt(1. - std::pow(u, 2.0));
-  auto theta = 2.0 * M_PI * engine.sample_uniform<double>(uniform_dist);
+    geode::Point3D sample_point_in_ball( geode::RandomEngine& engine,
+        const geode::UniformClosed< double >& uniform_dist,
+        const geode::Point3D& center,
+        double radius )
+    {
+        geode::Point3D point;
+        auto u = 2.0 * engine.sample_uniform< double >( uniform_dist ) - 1.0;
+        auto v = std::sqrt( 1. - std::pow( u, 2.0 ) );
+        auto theta =
+            2.0 * M_PI * engine.sample_uniform< double >( uniform_dist );
 
-  point.set_value(0, center.value(0) + radius * v * cos(theta));
-  point.set_value(1, center.value(1) + radius * v * sin(theta));
-  point.set_value(2, center.value(2) + radius * u);
+        point.set_value( 0, center.value( 0 ) + radius * v * cos( theta ) );
+        point.set_value( 1, center.value( 1 ) + radius * v * sin( theta ) );
+        point.set_value( 2, center.value( 2 ) + radius * u );
 
-  return point;
-}
+        return point;
+    }
 } // namespace
-namespace geode {
+namespace geode
+{
 
-template <index_t dimension> class BallSampler<dimension>::Impl {
-public:
-  Impl(const Sphere<dimension> &ball) : ball_{ball} {
-    dist_.min_value = 0.;
-    dist_.max_value = 1.;
-  }
+    template < index_t dimension >
+    class BallSampler< dimension >::Impl
+    {
+    public:
+        Impl( const Sphere< dimension >& ball ) : ball_{ ball }
+        {
+            dist_.min_value = 0.;
+            dist_.max_value = 1.;
+        }
 
-  geode::Point<dimension> sample_uniform(geode::RandomEngine &engine) {
-    return sample_point_in_ball(engine, dist_, ball_.origin(), ball_.radius());
-  }
+        geode::Point< dimension > sample_uniform( geode::RandomEngine& engine )
+        {
+            return sample_point_in_ball(
+                engine, dist_, ball_.origin(), ball_.radius() );
+        }
 
-private:
-  const Sphere<dimension> &ball_;
-  geode::UniformClosed<double> dist_;
-};
+    private:
+        const Sphere< dimension >& ball_;
+        geode::UniformClosed< double > dist_;
+    };
 
-template <index_t dimension>
-BallSampler<dimension>::BallSampler(const Sphere<dimension> &ball)
-    : impl_(ball){};
+    template < index_t dimension >
+    BallSampler< dimension >::BallSampler( const Sphere< dimension >& ball )
+        : impl_( ball ){};
 
-template <index_t dimension> BallSampler<dimension>::~BallSampler() = default;
+    template < index_t dimension >
+    BallSampler< dimension >::~BallSampler() = default;
 
-template <index_t dimension>
-Point<dimension> BallSampler<dimension>::sample_uniform(RandomEngine &engine) {
-  return impl_->sample_uniform(engine);
-}
+    template < index_t dimension >
+    Point< dimension > BallSampler< dimension >::sample_uniform(
+        RandomEngine& engine )
+    {
+        return impl_->sample_uniform( engine );
+    }
 
-template class opengeode_stochastic_stochastic_api BallSampler<2>;
-template class opengeode_stochastic_stochastic_api BallSampler<3>;
+    template class opengeode_stochastic_stochastic_api BallSampler< 2 >;
+    template class opengeode_stochastic_stochastic_api BallSampler< 3 >;
 } // namespace geode

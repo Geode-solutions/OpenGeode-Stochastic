@@ -23,26 +23,29 @@
 
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_monitor.hpp>
 
-namespace geode {
-void define_simulation_monitor(pybind11::module &module) {
-  pybind11::class_<geode::StatisticsMonitor>(module, "StatisticsMonitor")
-      .def(pybind11::init<geode::index_t>(), pybind11::arg("nb_energy_terms"),
-           "Create a StatisticsMonitor for a given number of energy "
-           "terms")
-      .def("add_realization", &geode::StatisticsMonitor::add_realization,
-           pybind11::arg("values"),
-           "Add a realization (vector of doubles) to update statistics")
-      .def("statiscal_count", &geode::StatisticsMonitor::statiscal_count,
-           "Return the number of realizations added")
-      .def_property_readonly(
-          "means", &geode::StatisticsMonitor::means,
-          "Return the computed mean values for each energy term")
-      .def_property_readonly(
-          "variances", &geode::StatisticsMonitor::variances,
-          "Return the computed variances for each energy term")
-      .def("__repr__", [](const geode::StatisticsMonitor &self) {
-        return "<StatisticsMonitor count=" +
-               std::to_string(self.statiscal_count()) + ">";
-      });
-}
+namespace geode
+{
+    void define_simulation_monitor( pybind11::module& module )
+    {
+        pybind11::class_< geode::StatisticsMonitor >(
+            module, "StatisticsMonitor" )
+            .def( pybind11::init< geode::index_t >(),
+                pybind11::arg( "nb_energy_terms" ),
+                "Create a StatisticsMonitor for a given number of energy "
+                "terms" )
+            .def( "add_realization", &geode::StatisticsMonitor::add_realization,
+                pybind11::arg( "values" ),
+                "Add a realization (vector of doubles) to update statistics" )
+            .def( "statiscal_count", &geode::StatisticsMonitor::statiscal_count,
+                "Return the number of realizations added" )
+            .def_property_readonly( "means", &geode::StatisticsMonitor::means,
+                "Return the computed mean values for each energy term" )
+            .def_property_readonly( "variances",
+                &geode::StatisticsMonitor::variances,
+                "Return the computed variances for each energy term" )
+            .def( "__repr__", []( const geode::StatisticsMonitor& self ) {
+                return "<StatisticsMonitor count="
+                       + std::to_string( self.statiscal_count() ) + ">";
+            } );
+    }
 } // namespace geode

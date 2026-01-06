@@ -31,64 +31,75 @@
 #include <geode/stochastic/sampling/direct/segment_uniform_sampler.hpp>
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
-namespace geode {
-class UniformSegmentSetSampler : public ObjectSetSampler<OwnerSegment2D> {
-public:
-  UniformSegmentSetSampler(const SpatialDomain<2> &domain,
-                           const DoubleSampler::Distribution &length,
-                           const DoubleSampler::Distribution &azimuth)
-      : ObjectSetSampler<OwnerSegment2D>{}, domain_{domain}, length_{length},
-        azimuth_{azimuth} {
-    auto volume = domain_.extended_n_volume();
-    OPENGEODE_EXCEPTION(volume != 0.,
-                        "[SegmentSetSampler] - Undefined Extended Bounding "
-                        "Box (volume ==0).");
-    this->log_pdf_ = -std::log(volume);
-  }
+namespace geode
+{
+    class UniformSegmentSetSampler : public ObjectSetSampler< OwnerSegment2D >
+    {
+    public:
+        UniformSegmentSetSampler( const SpatialDomain< 2 >& domain,
+            const DoubleSampler::Distribution& length,
+            const DoubleSampler::Distribution& azimuth )
+            : ObjectSetSampler< OwnerSegment2D >{},
+              domain_{ domain },
+              length_{ length },
+              azimuth_{ azimuth }
+        {
+            auto volume = domain_.extended_n_volume();
+            OPENGEODE_EXCEPTION( volume != 0.,
+                "[SegmentSetSampler] - Undefined Extended Bounding "
+                "Box (volume ==0)." );
+            this->log_pdf_ = -std::log( volume );
+        }
 
-  OwnerSegment2D sample(RandomEngine &engine) const override {
-    auto seg = SegmentUniformSampler::sample(engine, domain_.extended_box(),
-                                             length_, azimuth_);
-    return seg;
-  }
+        OwnerSegment2D sample( RandomEngine& engine ) const override
+        {
+            auto seg = SegmentUniformSampler::sample(
+                engine, domain_.extended_box(), length_, azimuth_ );
+            return seg;
+        }
 
-  OwnerSegment2D change(const OwnerSegment2D &obj,
-                        RandomEngine &engine) const override {
-    double ratio = 0.1;
-    const auto &extremities = obj.vertices();
-    const auto current =
-        static_cast<local_index_t>(engine.sample_bernoulli(0.5));
-    const auto other = 1 - current;
+        OwnerSegment2D change(
+            const OwnerSegment2D& obj, RandomEngine& engine ) const override
+        {
+            double ratio = 0.1;
+            const auto& extremities = obj.vertices();
+            const auto current =
+                static_cast< local_index_t >( engine.sample_bernoulli( 0.5 ) );
+            const auto other = 1 - current;
 
-    geode::Sphere<2> ball{extremities[current], ratio * obj.length()};
+            geode::Sphere< 2 > ball{ extremities[current],
+                ratio * obj.length() };
 
-    auto new_point = PointUniformSampler::sample<2>(engine, ball);
-    constexpr index_t max_try{100};
-    for (const auto try_id : geode::Range{max_try}) {
-      if (domain_.extended_contains(new_point) ||
-          domain_.extended_contains(extremities[other])) {
-        OwnerSegment2D new_segment{obj};
-        new_segment.set_point(current, new_point);
-        return new_segment;
-      }
-      new_point = PointUniformSampler::sample<2>(engine, ball);
-    }
-    throw OpenGeodeException(
-        absl::StrCat("[SegmentSetSampler] - Cannot find a point in the box"));
-    return obj;
-  }
+            auto new_point = PointUniformSampler::sample< 2 >( engine, ball );
+            constexpr index_t max_try{ 100 };
+            for( const auto try_id : geode::Range{ max_try } )
+            {
+                if( domain_.extended_contains( new_point )
+                    || domain_.extended_contains( extremities[other] ) )
+                {
+                    OwnerSegment2D new_segment{ obj };
+                    new_segment.set_point( current, new_point );
+                    return new_segment;
+                }
+                new_point = PointUniformSampler::sample< 2 >( engine, ball );
+            }
+            throw OpenGeodeException( absl::StrCat(
+                "[SegmentSetSampler] - Cannot find a point in the box" ) );
+            return obj;
+        }
 
-private:
-  bool is_valid_object(const OwnerSegment2D &obj) const override {
-    const auto &extremities = obj.vertices();
-    return domain_.extended_contains(extremities[0]) ||
-           domain_.extended_contains(extremities[1]);
-  }
+    private:
+        bool is_valid_object( const OwnerSegment2D& obj ) const override
+        {
+            const auto& extremities = obj.vertices();
+            return domain_.extended_contains( extremities[0] )
+                   || domain_.extended_contains( extremities[1] );
+        }
 
-private:
-  const SpatialDomain<2> &domain_;
-  DoubleSampler::Distribution length_;
-  DoubleSampler::Distribution azimuth_;
-};
+    private:
+        const SpatialDomain< 2 >& domain_;
+        DoubleSampler::Distribution length_;
+        DoubleSampler::Distribution azimuth_;
+    };
 
 } // namespace geode

@@ -31,31 +31,45 @@
 #include <geode/geometry/bounding_box.hpp>
 #include <geode/geometry/point.hpp>
 
-namespace geode {
-FORWARD_DECLARATION_DIMENSION_CLASS(Point);
+namespace geode
+{
+    FORWARD_DECLARATION_DIMENSION_CLASS( Point );
 } // namespace geode
-namespace geode {
+namespace geode
+{
 
-template <typename Type> auto object_bounding_box(const Type &object) {
-  if constexpr (std::is_same_v<Type, Point2D>) {
-    geode::BoundingBox<2> box;
-    box.add_point(object);
-    return box;
-  } else if constexpr (std::is_same_v<Type, Point3D>) {
-    geode::BoundingBox<3> box;
-    box.add_point(object);
-    return box;
-  } else {
-    return object.bounding_box();
-  }
-}
-template <typename Type> auto object_barycenter(const Type &object) {
-  if constexpr (std::is_same_v<Type, Point2D> ||
-                std::is_same_v<Type, Point3D>) {
-    return object;
-  } else {
-    return object.barycenter();
-  }
-}
+    template < typename Type >
+    auto object_bounding_box( const Type& object )
+    {
+        if constexpr( std::is_same_v< Type, Point2D > )
+        {
+            geode::BoundingBox< 2 > box;
+            box.add_point( object );
+            return box;
+        }
+        else if constexpr( std::is_same_v< Type, Point3D > )
+        {
+            geode::BoundingBox< 3 > box;
+            box.add_point( object );
+            return box;
+        }
+        else
+        {
+            return object.bounding_box();
+        }
+    }
+    template < typename Type >
+    auto object_barycenter( const Type& object )
+    {
+        if constexpr( std::is_same_v< Type, Point2D >
+                      || std::is_same_v< Type, Point3D > )
+        {
+            return object;
+        }
+        else
+        {
+            return object.barycenter();
+        }
+    }
 
 } // namespace geode
