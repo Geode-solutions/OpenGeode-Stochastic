@@ -38,7 +38,7 @@ const int NUMBER_OF_SAMPLES = 10000;
 
 template < geode::index_t dimension >
 void test_sample_ball(
-    geode::RandomEngine &engine, const geode::Sphere< dimension > &ball )
+    geode::RandomEngine& engine, const geode::Sphere< dimension >& ball )
 {
     for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
     {
@@ -52,7 +52,7 @@ void test_sample_ball(
 
 template < geode::index_t dimension >
 void test_sample_bounding_box(
-    geode::RandomEngine &engine, const geode::BoundingBox< dimension > &box )
+    geode::RandomEngine& engine, const geode::BoundingBox< dimension >& box )
 {
     for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
     {

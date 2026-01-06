@@ -33,7 +33,7 @@
 
 namespace
 {
-    geode::uuid init_object_set( geode::ObjectSets< geode::Point2D > &pattern )
+    geode::uuid init_object_set( geode::ObjectSets< geode::Point2D >& pattern )
     {
         geode::Point2D p1{ { 0., 0. } };
         geode::Point2D p2{ { 1., 1. } };
@@ -71,7 +71,7 @@ namespace
         for( const auto i : geode::Range{ 400 } )
         {
             auto proposal = kernel->propose( config, engine );
-            const auto &proposed_move = proposal.proposed_move;
+            const auto& proposed_move = proposal.proposed_move;
 
             switch( proposed_move.type )
             {
@@ -162,7 +162,7 @@ namespace
             geode::create_birth_death_change_kernel< geode::Point2D >(
                 empty_set_id, sampler, 0.4, 0.4 );
         auto proposal = empty_kernel->propose( empty_config, engine );
-        const auto &proposed_move = proposal.proposed_move;
+        const auto& proposed_move = proposal.proposed_move;
 
         OPENGEODE_EXCEPTION(
             proposed_move.type == geode::MoveType::Birth

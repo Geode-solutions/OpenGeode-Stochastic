@@ -36,9 +36,9 @@ namespace geode
     class UniformSegmentSetSampler : public ObjectSetSampler< OwnerSegment2D >
     {
     public:
-        UniformSegmentSetSampler( const SpatialDomain< 2 > &domain,
-            const DoubleSampler::Distribution &length,
-            const DoubleSampler::Distribution &azimuth )
+        UniformSegmentSetSampler( const SpatialDomain< 2 >& domain,
+            const DoubleSampler::Distribution& length,
+            const DoubleSampler::Distribution& azimuth )
             : ObjectSetSampler< OwnerSegment2D >{},
               domain_{ domain },
               length_{ length },
@@ -51,7 +51,7 @@ namespace geode
             this->log_pdf_ = -std::log( volume );
         }
 
-        OwnerSegment2D sample( RandomEngine &engine ) const override
+        OwnerSegment2D sample( RandomEngine& engine ) const override
         {
             auto seg = SegmentUniformSampler::sample(
                 engine, domain_.extended_box(), length_, azimuth_ );
@@ -59,10 +59,10 @@ namespace geode
         }
 
         OwnerSegment2D change(
-            const OwnerSegment2D &obj, RandomEngine &engine ) const override
+            const OwnerSegment2D& obj, RandomEngine& engine ) const override
         {
             double ratio = 0.1;
-            const auto &extremities = obj.vertices();
+            const auto& extremities = obj.vertices();
             const auto current =
                 static_cast< local_index_t >( engine.sample_bernoulli( 0.5 ) );
             const auto other = 1 - current;
@@ -89,15 +89,15 @@ namespace geode
         }
 
     private:
-        bool is_valid_object( const OwnerSegment2D &obj ) const override
+        bool is_valid_object( const OwnerSegment2D& obj ) const override
         {
-            const auto &extremities = obj.vertices();
+            const auto& extremities = obj.vertices();
             return domain_.extended_contains( extremities[0] )
                    || domain_.extended_contains( extremities[1] );
         }
 
     private:
-        const SpatialDomain< 2 > &domain_;
+        const SpatialDomain< 2 >& domain_;
         DoubleSampler::Distribution length_;
         DoubleSampler::Distribution azimuth_;
     };

@@ -32,12 +32,12 @@ namespace geode
     class ObjectSetSampler
     {
     public:
-        [[nodiscard]] virtual Type sample( RandomEngine &engine ) const = 0;
+        [[nodiscard]] virtual Type sample( RandomEngine& engine ) const = 0;
 
         [[nodiscard]] virtual Type change(
-            const Type &object, RandomEngine &engine ) const = 0;
+            const Type& object, RandomEngine& engine ) const = 0;
 
-        [[nodiscard]] double log_pdf( const Type &obj ) const
+        [[nodiscard]] double log_pdf( const Type& obj ) const
         {
             if( !is_valid_object( obj ) )
             {
@@ -48,7 +48,7 @@ namespace geode
         }
 
     protected:
-        virtual bool is_valid_object( const Type &obj ) const = 0;
+        virtual bool is_valid_object( const Type& obj ) const = 0;
 
     protected:
         double log_pdf_{ LOG_PROB_INVALID };

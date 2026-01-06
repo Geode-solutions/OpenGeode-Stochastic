@@ -61,24 +61,24 @@ namespace
         : public geode::SimulationRunner< geode::Point2D >
     {
     public:
-        StraussSimulationRunner( const geode::SpatialDomain< 2 > &domain )
+        StraussSimulationRunner( const geode::SpatialDomain< 2 >& domain )
             : geode::SimulationRunner< geode::Point2D >( domain )
         {
         }
 
-        void add_set_descriptor( const SetDescription &descriptor )
+        void add_set_descriptor( const SetDescription& descriptor )
         {
             set_descriptors_.push_back( descriptor );
         }
 
         void add_density_descriptor(
-            const PoissonDensityDescription &descriptor )
+            const PoissonDensityDescription& descriptor )
         {
             density_descriptors_.push_back( descriptor );
         }
 
         void add_interaction_descriptor(
-            const PairwiseInteractionDescription &descriptor )
+            const PairwiseInteractionDescription& descriptor )
         {
             interaction_descriptors_.push_back( descriptor );
         }
@@ -92,7 +92,7 @@ namespace
             std::unordered_map< std::string, geode::uuid > name_to_uuid;
 
             // Step 1: create object sets and samplers
-            for( const auto &set_desc : set_descriptors_ )
+            for( const auto& set_desc : set_descriptors_ )
             {
                 const auto set_id = this->object_sets_.add_set( set_desc.name );
                 name_to_uuid[set_desc.name] = set_id;
@@ -107,7 +107,7 @@ namespace
             }
 
             // Step 2: create density energy terms
-            for( const auto &density_desc : density_descriptors_ )
+            for( const auto& density_desc : density_descriptors_ )
             {
                 const auto set_id = name_to_uuid.at( density_desc.name );
                 this->ordered_energy_terms_.push_back(
@@ -124,10 +124,10 @@ namespace
             }
 
             // Step 3: create pairwise interaction terms
-            for( const auto &interaction_desc : interaction_descriptors_ )
+            for( const auto& interaction_desc : interaction_descriptors_ )
             {
                 std::vector< geode::uuid > set_ids;
-                for( const auto &name : interaction_desc.names )
+                for( const auto& name : interaction_desc.names )
                 {
                     set_ids.emplace_back( name_to_uuid.at( name ) );
                 }
@@ -158,14 +158,14 @@ namespace
         }
 
         void check_statistics(
-            const geode::StatisticsMonitor &statistic_monitoring ) const
+            const geode::StatisticsMonitor& statistic_monitoring ) const
         {
-            const auto &computed_means = statistic_monitoring.means();
+            const auto& computed_means = statistic_monitoring.means();
 
             for( const auto stat_id :
                 geode::Range{ this->energy_terms_collection_.size() } )
             {
-                const auto &term = energy_terms_collection_.get(
+                const auto& term = energy_terms_collection_.get(
                     ordered_energy_terms_[stat_id] );
 
                 const auto expected_mean =

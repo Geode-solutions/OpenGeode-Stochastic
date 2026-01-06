@@ -49,8 +49,8 @@ namespace geode
         explicit PairwiseInteraction( SCOPE scope ) : scope_( scope ) {}
         virtual ~PairwiseInteraction() = default;
 
-        double evaluate( const ObjectRef< Type > &object_a,
-            const ObjectRef< Type > &object_b ) const
+        double evaluate( const ObjectRef< Type >& object_a,
+            const ObjectRef< Type >& object_b ) const
         {
             if( scope_ == SCOPE::same_set
                 && object_a.set_id != object_b.set_id )
@@ -68,8 +68,8 @@ namespace geode
         virtual double neighborhood_searching_distance() const = 0;
 
     protected:
-        virtual double compute( const ObjectRef< Type > &object_a,
-            const ObjectRef< Type > &object_b ) const = 0;
+        virtual double compute( const ObjectRef< Type >& object_a,
+            const ObjectRef< Type >& object_b ) const = 0;
 
     private:
         SCOPE scope_{ SCOPE::all_set };
@@ -91,8 +91,8 @@ namespace geode
         double neighborhood_searching_distance() const override;
 
     protected:
-        double compute( const ObjectRef< Type > &object_a,
-            const ObjectRef< Type > &object_b ) const override;
+        double compute( const ObjectRef< Type >& object_a,
+            const ObjectRef< Type >& object_b ) const override;
 
     private:
         double cutoff_distance_{ GLOBAL_EPSILON };

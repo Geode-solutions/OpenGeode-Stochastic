@@ -49,7 +49,7 @@ namespace
         OPENGEODE_EXCEPTION( sets.nb_objects() == 3,
             "[TestObjectSets] - Total object count mismatch" );
 
-        const auto &point = sets.get_object( obj_b );
+        const auto& point = sets.get_object( obj_b );
         const auto expected = geode::Point2D{ { 1.0, 1.0 } };
         OPENGEODE_EXCEPTION( point == expected,
             "[TestObjectSets] - Wrong object value retrieved" );
@@ -64,7 +64,7 @@ namespace
 
         sets.update_free_object( obj, geode::Point2D{ { 9.0, 9.0 } } );
 
-        const auto &updated = sets.get_object( obj );
+        const auto& updated = sets.get_object( obj );
         auto result = geode::Point2D{ { 9.0, 9.0 } };
         OPENGEODE_EXCEPTION( updated == result,
             "[TestObjectSets] - Updating free object failed" );

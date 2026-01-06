@@ -36,7 +36,7 @@ namespace geode
     class UniformPointSetSampler : public ObjectSetSampler< Point< dimension > >
     {
     public:
-        UniformPointSetSampler( const SpatialDomain< dimension > &domain )
+        UniformPointSetSampler( const SpatialDomain< dimension >& domain )
             : ObjectSetSampler< Point< dimension > >{}, domain_( domain )
         {
             auto volume = domain_.extended_n_volume();
@@ -50,14 +50,14 @@ namespace geode
                 step_move_, ")." );
         }
 
-        Point< dimension > sample( RandomEngine &engine ) const override
+        Point< dimension > sample( RandomEngine& engine ) const override
         {
             return PointUniformSampler::sample< dimension >(
                 engine, domain_.extended_box() );
         }
 
         Point< dimension > change(
-            const Point< dimension > &obj, RandomEngine &engine ) const override
+            const Point< dimension >& obj, RandomEngine& engine ) const override
         {
             geode::Sphere< dimension > ball{ obj, step_move_ };
 
@@ -86,13 +86,13 @@ namespace geode
             return ratio * domain_.smallest_length();
         }
 
-        bool is_valid_object( const Point< dimension > &obj ) const override
+        bool is_valid_object( const Point< dimension >& obj ) const override
         {
             return domain_.extended_contains( obj );
         }
 
     private:
-        const SpatialDomain< dimension > &domain_;
+        const SpatialDomain< dimension >& domain_;
         double step_move_{ 0. };
     };
 

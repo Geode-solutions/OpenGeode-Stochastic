@@ -32,7 +32,7 @@ namespace geode
 {
     struct DistributionTypeHasher
     {
-        std::size_t operator()( const DistributionType &d ) const noexcept
+        std::size_t operator()( const DistributionType& d ) const noexcept
         {
             // Use the underlying string from NamedType
             return absl::Hash< std::string >{}( d.get() );
@@ -40,7 +40,7 @@ namespace geode
     };
 
     using DistributionFactory = std::function< DoubleSampler::Distribution(
-        const DoubleSampler::DistributionDescription & ) >;
+        const DoubleSampler::DistributionDescription& ) >;
 
     static absl::flat_hash_map< DistributionType, // key type
         DistributionFactory, // value type
@@ -48,7 +48,7 @@ namespace geode
         >
         distribution_registry = {
             { UniformClosed< double >::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription &desc ) {
+                []( const DoubleSampler::DistributionDescription& desc ) {
                     OPENGEODE_EXCEPTION( desc.min_value && desc.max_value,
                         "[DoubleSampler] - Incomplete description for "
                         "Uniform distribution need at least min "
@@ -59,7 +59,7 @@ namespace geode
                     return dist;
                 } },
             { UniformClosedOpen< double >::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription &desc ) {
+                []( const DoubleSampler::DistributionDescription& desc ) {
                     OPENGEODE_EXCEPTION( desc.min_value && desc.max_value,
                         "[DoubleSampler] - Incomplete description for "
                         "Uniform distribution need at least min "
@@ -70,7 +70,7 @@ namespace geode
                     return dist;
                 } },
             { Gaussian::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription &desc ) {
+                []( const DoubleSampler::DistributionDescription& desc ) {
                     OPENGEODE_EXCEPTION( desc.mean && desc.standard_deviation,
                         "[DoubleSampler] - Incomplete description for "
                         "Gaussian distribution need at least mean "
@@ -81,7 +81,7 @@ namespace geode
                     return dist;
                 } },
             { TruncatedGaussian::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription &desc ) {
+                []( const DoubleSampler::DistributionDescription& desc ) {
                     OPENGEODE_EXCEPTION( desc.mean && desc.standard_deviation,
                         "[DoubleSampler] - Incomplete description for "
                         "Truncated Gaussian distribution need at least mean "
@@ -95,7 +95,7 @@ namespace geode
                     return dist;
                 } },
             { VonMises::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription &desc ) {
+                []( const DoubleSampler::DistributionDescription& desc ) {
                     OPENGEODE_EXCEPTION( desc.mean && desc.kappa,
                         "[DoubleSampler] - Incomplete description for "
                         "Von Mises distribution need at least mean "
@@ -106,7 +106,7 @@ namespace geode
                     return dist;
                 } },
             { TruncatedLogNormal::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription &desc ) {
+                []( const DoubleSampler::DistributionDescription& desc ) {
                     OPENGEODE_EXCEPTION( desc.mean && desc.standard_deviation,
                         "[DoubleSampler] - Incomplete description for "
                         "TruncatedLogNormal distribution need mean "
@@ -120,7 +120,7 @@ namespace geode
                     return dist;
                 } },
             { TruncatedPowerLaw::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription &desc ) {
+                []( const DoubleSampler::DistributionDescription& desc ) {
                     OPENGEODE_EXCEPTION( desc.alpha,
                         "[DoubleSampler] - Incomplete description for "
                         "TruncatedPowerLaw distribution need power law "
@@ -134,7 +134,7 @@ namespace geode
         };
 
     DoubleSampler::Distribution DoubleSampler::create_distribution(
-        const DistributionDescription &desc )
+        const DistributionDescription& desc )
     {
         auto it = distribution_registry.find( desc.distribution_type );
         if( it == distribution_registry.end() )
@@ -145,7 +145,7 @@ namespace geode
 
     DoubleSampler::Distribution
         DoubleSampler::create_rad_angle_distribution_from_degree(
-            const DistributionDescription &desc_deg )
+            const DistributionDescription& desc_deg )
     {
         DistributionDescription desc_rad = desc_deg;
         if( desc_rad.mean )
@@ -179,10 +179,10 @@ namespace geode
     }
 
     double DoubleSampler::sample(
-        RandomEngine &engine, const Distribution &dist )
+        RandomEngine& engine, const Distribution& dist )
     {
         return std::visit(
-            [&engine]( auto &&d ) {
+            [&engine]( auto&& d ) {
                 using D = std::decay_t< decltype( d ) >;
                 if constexpr( std::is_same_v< D, UniformClosed< double > > )
                     return engine.sample_uniform< double >( d );

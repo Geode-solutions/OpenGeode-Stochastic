@@ -41,10 +41,10 @@ namespace geode
     class BoundingBoxSampler
     {
     public:
-        explicit BoundingBoxSampler( const BoundingBox< dimension > &box );
+        explicit BoundingBoxSampler( const BoundingBox< dimension >& box );
         ~BoundingBoxSampler();
 
-        Point< dimension > sample_uniform( RandomEngine &engine );
+        Point< dimension > sample_uniform( RandomEngine& engine );
 
     private:
         IMPLEMENTATION_MEMBER( impl_ );

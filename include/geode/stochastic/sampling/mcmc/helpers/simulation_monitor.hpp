@@ -31,11 +31,11 @@ namespace geode
     class StatisticsMonitor
     {
     public:
-        StatisticsMonitor( StatisticsMonitor && ) = default;
-        StatisticsMonitor( const StatisticsMonitor & ) = default;
-        StatisticsMonitor &operator=( StatisticsMonitor && ) noexcept = default;
-        StatisticsMonitor &operator=(
-            const StatisticsMonitor & ) noexcept = default;
+        StatisticsMonitor( StatisticsMonitor&& ) = default;
+        StatisticsMonitor( const StatisticsMonitor& ) = default;
+        StatisticsMonitor& operator=( StatisticsMonitor&& ) noexcept = default;
+        StatisticsMonitor& operator=(
+            const StatisticsMonitor& ) noexcept = default;
 
         StatisticsMonitor( const index_t nb_energy_terms )
         {
@@ -43,7 +43,7 @@ namespace geode
             variances_.resize( nb_energy_terms, 0.0 );
         }
 
-        void add_realization( const std::vector< double > &values )
+        void add_realization( const std::vector< double >& values )
         {
             OPENGEODE_EXCEPTION( values.size() == means_.size(),
                 "[StatisticsMonitor] - Mismatch between realization size and "
@@ -65,12 +65,12 @@ namespace geode
             return count_;
         }
 
-        const std::vector< double > &means() const
+        const std::vector< double >& means() const
         {
             return means_;
         }
 
-        const std::vector< double > &variances() const
+        const std::vector< double >& variances() const
         {
             return variances_;
         }

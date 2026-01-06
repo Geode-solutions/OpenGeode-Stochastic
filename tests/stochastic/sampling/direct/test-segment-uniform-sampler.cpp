@@ -39,7 +39,7 @@
 const int NUMBER_OF_SAMPLES = 10000;
 
 void test_sample_segment(
-    geode::RandomEngine &engine, const geode::BoundingBox< 2 > &box )
+    geode::RandomEngine& engine, const geode::BoundingBox< 2 >& box )
 {
     geode::UniformClosed< double > length;
     geode::UniformClosed< double > az;

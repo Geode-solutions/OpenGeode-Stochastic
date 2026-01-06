@@ -33,17 +33,17 @@ namespace geode
     {
     public:
         ObjectSet() noexcept = default;
-        ObjectSet( ObjectSet && ) noexcept = default;
-        ObjectSet &operator=( ObjectSet && ) noexcept = default;
+        ObjectSet( ObjectSet&& ) noexcept = default;
+        ObjectSet& operator=( ObjectSet&& ) noexcept = default;
 
         void set_name( std::string_view name );
-        const Type &get_fixed_object( index_t index ) const;
-        const Type &get_free_object( index_t index ) const;
+        const Type& get_fixed_object( index_t index ) const;
+        const Type& get_free_object( index_t index ) const;
 
-        index_t add_fixed_object( Type &&object );
+        index_t add_fixed_object( Type&& object );
 
-        index_t add_free_object( Type &&object );
-        void update_free_object( index_t index, Type &&object );
+        index_t add_free_object( Type&& object );
+        void update_free_object( index_t index, Type&& object );
         void remove_free_object( index_t index );
 
         index_t nb_objects() const;

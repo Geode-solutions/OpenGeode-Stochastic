@@ -36,7 +36,7 @@ const int NUMBER_OF_SAMPLES = 10000;
 
 template < geode::index_t dimension >
 void test_sample_ball(
-    geode::RandomEngine &engine, const geode::Sphere< dimension > &ball )
+    geode::RandomEngine& engine, const geode::Sphere< dimension >& ball )
 {
     geode::BallSampler< dimension > spec_ball{ ball };
 

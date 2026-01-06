@@ -34,7 +34,7 @@ namespace geode
     {
     public:
         SpatialDomain(
-            const BoundingBox< dimension > &domain, double buffer_size )
+            const BoundingBox< dimension >& domain, double buffer_size )
             : domain_{ domain },
               buffer_size_{ buffer_size },
               extended_domain_{ domain }
@@ -58,7 +58,7 @@ namespace geode
             return domain_;
         }
 
-        bool contains( const Point< dimension > &point ) const
+        bool contains( const Point< dimension >& point ) const
         {
             return domain_.contains( point );
         }
@@ -73,7 +73,7 @@ namespace geode
             return std::get< 1 >( domain_.smallest_length() );
         }
 
-        bool extended_contains( const Point< dimension > &point ) const
+        bool extended_contains( const Point< dimension >& point ) const
         {
             return extended_domain_.contains( point );
         }
@@ -99,15 +99,15 @@ namespace geode
     struct SpatialDomainChecker
     {
         static bool is_anchored_in_domain(
-            const SpatialDomain< ObjectType::dim > &domain,
-            const ObjectType &obj )
+            const SpatialDomain< ObjectType::dim >& domain,
+            const ObjectType& obj )
         {
             return domain.contains( obj );
         }
 
         static bool intersects_domain(
-            const SpatialDomain< ObjectType::dim > &domain,
-            const ObjectType &obj )
+            const SpatialDomain< ObjectType::dim >& domain,
+            const ObjectType& obj )
         {
             return domain.contains( obj );
         }
@@ -118,14 +118,14 @@ namespace geode
     struct SpatialDomainChecker< OwnerSegment2D >
     {
         static bool is_anchored_in_domain(
-            const SpatialDomain< 2 > &domain, const OwnerSegment2D &seg )
+            const SpatialDomain< 2 >& domain, const OwnerSegment2D& seg )
         {
-            const auto &v = seg.vertices();
+            const auto& v = seg.vertices();
             return domain.contains( v[0] );
         }
 
         static bool intersects_domain(
-            const SpatialDomain< 2 > &domain, const OwnerSegment2D &seg )
+            const SpatialDomain< 2 >& domain, const OwnerSegment2D& seg )
         {
             return domain.box().intersects( seg );
         }

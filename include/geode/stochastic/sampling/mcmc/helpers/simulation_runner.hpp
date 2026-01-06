@@ -63,21 +63,21 @@ namespace geode
     class SimulationRunner
     {
     public:
-        SimulationRunner( const SpatialDomain< ObjectType::dim > &domain )
-            : domain_( domain ) {};
+        SimulationRunner( const SpatialDomain< ObjectType::dim >& domain )
+            : domain_( domain ){};
         virtual ~SimulationRunner() = default;
 
         virtual void initialize() = 0;
 
-        const ObjectSets< ObjectType > &run(
-            RandomEngine &engine, const index_t steps )
+        const ObjectSets< ObjectType >& run(
+            RandomEngine& engine, const index_t steps )
         {
             mh_sampler_->walk( object_sets_, engine, steps );
             return object_sets_;
         }
 
         StatisticsMonitor run(
-            RandomEngine &engine, const SimulationConfigurator &config )
+            RandomEngine& engine, const SimulationConfigurator& config )
         {
             if( config.burn_in_steps > 0 )
             {
@@ -119,7 +119,7 @@ namespace geode
             return stats_monitor;
         }
 
-        const ObjectSets< ObjectType > &state_realization() const
+        const ObjectSets< ObjectType >& state_realization() const
         {
             return object_sets_;
         }
@@ -129,9 +129,9 @@ namespace geode
             std::vector< double > statistic_values;
             statistic_values.reserve( ordered_energy_terms_.size() );
 
-            for( const auto &energy_term_uuid : ordered_energy_terms_ )
+            for( const auto& energy_term_uuid : ordered_energy_terms_ )
             {
-                const auto &term =
+                const auto& term =
                     energy_terms_collection_.get( energy_term_uuid );
                 statistic_values.push_back( term.statistic( object_sets_ ) );
             }
@@ -144,9 +144,9 @@ namespace geode
             std::vector< std::string > term_names;
             term_names.reserve( ordered_energy_terms_.size() );
 
-            for( const auto &energy_term_uuid : ordered_energy_terms_ )
+            for( const auto& energy_term_uuid : ordered_energy_terms_ )
             {
-                const auto &term =
+                const auto& term =
                     energy_terms_collection_.get( energy_term_uuid );
                 term_names.push_back( term.name().data() );
             }

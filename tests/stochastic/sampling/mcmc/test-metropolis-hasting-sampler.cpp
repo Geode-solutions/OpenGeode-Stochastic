@@ -53,7 +53,7 @@ namespace
             "[MH test] acceptance_prob_helper wrong for -1.0." );
     }
 
-    void test_beta_setter( geode::MetropolisHastings< geode::Point2D > &mh )
+    void test_beta_setter( geode::MetropolisHastings< geode::Point2D >& mh )
     {
         mh.set_beta( 0.5 );
         OPENGEODE_EXCEPTION(
@@ -72,8 +72,8 @@ namespace
             exception_thrown, "[MH test] negative beta did not throw." );
     }
 
-    void test_steps( const geode::MetropolisHastings< geode::Point2D > &mh,
-        geode::ObjectSets< geode::Point2D > &state )
+    void test_steps( const geode::MetropolisHastings< geode::Point2D >& mh,
+        geode::ObjectSets< geode::Point2D >& state )
     {
         geode::RandomEngine engine;
 

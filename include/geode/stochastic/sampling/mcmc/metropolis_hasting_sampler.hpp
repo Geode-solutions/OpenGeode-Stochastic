@@ -50,7 +50,7 @@ namespace geode
     {
     public:
         MetropolisHastings(
-            const EnergyTermCollection< ObjectType > &energy_term_collection,
+            const EnergyTermCollection< ObjectType >& energy_term_collection,
             std::unique_ptr< ProposalKernel< ObjectType > > proposal_kernel )
             : gibbs_energy_{ energy_term_collection },
               proposal_kernel_( std::move( proposal_kernel ) )
@@ -60,11 +60,11 @@ namespace geode
         }
 
         StepResult< ObjectType > step(
-            ObjectSets< ObjectType > &state, RandomEngine &engine ) const
+            ObjectSets< ObjectType >& state, RandomEngine& engine ) const
         {
             Proposal< ObjectType > proposal =
                 proposal_kernel_->propose( state, engine );
-            const auto &move_type = proposal.proposed_move.type;
+            const auto& move_type = proposal.proposed_move.type;
             if( move_type == MoveType::Birth )
             {
                 return birth_step( proposal, state, engine );
@@ -80,8 +80,8 @@ namespace geode
             return StepResult< ObjectType >{};
         }
 
-        void walk( ObjectSets< ObjectType > &state,
-            RandomEngine &engine,
+        void walk( ObjectSets< ObjectType >& state,
+            RandomEngine& engine,
             index_t nb_steps ) const
         {
             for( const auto count : geode::Range{ nb_steps } )
@@ -92,7 +92,7 @@ namespace geode
         }
 
         ObjectSets< ObjectType > walk_copy( ObjectSets< ObjectType > initial,
-            RandomEngine &engine,
+            RandomEngine& engine,
             index_t nb_steps ) const
         {
             walk( initial, engine, nb_steps );
@@ -153,20 +153,20 @@ namespace geode
 
     private:
         const double compute_log_accept( const double deltaU,
-            const ProposalProbabilities &proposal_probas ) const
+            const ProposalProbabilities& proposal_probas ) const
         {
             return -beta_ * deltaU + proposal_probas.transition_probability();
         }
 
         template < typename ApplyMove >
         StepResult< ObjectType > accept_or_reject(
-            Proposal< ObjectType > &proposal,
-            ObjectSets< ObjectType > &state,
-            RandomEngine &engine,
+            Proposal< ObjectType >& proposal,
+            ObjectSets< ObjectType >& state,
+            RandomEngine& engine,
             const double delta_log_energy,
-            ApplyMove &&apply_move ) const
+            ApplyMove&& apply_move ) const
         {
-            const auto &proposed_move = proposal.proposed_move;
+            const auto& proposed_move = proposal.proposed_move;
             StepResult< ObjectType > step_result;
             step_result.move_type = proposed_move.type;
             step_result.delta_log_energy = delta_log_energy;
@@ -183,44 +183,44 @@ namespace geode
             return step_result;
         }
 
-        StepResult< ObjectType > birth_step( Proposal< ObjectType > &proposal,
-            ObjectSets< ObjectType > &state,
-            RandomEngine &engine ) const
+        StepResult< ObjectType > birth_step( Proposal< ObjectType >& proposal,
+            ObjectSets< ObjectType >& state,
+            RandomEngine& engine ) const
         {
             const auto new_object = proposal.new_object();
             const auto delta_log_energy =
                 gibbs_energy_.delta_log_add( state, new_object );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
-                []( auto &state, auto &proposal ) {
+                []( auto& state, auto& proposal ) {
                     state.add_object(
                         std::move( proposal.proposed_move.new_object.value() ),
                         proposal.set_id, false );
                 } );
         };
 
-        StepResult< ObjectType > death_step( Proposal< ObjectType > &proposal,
-            ObjectSets< ObjectType > &state,
-            RandomEngine &engine ) const
+        StepResult< ObjectType > death_step( Proposal< ObjectType >& proposal,
+            ObjectSets< ObjectType >& state,
+            RandomEngine& engine ) const
         {
             const auto old_object_id = proposal.old_object_id();
             const auto delta_log_energy =
                 gibbs_energy_.delta_log_remove( state, old_object_id );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
-                []( auto &state, auto &proposal ) {
+                []( auto& state, auto& proposal ) {
                     state.remove_free_object( proposal.old_object_id() );
                 } );
         };
 
-        StepResult< ObjectType > change_step( Proposal< ObjectType > &proposal,
-            ObjectSets< ObjectType > &state,
-            RandomEngine &engine ) const
+        StepResult< ObjectType > change_step( Proposal< ObjectType >& proposal,
+            ObjectSets< ObjectType >& state,
+            RandomEngine& engine ) const
         {
             const auto new_object = proposal.new_object();
             const auto old_object_id = proposal.old_object_id();
             const auto delta_log_energy = gibbs_energy_.delta_log_change(
                 state, old_object_id, new_object );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
-                []( auto &state, auto &proposal ) {
+                []( auto& state, auto& proposal ) {
                     state.update_free_object( proposal.old_object_id(),
                         std::move(
                             proposal.proposed_move.new_object.value() ) );

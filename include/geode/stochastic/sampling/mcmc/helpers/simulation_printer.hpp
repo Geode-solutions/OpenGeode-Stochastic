@@ -78,14 +78,14 @@ namespace geode
     class SimulationPrinter
     {
     public:
-        SimulationPrinter( const SimulationPrinterConfigurator &config )
+        SimulationPrinter( const SimulationPrinterConfigurator& config )
             : config_( config )
         {
         }
 
         // Print statistics to the configured statistics file
         void print_statistics(
-            const std::vector< double > &stats, absl::string_view header ) const
+            const std::vector< double >& stats, absl::string_view header ) const
         {
             if( !config_.print_statistics )
                 return;
@@ -97,7 +97,7 @@ namespace geode
         }
 
         template < typename ObjectType >
-        void print_object_sets( const ObjectSets< ObjectType > &object_sets,
+        void print_object_sets( const ObjectSets< ObjectType >& object_sets,
             index_t realization_id ) const
         {
             if( !config_.print_realisations
@@ -115,14 +115,14 @@ namespace geode
             const auto all_objects = object_sets.get_all_object();
             file << "#nb_objects\t" << all_objects.size() << "\n";
 
-            for( const auto &object_id : all_objects )
+            for( const auto& object_id : all_objects )
             {
-                const auto &object = object_sets.get_object( object_id );
+                const auto& object = object_sets.get_object( object_id );
                 file << object.string() << "\t" << object_id.set_id.string()
                      << "\n";
             }
         }
-        void print_statistics_summary( const StatisticsMonitor &monitor,
+        void print_statistics_summary( const StatisticsMonitor& monitor,
             absl::string_view energy_term_names ) const
         {
             if( !config_.print_statistics_summary )
@@ -176,7 +176,7 @@ namespace geode
 
             return file;
         }
-        const std::string &create_statistics_file(
+        const std::string& create_statistics_file(
             absl::string_view header ) const
         {
             stats_file_path_ = ( std::filesystem::path( config_.output_folder )

@@ -31,7 +31,7 @@
 namespace
 {
     void test_print_statistics(
-        const geode::SimulationPrinterConfigurator &config )
+        const geode::SimulationPrinterConfigurator& config )
     {
         geode::Logger::info( "[TEST] SimulationPrinter print statistics" );
 
@@ -63,7 +63,7 @@ namespace
     }
 
     void test_statistics_summary(
-        const geode::SimulationPrinterConfigurator &config )
+        const geode::SimulationPrinterConfigurator& config )
     {
         geode::Logger::info(
             "[TEST] SimulationPrinter print statistics summary" );
@@ -99,7 +99,7 @@ namespace
     }
 
     void test_print_objects(
-        const geode::SimulationPrinterConfigurator &config )
+        const geode::SimulationPrinterConfigurator& config )
     {
         geode::Logger::info( "[TEST] SimulationPrinter print object" );
 

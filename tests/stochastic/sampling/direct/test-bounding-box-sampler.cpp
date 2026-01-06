@@ -36,7 +36,7 @@ const int NUMBER_OF_SAMPLES = 10000;
 
 template < geode::index_t dimension >
 void test_sample_bounding_box(
-    geode::RandomEngine &engine, const geode::BoundingBox< dimension > &box )
+    geode::RandomEngine& engine, const geode::BoundingBox< dimension >& box )
 {
     geode::BoundingBoxSampler< dimension > spec_box{ box };
 

@@ -45,6 +45,6 @@ namespace geode
 
         template < index_t dimension >
         static Point< dimension > sample(
-            RandomEngine &engine, const Object< dimension > &object );
+            RandomEngine& engine, const Object< dimension >& object );
     };
 } // namespace geode

@@ -62,14 +62,14 @@ void test_reproducibility()
 }
 
 template < typename T >
-double compute_mean( const std::vector< T > &data )
+double compute_mean( const std::vector< T >& data )
 {
     double sum = std::accumulate( data.begin(), data.end(), 0.0 );
     return sum / data.size();
 }
 
 template < typename T >
-double compute_variance( const std::vector< T > &data, double mean )
+double compute_variance( const std::vector< T >& data, double mean )
 {
     double accum = 0.0;
     for( auto x : data )
@@ -81,7 +81,7 @@ double compute_variance( const std::vector< T > &data, double mean )
 }
 template < typename Type >
 void test_uniform(
-    const Type min_value, const Type max_value, geode::RandomEngine &engine )
+    const Type min_value, const Type max_value, geode::RandomEngine& engine )
 {
     std::vector< Type > samples;
     samples.reserve( NUMBER_OF_SAMPLES );
@@ -115,7 +115,7 @@ void test_uniform(
 }
 
 void test_gaussian(
-    double mean_value, double std_value, geode::RandomEngine &engine )
+    double mean_value, double std_value, geode::RandomEngine& engine )
 {
     std::vector< double > samples;
     samples.reserve( NUMBER_OF_SAMPLES );
@@ -148,7 +148,7 @@ void test_truncated_gaussian( double mean_value,
     double std_value,
     std::optional< double > min_value,
     std::optional< double > max_value,
-    geode::RandomEngine &engine )
+    geode::RandomEngine& engine )
 {
     const auto max =
         max_value.value_or( std::numeric_limits< double >::infinity() );
@@ -195,7 +195,7 @@ void test_truncated_gaussian( double mean_value,
 }
 
 void test_bernoulli(
-    double probability_of_success, geode::RandomEngine &engine )
+    double probability_of_success, geode::RandomEngine& engine )
 {
     int success_count = 0;
 

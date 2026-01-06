@@ -41,10 +41,10 @@ namespace geode
     class BallSampler
     {
     public:
-        BallSampler( const Sphere< dimension > &ball );
+        BallSampler( const Sphere< dimension >& ball );
         ~BallSampler();
 
-        Point< dimension > sample_uniform( RandomEngine &engine );
+        Point< dimension > sample_uniform( RandomEngine& engine );
 
     private:
         IMPLEMENTATION_MEMBER( impl_ );

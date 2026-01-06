@@ -102,11 +102,11 @@ namespace geode
         };
 
         static Distribution create_distribution(
-            const DistributionDescription &desc );
+            const DistributionDescription& desc );
         static Distribution create_rad_angle_distribution_from_degree(
-            const DistributionDescription &angle_desc_deg );
+            const DistributionDescription& angle_desc_deg );
 
-        static double sample( RandomEngine &engine, const Distribution &dist );
+        static double sample( RandomEngine& engine, const Distribution& dist );
     };
 
 } // namespace geode

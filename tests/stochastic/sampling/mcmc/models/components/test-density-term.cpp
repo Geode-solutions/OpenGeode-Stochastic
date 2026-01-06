@@ -26,7 +26,7 @@
 #include <geode/stochastic/spatial/object_sets.hpp>
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
-geode::uuid init_object_set( geode::ObjectSets< geode::Point2D > &pattern )
+geode::uuid init_object_set( geode::ObjectSets< geode::Point2D >& pattern )
 {
     geode::Point2D p1{ { 0., 0. } };
     geode::Point2D p2{ { 1., 1. } };
@@ -49,9 +49,9 @@ geode::SpatialDomain< 2 > init_domain()
 }
 
 void run_density_test( double lambda,
-    const geode::ObjectSets< geode::Point2D > &pattern,
-    const geode::uuid &set_id,
-    const geode::SpatialDomain< 2 > &domain )
+    const geode::ObjectSets< geode::Point2D >& pattern,
+    const geode::uuid& set_id,
+    const geode::SpatialDomain< 2 >& domain )
 {
     geode::DensityTerm< geode::Point2D > term(
         "density", lambda, { set_id }, domain );
@@ -143,7 +143,7 @@ int main()
         geode::Logger::info( "TEST FAILED" );
         return 1;
     }
-    catch( geode::OpenGeodeException &expt )
+    catch( geode::OpenGeodeException& expt )
     {
         geode::Logger::info( "TEST SUCCESS" );
         return 0;

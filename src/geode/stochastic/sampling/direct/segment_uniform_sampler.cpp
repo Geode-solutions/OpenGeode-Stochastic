@@ -32,7 +32,7 @@
 
 namespace
 {
-    geode::Vector2D direction_from_azimuth_angle( const geode::Angle &azimuth )
+    geode::Vector2D direction_from_azimuth_angle( const geode::Angle& azimuth )
     {
         return geode::Vector2D( { azimuth.sin(), azimuth.cos() } );
     }
@@ -40,10 +40,10 @@ namespace
 namespace geode
 {
 
-    OwnerSegment2D SegmentUniformSampler::sample( RandomEngine &engine,
-        const PointUniformSampler::Object< 2 > &object,
-        const DoubleSampler::Distribution &length,
-        const DoubleSampler::Distribution &azimuth_rad )
+    OwnerSegment2D SegmentUniformSampler::sample( RandomEngine& engine,
+        const PointUniformSampler::Object< 2 >& object,
+        const DoubleSampler::Distribution& length,
+        const DoubleSampler::Distribution& azimuth_rad )
     {
         auto point1 = PointUniformSampler::sample( engine, object );
 

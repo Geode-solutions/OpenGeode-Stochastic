@@ -146,7 +146,7 @@ namespace geode
         }
 
         template < typename Type >
-        Type sample_uniform( const UniformClosed< Type > &law )
+        Type sample_uniform( const UniformClosed< Type >& law )
         {
             OPENGEODE_ASSERT( law.min_value <= law.max_value,
                 "[Uniform sampling] - Wrong range ", law.min_value,
@@ -156,7 +156,7 @@ namespace geode
         }
 
         template < typename Type >
-        Type sample_uniform( const UniformClosedOpen< Type > &law )
+        Type sample_uniform( const UniformClosedOpen< Type >& law )
         {
             OPENGEODE_ASSERT( law.min_value < law.max_value,
                 "[Uniform sampling] - Wrong range ", law.min_value,
@@ -165,7 +165,7 @@ namespace geode
                 law.min_value, law.max_value );
         }
 
-        double sample_gaussian( const Gaussian &law )
+        double sample_gaussian( const Gaussian& law )
         {
             OPENGEODE_ASSERT( law.standard_deviation > 0
                                   && std::isfinite( law.standard_deviation )
@@ -177,7 +177,7 @@ namespace geode
                 law.mean, law.standard_deviation )( rand_gen_ );
         }
 
-        double sample_truncated_gaussian( const TruncatedGaussian &law )
+        double sample_truncated_gaussian( const TruncatedGaussian& law )
         {
             OPENGEODE_ASSERT( law.standard_deviation > 0
                                   && std::isfinite( law.standard_deviation )
@@ -219,7 +219,7 @@ namespace geode
             return law.mean + law.standard_deviation * normal_quantile( u );
         }
 
-        double sample_von_mises( const VonMises &law )
+        double sample_von_mises( const VonMises& law )
         {
             OPENGEODE_ASSERT(
                 law.concentration >= 0.0 && std::isfinite( law.mean ),
@@ -284,7 +284,7 @@ namespace geode
             return theta;
         }
 
-        double sample_truncated_lognormal( const TruncatedLogNormal &law )
+        double sample_truncated_lognormal( const TruncatedLogNormal& law )
         {
             // Basic sanity checks
             OPENGEODE_ASSERT( law.standard_deviation > 0
@@ -331,7 +331,7 @@ namespace geode
             return std::exp( law.mean + law.standard_deviation * z );
         }
 
-        double sample_truncated_powerlaw( const TruncatedPowerLaw &law )
+        double sample_truncated_powerlaw( const TruncatedPowerLaw& law )
         {
             OPENGEODE_ASSERT(
                 law.alpha > 0, "Power-law exponent alpha must be > 0" );
@@ -407,60 +407,60 @@ namespace geode
     }
 
     template < typename Type >
-    Type RandomEngine::sample_uniform( const UniformClosed< Type > &law )
+    Type RandomEngine::sample_uniform( const UniformClosed< Type >& law )
     {
         return impl_->sample_uniform( law );
     }
 
     template index_t opengeode_stochastic_stochastic_api
-        RandomEngine::sample_uniform( const UniformClosed< index_t > & );
+        RandomEngine::sample_uniform( const UniformClosed< index_t >& );
     template local_index_t opengeode_stochastic_stochastic_api
-        RandomEngine::sample_uniform( const UniformClosed< local_index_t > & );
+        RandomEngine::sample_uniform( const UniformClosed< local_index_t >& );
     template signed_index_t opengeode_stochastic_stochastic_api
-        RandomEngine::sample_uniform( const UniformClosed< signed_index_t > & );
+        RandomEngine::sample_uniform( const UniformClosed< signed_index_t >& );
     template float opengeode_stochastic_stochastic_api
-        RandomEngine::sample_uniform( const UniformClosed< float > & );
+        RandomEngine::sample_uniform( const UniformClosed< float >& );
     template double opengeode_stochastic_stochastic_api
-        RandomEngine::sample_uniform( const UniformClosed< double > & );
+        RandomEngine::sample_uniform( const UniformClosed< double >& );
 
     template < typename Type >
-    Type RandomEngine::sample_uniform( const UniformClosedOpen< Type > &law )
+    Type RandomEngine::sample_uniform( const UniformClosedOpen< Type >& law )
     {
         return impl_->sample_uniform( law );
     }
     template index_t opengeode_stochastic_stochastic_api
-        RandomEngine::sample_uniform( const UniformClosedOpen< index_t > & );
+        RandomEngine::sample_uniform( const UniformClosedOpen< index_t >& );
     template local_index_t opengeode_stochastic_stochastic_api
         RandomEngine::sample_uniform(
-            const UniformClosedOpen< local_index_t > & );
+            const UniformClosedOpen< local_index_t >& );
     template signed_index_t opengeode_stochastic_stochastic_api
         RandomEngine::sample_uniform(
-            const UniformClosedOpen< signed_index_t > & );
+            const UniformClosedOpen< signed_index_t >& );
     template float opengeode_stochastic_stochastic_api
-        RandomEngine::sample_uniform( const UniformClosedOpen< float > & );
+        RandomEngine::sample_uniform( const UniformClosedOpen< float >& );
     template double opengeode_stochastic_stochastic_api
-        RandomEngine::sample_uniform( const UniformClosedOpen< double > & );
+        RandomEngine::sample_uniform( const UniformClosedOpen< double >& );
 
-    double RandomEngine::sample_gaussian( const Gaussian &law )
+    double RandomEngine::sample_gaussian( const Gaussian& law )
     {
         return impl_->sample_gaussian( law );
     }
     double RandomEngine::sample_truncated_gaussian(
-        const TruncatedGaussian &law )
+        const TruncatedGaussian& law )
     {
         return impl_->sample_truncated_gaussian( law );
     }
-    double RandomEngine::sample_von_mises( const VonMises &law )
+    double RandomEngine::sample_von_mises( const VonMises& law )
     {
         return impl_->sample_von_mises( law );
     }
     double RandomEngine::sample_truncated_lognormal(
-        const TruncatedLogNormal &law )
+        const TruncatedLogNormal& law )
     {
         return impl_->sample_truncated_lognormal( law );
     }
     double RandomEngine::sample_truncated_powerlaw(
-        const TruncatedPowerLaw &law )
+        const TruncatedPowerLaw& law )
     {
         return impl_->sample_truncated_powerlaw( law );
     }

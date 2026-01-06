@@ -44,8 +44,8 @@ namespace
         // --- Check count
         OPENGEODE_EXCEPTION( monitor.statiscal_count() == 2, "Count mismatch" );
 
-        const auto &means = monitor.means();
-        const auto &variances = monitor.variances();
+        const auto& means = monitor.means();
+        const auto& variances = monitor.variances();
 
         // --- Check means
         OPENGEODE_EXCEPTION(

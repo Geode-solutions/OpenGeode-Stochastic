@@ -90,8 +90,8 @@ namespace geode
     public:
         explicit EnergyTerm( std::string_view name,
             double param,
-            std::vector< uuid > &&targeted_set_ids,
-            const SpatialDomain< ObjectType::dim > &domain )
+            std::vector< uuid >&& targeted_set_ids,
+            const SpatialDomain< ObjectType::dim >& domain )
             : energy_scale_{ param },
               targeted_set_ids_{ std::move( targeted_set_ids ) },
               domain_( domain )
@@ -108,7 +108,7 @@ namespace geode
             return energy_scale_.parameter();
         }
 
-        const std::vector< uuid > &targeted_set_ids() const
+        const std::vector< uuid >& targeted_set_ids() const
         {
             return targeted_set_ids_;
         }
@@ -120,20 +120,20 @@ namespace geode
         }
 
         virtual double total_log(
-            const ObjectSets< ObjectType > &state ) const = 0;
+            const ObjectSets< ObjectType >& state ) const = 0;
 
-        virtual double delta_log_add( const ObjectSets< ObjectType > &state,
-            const ObjectRef< ObjectType > &new_object ) const = 0;
+        virtual double delta_log_add( const ObjectSets< ObjectType >& state,
+            const ObjectRef< ObjectType >& new_object ) const = 0;
 
-        virtual double delta_log_remove( const ObjectSets< ObjectType > &state,
-            const ObjectId &object_id ) const = 0;
+        virtual double delta_log_remove( const ObjectSets< ObjectType >& state,
+            const ObjectId& object_id ) const = 0;
 
-        virtual double delta_log_change( const ObjectSets< ObjectType > &state,
-            const ObjectId &old_object_id,
-            const ObjectRef< ObjectType > &new_object ) const = 0;
+        virtual double delta_log_change( const ObjectSets< ObjectType >& state,
+            const ObjectId& old_object_id,
+            const ObjectRef< ObjectType >& new_object ) const = 0;
 
         virtual double statistic(
-            const ObjectSets< ObjectType > &state ) const = 0;
+            const ObjectSets< ObjectType >& state ) const = 0;
 
         std::string string() const
         {
@@ -142,7 +142,7 @@ namespace geode
                     " parameter value: ", energy_scale_.parameter(),
                     " applyied on ", targeted_set_ids_.size(),
                     " object subsets -->" );
-            for( const auto &set_id : targeted_set_ids_ )
+            for( const auto& set_id : targeted_set_ids_ )
             {
                 absl::StrAppend( &message, "\t", set_id.string() );
             }
@@ -150,13 +150,13 @@ namespace geode
         }
 
     protected:
-        bool is_targeted_set( const uuid &set_id ) const
+        bool is_targeted_set( const uuid& set_id ) const
         {
             return std::binary_search(
                 targeted_set_ids_.begin(), targeted_set_ids_.end(), set_id );
         }
 
-        const SpatialDomain< ObjectType::dim > &domain() const
+        const SpatialDomain< ObjectType::dim >& domain() const
         {
             return domain_;
         }
@@ -170,9 +170,9 @@ namespace geode
 
         template < typename Func >
         void for_each_targeted_object(
-            const ObjectSets< ObjectType > &state, Func &&do_apply ) const
+            const ObjectSets< ObjectType >& state, Func&& do_apply ) const
         {
-            for( const auto &targeted_set_id : targeted_set_ids_ )
+            for( const auto& targeted_set_id : targeted_set_ids_ )
             {
                 for( const auto id :
                     state.get_objects_in_set( targeted_set_id ) )
@@ -185,6 +185,6 @@ namespace geode
     private:
         detail::EnergyScale energy_scale_;
         std::vector< uuid > targeted_set_ids_;
-        const SpatialDomain< ObjectType::dim > &domain_;
+        const SpatialDomain< ObjectType::dim >& domain_;
     };
 } // namespace geode

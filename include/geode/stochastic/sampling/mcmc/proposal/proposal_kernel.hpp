@@ -63,8 +63,8 @@ namespace geode
     public:
         virtual ~ProposalKernel() = default;
 
-        Proposal< ObjectType > propose( const ObjectSets< ObjectType > &current,
-            RandomEngine &engine ) const
+        Proposal< ObjectType > propose( const ObjectSets< ObjectType >& current,
+            RandomEngine& engine ) const
         {
             OPENGEODE_EXCEPTION( !set_moves_.empty(),
                 "[MCMC Proposal Kernel] - no move are defined in the Kernel." );
@@ -73,7 +73,7 @@ namespace geode
             {
                 if( rnd <= cumulative_probs_[proba_id] )
                 {
-                    auto &[set_id, move] = set_moves_[proba_id];
+                    auto& [set_id, move] = set_moves_[proba_id];
                     return Proposal< ObjectType >{ set_id,
                         move->propose_move(
                             current.get_set( set_id ), engine ) };
@@ -88,7 +88,7 @@ namespace geode
         }
 
         void add_move(
-            const uuid &set_id, std::unique_ptr< Move< ObjectType > > move )
+            const uuid& set_id, std::unique_ptr< Move< ObjectType > > move )
         {
             set_moves_.push_back( { set_id, std::move( move ) } );
             initialize_probabilities();
@@ -104,7 +104,7 @@ namespace geode
             {
                 absl::StrAppend( &message, " ", cumsum );
             }
-            for( const auto &[set_id, move] : set_moves_ )
+            for( const auto& [set_id, move] : set_moves_ )
             {
                 absl::StrAppend( &message, " \n\t --> move on subset ",
                     set_id.string(), ": ", move->string() );
@@ -119,7 +119,7 @@ namespace geode
 
             // Extract weights
             std::transform( set_moves_.begin(), set_moves_.end(),
-                probabilities.begin(), []( const auto &move ) {
+                probabilities.begin(), []( const auto& move ) {
                     return move.second->proportion_weight();
                 } );
 
@@ -141,7 +141,7 @@ namespace geode
         }
 
         void compute_cumulative_probabilities(
-            const std::vector< double > &probabilities )
+            const std::vector< double >& probabilities )
         {
             cumulative_probs_.resize( probabilities.size() );
 
@@ -154,7 +154,7 @@ namespace geode
                 cumulative_probs_.back() = 1.0; // ensure exact 1.0
         }
         void initialize_move_probabilities(
-            const std::vector< double > &probabilities )
+            const std::vector< double >& probabilities )
         {
             for( const auto move_id : geode::Range{ probabilities.size() } )
             {

@@ -39,7 +39,7 @@ namespace geode
     }
 
     template < typename Type >
-    const Type &ObjectSet< Type >::get_fixed_object( index_t index ) const
+    const Type& ObjectSet< Type >::get_fixed_object( index_t index ) const
     {
         OPENGEODE_EXCEPTION( index < fixed_objects_.size(),
             "[ObjectSet] - index for fixed object out of range." );
@@ -47,7 +47,7 @@ namespace geode
     }
 
     template < typename Type >
-    const Type &ObjectSet< Type >::get_free_object( index_t index ) const
+    const Type& ObjectSet< Type >::get_free_object( index_t index ) const
     {
         OPENGEODE_EXCEPTION( index < free_objects_.size(),
             "[ObjectSet] - index for free object out of range." );
@@ -55,21 +55,21 @@ namespace geode
     }
 
     template < typename Type >
-    index_t ObjectSet< Type >::add_fixed_object( Type &&object )
+    index_t ObjectSet< Type >::add_fixed_object( Type&& object )
     {
         fixed_objects_.push_back( std::move( object ) );
         return fixed_objects_.size() - 1;
     }
 
     template < typename Type >
-    index_t ObjectSet< Type >::add_free_object( Type &&object )
+    index_t ObjectSet< Type >::add_free_object( Type&& object )
     {
         free_objects_.push_back( std::move( object ) );
         return free_objects_.size() - 1;
     }
 
     template < typename Type >
-    void ObjectSet< Type >::update_free_object( index_t index, Type &&object )
+    void ObjectSet< Type >::update_free_object( index_t index, Type&& object )
     {
         OPENGEODE_EXCEPTION( index < free_objects_.size(),
             "[ObjectSet] - free object index out of range." );

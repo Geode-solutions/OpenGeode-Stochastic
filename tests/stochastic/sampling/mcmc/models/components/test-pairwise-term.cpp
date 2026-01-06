@@ -29,7 +29,7 @@
 #include <geode/stochastic/spatial/object_sets.hpp>
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
-geode::uuid init_object_set( geode::ObjectSets< geode::Point2D > &pattern )
+geode::uuid init_object_set( geode::ObjectSets< geode::Point2D >& pattern )
 {
     geode::Point2D p1{ { 0.1, 0.1 } }; // VOI
     geode::Point2D p2{ { 0.9, 0.9 } }; // VOI
@@ -52,9 +52,9 @@ geode::SpatialDomain< 2 > init_domain()
 }
 
 void test_pairwise_term( double gamma,
-    const geode::ObjectSets< geode::Point2D > &pattern,
-    const geode::uuid &set_id,
-    const geode::SpatialDomain< 2 > &domain )
+    const geode::ObjectSets< geode::Point2D >& pattern,
+    const geode::uuid& set_id,
+    const geode::SpatialDomain< 2 >& domain )
 {
     auto interaction =
         std::make_unique< geode::EuclideanCutoffInteraction< geode::Point2D > >(
@@ -125,9 +125,9 @@ void test_pairwise_term( double gamma,
 }
 
 void test_pairwise_term_zero_gamma( double gamma,
-    const geode::ObjectSets< geode::Point2D > &pattern,
-    const geode::uuid &set_id,
-    const geode::SpatialDomain< 2 > &domain )
+    const geode::ObjectSets< geode::Point2D >& pattern,
+    const geode::uuid& set_id,
+    const geode::SpatialDomain< 2 >& domain )
 {
     auto interaction =
         std::make_unique< geode::EuclideanCutoffInteraction< geode::Point2D > >(

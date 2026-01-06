@@ -29,14 +29,14 @@
 namespace
 {
     template < geode::index_t dimension >
-    double compute_euclidean_distance( const geode::Point< dimension > &point1,
-        const geode::Point< dimension > &point2 )
+    double compute_euclidean_distance( const geode::Point< dimension >& point1,
+        const geode::Point< dimension >& point2 )
     {
         return geode::point_point_distance( point1, point2 );
     }
     template < geode::index_t dimension >
-    double compute_euclidean_distance( const geode::Segment< dimension > &seg1,
-        const geode::Segment< dimension > &seg2 )
+    double compute_euclidean_distance( const geode::Segment< dimension >& seg1,
+        const geode::Segment< dimension >& seg2 )
     {
         return std::get< 0 >( geode::segment_segment_distance( seg1, seg2 ) );
     }
@@ -68,8 +68,8 @@ namespace geode
 
     template < typename Type >
     double EuclideanCutoffInteraction< Type >::compute(
-        const ObjectRef< Type > &object_a,
-        const ObjectRef< Type > &object_b ) const
+        const ObjectRef< Type >& object_a,
+        const ObjectRef< Type >& object_b ) const
     {
         auto dist = compute_euclidean_distance< Type::dim >(
             object_a.object, object_b.object );

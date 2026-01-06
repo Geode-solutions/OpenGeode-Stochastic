@@ -36,7 +36,7 @@ namespace geode
     class BoundingBoxSampler< dimension >::Impl
     {
     public:
-        Impl( const BoundingBox< dimension > &box )
+        Impl( const BoundingBox< dimension >& box )
         {
             for( const auto dim : LRange( dimension ) )
             {
@@ -44,7 +44,7 @@ namespace geode
                 dist_coordinates[dim].max_value = box.max().value( dim );
             }
         }
-        Point< dimension > sample_uniform( RandomEngine &engine )
+        Point< dimension > sample_uniform( RandomEngine& engine )
         {
             geode::Point< dimension > point;
             for( const auto dim : geode::Range( dimension ) )
@@ -61,7 +61,7 @@ namespace geode
 
     template < index_t dimension >
     BoundingBoxSampler< dimension >::BoundingBoxSampler(
-        const BoundingBox< dimension > &box )
+        const BoundingBox< dimension >& box )
         : impl_{ box }
     {
     }
@@ -71,7 +71,7 @@ namespace geode
 
     template < index_t dimension >
     Point< dimension > BoundingBoxSampler< dimension >::sample_uniform(
-        RandomEngine &engine )
+        RandomEngine& engine )
     {
         return impl_->sample_uniform( engine );
     }

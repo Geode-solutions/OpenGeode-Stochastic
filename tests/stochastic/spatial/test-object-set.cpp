@@ -44,7 +44,7 @@ namespace
         OPENGEODE_EXCEPTION( !set.empty(),
             "[TestObjectSet] - Set should not be empty after insertions" );
 
-        const auto &p = set.get_fixed_object( idx1 );
+        const auto& p = set.get_fixed_object( idx1 );
         const auto result = geode::Point2D{ { 1.0, 1.0 } };
         OPENGEODE_EXCEPTION(
             p == result, "[TestObjectSet] - Wrong object value at index 1" );
@@ -59,7 +59,7 @@ namespace
 
         set.update_free_object( idx1, geode::Point2D{ { 5.0, 5.0 } } );
 
-        const auto &updated = set.get_free_object( idx1 );
+        const auto& updated = set.get_free_object( idx1 );
         const auto new_point = geode::Point2D{ { 5.0, 5.0 } };
         OPENGEODE_EXCEPTION(
             updated == new_point, "[TestObjectSet] - Object update failed" );
@@ -77,7 +77,7 @@ namespace
         OPENGEODE_EXCEPTION( set.nb_objects() == 2,
             "[TestObjectSet] - Set size should be 2 after removal" );
 
-        const auto &last = set.get_free_object( 0 );
+        const auto& last = set.get_free_object( 0 );
         const auto result = geode::Point2D{ { 2.0, 2.0 } };
         OPENGEODE_EXCEPTION( last == result,
             "[TestObjectSet] - Remaining objects not shifted "
@@ -89,8 +89,8 @@ namespace
         geode::ObjectSet< geode::Point2D > set;
         set.add_fixed_object( geode::Point2D{ { 10.0, 10.0 } } );
 
-        const auto &const_set = set;
-        const auto &p = const_set.get_fixed_object( 0 );
+        const auto& const_set = set;
+        const auto& p = const_set.get_fixed_object( 0 );
         const auto result = geode::Point2D{ { 10.0, 10.0 } };
         OPENGEODE_EXCEPTION(
             p == result, "[TestObjectSet] - Const access mismatch" );

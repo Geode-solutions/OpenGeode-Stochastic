@@ -43,18 +43,18 @@ namespace geode
         void set_seed( std::string_view word );
 
         template < typename Type >
-        Type sample_uniform( const UniformClosed< Type > &law );
+        Type sample_uniform( const UniformClosed< Type >& law );
 
         template < typename Type >
-        Type sample_uniform( const UniformClosedOpen< Type > &law );
+        Type sample_uniform( const UniformClosedOpen< Type >& law );
 
-        double sample_gaussian( const Gaussian &law );
-        double sample_truncated_gaussian( const TruncatedGaussian &law );
+        double sample_gaussian( const Gaussian& law );
+        double sample_truncated_gaussian( const TruncatedGaussian& law );
 
-        double sample_von_mises( const VonMises &law );
+        double sample_von_mises( const VonMises& law );
 
-        double sample_truncated_lognormal( const TruncatedLogNormal &law );
-        double sample_truncated_powerlaw( const TruncatedPowerLaw &law );
+        double sample_truncated_lognormal( const TruncatedLogNormal& law );
+        double sample_truncated_powerlaw( const TruncatedPowerLaw& law );
 
         double sample_log();
 

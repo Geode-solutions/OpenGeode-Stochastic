@@ -39,7 +39,7 @@ namespace geode
 {
 
     template < typename Type >
-    auto object_bounding_box( const Type &object )
+    auto object_bounding_box( const Type& object )
     {
         if constexpr( std::is_same_v< Type, Point2D > )
         {
@@ -59,7 +59,7 @@ namespace geode
         }
     }
     template < typename Type >
-    auto object_barycenter( const Type &object )
+    auto object_barycenter( const Type& object )
     {
         if constexpr( std::is_same_v< Type, Point2D >
                       || std::is_same_v< Type, Point3D > )

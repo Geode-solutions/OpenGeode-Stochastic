@@ -32,9 +32,9 @@
 
 namespace
 {
-    geode::Point2D sample_point_in_ball( geode::RandomEngine &engine,
-        const geode::UniformClosed< double > &uniform_dist,
-        const geode::Point2D &center,
+    geode::Point2D sample_point_in_ball( geode::RandomEngine& engine,
+        const geode::UniformClosed< double >& uniform_dist,
+        const geode::Point2D& center,
         double radius )
     {
         geode::Point2D point;
@@ -48,9 +48,9 @@ namespace
         return point;
     }
 
-    geode::Point3D sample_point_in_ball( geode::RandomEngine &engine,
-        const geode::UniformClosed< double > &uniform_dist,
-        const geode::Point3D &center,
+    geode::Point3D sample_point_in_ball( geode::RandomEngine& engine,
+        const geode::UniformClosed< double >& uniform_dist,
+        const geode::Point3D& center,
         double radius )
     {
         geode::Point3D point;
@@ -73,25 +73,25 @@ namespace geode
     class BallSampler< dimension >::Impl
     {
     public:
-        Impl( const Sphere< dimension > &ball ) : ball_{ ball }
+        Impl( const Sphere< dimension >& ball ) : ball_{ ball }
         {
             dist_.min_value = 0.;
             dist_.max_value = 1.;
         }
 
-        geode::Point< dimension > sample_uniform( geode::RandomEngine &engine )
+        geode::Point< dimension > sample_uniform( geode::RandomEngine& engine )
         {
             return sample_point_in_ball(
                 engine, dist_, ball_.origin(), ball_.radius() );
         }
 
     private:
-        const Sphere< dimension > &ball_;
+        const Sphere< dimension >& ball_;
         geode::UniformClosed< double > dist_;
     };
 
     template < index_t dimension >
-    BallSampler< dimension >::BallSampler( const Sphere< dimension > &ball )
+    BallSampler< dimension >::BallSampler( const Sphere< dimension >& ball )
         : impl_( ball ){};
 
     template < index_t dimension >
@@ -99,7 +99,7 @@ namespace geode
 
     template < index_t dimension >
     Point< dimension > BallSampler< dimension >::sample_uniform(
-        RandomEngine &engine )
+        RandomEngine& engine )
     {
         return impl_->sample_uniform( engine );
     }

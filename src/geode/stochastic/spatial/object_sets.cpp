@@ -8,8 +8,8 @@
 namespace geode
 {
     template < typename Type >
-    const ObjectSet< Type > &ObjectSets< Type >::get_set(
-        const uuid &set_id ) const
+    const ObjectSet< Type >& ObjectSets< Type >::get_set(
+        const uuid& set_id ) const
     {
         auto it = sets_.find( set_id );
         OPENGEODE_EXCEPTION( it != sets_.end(), "[ObjectSet] - group (",
@@ -18,9 +18,9 @@ namespace geode
     }
 
     template < typename Type >
-    const Type &ObjectSets< Type >::get_object( const ObjectId &object ) const
+    const Type& ObjectSets< Type >::get_object( const ObjectId& object ) const
     {
-        auto &set = get_set( object.set_id );
+        auto& set = get_set( object.set_id );
         if( object.fixed )
         {
             return set.get_fixed_object( object.index );
@@ -33,7 +33,7 @@ namespace geode
     {
         std::vector< ObjectId > result;
         result.reserve( nb_objects() );
-        for( const auto &[set_id, objs] : sets_ )
+        for( const auto& [set_id, objs] : sets_ )
         {
             for( const auto obj_id : geode::Range{ objs.nb_fixed_objects() } )
             {
@@ -49,9 +49,9 @@ namespace geode
 
     template < typename Type >
     std::vector< ObjectId > ObjectSets< Type >::get_objects_in_set(
-        const uuid &set_id ) const
+        const uuid& set_id ) const
     {
-        const auto &set = get_set( set_id );
+        const auto& set = get_set( set_id );
         std::vector< ObjectId > result;
         result.reserve( set.nb_objects() );
         for( const auto obj_id : geode::Range{ set.nb_fixed_objects() } )
@@ -72,7 +72,7 @@ namespace geode
     }
 
     template < typename Type >
-    index_t ObjectSets< Type >::nb_objects_in_set( const uuid &set_id ) const
+    index_t ObjectSets< Type >::nb_objects_in_set( const uuid& set_id ) const
     {
         return get_set( set_id ).nb_objects();
     }
@@ -81,7 +81,7 @@ namespace geode
     index_t ObjectSets< Type >::nb_objects() const
     {
         index_t nb_objects{ 0 };
-        for( const auto &[set_id, objs] : sets_ )
+        for( const auto& [set_id, objs] : sets_ )
         {
             geode_unused( set_id );
             nb_objects += objs.nb_objects();
@@ -103,9 +103,9 @@ namespace geode
 
     template < typename Type >
     ObjectId ObjectSets< Type >::add_object(
-        Type &&object, const uuid &set_id, bool fixed )
+        Type&& object, const uuid& set_id, bool fixed )
     {
-        auto &set = get_set( set_id );
+        auto& set = get_set( set_id );
         auto object_box = object_bounding_box( object );
 
         if( fixed )
@@ -123,11 +123,11 @@ namespace geode
 
     template < typename Type >
     void ObjectSets< Type >::update_free_object(
-        const ObjectId &old_object_id, Type &&new_object )
+        const ObjectId& old_object_id, Type&& new_object )
     {
         OPENGEODE_EXCEPTION(
             !old_object_id.fixed, "[ObjectSet]- cannot modify fixed object." );
-        auto &set = get_set( old_object_id.set_id );
+        auto& set = get_set( old_object_id.set_id );
         OPENGEODE_EXCEPTION( old_object_id.index < set.nb_objects(),
             "[ObjectSet]- index of object to update out of range." );
         auto old_box = object_bounding_box( get_object( old_object_id ) );
@@ -137,12 +137,12 @@ namespace geode
     }
 
     template < typename Type >
-    void ObjectSets< Type >::remove_free_object( const ObjectId &object_id )
+    void ObjectSets< Type >::remove_free_object( const ObjectId& object_id )
     {
-        auto &set = get_set( object_id.set_id );
+        auto& set = get_set( object_id.set_id );
         OPENGEODE_EXCEPTION(
             !object_id.fixed, "[ObjectSet]- Cannot remove fixed object." );
-        const auto &obj_to_remove = get_object( object_id );
+        const auto& obj_to_remove = get_object( object_id );
         neighborhood_.remove( object_bounding_box( obj_to_remove ), object_id );
 
         ObjectId last_free_id{ static_cast< geode::index_t >(
@@ -150,7 +150,7 @@ namespace geode
             false, object_id.set_id };
         if( object_id != last_free_id )
         {
-            const auto &last_free_obj =
+            const auto& last_free_obj =
                 set.get_free_object( last_free_id.index );
             auto box_to_move = object_bounding_box( last_free_obj );
             neighborhood_.update( box_to_move, last_free_id, object_id );
@@ -160,8 +160,8 @@ namespace geode
 
     template < typename Type >
     std::vector< ObjectId > ObjectSets< Type >::neighbors(
-        const ObjectId &object_id,
-        const std::vector< uuid > &targeted_set_ids,
+        const ObjectId& object_id,
+        const std::vector< uuid >& targeted_set_ids,
         double searching_distance ) const
     {
         auto box = object_bounding_box( get_object( object_id ) );
@@ -171,8 +171,8 @@ namespace geode
     }
 
     template < typename Type >
-    std::vector< ObjectId > ObjectSets< Type >::neighbors( const Type &object,
-        const std::vector< uuid > &targeted_set_ids,
+    std::vector< ObjectId > ObjectSets< Type >::neighbors( const Type& object,
+        const std::vector< uuid >& targeted_set_ids,
         double searching_distance ) const
     {
         auto box = object_bounding_box( object );
@@ -182,10 +182,10 @@ namespace geode
     }
 
     template < typename Type >
-    ObjectSet< Type > &ObjectSets< Type >::get_set( const uuid &set_id )
+    ObjectSet< Type >& ObjectSets< Type >::get_set( const uuid& set_id )
     {
-        return const_cast< ObjectSet< Type > & >(
-            static_cast< const ObjectSets * >( this )->get_set( set_id ) );
+        return const_cast< ObjectSet< Type >& >(
+            static_cast< const ObjectSets* >( this )->get_set( set_id ) );
     }
 
     template < typename Type >
@@ -193,7 +193,7 @@ namespace geode
     {
         auto message = absl::StrCat( "ObjectSets with ", nb_objects(),
             " objects in, ", nb_sets(), " sets" );
-        for( const auto &[set_id, objs] : sets_ )
+        for( const auto& [set_id, objs] : sets_ )
         {
             absl::StrAppend( &message, "\n\t --> ", objs.string() );
         }

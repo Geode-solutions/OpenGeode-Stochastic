@@ -109,7 +109,7 @@ namespace geode
     class Move
     {
     public:
-        Move( const ObjectSetSampler< ObjectType > &sampler,
+        Move( const ObjectSetSampler< ObjectType >& sampler,
             double proportion_weight )
             : sampler_( sampler ), proportion_weight_{ proportion_weight }
         {
@@ -122,8 +122,8 @@ namespace geode
         virtual ~Move() = default;
 
         virtual MoveResult< ObjectType > propose_move(
-            const ObjectSet< ObjectType > &set,
-            RandomEngine &engine ) const = 0;
+            const ObjectSet< ObjectType >& set,
+            RandomEngine& engine ) const = 0;
 
         double proportion_weight() const
         {
@@ -139,7 +139,7 @@ namespace geode
 
     protected:
         std::optional< geode::index_t > draw_a_free_sample_id(
-            const ObjectSet< ObjectType > &set, RandomEngine &engine ) const
+            const ObjectSet< ObjectType >& set, RandomEngine& engine ) const
         {
             const auto max_obj_id = set.nb_free_objects();
             if( max_obj_id == 0 )
@@ -153,7 +153,7 @@ namespace geode
         }
 
     protected:
-        const ObjectSetSampler< ObjectType > &sampler_;
+        const ObjectSetSampler< ObjectType >& sampler_;
         double proportion_weight_{ 1.0 };
     };
 
@@ -161,7 +161,7 @@ namespace geode
     class BirthDeathMove : public Move< ObjectType >
     {
     public:
-        BirthDeathMove( const ObjectSetSampler< ObjectType > &sampler,
+        BirthDeathMove( const ObjectSetSampler< ObjectType >& sampler,
             double probability,
             double birth_ratio )
             : Move< ObjectType >( sampler, probability ),
@@ -170,8 +170,8 @@ namespace geode
         }
 
         MoveResult< ObjectType > propose_move(
-            const ObjectSet< ObjectType > &set,
-            RandomEngine &engine ) const override
+            const ObjectSet< ObjectType >& set,
+            RandomEngine& engine ) const override
         {
             if( engine.sample_bernoulli( birth_ratio_ ) )
             {
@@ -199,7 +199,7 @@ namespace geode
 
     private:
         MoveResult< ObjectType > propose_birth_move(
-            const ObjectSet< ObjectType > &set, RandomEngine &engine ) const
+            const ObjectSet< ObjectType >& set, RandomEngine& engine ) const
         {
             MoveResult< ObjectType > birth;
             birth.type = MoveType::Birth;
@@ -208,7 +208,7 @@ namespace geode
             {
                 return birth;
             }
-            auto &new_obj = birth.new_object.value();
+            auto& new_obj = birth.new_object.value();
             birth.proposal_probabilities.log_forward_prob =
                 log_p_birth_ + this->sampler_.log_pdf( new_obj );
             birth.proposal_probabilities.log_backward_prob =
@@ -217,7 +217,7 @@ namespace geode
         }
 
         MoveResult< ObjectType > propose_death_move(
-            const ObjectSet< ObjectType > &set, RandomEngine &engine ) const
+            const ObjectSet< ObjectType >& set, RandomEngine& engine ) const
         {
             MoveResult< ObjectType > death;
             death.old_object_id = this->draw_a_free_sample_id( set, engine );
@@ -247,14 +247,14 @@ namespace geode
     {
     public:
         ChangeMove(
-            const ObjectSetSampler< ObjectType > &sampler, double probability )
+            const ObjectSetSampler< ObjectType >& sampler, double probability )
             : Move< ObjectType >( sampler, probability )
         {
         }
 
         MoveResult< ObjectType > propose_move(
-            const ObjectSet< ObjectType > &set,
-            RandomEngine &engine ) const override
+            const ObjectSet< ObjectType >& set,
+            RandomEngine& engine ) const override
         {
             MoveResult< ObjectType > change;
             change.old_object_id = this->draw_a_free_sample_id( set, engine );
@@ -263,7 +263,7 @@ namespace geode
                 return change;
             }
             change.type = MoveType::Change;
-            const auto &object_to_change =
+            const auto& object_to_change =
                 set.get_free_object( change.old_object_id.value() );
             change.new_object =
                 this->sampler_.change( object_to_change, engine );
