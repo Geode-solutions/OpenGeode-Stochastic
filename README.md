@@ -1,7 +1,6 @@
 <h1 align="center">OpenGeode-Stochatic<sup><i>by Geode-solutions</i></sup></h1>
 <h3 align="center">A module of the OpenGeode framework for stochastic modeling, simulation and bayesian inference.</h3>
 
-
 <p align="center">
   <img src="https://github.com/Geode-solutions/OpenGeode-Stochatic/workflows/CI/badge.svg" alt="Build Status">
   <img src="https://github.com/Geode-solutions/OpenGeode-Stochatic/workflows/CD/badge.svg" alt="Deploy Status">
@@ -31,19 +30,19 @@
 
 ## Introduction
 
-
 ## Documentation
 
-
 ## Questions
-For questions and support please use the official [slack](https://slackin-opengeode.herokuapp.com) and go to the channel #module_template. The issue list of this repo is exclusively for bug reports and feature requests. 
+
+For questions and support please use the official [slack](https://slackin-opengeode.herokuapp.com) and go to the channel #module_template. The issue list of this repo is exclusively for bug reports and feature requests.
 
 ## Interesting other projects
-DRlib is a C++ library for modeling, simulation and inference of marked point processes: 
+
+DRlib is a C++ library for modeling, simulation and inference of marked point processes:
 https://gitlab.univ-lorraine.fr/labos/iecl/drlib
 
 ## License
 
 [MIT](https://opensource.org/licenses/MIT)
 
-Copyright (c) 2019 - 2025, Geode-solutions
+Copyright (c) 2019 - 2026, Geode-solutions
