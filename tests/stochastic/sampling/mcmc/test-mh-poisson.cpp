@@ -247,9 +247,9 @@ namespace
             printer_config.output_folder, "/sim_point_multitype_poisson_test" );
 
         geode::SimulationConfigurator sim_config;
-        sim_config.realizations = 1000;
+        sim_config.realizations = 1500;
         sim_config.metropolis_hasting_steps = 1000;
-        sim_config.burn_in_steps = 1000;
+        sim_config.burn_in_steps = 3000;
         sim_config.printer = printer_config;
 
         auto statistic_monitoring = runner.run( engine, sim_config );
