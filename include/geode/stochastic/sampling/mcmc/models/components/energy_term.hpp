@@ -138,7 +138,8 @@ namespace geode
         std::string string() const
         {
             auto message =
-                absl::StrCat( "Term : ", name(), "; uuid: ", id().string(),
+                absl::StrCat( "Term : ", name().value_or( id().string() ),
+                    "; uuid: ", id().string(),
                     " parameter value: ", energy_scale_.parameter(),
                     " applyied on ", targeted_set_ids_.size(),
                     " object subsets -->" );
