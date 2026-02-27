@@ -131,7 +131,8 @@ namespace
 
                 OPENGEODE_EXCEPTION( target_vs_mean_error < 0.05,
                     "[MH test] statistic value ", computed_means[stat_id],
-                    " for energy term: ", term.name().data(),
+                    " for energy term: ",
+                    term.name().value_or( term.id().string() ),
                     " not close enough to expected value ", expected_means,
                     " --> error : ", target_vs_mean_error );
 
@@ -141,8 +142,8 @@ namespace
 
                 OPENGEODE_EXCEPTION( target_vs_variance_error < 0.15,
                     "[MH test] variance of statistic ",
-                    computed_variances[stat_id],
-                    " for energy term: ", term.name().data(),
+                    computed_variances[stat_id], " for energy term: ",
+                    term.name().value_or( term.id().string() ),
                     " not close enough to expected value ", expected_means,
                     " --> error : ", target_vs_variance_error );
             }

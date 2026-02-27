@@ -116,7 +116,8 @@ namespace geode
     template < typename Type >
     std::string ObjectSet< Type >::string() const
     {
-        return absl::StrCat( "ObjectSet ", this->name(), " (",
+        return absl::StrCat( "ObjectSet ",
+            this->name().value_or( this->id().string() ), " (",
             this->id().string(), ") contains ", nb_objects(),
             " objects (fixed: ", nb_fixed_objects(),
             " - free: ", nb_free_objects(), ")" );

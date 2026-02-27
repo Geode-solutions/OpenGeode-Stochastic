@@ -148,7 +148,8 @@ namespace geode
             {
                 const auto& term =
                     energy_terms_collection_.get( energy_term_uuid );
-                term_names.push_back( term.name().data() );
+                term_names.push_back(
+                    term.name().value_or( term.id().string() ) );
             }
 
             return absl::StrCat( absl::StrJoin( term_names, " ; " ), "\n" );

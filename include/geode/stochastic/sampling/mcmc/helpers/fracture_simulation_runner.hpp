@@ -164,8 +164,8 @@ namespace geode
                 const auto& term = energy_terms_collection_.get(
                     ordered_energy_terms_[stat_id] );
                 Logger::info( "[MH test] Statistic value ",
-                    computed_means[stat_id],
-                    " for energy term: ", term.name().data() );
+                    computed_means[stat_id], " for energy term: ",
+                    term.name().value_or( term.id().string() ) );
             }
         }
 

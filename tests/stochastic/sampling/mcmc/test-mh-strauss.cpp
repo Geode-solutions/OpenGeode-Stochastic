@@ -179,7 +179,8 @@ namespace
 
                 OPENGEODE_EXCEPTION( target_vs_mean_error < 0.1,
                     "[MH test] Statistic value ", computed_means[stat_id],
-                    " for energy term: ", term.name().data(),
+                    " for energy term: ",
+                    term.name().value_or( term.id().string() ),
                     " not close enough to expected value ", expected_mean,
                     " --> error: ", target_vs_mean_error );
             }
