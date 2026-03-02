@@ -32,6 +32,8 @@ namespace geode
     class ObjectSetSampler
     {
     public:
+        virtual ~ObjectSetSampler() = default;
+
         [[nodiscard]] virtual Type sample( RandomEngine& engine ) const = 0;
 
         [[nodiscard]] virtual Type change(
