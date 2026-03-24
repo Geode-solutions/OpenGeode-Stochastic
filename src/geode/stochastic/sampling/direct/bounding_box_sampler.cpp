@@ -32,7 +32,7 @@
 
 namespace geode
 {
-    template < index_t dimension >
+    template < local_index_t dimension >
     class BoundingBoxSampler< dimension >::Impl
     {
     public:
@@ -40,8 +40,8 @@ namespace geode
         {
             for( const auto dim : LRange( dimension ) )
             {
-                dist_coordinates[dim].min_value = box.min().value( dim );
-                dist_coordinates[dim].max_value = box.max().value( dim );
+                dist_coordinates_[dim].min_value = box.min().value( dim );
+                dist_coordinates_[dim].max_value = box.max().value( dim );
             }
         }
         Point< dimension > sample_uniform( RandomEngine& engine )
@@ -50,26 +50,26 @@ namespace geode
             for( const auto dim : geode::Range( dimension ) )
             {
                 point.set_value(
-                    dim, engine.sample_uniform( dist_coordinates[dim] ) );
+                    dim, engine.sample_uniform( dist_coordinates_[dim] ) );
             }
             return point;
         }
 
     private:
-        std::array< UniformClosed< double >, dimension > dist_coordinates;
+        std::array< UniformClosed< double >, dimension > dist_coordinates_;
     };
 
-    template < index_t dimension >
+    template < local_index_t dimension >
     BoundingBoxSampler< dimension >::BoundingBoxSampler(
         const BoundingBox< dimension >& box )
         : impl_{ box }
     {
     }
 
-    template < index_t dimension >
+    template < local_index_t dimension >
     BoundingBoxSampler< dimension >::~BoundingBoxSampler() = default;
 
-    template < index_t dimension >
+    template < local_index_t dimension >
     Point< dimension > BoundingBoxSampler< dimension >::sample_uniform(
         RandomEngine& engine )
     {
