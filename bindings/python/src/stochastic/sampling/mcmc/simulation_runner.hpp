@@ -20,6 +20,7 @@
  * SOFTWARE.
  *
  */
+#include "../../../common.hpp"
 
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_printer.hpp>
 #include <geode/stochastic/sampling/mcmc/simulation_runner.hpp>

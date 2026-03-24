@@ -22,75 +22,15 @@
  */
 #pragma once
 
-#include <geode/stochastic/spatial/object_sets.hpp>
+#include <geode/stochastic/common.hpp>
 
 #include <geode/stochastic/sampling/mcmc/energy_terms/single_object_term.hpp>
 
-double length_inside_box( const geode::Point2D& segment_start,
-    const geode::Point2D& segment_end,
-    const geode::BoundingBox2D& box )
+namespace geode
 {
-    // Segment direction
-    const double dir_x = segment_end.value( 0 ) - segment_start.value( 0 );
-    const double dir_y = segment_end.value( 1 ) - segment_start.value( 1 );
-
-    // Parameter interval where the segment is inside the box
-    double t_enter = 0.0; // start of valid interval
-    double t_exit = 1.0; // end of valid interval
-
-    // Clips the parametric segment against one axis interval
-    auto clip_against_axis_interval = [&t_enter, &t_exit]( double direction,
-                                          double min_distance,
-                                          double max_distance ) -> bool {
-        // Segment is parallel to this axis
-        if( std::fabs( direction ) < geode::GLOBAL_EPSILON )
-        {
-            // Outside the interval → no intersection
-            return min_distance <= 0.0 && 0.0 <= max_distance;
-        }
-
-        double t0 = min_distance / direction;
-        double t1 = max_distance / direction;
-
-        if( t0 > t1 )
-        {
-            std::swap( t0, t1 );
-        }
-
-        t_enter = std::max( t_enter, t0 );
-        t_exit = std::min( t_exit, t1 );
-
-        return t_enter <= t_exit;
-    };
-
-    // Clip against X interval of the box
-    if( !clip_against_axis_interval( dir_x,
-            box.min().value( 0 ) - segment_start.value( 0 ),
-            box.max().value( 0 ) - segment_start.value( 0 ) ) )
-    {
-        return 0.0;
-    }
-
-    // Clip against Y interval of the box
-    if( !clip_against_axis_interval( dir_y,
-            box.min().value( 1 ) - segment_start.value( 1 ),
-            box.max().value( 1 ) - segment_start.value( 1 ) ) )
-    {
-        return 0.0;
-    }
-
-    // No portion of the segment is inside the box
-    if( t_exit <= t_enter )
-    {
-        return 0.0;
-    }
-
-    // Length of the clipped segment
-    const double clipped_dx = dir_x * ( t_exit - t_enter );
-    const double clipped_dy = dir_y * ( t_exit - t_enter );
-
-    return std::sqrt( clipped_dx * clipped_dx + clipped_dy * clipped_dy );
-}
+    FORWARD_DECLARATION_DIMENSION_CLASS( OwnerSegment );
+    ALIAS_2D( OwnerSegment );
+} // namespace geode
 
 namespace geode
 {
@@ -104,22 +44,6 @@ namespace geode
             double lambda,
             std::vector< uuid > targeted_set_ids,
             double caracteristic_length,
-            const SpatialDomain< OwnerSegment2D::dim >& domain )
-            : SingleObjectTerm< OwnerSegment2D,
-                  std::function< double( const OwnerSegment2D&,
-                      const SpatialDomain< OwnerSegment2D::dim >& ) > >(
-                  name,
-                  lambda,
-                  std::move( targeted_set_ids ),
-                  1.0 / caracteristic_length,
-                  []( const OwnerSegment2D& segment,
-                      const SpatialDomain< OwnerSegment2D::dim >& domain ) {
-                      auto seg_extremities = segment.vertices();
-                      return length_inside_box( seg_extremities[0],
-                          seg_extremities[1], domain.box() );
-                  },
-                  domain )
-        {
-        }
+            const SpatialDomain< OwnerSegment2D::dim >& domain );
     };
 } // namespace geode

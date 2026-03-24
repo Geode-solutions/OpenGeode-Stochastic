@@ -46,12 +46,14 @@ namespace geode
         {
         }
 
-        double total_log( const ObjectSets< ObjectType >& state ) const override
+        [[nodiscard]] double total_log(
+            const ObjectSets< ObjectType >& state ) const override
         {
             return this->contribution( scale_ * statistic( state ) );
         }
 
-        double delta_log_add( const ObjectSets< ObjectType >& /*state*/,
+        [[nodiscard]] double delta_log_add(
+            const ObjectSets< ObjectType >& /*state*/,
             const ObjectRef< ObjectType >& new_object ) const override
         {
             if( !this->is_targeted_set( new_object.set_id ) )
@@ -63,7 +65,8 @@ namespace geode
                 * contribution_func_( new_object.object, this->domain() ) );
         }
 
-        double delta_log_remove( const ObjectSets< ObjectType >& state,
+        [[nodiscard]] double delta_log_remove(
+            const ObjectSets< ObjectType >& state,
             const ObjectId& object_id ) const override
         {
             if( !this->is_targeted_set( object_id.set_id ) )
@@ -76,7 +79,8 @@ namespace geode
                     state.get_object( object_id ), this->domain() ) );
         }
 
-        double delta_log_change( const ObjectSets< ObjectType >& state,
+        [[nodiscard]] double delta_log_change(
+            const ObjectSets< ObjectType >& state,
             const ObjectId& old_object_id,
             const ObjectRef< ObjectType >& new_object ) const override
         {
@@ -87,7 +91,8 @@ namespace geode
             return this->contribution( scale_ * delta );
         }
 
-        double statistic( const ObjectSets< ObjectType >& state ) const override
+        [[nodiscard]] double statistic(
+            const ObjectSets< ObjectType >& state ) const override
         {
             double sum = 0.0;
             this->for_each_targeted_object(

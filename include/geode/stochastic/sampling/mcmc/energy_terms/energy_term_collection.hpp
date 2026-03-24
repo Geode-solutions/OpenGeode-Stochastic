@@ -13,42 +13,52 @@ namespace geode
     public:
         EnergyTermCollection() = default;
         EnergyTermCollection( EnergyTermCollection&& ) noexcept = default;
+
         ~EnergyTermCollection() = default;
 
-        uuid add_energy_term( std::shared_ptr< EnergyTerm< ObjectType > > term )
+        EnergyTermCollection& operator=( EnergyTermCollection&& ) = default;
+
+        [[nodiscard]] uuid add_energy_term(
+            std::shared_ptr< EnergyTerm< ObjectType > > term )
         {
-            const uuid id = term->id();
-            energy_terms_.emplace( id, term );
+            const uuid term_id = term->id();
+            energy_terms_.emplace( term_id, term );
             for( const uuid& set_id : term->targeted_set_ids() )
             {
                 set_to_terms_[set_id].push_back( term );
             }
-            return id;
+            return term_id;
         }
 
-        bool remove_energy_term( const uuid& id )
+        [[nodiscard]] bool remove_energy_term( const uuid& term_id )
         {
-            auto it = energy_terms_.find( id );
-            if( it == energy_terms_.end() )
+            auto term_it = energy_terms_.find( term_id );
+            if( term_it == energy_terms_.end() )
+            {
                 return false;
+            }
 
-            auto term = it->second;
+            auto term = term_it->second;
 
             for( const uuid& set_id : term->targeted_set_ids() )
             {
                 auto vec_it = set_to_terms_.find( set_id );
                 if( vec_it == set_to_terms_.end() )
+                {
                     continue;
+                }
 
                 auto& vec = vec_it->second;
                 vec.erase(
                     std::remove( vec.begin(), vec.end(), term ), vec.end() );
 
                 if( vec.empty() )
+                {
                     set_to_terms_.erase( vec_it );
+                }
             }
 
-            energy_terms_.erase( it );
+            energy_terms_.erase( term_it );
             return true;
         }
 
@@ -64,13 +74,13 @@ namespace geode
         }
 
         [[nodiscard]] const EnergyTerm< ObjectType >& get(
-            const uuid& id ) const
+            const uuid& term_id ) const
         {
-            auto it = energy_terms_.find( id );
-            OPENGEODE_EXCEPTION( it != energy_terms_.end(),
+            auto term_it = energy_terms_.find( term_id );
+            OPENGEODE_EXCEPTION( term_it != energy_terms_.end(),
                 absl::StrCat( "[EnergyTermCollection] Unknown energy term: ",
-                    id.string() ) );
-            return *it->second;
+                    term_id.string() ) );
+            return *term_it->second;
         }
 
         [[nodiscard]] const absl::flat_hash_map< uuid,
@@ -91,7 +101,7 @@ namespace geode
             return it->second;
         }
 
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             auto message = absl::StrCat(
                 "EnergyTermCollection: ", energy_terms_.size(), " terms:" );

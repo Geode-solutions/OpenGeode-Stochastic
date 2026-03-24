@@ -33,6 +33,7 @@ add_geode_library(
         "sampling/direct/segment_uniform_sampler.cpp"
         "sampling/distributions.cpp"
         "sampling/random_engine.cpp"
+        "sampling/mcmc/energy_terms/intensity_term.cpp"
         "common.cpp"
     PUBLIC_HEADERS
         "inference/abc_shadow.hpp"

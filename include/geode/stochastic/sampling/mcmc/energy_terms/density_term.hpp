@@ -46,10 +46,9 @@ namespace geode
                   std::move( targeted_set_ids ),
                   1.0, // scale by domain area to get density per unit
                   []( const ObjectType& obj,
-                      const SpatialDomain< ObjectType::dim >& domain ) {
-                      if( SpatialDomainChecker<
-                              ObjectType >::is_anchored_in_domain( domain,
-                              obj ) )
+                      const SpatialDomain< ObjectType::dim >& spatial_domain ) {
+                      if( SpatialDomainChecker< ObjectType >::
+                              is_anchored_in_domain( spatial_domain, obj ) )
                       {
                           return 1.0;
                       }

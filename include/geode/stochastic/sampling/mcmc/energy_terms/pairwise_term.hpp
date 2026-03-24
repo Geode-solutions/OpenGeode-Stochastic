@@ -46,13 +46,15 @@ namespace geode
         {
         }
 
-        double total_log( const ObjectSets< ObjectType >& state ) const final
+        [[nodiscard]] double total_log(
+            const ObjectSets< ObjectType >& state ) const final
         {
             const auto interaction_weight = statistic( state );
             return this->contribution( interaction_weight );
         }
 
-        double delta_log_add( const ObjectSets< ObjectType >& state,
+        [[nodiscard]] double delta_log_add(
+            const ObjectSets< ObjectType >& state,
             const ObjectRef< ObjectType >& new_object ) const final
         {
             if( !this->is_targeted_set( new_object.set_id ) )
@@ -82,7 +84,8 @@ namespace geode
             return this->contribution( delta );
         }
 
-        double delta_log_remove( const ObjectSets< ObjectType >& state,
+        [[nodiscard]] double delta_log_remove(
+            const ObjectSets< ObjectType >& state,
             const ObjectId& object_id ) const override
         {
             if( !this->is_targeted_set( object_id.set_id ) )
@@ -114,7 +117,8 @@ namespace geode
             return this->contribution( -delta );
         }
 
-        double delta_log_change( const ObjectSets< ObjectType >& state,
+        [[nodiscard]] double delta_log_change(
+            const ObjectSets< ObjectType >& state,
             const ObjectId& old_object_id,
             const ObjectRef< ObjectType >& new_object ) const override
         {
@@ -173,7 +177,8 @@ namespace geode
             return this->contribution( delta );
         }
 
-        double statistic( const ObjectSets< ObjectType >& state ) const override
+        [[nodiscard]] double statistic(
+            const ObjectSets< ObjectType >& state ) const override
         {
             double sum = 0.0;
             this->for_each_targeted_object( state, [&]( const ObjectId&
@@ -205,7 +210,7 @@ namespace geode
         }
 
     private:
-        bool is_new_pair( const ObjectType& obj,
+        [[nodiscard]] bool is_new_pair( const ObjectType& obj,
             const ObjectId& obj_id,
             const ObjectId& neigh_obj_id ) const
         {
