@@ -1,7 +1,7 @@
 #pragma once
 
 #include <absl/container/flat_hash_map.h>
-#include <geode/stochastic/sampling/mcmc/models/components/energy_term.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/energy_term.hpp>
 
 namespace geode
 {

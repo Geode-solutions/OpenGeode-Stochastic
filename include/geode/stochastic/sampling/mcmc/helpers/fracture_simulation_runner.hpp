@@ -27,11 +27,11 @@
 #include <geode/stochastic/common.hpp>
 #include <geode/stochastic/sampling/direct/double_sampler.hpp>
 #include <geode/stochastic/sampling/direct/object_set_sampler/segment_set_sampler.hpp>
-#include <geode/stochastic/sampling/mcmc/helpers/simulation_runner.hpp>
-#include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
-#include <geode/stochastic/sampling/mcmc/models/components/intensity_term.hpp>
-#include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/density_term.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/intensity_term.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/pairwise_term.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
+#include <geode/stochastic/sampling/mcmc/simulation_runner.hpp>
 #include <geode/stochastic/spatial/pairwise_interactions.hpp>
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 

@@ -22,11 +22,11 @@
  */
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
-#include <geode/stochastic/sampling/mcmc/helpers/simulation_runner.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/density_term.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
-#include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
-#include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
+#include <geode/stochastic/sampling/mcmc/simulation_runner.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 namespace
 {
@@ -50,7 +50,7 @@ namespace
     {
     public:
         PoissonSimulationRunner( const geode::SpatialDomain< 2 >& domain )
-            : geode::SimulationRunner< geode::Point2D >( domain ) {};
+            : geode::SimulationRunner< geode::Point2D >( domain ){};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {

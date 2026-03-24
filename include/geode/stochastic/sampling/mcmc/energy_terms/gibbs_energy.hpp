@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/energy_term_collection.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 
 namespace geode

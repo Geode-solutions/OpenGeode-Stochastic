@@ -24,7 +24,7 @@
 
 #include <geode/stochastic/spatial/object_sets.hpp>
 
-#include <geode/stochastic/sampling/mcmc/models/components/single_object_term.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/single_object_term.hpp>
 
 double length_inside_box( const geode::Point2D& segment_start,
     const geode::Point2D& segment_end,

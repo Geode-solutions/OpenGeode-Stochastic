@@ -23,10 +23,10 @@
 
 #pragma once
 #include <geode/stochastic/common.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/energy_term_collection.hpp>
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_monitor.hpp>
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_printer.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
-#include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
 #include <absl/strings/str_join.h>
@@ -64,7 +64,7 @@ namespace geode
     {
     public:
         SimulationRunner( const SpatialDomain< ObjectType::dim >& domain )
-            : domain_( domain ) {};
+            : domain_( domain ){};
         virtual ~SimulationRunner() = default;
 
         virtual void initialize() = 0;

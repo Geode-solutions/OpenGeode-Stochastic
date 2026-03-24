@@ -24,7 +24,7 @@ add_geode_python_binding(
         "sampling/mcmc/helpers/fracture_simulation_runner.hpp"
         "sampling/mcmc/helpers/simulation_monitor.hpp"
         "sampling/mcmc/helpers/simulation_printer.hpp"
-        "sampling/mcmc/helpers/simulation_runner.hpp"
+        "sampling/mcmc/simulation_runner.hpp"
         "sampling/direct/double_sampler.hpp"
         "sampling/random_engine.hpp"
         "sampling/distributions.hpp"
