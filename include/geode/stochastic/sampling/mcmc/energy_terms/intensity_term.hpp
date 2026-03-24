@@ -34,7 +34,7 @@ namespace geode
 
 namespace geode
 {
-    class IntensityTerm
+    class opengeode_stochastic_stochastic_api IntensityTerm
         : public SingleObjectTerm< OwnerSegment2D,
               std::function< double( const OwnerSegment2D&,
                   const SpatialDomain< OwnerSegment2D::dim >& ) > >
