@@ -24,7 +24,7 @@
 
 #include <geode/stochastic/spatial/object_sets.hpp>
 
-#include <geode/stochastic/sampling/mcmc/models/components/single_object_term.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/single_object_term.hpp>
 
 namespace geode
 {
@@ -46,10 +46,9 @@ namespace geode
                   std::move( targeted_set_ids ),
                   1.0, // scale by domain area to get density per unit
                   []( const ObjectType& obj,
-                      const SpatialDomain< ObjectType::dim >& domain ) {
-                      if( SpatialDomainChecker<
-                              ObjectType >::is_anchored_in_domain( domain,
-                              obj ) )
+                      const SpatialDomain< ObjectType::dim >& spatial_domain ) {
+                      if( SpatialDomainChecker< ObjectType >::
+                              is_anchored_in_domain( spatial_domain, obj ) )
                       {
                           return 1.0;
                       }

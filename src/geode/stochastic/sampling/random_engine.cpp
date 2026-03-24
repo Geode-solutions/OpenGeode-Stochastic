@@ -25,6 +25,7 @@
 
 #include <geode/basic/pimpl_impl.hpp>
 #include <geode/basic/range.hpp>
+#include <geode/stochastic/common.hpp>
 
 #include <absl/random/bernoulli_distribution.h>
 #include <absl/random/gaussian_distribution.h>
@@ -34,10 +35,6 @@
 
 #include <absl/hash/hash.h>
 #include <limits>
-
-#define FORWARD_DECLARATION_DIMENSION_CLASS( Class )                           \
-    template < index_t >                                                       \
-    class Class
 
 namespace
 {

@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/energy_term_collection.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 
 namespace geode
@@ -37,18 +37,20 @@ namespace geode
         {
         }
 
-        double total_log_energy( const ObjectSets< ObjectType >& state ) const
+        [[nodiscard]] double total_log_energy(
+            const ObjectSets< ObjectType >& state ) const
         {
             double log_energy = 0.0;
             const auto& energy_terms = energy_terms_collection_.all_terms();
-            for( auto& [id, term] : energy_terms )
+            for( auto& [term_id, term] : energy_terms )
             {
+                geode_unused( term_id );
                 log_energy += term->total_log( state );
             }
             return log_energy;
         }
 
-        double total_log_energy_for_set(
+        [[nodiscard]] double total_log_energy_for_set(
             const ObjectSets< ObjectType >& state, const uuid& set_id ) const
         {
             double log_energy = 0.0;
@@ -60,7 +62,8 @@ namespace geode
             return log_energy;
         }
 
-        double delta_log_add( const ObjectSets< ObjectType >& state,
+        [[nodiscard]] double delta_log_add(
+            const ObjectSets< ObjectType >& state,
             const ObjectRef< ObjectType >& new_object ) const
         {
             double log_energy = 0.0;
@@ -72,19 +75,21 @@ namespace geode
             return log_energy;
         }
 
-        double delta_log_remove(
-            const ObjectSets< ObjectType >& state, const ObjectId& id ) const
+        [[nodiscard]] double delta_log_remove(
+            const ObjectSets< ObjectType >& state,
+            const ObjectId& object_id ) const
         {
             double log_energy = 0.0;
             for( const auto& term :
-                energy_terms_collection_.terms_for_set( id.set_id ) )
+                energy_terms_collection_.terms_for_set( object_id.set_id ) )
             {
-                log_energy += term->delta_log_remove( state, id );
+                log_energy += term->delta_log_remove( state, object_id );
             }
             return log_energy;
         }
 
-        double delta_log_change( const ObjectSets< ObjectType >& state,
+        [[nodiscard]] double delta_log_change(
+            const ObjectSets< ObjectType >& state,
             const ObjectId& old_id,
             const ObjectRef< ObjectType >& new_object ) const
         {

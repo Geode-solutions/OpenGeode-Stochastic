@@ -26,6 +26,8 @@
 
 #include <variant>
 
+#include <geode/stochastic/common.hpp>
+
 namespace geode
 {
     FORWARD_DECLARATION_DIMENSION_CLASS( BoundingBox );

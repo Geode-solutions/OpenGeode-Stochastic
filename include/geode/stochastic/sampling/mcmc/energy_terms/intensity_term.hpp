@@ -20,35 +20,30 @@
  * SOFTWARE.
  *
  */
+#pragma once
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <geode/stochastic/common.hpp>
 
-#include "sampling/direct/double_sampler.hpp"
+#include <geode/stochastic/sampling/mcmc/energy_terms/single_object_term.hpp>
 
-#include "sampling/mcmc/helpers/fracture_simulation_runner.hpp"
-#include "sampling/mcmc/helpers/simulation_monitor.hpp"
-#include "sampling/mcmc/helpers/simulation_printer.hpp"
-#include "sampling/mcmc/simulation_runner.hpp"
-
-#include "sampling/distributions.hpp"
-#include "sampling/random_engine.hpp"
-#include "spatial/spatial_domain.hpp"
-
-PYBIND11_MODULE( opengeode_stochastic_py_stochastic, module )
+namespace geode
 {
-    module.doc() = "OpenGeode-Stochastic Python binding";
-    pybind11::class_< geode::StochasticLibrary >( module, "StochasticLibrary" )
-        .def( "initialize", &geode::StochasticLibrary::initialize );
+    FORWARD_DECLARATION_DIMENSION_CLASS( OwnerSegment );
+    ALIAS_2D( OwnerSegment );
+} // namespace geode
 
-    geode::define_spatial_domain( module );
-
-    geode::define_distributions( module );
-    geode::define_random_engine( module );
-    geode::define_double_sampler( module );
-
-    geode::define_simulation_monitor( module );
-    geode::define_simulation_printer( module );
-    geode::define_simulation_runner( module );
-    geode::define_fracture_simulation( module );
-}
+namespace geode
+{
+    class opengeode_stochastic_stochastic_api IntensityTerm
+        : public SingleObjectTerm< OwnerSegment2D,
+              std::function< double( const OwnerSegment2D&,
+                  const SpatialDomain< OwnerSegment2D::dim >& ) > >
+    {
+    public:
+        explicit IntensityTerm( std::string_view name,
+            double lambda,
+            std::vector< uuid > targeted_set_ids,
+            double caracteristic_length,
+            const SpatialDomain< OwnerSegment2D::dim >& domain );
+    };
+} // namespace geode

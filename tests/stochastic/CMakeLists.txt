@@ -106,7 +106,7 @@ add_geode_test(
 )
 
 add_geode_test(
-    SOURCE "sampling/mcmc/models/components/test-density-term.cpp"
+    SOURCE "sampling/mcmc/energy_terms/test-density-term.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry
@@ -114,7 +114,7 @@ add_geode_test(
 )
 
 add_geode_test(
-    SOURCE "sampling/mcmc/models/components/test-intensity-term.cpp"
+    SOURCE "sampling/mcmc/energy_terms/test-intensity-term.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry
@@ -122,7 +122,7 @@ add_geode_test(
 )
 
 add_geode_test(
-    SOURCE "sampling/mcmc/models/components/test-pairwise-term.cpp"
+    SOURCE "sampling/mcmc/energy_terms/test-pairwise-term.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry
@@ -130,7 +130,7 @@ add_geode_test(
 )
 
 add_geode_test(
-    SOURCE "sampling/mcmc/models/test-gibbs-energy.cpp"
+    SOURCE "sampling/mcmc/energy_terms/test-gibbs-energy.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry

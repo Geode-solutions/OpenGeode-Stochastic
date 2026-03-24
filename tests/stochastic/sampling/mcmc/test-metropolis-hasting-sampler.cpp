@@ -22,10 +22,10 @@
  */
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/density_term.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/energy_term_collection.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
-#include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
-#include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
-#include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
 namespace
 {
@@ -175,10 +175,11 @@ int main()
         geode::EnergyTermCollection< geode::Point2D > energy_terms;
 
         // Add intensity term
-        energy_terms.add_energy_term(
+        const auto term_id = energy_terms.add_energy_term(
             std::make_unique< geode::DensityTerm< geode::Point2D > >(
                 "intensity", 0.5, std::vector< geode::uuid >{ set_id },
                 domain ) );
+        geode_unused( term_id );
 
         geode::MetropolisHastings< geode::Point2D > mh(
             energy_terms, std::move( kernel ) );

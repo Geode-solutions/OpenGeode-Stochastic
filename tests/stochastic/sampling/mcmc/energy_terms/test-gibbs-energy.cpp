@@ -25,10 +25,10 @@
 
 #include <geode/geometry/point.hpp>
 
-#include <geode/stochastic/sampling/mcmc/models/components/density_term.hpp>
-#include <geode/stochastic/sampling/mcmc/models/components/pairwise_term.hpp>
-#include <geode/stochastic/sampling/mcmc/models/energy_term_collection.hpp>
-#include <geode/stochastic/sampling/mcmc/models/gibbs_energy.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/density_term.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/energy_term_collection.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/gibbs_energy.hpp>
+#include <geode/stochastic/sampling/mcmc/energy_terms/pairwise_term.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 
 void test_gibbs_energy()
@@ -48,19 +48,20 @@ void test_gibbs_energy()
     geode::EnergyTermCollection< geode::Point2D > energy_terms;
 
     // Add intensity term
-    energy_terms.add_energy_term(
+    const auto term_id = energy_terms.add_energy_term(
         std::make_unique< geode::DensityTerm< geode::Point2D > >(
             "intensity", 0.5, std::vector< geode::uuid >{ set_id }, domain ) );
-
+    geode_unused( term_id );
     // Add pairwise term with trivial interaction: always counts 1 for each pair
     auto interaction =
         std::make_unique< geode::EuclideanCutoffInteraction< geode::Point2D > >(
             1000000 );
 
-    energy_terms.add_energy_term(
+    const auto pwterm_id = energy_terms.add_energy_term(
         std::make_unique< geode::PairwiseTerm< geode::Point2D > >(
             "interaction", 0.8, std::vector< geode::uuid >{ set_id },
             std::move( interaction ), domain ) );
+    geode_unused( pwterm_id );
 
     OPENGEODE_EXCEPTION( energy_terms.size() == 2,
         "[test gibbs] Wrong number of components after adding terms." );

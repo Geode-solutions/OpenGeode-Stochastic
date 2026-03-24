@@ -37,7 +37,7 @@ namespace geode
 namespace geode
 {
 
-    template < index_t dimension >
+    template < local_index_t dimension >
     class BoundingBoxSampler
     {
     public:

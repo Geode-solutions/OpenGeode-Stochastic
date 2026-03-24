@@ -34,59 +34,58 @@
 
 #include <optional>
 
-namespace geode
+namespace geode::detail
 {
-    namespace detail
+    struct EnergyScale
     {
-        struct EnergyScale
+        explicit EnergyScale( double param )
         {
-            explicit EnergyScale( double param )
+            OPENGEODE_EXCEPTION( param >= 0.,
+                "[Gibbs energy term] - The model parameter "
+                "cannot be negative." );
+
+            if( param >= geode::GLOBAL_EPSILON )
             {
-                OPENGEODE_EXCEPTION( param >= 0.,
-                    "[Gibbs energy term] - The model parameter "
-                    "cannot be negative." );
-
-                if( param >= geode::GLOBAL_EPSILON )
-                {
-                    value = -std::log( param ); // store log-space parameter
-                }
-                // else value = std::nullopt → special case: param == 0
+                value_ = -std::log( param ); // store log-space parameter
             }
+            // else value = std::nullopt → special case: param == 0
+        }
 
-            /// Compute energy contribution for a given statistic multiplier
-            double contribution( double multiplier ) const
+        /// Compute energy contribution for a given statistic multiplier
+        [[nodiscard]] double contribution( double multiplier ) const
+        {
+            if( value_ )
             {
-                if( value )
-                {
-                    return value.value() * multiplier;
-                }
-                // Hard constraint: param == 0
-                return ( multiplier > 0 )
-                           ? std::numeric_limits< double >::infinity()
-                           : 0.0;
+                return value_.value() * multiplier;
             }
+            // Hard constraint: param == 0
+            return ( multiplier > 0 )
+                       ? std::numeric_limits< double >::infinity()
+                       : 0.0;
+        }
 
-            /// Return original parameter (gamma)
-            double parameter() const
+        /// Return original parameter (gamma)
+        [[nodiscard]] double parameter() const
+        {
+            if( value_ )
             {
-                if( value )
-                {
-                    return std::exp( -value.value() );
-                }
-                return 0.;
+                return std::exp( -value_.value() );
             }
+            return 0.;
+        }
 
-        private:
-            std::optional< double > value; // empty if param == 0 (hardcore)
-        };
-    } // namespace detail
-} // namespace geode
+    private:
+        std::optional< double > value_; // empty if param == 0 (hardcore)
+    };
+} // namespace geode::detail
 
 namespace geode
 {
     template < typename ObjectType >
     class EnergyTerm : public Identifier
     {
+        OPENGEODE_DISABLE_COPY_AND_MOVE( EnergyTerm );
+
     public:
         explicit EnergyTerm( std::string_view name,
             double param,
@@ -103,39 +102,42 @@ namespace geode
 
         virtual ~EnergyTerm() = default;
 
-        double parameter() const
+        [[nodiscard]] double parameter() const
         {
             return energy_scale_.parameter();
         }
 
-        const std::vector< uuid >& targeted_set_ids() const
+        [[nodiscard]] const std::vector< uuid >& targeted_set_ids() const
         {
             return targeted_set_ids_;
         }
 
         /// Energy contribution for a given statistic multiplier
-        double contribution( double multiplier ) const
+        [[nodiscard]] double contribution( double multiplier ) const
         {
             return energy_scale_.contribution( multiplier );
         }
 
-        virtual double total_log(
+        [[nodiscard]] virtual double total_log(
             const ObjectSets< ObjectType >& state ) const = 0;
 
-        virtual double delta_log_add( const ObjectSets< ObjectType >& state,
+        [[nodiscard]] virtual double delta_log_add(
+            const ObjectSets< ObjectType >& state,
             const ObjectRef< ObjectType >& new_object ) const = 0;
 
-        virtual double delta_log_remove( const ObjectSets< ObjectType >& state,
+        [[nodiscard]] virtual double delta_log_remove(
+            const ObjectSets< ObjectType >& state,
             const ObjectId& object_id ) const = 0;
 
-        virtual double delta_log_change( const ObjectSets< ObjectType >& state,
+        [[nodiscard]] virtual double delta_log_change(
+            const ObjectSets< ObjectType >& state,
             const ObjectId& old_object_id,
             const ObjectRef< ObjectType >& new_object ) const = 0;
 
-        virtual double statistic(
+        [[nodiscard]] virtual double statistic(
             const ObjectSets< ObjectType >& state ) const = 0;
 
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             auto message =
                 absl::StrCat( "Term : ", name().value_or( id().string() ),
@@ -151,13 +153,13 @@ namespace geode
         }
 
     protected:
-        bool is_targeted_set( const uuid& set_id ) const
+        [[nodiscard]] bool is_targeted_set( const uuid& set_id ) const
         {
             return std::binary_search(
                 targeted_set_ids_.begin(), targeted_set_ids_.end(), set_id );
         }
 
-        const SpatialDomain< ObjectType::dim >& domain() const
+        [[nodiscard]] const SpatialDomain< ObjectType::dim >& domain() const
         {
             return domain_;
         }
@@ -175,10 +177,10 @@ namespace geode
         {
             for( const auto& targeted_set_id : targeted_set_ids_ )
             {
-                for( const auto id :
+                for( const auto set_id :
                     state.get_objects_in_set( targeted_set_id ) )
                 {
-                    do_apply( id );
+                    std::forward< Func >( do_apply )( set_id );
                 }
             }
         }
