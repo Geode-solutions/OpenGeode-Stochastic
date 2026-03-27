@@ -25,10 +25,10 @@
 
 #include <geode/geometry/point.hpp>
 
-#include <geode/stochastic/sampling/mcmc/energy_terms/density_term.hpp>
-#include <geode/stochastic/sampling/mcmc/energy_terms/energy_term_collection.hpp>
-#include <geode/stochastic/sampling/mcmc/energy_terms/gibbs_energy.hpp>
-#include <geode/stochastic/sampling/mcmc/energy_terms/pairwise_term.hpp>
+#include <geode/stochastic/models/energy_terms/density_term.hpp>
+#include <geode/stochastic/models/energy_terms/energy_term_collection.hpp>
+#include <geode/stochastic/models/energy_terms/gibbs_energy.hpp>
+#include <geode/stochastic/models/energy_terms/pairwise_term.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 
 void test_gibbs_energy()

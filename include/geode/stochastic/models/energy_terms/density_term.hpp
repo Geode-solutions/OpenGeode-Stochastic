@@ -24,7 +24,7 @@
 
 #include <geode/stochastic/spatial/object_sets.hpp>
 
-#include <geode/stochastic/sampling/mcmc/energy_terms/single_object_term.hpp>
+#include <geode/stochastic/models/energy_terms/single_object_term.hpp>
 
 namespace geode
 {

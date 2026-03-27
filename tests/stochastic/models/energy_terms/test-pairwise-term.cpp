@@ -22,7 +22,7 @@
  */
 
 #include <geode/stochastic/common.hpp>
-#include <geode/stochastic/sampling/mcmc/energy_terms/pairwise_term.hpp>
+#include <geode/stochastic/models/energy_terms/pairwise_term.hpp>
 #include <geode/stochastic/spatial/pairwise_interactions.hpp>
 
 #include <geode/geometry/point.hpp>

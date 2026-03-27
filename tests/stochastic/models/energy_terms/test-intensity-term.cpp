@@ -20,7 +20,7 @@
  * SOFTWARE.
  *
  */
-#include <geode/stochastic/sampling/mcmc/energy_terms/intensity_term.hpp>
+#include <geode/stochastic/models/energy_terms/intensity_term.hpp>
 
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>

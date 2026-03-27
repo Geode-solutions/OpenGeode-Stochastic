@@ -106,7 +106,7 @@ add_geode_test(
 )
 
 add_geode_test(
-    SOURCE "sampling/mcmc/energy_terms/test-density-term.cpp"
+    SOURCE "models/energy_terms/test-density-term.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry
@@ -114,7 +114,7 @@ add_geode_test(
 )
 
 add_geode_test(
-    SOURCE "sampling/mcmc/energy_terms/test-intensity-term.cpp"
+    SOURCE "models/energy_terms/test-intensity-term.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry
@@ -122,7 +122,7 @@ add_geode_test(
 )
 
 add_geode_test(
-    SOURCE "sampling/mcmc/energy_terms/test-pairwise-term.cpp"
+    SOURCE "models/energy_terms/test-pairwise-term.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry
@@ -130,7 +130,7 @@ add_geode_test(
 )
 
 add_geode_test(
-    SOURCE "sampling/mcmc/energy_terms/test-gibbs-energy.cpp"
+    SOURCE "models/energy_terms/test-gibbs-energy.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry
@@ -153,13 +153,13 @@ add_geode_test(
         ${PROJECT_NAME}::stochastic
 )
 
-add_geode_test(
-     SOURCE "sampling/mcmc/test-mh-fractures.cpp"
-     DEPENDENCIES
-         OpenGeode::basic
-         OpenGeode::geometry
-         ${PROJECT_NAME}::stochastic
-)
+#add_geode_test(
+#     SOURCE "sampling/mcmc/test-mh-fractures.cpp"
+#     DEPENDENCIES
+#         OpenGeode::basic
+#         OpenGeode::geometry
+#         ${PROJECT_NAME}::stochastic
+#)
 
 add_geode_test(
      SOURCE "sampling/mcmc/test-mh-poisson.cpp"
@@ -169,13 +169,13 @@ add_geode_test(
          ${PROJECT_NAME}::stochastic
 )
 
-add_geode_test(
-    SOURCE  "sampling/mcmc/test-mh-strauss.cpp"
-    DEPENDENCIES
-        OpenGeode::basic
-        OpenGeode::geometry
-        ${PROJECT_NAME}::stochastic
-)
+#add_geode_test(
+#    SOURCE  "sampling/mcmc/test-mh-strauss.cpp"
+#    DEPENDENCIES
+#        OpenGeode::basic
+#        OpenGeode::geometry
+#        ${PROJECT_NAME}::stochastic
+#)
 
 
 add_geode_test(

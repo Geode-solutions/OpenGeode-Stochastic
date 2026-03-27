@@ -21,7 +21,7 @@
  *
  */
 
-#include <geode/stochastic/sampling/mcmc/helpers/fracture_simulation_runner.hpp>
+#include <geode/stochastic/models/helpers/fracture_simulation_runner.hpp>
 
 namespace
 {
