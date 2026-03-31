@@ -20,6 +20,7 @@
  * SOFTWARE.
  *
  */
+#include <absl/container/flat_hash_map.h>
 
 #include <geode/stochastic/sampling/direct/double_sampler.hpp>
 

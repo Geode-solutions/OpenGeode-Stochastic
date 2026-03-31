@@ -24,7 +24,7 @@
 #pragma once
 
 #include <geode/stochastic/common.hpp>
-#include <geode/stochastic/models/energy_terms/gibbs_energy.hpp>
+#include <geode/stochastic/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/proposal_kernel.hpp>
 
 namespace geode

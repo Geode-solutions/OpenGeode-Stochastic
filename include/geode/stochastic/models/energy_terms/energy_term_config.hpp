@@ -20,3 +20,29 @@
  * SOFTWARE.
  *
  */
+#pragma once
+
+#include <string>
+#include <variant>
+#include <vector>
+
+namespace geode
+{
+    struct DensityTermConfig
+    {
+        std::string term_name;
+        std::vector< std::string > object_set_names;
+        double lambda;
+    };
+
+    struct PairwiseTermConfig
+    {
+        std::string term_name;
+        std::vector< std::string > object_set_names;
+        double gamma;
+    };
+
+    using EnergyTermConfig =
+        std::variant< DensityTermConfig, PairwiseTermConfig >;
+
+} // namespace geode

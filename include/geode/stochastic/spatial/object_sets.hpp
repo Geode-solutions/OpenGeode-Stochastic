@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <absl/container/flat_hash_map.h>
+#include <absl/container/btree_map.h>
 
 #include <geode/basic/uuid.hpp>
 
@@ -82,11 +82,15 @@ namespace geode
 
         std::string string() const;
 
+        std::vector< uuid > get_existing_set_uuids(
+            const std::vector< std::string > set_names ) const;
+
     private:
         ObjectSet< Type >& get_set( const uuid& set_id );
 
     private:
-        absl::flat_hash_map< uuid, ObjectSet< Type > > sets_;
+        absl::btree_map< std::string, geode::uuid > object_set_name_to_uuid_;
+        absl::btree_map< uuid, ObjectSet< Type > > sets_;
         ObjectNeighborhood< Type::dim > neighborhood_;
     };
 } // namespace geode

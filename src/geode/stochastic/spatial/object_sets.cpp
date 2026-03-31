@@ -95,8 +95,14 @@ namespace geode
         ObjectSet< Type > new_set;
         new_set.set_name( name );
         const auto new_set_id = new_set.id();
-        auto [it, inserted] = sets_.emplace( new_set_id, std::move( new_set ) );
-        OPENGEODE_EXCEPTION( inserted, "[ObjectSet]- group (",
+        auto [it_set_name, set_id_inserted] =
+            object_set_name_to_uuid_.emplace( name, new_set_id );
+        OPENGEODE_EXCEPTION(
+            set_id_inserted, absl::StrCat( "[ObjectSet]- group named ", name,
+                                 " already exists." ) );
+        auto [it_set_id, set_inserted] =
+            sets_.emplace( new_set_id, std::move( new_set ) );
+        OPENGEODE_EXCEPTION( set_inserted, "[ObjectSet]- group (",
             new_set_id.string(), ") already exists." );
         return new_set_id;
     }
@@ -186,6 +192,24 @@ namespace geode
     {
         return const_cast< ObjectSet< Type >& >(
             static_cast< const ObjectSets* >( this )->get_set( set_id ) );
+    }
+
+    template < typename Type >
+    std::vector< uuid > ObjectSets< Type >::get_existing_set_uuids(
+        const std::vector< std::string > set_names ) const
+    {
+        std::vector< geode::uuid > uuids;
+        uuids.reserve( set_names.size() );
+
+        for( const auto& name : set_names )
+        {
+            if( auto it = object_set_name_to_uuid_.find( name );
+                it != object_set_name_to_uuid_.end() )
+            {
+                uuids.push_back( it->second );
+            }
+        }
+        return uuids;
     }
 
     template < typename Type >

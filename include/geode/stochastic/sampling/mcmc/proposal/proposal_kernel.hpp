@@ -23,6 +23,9 @@
 
 #pragma once
 
+#include <numeric>
+#include <vector>
+
 #include <geode/stochastic/common.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/moves.hpp>
 

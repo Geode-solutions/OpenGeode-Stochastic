@@ -23,7 +23,7 @@
 
 #pragma once
 #include <geode/stochastic/common.hpp>
-#include <geode/stochastic/models/energy_terms/energy_term_collection.hpp>
+#include <geode/stochastic/models/energy_term_collection.hpp>
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_monitor.hpp>
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_printer.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
