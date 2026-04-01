@@ -24,7 +24,7 @@
 
 #include <geode/basic/range.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
-#include <geode/stochastic/spatial/pairwise_interactions.hpp>
+#include <geode/stochastic/spatial/pairwise_interactions/distance_cutoff.hpp>
 
 #include <geode/stochastic/models/energy_terms/energy_term.hpp>
 

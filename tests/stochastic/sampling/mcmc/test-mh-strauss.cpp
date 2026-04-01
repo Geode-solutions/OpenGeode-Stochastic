@@ -133,7 +133,7 @@ namespace
                 }
 
                 auto interaction = std::make_unique<
-                    geode::EuclideanCutoffInteraction< geode::Point2D > >(
+                    geode::MinimalDistanceCutoff< geode::Point2D > >(
                     interaction_desc.distance_threshold
                     /*,interaction_desc.interaction_scope*/ );
 

@@ -32,7 +32,7 @@
 #include <geode/stochastic/sampling/direct/object_set_sampler/segment_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
 #include <geode/stochastic/sampling/mcmc/simulation_runner.hpp>
-#include <geode/stochastic/spatial/pairwise_interactions.hpp>
+#include <geode/stochastic/spatial/pairwise_interactions/distance_cutoff.hpp>
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
 #include <geode/geometry/basic_objects/segment.hpp>
@@ -225,10 +225,10 @@ namespace geode
                 return;
             }
             const auto set_id = set_name_to_uuid_.at( set_desc.name );
-            auto interaction = std::make_unique<
-                EuclideanCutoffInteraction< OwnerSegment2D > >(
-                set_desc.minimal_spacing,
-                PairwiseInteraction< OwnerSegment2D >::SCOPE::same_set );
+            auto interaction =
+                std::make_unique< MinimalDistanceCutoff< OwnerSegment2D > >(
+                    set_desc.minimal_spacing,
+                    PairwiseInteraction< OwnerSegment2D >::SCOPE::same_set );
 
             this->ordered_energy_terms_.push_back(
                 this->energy_terms_collection_.add_energy_term(
@@ -248,10 +248,10 @@ namespace geode
                 {
                     set_uuids.push_back( id );
                 }
-                auto interaction = std::make_unique<
-                    EuclideanCutoffInteraction< OwnerSegment2D > >(
-                    0., PairwiseInteraction<
-                            OwnerSegment2D >::SCOPE::different_set );
+                auto interaction =
+                    std::make_unique< MinimalDistanceCutoff< OwnerSegment2D > >(
+                        0., PairwiseInteraction<
+                                OwnerSegment2D >::SCOPE::different_set );
 
                 this->ordered_energy_terms_.push_back(
                     this->energy_terms_collection_.add_energy_term(

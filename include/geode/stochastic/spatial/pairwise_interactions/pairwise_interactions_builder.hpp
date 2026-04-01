@@ -20,31 +20,35 @@
  * SOFTWARE.
  *
  */
-#pragma once
 
-#include <string>
 #include <variant>
-#include <vector>
 
-#include <geode/stochastic/spatial/pairwise_interactions/pairwise_interactions_config.hpp>
-
+#pragma once
 namespace geode
 {
-    struct DensityTermConfig
+    template < typename ObjectType >
+    std::unique_ptr< PairwiseInteraction< ObjectType > > build_interaction(
+        const PairwiseInteractionConfig& cfg )
     {
-        std::string term_name;
-        std::vector< std::string > object_set_names;
-        double lambda;
-    };
+        return std::visit(
+            [&]( auto&& c )
+                -> std::unique_ptr< PairwiseInteraction< ObjectType > > {
+                using T = std::decay_t< decltype( c ) >;
 
-    struct PairwiseTermConfig
-    {
-        std::string term_name;
-        std::vector< std::string > object_set_names;
-        double gamma;
-    };
-
-    using EnergyTermConfig =
-        std::variant< DensityTermConfig, PairwiseTermConfig >;
-
+                if constexpr( std::is_same_v< T,
+                                  EuclideanCenterDistanceConfig > )
+                {
+                    return std::make_unique<
+                        EuclideanCenterDistance< ObjectType > >(
+                        c.threshold, c.weight );
+                }
+                else if constexpr( std::is_same_v< T,
+                                       HausdorffDistanceConfig > )
+                {
+                    return std::make_unique< HausdorffDistance< ObjectType > >(
+                        c.threshold, c.weight );
+                }
+            },
+            cfg );
+    }
 } // namespace geode

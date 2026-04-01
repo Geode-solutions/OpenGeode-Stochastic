@@ -35,7 +35,7 @@
 #include <geode/stochastic/models/energy_terms/pairwise_term.hpp>
 
 #include <geode/stochastic/spatial/object_sets.hpp>
-#include <geode/stochastic/spatial/pairwise_interactions.hpp>
+#include <geode/stochastic/spatial/pairwise_interactions/pairwise_interactions.hpp>
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
 namespace geode
@@ -63,8 +63,7 @@ namespace geode
             object_sets.get_existing_set_uuids( cfg.object_set_names );
 
         auto interaction =
-            std::make_unique< geode::EuclideanCutoffInteraction< ObjectType > >(
-                0.5
+            std::make_unique< geode::MinimalDistanceCutoff< ObjectType > >( 0.5
                 /*,interaction_desc.interaction_scope*/ );
 
         return std::make_unique< geode::PairwiseTerm< geode::Point2D > >(

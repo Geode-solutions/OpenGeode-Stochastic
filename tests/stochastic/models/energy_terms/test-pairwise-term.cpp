@@ -23,7 +23,7 @@
 
 #include <geode/stochastic/common.hpp>
 #include <geode/stochastic/models/energy_terms/pairwise_term.hpp>
-#include <geode/stochastic/spatial/pairwise_interactions.hpp>
+#include <geode/stochastic/spatial/pairwise_interactions/distance_cutoff.hpp>
 
 #include <geode/geometry/point.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
@@ -57,8 +57,7 @@ void test_pairwise_term( double gamma,
     const geode::SpatialDomain< 2 >& domain )
 {
     auto interaction =
-        std::make_unique< geode::EuclideanCutoffInteraction< geode::Point2D > >(
-            1 );
+        std::make_unique< geode::MinimalDistanceCutoff< geode::Point2D > >( 1 );
     geode::PairwiseTerm< geode::Point2D > term(
         "strauss", gamma, { set_id }, std::move( interaction ), domain );
 
@@ -130,8 +129,7 @@ void test_pairwise_term_zero_gamma( double gamma,
     const geode::SpatialDomain< 2 >& domain )
 {
     auto interaction =
-        std::make_unique< geode::EuclideanCutoffInteraction< geode::Point2D > >(
-            1 );
+        std::make_unique< geode::MinimalDistanceCutoff< geode::Point2D > >( 1 );
     geode::PairwiseTerm< geode::Point2D > term(
         "strauss", gamma, { set_id }, std::move( interaction ), domain );
 

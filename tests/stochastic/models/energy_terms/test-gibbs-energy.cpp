@@ -54,7 +54,7 @@ void test_gibbs_energy()
     geode_unused( term_id );
     // Add pairwise term with trivial interaction: always counts 1 for each pair
     auto interaction =
-        std::make_unique< geode::EuclideanCutoffInteraction< geode::Point2D > >(
+        std::make_unique< geode::MinimalDistanceCutoff< geode::Point2D > >(
             1000000 );
 
     const auto pwterm_id = energy_terms.add_energy_term(

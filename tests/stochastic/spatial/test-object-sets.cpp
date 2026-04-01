@@ -29,8 +29,8 @@ namespace
     void test_add_sets_and_objects()
     {
         ObjectSets< geode::Point2D > sets;
-        const auto set_id1 = sets.add_set( "default_name" );
-        const auto set_id2 = sets.add_set( "default_name" );
+        const auto set_id1 = sets.add_set( "default_name1" );
+        const auto set_id2 = sets.add_set( "default_name2" );
 
         OPENGEODE_EXCEPTION(
             sets.nb_sets() == 2, "[TestObjectSets] - Expected 2 sets" );
