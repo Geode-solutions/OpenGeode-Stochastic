@@ -49,7 +49,8 @@ namespace geode
         }
         bool operator<( const ObjectId& other ) const noexcept
         {
-            return index < other.index && (set_id < other.set_id||set_id == other.set_id);
+            return index < other.index
+                   && ( set_id < other.set_id || set_id == other.set_id );
         }
     };
 

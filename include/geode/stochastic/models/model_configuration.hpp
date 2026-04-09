@@ -55,8 +55,9 @@ namespace geode
 
         for( const auto& term_cfg : config.terms )
         {
-            auto term_id = collection.add_energy_term(
-                build_energy_term< ObjectType >( term_cfg, object_sets, domain ) );
+            auto term_id =
+                collection.add_energy_term( build_energy_term< ObjectType >(
+                    term_cfg, object_sets, domain ) );
         }
 
         return collection;

@@ -50,7 +50,7 @@ namespace geode
         PairwiseInteractionConfig interaction_config;
     };
 
-    using EnergyTermConfig =
-        std::variant<std::monostate ,SingleObjectTermConfig, PairwiseTermConfig >;
+    using EnergyTermConfig = std::
+        variant< std::monostate, SingleObjectTermConfig, PairwiseTermConfig >;
 
 } // namespace geode
