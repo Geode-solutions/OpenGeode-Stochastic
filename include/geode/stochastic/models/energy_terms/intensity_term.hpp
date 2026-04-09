@@ -30,14 +30,14 @@ namespace geode
 {
     FORWARD_DECLARATION_DIMENSION_CLASS( OwnerSegment );
     ALIAS_2D( OwnerSegment );
+    FORWARD_DECLARATION_DIMENSION_CLASS( SpatialDomain );
+
 } // namespace geode
 
 namespace geode
 {
     class opengeode_stochastic_stochastic_api IntensityTerm
-        : public SingleObjectTerm< OwnerSegment2D,
-              std::function< double( const OwnerSegment2D&,
-                  const SpatialDomain< OwnerSegment2D::dim >& ) > >
+        : public SingleObjectTerm< OwnerSegment2D >
     {
     public:
         explicit IntensityTerm( std::string_view name,

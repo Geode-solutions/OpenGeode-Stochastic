@@ -22,39 +22,24 @@
  */
 #pragma once
 
-#include <geode/stochastic/spatial/object_sets.hpp>
-
 #include <geode/stochastic/models/energy_terms/single_object_term.hpp>
+#include <geode/stochastic/spatial/single_object_features/single_object_feature.hpp>
 
 namespace geode
 {
     template < typename ObjectType >
-    class DensityTerm : public SingleObjectTerm< ObjectType,
-                            std::function< double( const ObjectType&,
-                                const SpatialDomain< ObjectType::dim >& ) > >
+    class DensityTerm : public SingleObjectTerm< ObjectType >
     {
     public:
         explicit DensityTerm( std::string_view name,
             double lambda,
             std::vector< uuid > targeted_set_ids,
             const SpatialDomain< ObjectType::dim >& domain )
-            : SingleObjectTerm< ObjectType,
-                  std::function< double( const ObjectType&,
-                      const SpatialDomain< ObjectType::dim >& ) > >(
-                  name,
+            : SingleObjectTerm< ObjectType >( name,
                   lambda,
                   std::move( targeted_set_ids ),
-                  1.0, // scale by domain area to get density per unit
-                  []( const ObjectType& obj,
-                      const SpatialDomain< ObjectType::dim >& spatial_domain ) {
-                      if( SpatialDomainChecker< ObjectType >::
-                              is_anchored_in_domain( spatial_domain, obj ) )
-                      {
-                          return 1.0;
-                      }
-                      return 0.0;
-                  }, // contribution = 1 anchoredin domain
-                  domain )
+                  domain,
+                  std::make_unique< ObjectInDomainFeature< ObjectType > >() )
         {
         }
     };

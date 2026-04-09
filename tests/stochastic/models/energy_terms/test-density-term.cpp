@@ -53,8 +53,9 @@ void run_density_test( double lambda,
     const geode::uuid& set_id,
     const geode::SpatialDomain< 2 >& domain )
 {
+    std::string denity_name{ "density" };
     geode::DensityTerm< geode::Point2D > term(
-        "density", lambda, { set_id }, domain );
+        denity_name, lambda, { set_id }, domain );
 
     auto neg_log_lambda = -std::log( lambda );
     double expected_add =

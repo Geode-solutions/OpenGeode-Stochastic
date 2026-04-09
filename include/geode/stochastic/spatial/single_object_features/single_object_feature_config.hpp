@@ -20,45 +20,23 @@
  * SOFTWARE.
  *
  */
-#pragma once
 
-#include <absl/container/btree_map.h>
-#include <absl/strings/str_join.h>
-
-#include <geode/basic/uuid.hpp>
-
-#include <string>
 #include <variant>
-#include <vector>
 
-#include <geode/stochastic/models/energy_term_collection.hpp>
-#include <geode/stochastic/models/energy_terms/energy_term_builder.hpp>
-#include <geode/stochastic/models/energy_terms/energy_term_config.hpp>
-
-#include <geode/stochastic/spatial/object_sets.hpp>
-#include <geode/stochastic/spatial/spatial_domain.hpp>
+#pragma once
 namespace geode
 {
-
-    struct ModelConfig
+    struct ObjectInDomainFeatureConfig
     {
-        std::vector< EnergyTermConfig > terms;
     };
 
-    template < typename ObjectType >
-    EnergyTermCollection< ObjectType > build_energy_term_collection(
-        const ModelConfig& config,
-        const ObjectSets< ObjectType >& object_sets,
-        const SpatialDomain< ObjectType::dim >& domain )
+    struct SegmentLengthInsideBoxFeatureConfig
     {
-        EnergyTermCollection< ObjectType > collection;
+        double characteristic_length;
+    };
 
-        for( const auto& term_cfg : config.terms )
-        {
-            auto term_id = collection.add_energy_term(
-                build_energy_term< ObjectType >( term_cfg, object_sets, domain ) );
-        }
+    using SingleObjectFeatureConfig = std::variant< std::monostate,
+        ObjectInDomainFeatureConfig,
+        SegmentLengthInsideBoxFeatureConfig >;
 
-        return collection;
-    }
 } // namespace geode

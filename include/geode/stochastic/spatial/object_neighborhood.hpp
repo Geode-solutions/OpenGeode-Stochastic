@@ -47,6 +47,10 @@ namespace geode
             return index != other.index || fixed != other.fixed
                    || set_id != other.set_id;
         }
+        bool operator<( const ObjectId& other ) const noexcept
+        {
+            return index < other.index && (set_id < other.set_id||set_id == other.set_id);
+        }
     };
 
     template < index_t dimension >

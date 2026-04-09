@@ -38,34 +38,8 @@ namespace geode
         double threshold;
     };
 
-    using PairwiseInteractionConfig =
-        std::variant< EuclideanDistanceCutoffConfig,
-            MinimalDistanceCutoffConfig >;
+    using PairwiseInteractionConfig = std::variant< std::monostate,
+        EuclideanDistanceCutoffConfig,
+        MinimalDistanceCutoffConfig >;
 
-    template < typename ObjectType >
-    std::unique_ptr< PairwiseInteraction< ObjectType > > build_interaction(
-        const PairwiseInteractionConfig& cfg )
-    {
-        return std::visit(
-            [&]( auto&& c )
-                -> std::unique_ptr< PairwiseInteraction< ObjectType > > {
-                using T = std::decay_t< decltype( c ) >;
-
-                if constexpr( std::is_same_v< T,
-                                  EuclideanDistanceCutoffConfig > )
-                {
-                    return std::make_unique<
-                        CenterEuclideanDistanceCutoff< ObjectType > >(
-                        c.threshold );
-                }
-                else if constexpr( std::is_same_v< T,
-                                       MinimalDistanceCutoffConfig > )
-                {
-                    return std::make_unique<
-                        MinimalDistanceCutoff< ObjectType > >(
-                        c.threshold, c.weight );
-                }
-            },
-            cfg );
-    }
 } // namespace geode

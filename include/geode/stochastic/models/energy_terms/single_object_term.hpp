@@ -25,58 +25,54 @@
 #include <geode/stochastic/spatial/object_sets.hpp>
 
 #include <geode/stochastic/models/energy_terms/energy_term.hpp>
+#include <geode/stochastic/spatial/single_object_features/single_object_feature.hpp>
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
 namespace geode
 {
-    template < typename ObjectType, typename ObjectContributionFunc >
+    template < typename ObjectType >
     class SingleObjectTerm : public EnergyTerm< ObjectType >
     {
     public:
         explicit SingleObjectTerm( std::string_view name,
             double lambda,
-            std::vector< uuid > targeted_set_ids,
-            double scale,
-            ObjectContributionFunc contribution_func,
-            const SpatialDomain< ObjectType::dim >& domain )
+            std::vector< uuid >&& impacted_set_ids,
+            const SpatialDomain< ObjectType::dim >& domain,
+            std::unique_ptr< SingleObjectFeature< ObjectType > > feature )
             : EnergyTerm< ObjectType >(
-                  name, lambda, std::move( targeted_set_ids ), domain ),
-              scale_( scale ),
-              contribution_func_( std::move( contribution_func ) )
+                  name, lambda, std::move( impacted_set_ids ), domain ),
+              feature_( std::move( feature ) )
         {
         }
 
         [[nodiscard]] double total_log(
             const ObjectSets< ObjectType >& state ) const override
         {
-            return this->contribution( scale_ * statistic( state ) );
+            return this->contribution( statistic( state ) );
         }
 
         [[nodiscard]] double delta_log_add(
             const ObjectSets< ObjectType >& /*state*/,
             const ObjectRef< ObjectType >& new_object ) const override
         {
-            if( !this->is_targeted_set( new_object.set_id ) )
+            if( !this->is_impacted_set( new_object.set_id ) )
             {
                 return 0.0;
             }
             return this->contribution(
-                scale_
-                * contribution_func_( new_object.object, this->domain() ) );
+                feature_->evaluate( new_object.object, this->domain() ) );
         }
 
         [[nodiscard]] double delta_log_remove(
             const ObjectSets< ObjectType >& state,
             const ObjectId& object_id ) const override
         {
-            if( !this->is_targeted_set( object_id.set_id ) )
+            if( !this->is_impacted_set( object_id.set_id ) )
             {
                 return 0.0;
             }
-            return this->contribution(
-                -scale_
-                * contribution_func_(
-                    state.get_object( object_id ), this->domain() ) );
+            return this->contribution( -feature_->evaluate(
+                state.get_object( object_id ), this->domain() ) );
         }
 
         [[nodiscard]] double delta_log_change(
@@ -84,27 +80,31 @@ namespace geode
             const ObjectId& old_object_id,
             const ObjectRef< ObjectType >& new_object ) const override
         {
+            if( !this->is_impacted_set( new_object.set_id ) )
+            {
+                return 0.0;
+            }
             double delta =
-                contribution_func_( new_object.object, this->domain() )
-                - contribution_func_(
+                feature_->evaluate( new_object.object, this->domain() )
+                - feature_->evaluate(
                     state.get_object( old_object_id ), this->domain() );
-            return this->contribution( scale_ * delta );
+            return this->contribution( delta );
         }
 
         [[nodiscard]] double statistic(
             const ObjectSets< ObjectType >& state ) const override
         {
             double sum = 0.0;
-            this->for_each_targeted_object(
-                state, [&]( const ObjectId& obj_id ) {
+            this->for_each_object_in_sets(
+                state, this->impacted_set_ids(), [&]( const ObjectId& obj_id ) {
+                    DEBUG( sum );
                     const auto& obj = state.get_object( obj_id );
-                    sum += contribution_func_( obj, this->domain() );
+                    sum += feature_->evaluate( obj, this->domain() );
                 } );
             return sum;
         }
 
     private:
-        double scale_{ 1. };
-        ObjectContributionFunc contribution_func_;
+        std::unique_ptr< SingleObjectFeature< ObjectType > > feature_;
     };
 } // namespace geode

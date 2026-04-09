@@ -22,24 +22,20 @@
  *
  */
 
-#include <geode/stochastic/models/energy_terms/intensity_term.hpp>
-
-#include <geode/stochastic/spatial/object_sets.hpp>
-#include <geode/stochastic/spatial/single_object_features/segment_length_feature.hpp>
+#include <geode/stochastic/spatial/single_object_features/single_object_feature.hpp>
 
 namespace geode
 {
-    IntensityTerm::IntensityTerm( std::string_view name,
-        double lambda,
-        std::vector< uuid > impacted_set_ids,
-        double caracteristic_length,
-        const SpatialDomain< OwnerSegment2D::dim >& domain )
-        : SingleObjectTerm< OwnerSegment2D >( name,
-              lambda,
-              std::move( impacted_set_ids ),
-              domain,
-              std::make_unique< SegmentLengthInsideBoxFeature >(
-                  caracteristic_length ) )
+    class SegmentLengthInsideBoxFeature
+        : public SingleObjectFeature< OwnerSegment2D >
     {
-    }
+    public:
+        explicit SegmentLengthInsideBoxFeature( double characteristic_length );
+
+        double evaluate( const OwnerSegment2D& segment,
+            const SpatialDomain< 2 >& domain ) const override;
+
+    private:
+        double inv_length_;
+    };
 } // namespace geode

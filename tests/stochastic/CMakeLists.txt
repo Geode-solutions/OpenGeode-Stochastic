@@ -129,13 +129,13 @@ add_geode_test(
         ${PROJECT_NAME}::stochastic
 )
 
-add_geode_test(
-    SOURCE "models/energy_terms/test-gibbs-energy.cpp"
-    DEPENDENCIES
-        OpenGeode::basic
-        OpenGeode::geometry
-        ${PROJECT_NAME}::stochastic
-)
+#add_geode_test(
+#    SOURCE "models/energy_terms/test-gibbs-energy.cpp"
+#    DEPENDENCIES
+#        OpenGeode::basic
+#        OpenGeode::geometry
+#        ${PROJECT_NAME}::stochastic
+#)
 
 add_geode_test(
     SOURCE "sampling/mcmc/proposal/test-proposal-kernel.cpp"

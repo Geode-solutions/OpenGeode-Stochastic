@@ -165,26 +165,15 @@ namespace geode
     }
 
     template < typename Type >
-    std::vector< ObjectId > ObjectSets< Type >::neighbors(
-        const ObjectId& object_id,
-        const std::vector< uuid >& targeted_set_ids,
-        double searching_distance ) const
-    {
-        auto box = object_bounding_box( get_object( object_id ) );
-        box.extends( searching_distance * 2. );
-        return neighborhood_.get_all_neighbor_ids(
-            box, targeted_set_ids, object_id );
-    }
-
-    template < typename Type >
     std::vector< ObjectId > ObjectSets< Type >::neighbors( const Type& object,
         const std::vector< uuid >& targeted_set_ids,
-        double searching_distance ) const
+        double searching_distance,
+        std::optional< ObjectId > excluded_id ) const
     {
         auto box = object_bounding_box( object );
         box.extends( searching_distance * 2. );
         return neighborhood_.get_all_neighbor_ids(
-            box, targeted_set_ids, std::nullopt );
+            box, targeted_set_ids, excluded_id );
     }
 
     template < typename Type >
@@ -195,21 +184,47 @@ namespace geode
     }
 
     template < typename Type >
-    std::vector< uuid > ObjectSets< Type >::get_existing_set_uuids(
-        const std::vector< std::string > set_names ) const
+    uuid ObjectSets< Type >::get_set_uuid(
+        const std::string_view set_name ) const
+    {
+        if( auto set_uuid = object_set_name_to_uuid_.find( set_name );
+            set_uuid != object_set_name_to_uuid_.end() )
+        {
+            return set_uuid->second;
+        }
+        throw OpenGeodeException(
+            "[ObjectSets] ObjectSet uuid accessor - group named ", set_name,
+            " does not exist." );
+    }
+
+    template < typename Type >
+    std::vector< uuid > ObjectSets< Type >::get_set_uuids(
+        const std::vector< std::string >& set_names ) const
     {
         std::vector< geode::uuid > uuids;
         uuids.reserve( set_names.size() );
 
         for( const auto& name : set_names )
         {
-            if( auto it = object_set_name_to_uuid_.find( name );
-                it != object_set_name_to_uuid_.end() )
-            {
-                uuids.push_back( it->second );
-            }
+            uuids.emplace_back( get_set_uuid( name ) );
         }
         return uuids;
+    }
+
+    template < typename Type >
+    std::vector< std::pair< uuid, uuid > >
+        ObjectSets< Type >::get_set_uuid_pairs(
+            const std::vector< std::pair< std::string, std::string > >&
+                set_name_pairs ) const
+    {
+        std::vector< std::pair< uuid, uuid > > result;
+        result.reserve( set_name_pairs.size() );
+
+        for( const auto& [name1, name2] : set_name_pairs )
+        {
+            result.emplace_back( get_set_uuid( name1 ), get_set_uuid( name2 ) );
+        }
+        return result;
     }
 
     template < typename Type >

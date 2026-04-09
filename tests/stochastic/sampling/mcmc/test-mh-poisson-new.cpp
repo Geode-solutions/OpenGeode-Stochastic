@@ -23,17 +23,7 @@
 
 #include <geode/basic/common.hpp>
 #include <geode/stochastic/models/model_configuration.hpp>
-
-namespace
-{
-    struct SetDescription
-    {
-        std::string name;
-        geode::index_t number_of_object;
-        std::vector< geode::Point2D > fixed_object;
-    };
-} // namespace
-
+#include <geode/stochastic/spatial/single_object_features/single_object_feature_config.hpp>
 int main()
 {
     try
@@ -48,21 +38,29 @@ int main()
 
         geode::ObjectSets< geode::Point2D > object_sets;
         const auto set_id1 = object_sets.add_set( set_name1 );
+        geode::SingleObjectFeatureConfig density_feature =
+            geode::ObjectInDomainFeatureConfig{};
         const auto set_id2 = object_sets.add_set( set_name2 );
         const auto set_id3 = object_sets.add_set( set_name3 );
         const auto set_id4 = object_sets.add_set( set_name4 );
 
         geode::ModelConfig config;
-        config.terms.push_back(
-            geode::DensityTermConfig{ "density_set1", { set_name1 }, 1.0 } );
-        config.terms.push_back(
-            geode::DensityTermConfig{ "density_set2", { set_name2 }, 1.0 } );
-        config.terms.push_back(
-            geode::DensityTermConfig{ "density_set3", { set_name3 }, 1.0 } );
-        config.terms.push_back(
-            geode::DensityTermConfig{ "density_set4", { set_name4 }, 1.0 } );
+        config.terms.push_back( geode::SingleObjectTermConfig{
+            "density_set1", { set_name1 }, 1.0, density_feature } );
+        config.terms.push_back( geode::SingleObjectTermConfig{
+            "density_set2", { set_name2 }, 1.0, density_feature } );
+        config.terms.push_back( geode::SingleObjectTermConfig{
+            "density_set3", { set_name3 }, 1.0, density_feature } );
+        config.terms.push_back( geode::SingleObjectTermConfig{
+            "density_set4", { set_name4 }, 1.0, density_feature } );
+
+        std::vector< std::pair< std::string, std::string > >
+            set_name_interactions{ { set_name4, set_name2 },
+                { set_name4, set_name3 }, { set_name3, set_name2 } };
+
         config.terms.push_back( geode::PairwiseTermConfig{
-            "eclidiant_set2_3_4", { set_name4, set_name2, set_name3 }, 0.5 } );
+            "min_distance_set2_3_4", set_name_interactions, 0.5,
+            geode::MinimalDistanceCutoffConfig{ 1. } } );
 
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );

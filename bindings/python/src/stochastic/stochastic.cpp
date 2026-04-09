@@ -26,7 +26,7 @@
 
 #include "sampling/direct/double_sampler.hpp"
 
-#include "sampling/mcmc/helpers/fracture_simulation_runner.hpp"
+// #include "sampling/mcmc/helpers/fracture_simulation_runner.hpp"
 #include "sampling/mcmc/helpers/simulation_monitor.hpp"
 #include "sampling/mcmc/helpers/simulation_printer.hpp"
 #include "sampling/mcmc/simulation_runner.hpp"
@@ -50,5 +50,5 @@ PYBIND11_MODULE( opengeode_stochastic_py_stochastic, module )
     geode::define_simulation_monitor( module );
     geode::define_simulation_printer( module );
     geode::define_simulation_runner( module );
-    geode::define_fracture_simulation( module );
+    // geode::define_fracture_simulation( module );
 }

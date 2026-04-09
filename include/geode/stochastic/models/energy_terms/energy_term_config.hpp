@@ -27,24 +27,30 @@
 #include <vector>
 
 #include <geode/stochastic/spatial/pairwise_interactions/pairwise_interactions_config.hpp>
+#include <geode/stochastic/spatial/single_object_features/single_object_feature_config.hpp>
 
 namespace geode
 {
-    struct DensityTermConfig
+    struct SingleObjectTermConfig
     {
         std::string term_name;
         std::vector< std::string > object_set_names;
         double lambda;
+
+        SingleObjectFeatureConfig object_feature;
     };
 
     struct PairwiseTermConfig
     {
         std::string term_name;
-        std::vector< std::string > object_set_names;
+        std::vector< std::pair< std::string, std::string > >
+            object_set_names_interactions;
         double gamma;
+
+        PairwiseInteractionConfig interaction_config;
     };
 
     using EnergyTermConfig =
-        std::variant< DensityTermConfig, PairwiseTermConfig >;
+        std::variant<std::monostate ,SingleObjectTermConfig, PairwiseTermConfig >;
 
 } // namespace geode

@@ -59,7 +59,9 @@ void test_gibbs_energy()
 
     const auto pwterm_id = energy_terms.add_energy_term(
         std::make_unique< geode::PairwiseTerm< geode::Point2D > >(
-            "interaction", 0.8, std::vector< geode::uuid >{ set_id },
+            "interaction", 0.8,
+            std::vector< std::pair< geode::uuid, geode::uuid > >{
+                { set_id, set_id } },
             std::move( interaction ), domain ) );
     geode_unused( pwterm_id );
 
