@@ -52,9 +52,10 @@ namespace geode
                     BallSampler< dimension > sampler{ obj };
                     return sampler.sample_uniform( engine );
                 }
-                throw OpenGeodeException(
-                    "PointUniformSampler - Unsupported object "
-                    "for point sampling" );
+                throw OpenGeodeStochasticStochasticException{ nullptr,
+                    OpenGeodeException::TYPE::data,
+                    "PointUniformSampler - Unsupported object for point "
+                    "sampling" };
             },
             object );
     }

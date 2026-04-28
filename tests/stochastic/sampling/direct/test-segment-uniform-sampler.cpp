@@ -50,9 +50,11 @@ void test_sample_segment(
     {
         auto value =
             geode::SegmentUniformSampler::sample( engine, box, length, az );
-        OPENGEODE_EXCEPTION( box_enlarged.contains( value.vertices()[0] ),
+        geode::OpenGeodeStochasticStochasticException::test(
+            box_enlarged.contains( value.vertices()[0] ),
             "[SegmentUniformSampler] - segment out of box." );
-        OPENGEODE_EXCEPTION( box_enlarged.contains( value.vertices()[1] ),
+        geode::OpenGeodeStochasticStochasticException::test(
+            box_enlarged.contains( value.vertices()[1] ),
             "[SegmentUniformSampler] - segment out of box." );
     }
 }
@@ -72,7 +74,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
 
         test_segment_sampling2D();
 

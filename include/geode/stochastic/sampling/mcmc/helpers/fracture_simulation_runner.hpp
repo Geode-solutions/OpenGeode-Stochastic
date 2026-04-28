@@ -91,7 +91,9 @@ namespace geode
 
         void add_x_node_monitoring( double beta_x_node )
         {
-            OPENGEODE_EXCEPTION( beta_x_node <= 1.0 && beta_x_node >= 0.,
+            OpenGeodeStochasticStochasticException::check(
+                beta_x_node <= 1.0 && beta_x_node >= 0., nullptr,
+                OpenGeodeException::TYPE::data,
                 "[FractureSimulationRunner] x node should be inhibitated, "
                 "please provise a value in [0., 1.]." );
             beta_x_node_ = beta_x_node;

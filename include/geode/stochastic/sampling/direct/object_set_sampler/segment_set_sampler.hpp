@@ -45,7 +45,8 @@ namespace geode
               azimuth_{ azimuth }
         {
             auto volume = domain_.extended_n_volume();
-            OPENGEODE_EXCEPTION( volume != 0.,
+            OpenGeodeStochasticStochasticException::check( volume != 0.,
+                nullptr, OpenGeodeException::TYPE::data,
                 "[SegmentSetSampler] - Undefined Extended Bounding "
                 "Box (volume ==0)." );
             this->log_pdf_ = -std::log( volume );
@@ -83,8 +84,9 @@ namespace geode
                 }
                 new_point = PointUniformSampler::sample< 2 >( engine, ball );
             }
-            throw OpenGeodeException( absl::StrCat(
-                "[SegmentSetSampler] - Cannot find a point in the box" ) );
+            throw OpenGeodeStochasticStochasticException{ nullptr,
+                OpenGeodeException::TYPE::internal,
+                "[SegmentSetSampler] - Cannot find a point in the box" };
             return obj;
         }
 

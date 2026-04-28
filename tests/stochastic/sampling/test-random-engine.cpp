@@ -52,8 +52,9 @@ void test_reproducibility()
         // Sample more values to check sequence reproducibility
         for( const auto value : geode::Range{ 100 } )
         {
-            OPENGEODE_ASSERT( engine1.sample_uniform( dist )
-                                  == engine2.sample_uniform( dist ),
+            geode::OpenGeodeStochasticStochasticException::test(
+                engine1.sample_uniform( dist )
+                    == engine2.sample_uniform( dist ),
                 "[REPRODUCIBILITY] - Same seed should produce same output." );
         }
         geode::Logger::info( "Test Reproducibility: ", seed, " SUCCESS " );
@@ -94,7 +95,8 @@ void test_uniform(
 
         Type value = engine.sample_uniform( dist_closed );
         samples.emplace_back( value );
-        OPENGEODE_ASSERT( value >= min_value && value <= max_value,
+        geode::OpenGeodeStochasticStochasticException::test(
+            value >= min_value && value <= max_value,
             "[Uniform] -  value out of range." );
     }
     double mean = compute_mean( samples );
@@ -104,9 +106,10 @@ void test_uniform(
     double expected_var =
         ( ( max_value - min_value + 1 ) * ( max_value - min_value + 1 ) - 1 )
         / 12.0;
-    OPENGEODE_ASSERT( mean > expected_mean - 0.1 && mean < expected_mean + 0.1,
+    geode::OpenGeodeStochasticStochasticException::test(
+        mean > expected_mean - 0.1 && mean < expected_mean + 0.1,
         "[Uniform] - Wrong expected mean." );
-    OPENGEODE_ASSERT(
+    geode::OpenGeodeStochasticStochasticException::test(
         variance > expected_var - 0.1 && variance < expected_var + 0.1,
         "[Uniform] - Wrong expected std." );
     geode::Logger::info( "Test Uniform ",
@@ -134,9 +137,10 @@ void test_gaussian(
     double expected_mean = mean_value;
     double expected_var = std_value * std_value;
 
-    OPENGEODE_ASSERT( mean > expected_mean - 0.1 && mean < expected_mean + 0.1,
+    geode::OpenGeodeStochasticStochasticException::test(
+        mean > expected_mean - 0.1 && mean < expected_mean + 0.1,
         "[Gaussian] - Wrong expected mean." );
-    OPENGEODE_ASSERT(
+    geode::OpenGeodeStochasticStochasticException::test(
         variance > expected_var - 0.1 && variance < expected_var + 0.1,
         "[Gaussian] - Wrong expected std." );
     geode::Logger::info( "Test Gaussian ",
@@ -168,7 +172,7 @@ void test_truncated_gaussian( double mean_value,
     {
         double value = engine.sample_truncated_gaussian( spec );
         samples.emplace_back( value );
-        OPENGEODE_ASSERT(
+        geode::OpenGeodeStochasticStochasticException::test(
             value >= min && value <= max, "[Gaussian] -  value out of range." );
     }
 
@@ -184,9 +188,10 @@ void test_truncated_gaussian( double mean_value,
     double expected_mean = mean_value;
     double expected_var = std_value * std_value;
 
-    OPENGEODE_ASSERT( mean > expected_mean - 0.1 && mean < expected_mean + 0.1,
+    geode::OpenGeodeStochasticStochasticException::test(
+        mean > expected_mean - 0.1 && mean < expected_mean + 0.1,
         "[Gaussian] - Wrong expected mean." );
-    OPENGEODE_ASSERT(
+    geode::OpenGeodeStochasticStochasticException::test(
         variance > expected_var - 0.1 && variance < expected_var + 0.1,
         "[Gaussian] - Wrong expected std." );
     geode::Logger::info( "Test Gaussian ",
@@ -210,7 +215,7 @@ void test_bernoulli(
     const double empirical_probability =
         static_cast< double >( success_count ) / NUMBER_OF_SAMPLES;
 
-    OPENGEODE_ASSERT(
+    geode::OpenGeodeStochasticStochasticException::test(
         abs( empirical_probability - probability_of_success ) < 0.05,
         "[Bernoulli] - Empirical probability out of tolerance." );
 
@@ -223,7 +228,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::RandomEngine random_engine;
         test_reproducibility();
 

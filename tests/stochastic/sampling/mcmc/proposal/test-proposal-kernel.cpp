@@ -77,19 +77,20 @@ namespace
             {
                 case geode::MoveType::Birth:
                     saw_birth = true;
-                    OPENGEODE_EXCEPTION( proposed_move.new_object.has_value(),
+                    geode::OpenGeodeStochasticStochasticException::test(
+                        proposed_move.new_object.has_value(),
                         "[test proposal] Birth must provide new_object." );
-                    OPENGEODE_EXCEPTION(
+                    geode::OpenGeodeStochasticStochasticException::test(
                         !proposed_move.old_object_id.has_value(),
                         "[test proposal] Birth should not provide index." );
                     // Probabilities
-                    OPENGEODE_EXCEPTION(
+                    geode::OpenGeodeStochasticStochasticException::test(
                         proposed_move.proposal_probabilities.log_forward_prob
                             <= 0.0,
                         "[test proposal] Birth forward log-prob must be <= "
                         "0." );
 
-                    OPENGEODE_EXCEPTION(
+                    geode::OpenGeodeStochasticStochasticException::test(
                         std::abs(
                             proposed_move.proposal_probabilities
                                 .log_backward_prob
@@ -102,18 +103,19 @@ namespace
 
                 case geode::MoveType::Death:
                     saw_death = true;
-                    OPENGEODE_EXCEPTION( !proposed_move.new_object.has_value(),
+                    geode::OpenGeodeStochasticStochasticException::test(
+                        !proposed_move.new_object.has_value(),
                         "[test proposal] Death should not provide "
                         "new_object." );
-                    OPENGEODE_EXCEPTION(
+                    geode::OpenGeodeStochasticStochasticException::test(
                         proposed_move.old_object_id.has_value(),
                         "[test proposal] Death must provide index." );
-                    OPENGEODE_EXCEPTION(
+                    geode::OpenGeodeStochasticStochasticException::test(
                         proposed_move.old_object_id.value()
                             < config.nb_objects_in_set( set_id ),
                         "[test proposal] Death index out of bounds." );
                     // Probabilities
-                    OPENGEODE_EXCEPTION(
+                    geode::OpenGeodeStochasticStochasticException::test(
                         proposed_move.proposal_probabilities.log_forward_prob
                             <= 0.0,
                         "[test proposal] Death forward log-prob must be <= "
@@ -122,12 +124,13 @@ namespace
 
                 case geode::MoveType::Change:
                     saw_change = true;
-                    OPENGEODE_EXCEPTION( proposed_move.new_object.has_value(),
+                    geode::OpenGeodeStochasticStochasticException::test(
+                        proposed_move.new_object.has_value(),
                         "[test proposal] Change must provide new_object." );
-                    OPENGEODE_EXCEPTION(
+                    geode::OpenGeodeStochasticStochasticException::test(
                         proposed_move.old_object_id.has_value(),
                         "[test proposal] Change must provide index." );
-                    OPENGEODE_EXCEPTION(
+                    geode::OpenGeodeStochasticStochasticException::test(
                         proposed_move.old_object_id.value()
                             < config.nb_objects_in_set( set_id ),
                         "[test proposal] Change index out of bounds." );
@@ -135,24 +138,26 @@ namespace
 
                 case geode::MoveType::Invalid:
                 default:
-                    throw geode::OpenGeodeException(
+                    throw geode::OpenGeodeStochasticStochasticException(
+                        nullptr, geode::OpenGeodeException::TYPE::data,
                         "[test proposal] Proposal type Invalid." );
             }
 
             // Log probabilities must be finite proposed move should be
             // possible.
-            OPENGEODE_EXCEPTION(
+            geode::OpenGeodeStochasticStochasticException::test(
                 std::isfinite(
                     proposed_move.proposal_probabilities.log_forward_prob ),
                 "[test proposal] Forward probability is not finite - Move" );
-            OPENGEODE_EXCEPTION(
+            geode::OpenGeodeStochasticStochasticException::test(
                 std::isfinite(
                     proposed_move.proposal_probabilities.log_backward_prob ),
                 "[test proposal] Backward probability is not finite." );
         }
 
         // Ensure kernel actually produced all types of proposals
-        OPENGEODE_EXCEPTION( saw_birth && saw_death && saw_change,
+        geode::OpenGeodeStochasticStochasticException::test(
+            saw_birth && saw_death && saw_change,
             "[test proposal] Kernel did not produce all move types." );
 
         // --- Edge case: empty object_set ---
@@ -164,7 +169,7 @@ namespace
         auto proposal = empty_kernel->propose( empty_config, engine );
         const auto& proposed_move = proposal.proposed_move;
 
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             proposed_move.type == geode::MoveType::Birth
                 || proposed_move.type == geode::MoveType::Invalid,
             "[test proposal] On empty config, only Birth should be possible." );
@@ -174,7 +179,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         test_proposal_kernel();
     }
     catch( ... )

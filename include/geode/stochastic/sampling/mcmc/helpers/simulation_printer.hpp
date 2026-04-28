@@ -164,16 +164,20 @@ namespace geode
             fs::path file_path{ std::string( path_filename ) };
 
             if( !file_path.has_parent_path() )
+            {
                 file_path = fs::current_path() / file_path;
-
+            }
             if( file_path.has_parent_path() )
+            {
                 fs::create_directories( file_path.parent_path() );
-
+            }
             std::ofstream file( file_path, mode );
             if( !file.is_open() )
-                throw geode::OpenGeodeException(
-                    "Cannot open file: " + file_path.string() );
-
+            {
+                throw geode::OpenGeodeStochasticStochasticException{ nullptr,
+                    OpenGeodeException::TYPE::data,
+                    "Cannot open file: " + file_path.string() };
+            }
             return file;
         }
         const std::string& create_statistics_file(

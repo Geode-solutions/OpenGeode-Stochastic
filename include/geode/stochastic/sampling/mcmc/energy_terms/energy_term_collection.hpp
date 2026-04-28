@@ -77,9 +77,11 @@ namespace geode
             const uuid& term_id ) const
         {
             auto term_it = energy_terms_.find( term_id );
-            OPENGEODE_EXCEPTION( term_it != energy_terms_.end(),
-                absl::StrCat( "[EnergyTermCollection] Unknown energy term: ",
-                    term_id.string() ) );
+            OpenGeodeStochasticStochasticException::check(
+                term_it != energy_terms_.end(), nullptr,
+                OpenGeodeException::TYPE::data,
+                "[EnergyTermCollection] Unknown energy term: ",
+                term_id.string() );
             return *term_it->second;
         }
 
@@ -95,7 +97,9 @@ namespace geode
             terms_for_set( const uuid& set_id ) const
         {
             const auto it = set_to_terms_.find( set_id );
-            OPENGEODE_EXCEPTION( it != set_to_terms_.end(),
+            OpenGeodeStochasticStochasticException::check(
+                it != set_to_terms_.end(), nullptr,
+                OpenGeodeException::TYPE::data,
                 "[EnergyTermCollection] - Object Subset (", set_id.string(),
                 ") does not have any energy term." );
             return it->second;

@@ -55,8 +55,9 @@ namespace geode
             : gibbs_energy_{ energy_term_collection },
               proposal_kernel_( std::move( proposal_kernel ) )
         {
-            OPENGEODE_ASSERT(
-                proposal_kernel_ != nullptr, "[MH] null proposal kernel" );
+            OpenGeodeStochasticStochasticException::check(
+                proposal_kernel_ != nullptr, nullptr,
+                OpenGeodeException::TYPE::data, "[MH] null proposal kernel" );
         }
 
         StepResult< ObjectType > step(
@@ -106,34 +107,32 @@ namespace geode
 
         void set_beta( double b )
         {
-            OPENGEODE_EXCEPTION( b >= 0.0, "[MH] beta must be >= 0" );
+            OpenGeodeStochasticStochasticException::check( b >= 0.0, nullptr,
+                OpenGeodeException::TYPE::data, "[MH] beta must be >= 0" );
             if( b == 0 )
             {
-                geode::Logger::info(
+                Logger::info(
                     "[Metropolis Hastings] - beta == 0 all move will be "
                     "accepted - Uniform sampling." );
             }
             if( b < 1 )
             {
-                geode::Logger::info(
+                Logger::info(
                     "[Metropolis Hastings] - beta < 1 moves that increase "
-                    "energy are "
-                    "more likely to be accepted - Hot system introduce "
-                    "randomness for exploration." );
+                    "energy are more likely to be accepted - Hot system "
+                    "introduce randomness for exploration." );
             }
             if( b == 1 )
             {
-                geode::Logger::info( "[Metropolis Hastings] - beta == 1 "
-                                     "default choice no temperature "
-                                     "- only consider energy." );
+                Logger::info( "[Metropolis Hastings] - beta == 1 default "
+                              "choice no temperature - only consider energy." );
             }
             if( b > 1 )
             {
-                geode::Logger::info(
-                    "[Metropolis Hastings] - beta > 1 moves that increase "
-                    "energy are "
-                    "less likely to be accepted - Cold system to ensure "
-                    "convergence but may find local minimum randomness." );
+                Logger::info( "[Metropolis Hastings] - beta > 1 moves that "
+                              "increase energy are less likely to be accepted "
+                              "- Cold system to ensure convergence but may "
+                              "find local minimum randomness." );
             }
             beta_ = b;
         }

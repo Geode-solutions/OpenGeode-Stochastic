@@ -50,8 +50,10 @@ namespace geode
 
         double transition_probability() const
         {
-            OPENGEODE_EXCEPTION( std::isfinite( log_forward_prob )
-                                     && std::isfinite( log_backward_prob ),
+            OpenGeodeStochasticStochasticException::check(
+                std::isfinite( log_forward_prob )
+                    && std::isfinite( log_backward_prob ),
+                nullptr, OpenGeodeException::TYPE::data,
                 "[Proposal Probabilities] Non-finite proposal "
                 "log-probabilities" );
             return log_backward_prob - log_forward_prob;
@@ -80,9 +82,10 @@ namespace geode
                 case MoveType::Change:
                     return "Change";
                 default:
-                    throw OpenGeodeException(
+                    throw OpenGeodeStochasticStochasticException{ nullptr,
+                        OpenGeodeException::TYPE::data,
                         "[MoveResult] -Move result type should always be "
-                        "defined." );
+                        "defined." };
                     return "Unknown";
             }
         }
@@ -113,7 +116,9 @@ namespace geode
             double proportion_weight )
             : sampler_( sampler ), proportion_weight_{ proportion_weight }
         {
-            OPENGEODE_EXCEPTION( proportion_weight_ > 0.,
+            OpenGeodeStochasticStochasticException::check(
+                proportion_weight_ > 0., nullptr,
+                OpenGeodeException::TYPE::data,
                 "[Move] - the weight factor for a move should be in higher "
                 "than 0. (here = ",
                 proportion_weight_, ")" );
@@ -182,7 +187,9 @@ namespace geode
 
         void initialize_probability( double probability ) override
         {
-            OPENGEODE_EXCEPTION( birth_ratio_ > 0. && birth_ratio_ < 1.,
+            OpenGeodeStochasticStochasticException::check(
+                birth_ratio_ > 0. && birth_ratio_ < 1., nullptr,
+                OpenGeodeException::TYPE::data,
                 "[BirthDeathMove]-the ratio of birth over mover should be in "
                 "]0,1[. (here = ",
                 birth_ratio_, ")" );

@@ -40,12 +40,14 @@ namespace geode
             : ObjectSetSampler< Point< dimension > >{}, domain_( domain )
         {
             auto volume = domain_.extended_n_volume();
-            OPENGEODE_EXCEPTION( volume != 0.,
+            OpenGeodeStochasticStochasticException::check( volume != 0.,
+                nullptr, OpenGeodeException::TYPE::data,
                 "[PointSetSampler] - Undefined Extended Bounding "
                 "Box (volume ==0)." );
             this->log_pdf_ = -std::log( volume );
             step_move_ = define_step_for_move();
-            OPENGEODE_EXCEPTION( step_move_ > 0.,
+            OpenGeodeStochasticStochasticException::check( step_move_ > 0.,
+                nullptr, OpenGeodeException::TYPE::data,
                 "[PointSetSampler] - Undefined step length for move (value == ",
                 step_move_, ")." );
         }
@@ -73,10 +75,10 @@ namespace geode
                 new_point =
                     PointUniformSampler::sample< dimension >( engine, ball );
             }
-            throw OpenGeodeException(
-                absl::StrCat( "[PointSampler] - Cannot find a point in the "
-                              "extended domain" ) );
-            return obj;
+            throw OpenGeodeStochasticStochasticException{ nullptr,
+                OpenGeodeException::TYPE::internal,
+                "[PointSampler] - Cannot find a point in the "
+                "extended domain" };
         }
 
     private:

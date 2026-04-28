@@ -40,9 +40,10 @@ namespace geode::detail
     {
         explicit EnergyScale( double param )
         {
-            OPENGEODE_EXCEPTION( param >= 0.,
-                "[Gibbs energy term] - The model parameter "
-                "cannot be negative." );
+            OpenGeodeStochasticStochasticException::check( param >= 0., nullptr,
+                OpenGeodeException::TYPE::data,
+                "[Gibbs energy term] - The model parameter cannot be "
+                "negative." );
 
             if( param >= geode::GLOBAL_EPSILON )
             {
