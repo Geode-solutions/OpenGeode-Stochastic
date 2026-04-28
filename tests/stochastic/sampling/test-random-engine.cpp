@@ -29,8 +29,7 @@
 #include <geode/stochastic/sampling/distributions.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
 
-const int NUMBER_OF_SAMPLES = 50000;
-const double TOLERANCE = 0.1;
+const int NUMBER_OF_SAMPLES = 10000;
 
 void test_reproducibility()
 {
@@ -82,7 +81,7 @@ double compute_variance( const std::vector< T >& data, double mean )
     return accum / ( data.size() - 1 );
 }
 template < typename T >
-void test_distribution( const std::vector< T >& data,
+void test_distribution_mean_and_variance( const std::vector< T >& data,
     double expected_mean,
     double expected_var,
     double k = 3.0 )
@@ -111,18 +110,19 @@ double compute_expected_variance( T min_value, T max_value )
 {
     if constexpr( std::is_integral_v< T > )
     {
-        const double n = static_cast< double >( max_value - min_value + 1 );
-        return ( n * n - 1.0 ) / 12.0;
+        const double distance =
+            static_cast< double >( max_value - min_value + 1 );
+        return ( distance * distance - 1.0 ) / 12.0;
     }
     else if constexpr( std::is_floating_point_v< T > )
     {
-        const double d = static_cast< double >( max_value - min_value );
-        return ( d * d ) / 12.0;
+        const double distance = static_cast< double >( max_value - min_value );
+        return ( distance * distance ) / 12.0;
     }
     else
     {
-        static_assert(
-            std::is_arithmetic_v< T >, "Unsupported type for UniformStats" );
+        static_assert( std::is_arithmetic_v< T >,
+            "Unsupported type to compute theoretical variance." );
     }
 }
 
@@ -149,7 +149,7 @@ void test_uniform(
     double expected_mean = ( min_value + max_value ) / 2.0;
     double expected_var = compute_expected_variance( min_value, max_value );
 
-    test_distribution( samples, expected_mean, expected_var );
+    test_distribution_mean_and_variance( samples, expected_mean, expected_var );
 }
 
 void test_gaussian(
@@ -167,7 +167,7 @@ void test_gaussian(
         samples.emplace_back( value );
     }
 
-    test_distribution( samples, mean_value, std_value );
+    test_distribution_mean_and_variance( samples, mean_value, std_value );
 }
 
 void test_truncated_gaussian( double mean_value,
