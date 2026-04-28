@@ -22,28 +22,31 @@
  */
 #pragma once
 
-#include <geode/stochastic/common.hpp>
-
-#include <geode/stochastic/models/energy_terms/single_object_term.hpp>
-
-namespace geode
-{
-    FORWARD_DECLARATION_DIMENSION_CLASS( OwnerSegment );
-    ALIAS_2D( OwnerSegment );
-    FORWARD_DECLARATION_DIMENSION_CLASS( SpatialDomain );
-
-} // namespace geode
+#include <absl/container/flat_hash_map.h>
+#include <geode/stochastic/inference/statistic_monitor.hpp>
+#include <geode/stochastic/inference/target_statistic.hpp>
 
 namespace geode
 {
-    class opengeode_stochastic_stochastic_api IntensityTerm
-        : public SingleObjectTerm< OwnerSegment2D >
+
+    template < typename ObjectType >
+    class StatisticObjective
     {
     public:
-        explicit IntensityTerm( std::string_view name,
-            double lambda,
-            std::vector< uuid > targeted_set_ids,
-            double caracteristic_length,
-            const SpatialDomain< OwnerSegment2D::dim >& domain );
+        double compute_loss( const StatMonitor& monitor,
+            const std::vector< TargetStatistic >& targets ) const
+        {
+            double loss = 0.0;
+
+            for( const auto& target : targets )
+            {
+                const double mean = monitor.mean( target.term_id );
+                const double diff = mean - target.value;
+
+                loss += diff * diff;
+            }
+
+            return loss;
+        }
     };
 } // namespace geode

@@ -22,44 +22,33 @@
  */
 #pragma once
 
-#include <absl/container/btree_map.h>
-#include <absl/strings/str_join.h>
+#include <absl/container/flat_hash_map.h>
 
-#include <geode/basic/uuid.hpp>
+#include <geode/stochastic/inference/statistic_monitor.hpp>
+#include <geode/stochastic/inference/target_statistic.hpp>
 
-#include <string>
-#include <variant>
-#include <vector>
-
-#include <geode/stochastic/models/energy_term_collection.hpp>
-#include <geode/stochastic/models/energy_terms/energy_term_builder.hpp>
-#include <geode/stochastic/models/energy_terms/energy_term_config.hpp>
-
-#include <geode/stochastic/spatial/object_sets.hpp>
-#include <geode/stochastic/spatial/spatial_domain.hpp>
 namespace geode
 {
-
-    struct ModelConfig
-    {
-        std::vector< EnergyTermConfig > terms;
-    };
-
     template < typename ObjectType >
-    EnergyTermCollection< ObjectType > build_energy_term_collection(
-        const ModelConfig& config,
-        const ObjectSets< ObjectType >& object_sets,
-        const SpatialDomain< ObjectType::dim >& domain )
+    class StatisticsValidator
     {
-        EnergyTermCollection< ObjectType > collection;
-
-        for( const auto& term_cfg : config.terms )
+    public:
+        void check( const StatisticsMonitor& monitor,
+            const std::vector< TargetStatistic >& targets ) const
         {
-            auto term_id =
-                collection.add_energy_term( build_energy_term< ObjectType >(
-                    term_cfg, object_sets, domain ) );
+            for( const auto& target : targets )
+            {
+                const double mean = monitor.mean( target.term_id );
+                const double rel_error = std::abs( mean - target.value )
+                                         / ( std::abs( target.value ) + 1e-12 );
+                //                OPENGEODE_EXCEPTION( rel_error < t.tolerance,
+                //                    "[StatisticsValidator] Failure for term ",
+                //                    t.term_id.string(), "\n  mean    = ",
+                //                    mean,
+                //                    "\n  target  = ", target.value, "\n  error
+                //                    = ", rel_error,
+                //                    "\n  tol     = ", target.tolerance );
+            }
         }
-
-        return collection;
-    }
+    };
 } // namespace geode

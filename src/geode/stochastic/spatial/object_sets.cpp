@@ -11,10 +11,10 @@ namespace geode
     const ObjectSet< Type >& ObjectSets< Type >::get_set(
         const uuid& set_id ) const
     {
-        auto it = sets_.find( set_id );
-        OPENGEODE_EXCEPTION( it != sets_.end(), "[ObjectSet] - group (",
-            set_id.string(), ") is not defined." );
-        return it->second;
+        auto it = uuid_to_index_.find( set_id );
+        OPENGEODE_EXCEPTION( it != uuid_to_index_.end(),
+            "[ObjectSet] - group (", set_id.string(), ") is not defined." );
+        return sets_[it->second];
     }
 
     template < typename Type >
@@ -33,8 +33,9 @@ namespace geode
     {
         std::vector< ObjectId > result;
         result.reserve( nb_objects() );
-        for( const auto& [set_id, objs] : sets_ )
+        for( const auto& objs : sets_ )
         {
+            auto set_id = objs.id();
             for( const auto obj_id : geode::Range{ objs.nb_fixed_objects() } )
             {
                 result.push_back( { obj_id, true, set_id } );
@@ -81,9 +82,8 @@ namespace geode
     index_t ObjectSets< Type >::nb_objects() const
     {
         index_t nb_objects{ 0 };
-        for( const auto& [set_id, objs] : sets_ )
+        for( const auto& objs : sets_ )
         {
-            geode_unused( set_id );
             nb_objects += objs.nb_objects();
         }
         return nb_objects;
@@ -92,19 +92,22 @@ namespace geode
     template < typename Type >
     uuid ObjectSets< Type >::add_set( std::string_view name )
     {
-        ObjectSet< Type > new_set;
+        auto set_index = sets_.size();
+        auto& new_set = sets_.emplace_back( ObjectSet< Type >{} );
+        const auto set_uuid = new_set.id();
+
         new_set.set_name( name );
-        const auto new_set_id = new_set.id();
-        auto [it_set_name, set_id_inserted] =
-            object_set_name_to_uuid_.emplace( name, new_set_id );
+        auto [it_set_name, set_uuid_inserted] =
+            name_to_uuid_.emplace( name, set_uuid );
         OPENGEODE_EXCEPTION(
-            set_id_inserted, absl::StrCat( "[ObjectSet]- group named ", name,
-                                 " already exists." ) );
-        auto [it_set_id, set_inserted] =
-            sets_.emplace( new_set_id, std::move( new_set ) );
-        OPENGEODE_EXCEPTION( set_inserted, "[ObjectSet]- group (",
-            new_set_id.string(), ") already exists." );
-        return new_set_id;
+            set_uuid_inserted, absl::StrCat( "[ObjectSet]- group named ", name,
+                                   " already exists." ) );
+
+        auto [it_set_uuid, set_index_inserted] =
+            uuid_to_index_.emplace( set_uuid, set_index );
+        OPENGEODE_EXCEPTION( set_index_inserted, "[ObjectSet]- group (",
+            set_uuid.string(), ") already exists." );
+        return set_uuid;
     }
 
     template < typename Type >
@@ -184,16 +187,15 @@ namespace geode
     }
 
     template < typename Type >
-    uuid ObjectSets< Type >::get_set_uuid(
-        const std::string_view set_name ) const
+    uuid ObjectSets< Type >::get_set_uuid( const std::string_view name ) const
     {
-        if( auto set_uuid = object_set_name_to_uuid_.find( set_name );
-            set_uuid != object_set_name_to_uuid_.end() )
+        if( auto set_uuid = name_to_uuid_.find( name );
+            set_uuid != name_to_uuid_.end() )
         {
             return set_uuid->second;
         }
         throw OpenGeodeException(
-            "[ObjectSets] ObjectSet uuid accessor - group named ", set_name,
+            "[ObjectSets] ObjectSet uuid accessor - group named ", name,
             " does not exist." );
     }
 
@@ -232,7 +234,7 @@ namespace geode
     {
         auto message = absl::StrCat( "ObjectSets with ", nb_objects(),
             " objects in, ", nb_sets(), " sets" );
-        for( const auto& [set_id, objs] : sets_ )
+        for( const auto& objs : sets_ )
         {
             absl::StrAppend( &message, "\n\t --> ", objs.string() );
         }

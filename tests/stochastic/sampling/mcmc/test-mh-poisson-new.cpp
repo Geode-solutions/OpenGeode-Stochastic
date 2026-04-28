@@ -22,7 +22,7 @@
  */
 
 #include <geode/basic/common.hpp>
-#include <geode/stochastic/models/model_configuration.hpp>
+#include <geode/stochastic/models/model.hpp>
 #include <geode/stochastic/spatial/single_object_features/single_object_feature_config.hpp>
 int main()
 {
@@ -67,10 +67,11 @@ int main()
         box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
         geode::SpatialDomain domain( box, 0. );
 
-        auto collection = geode::build_energy_term_collection< geode::Point2D >(
-            config, object_sets, domain );
-        geode::Logger::info( collection.size() );
-        OPENGEODE_EXCEPTION( collection.size() == 5, "Collection not created" );
+        auto model =
+            geode::build_model< geode::Point2D >( config, object_sets, domain );
+        geode::Logger::info( model.terms().size() );
+        OPENGEODE_EXCEPTION(
+            model.terms().size() == 5, "Collection not created" );
         return 0;
     }
     catch( ... )

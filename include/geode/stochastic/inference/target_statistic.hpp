@@ -22,25 +22,12 @@
  */
 #pragma once
 
-#include <geode/stochastic/models/energy_terms/single_object_term.hpp>
-#include <geode/stochastic/spatial/single_object_features/single_object_feature.hpp>
-
 namespace geode
 {
-    template < typename ObjectType >
-    class DensityTerm : public SingleObjectTerm< ObjectType >
+    struct TargetStatistic
     {
-    public:
-        explicit DensityTerm( std::string_view name,
-            double lambda,
-            std::vector< uuid > targeted_set_ids,
-            const SpatialDomain< ObjectType::dim >& domain )
-            : SingleObjectTerm< ObjectType >( name,
-                  lambda,
-                  std::move( targeted_set_ids ),
-                  domain,
-                  std::make_unique< ObjectInDomainFeature< ObjectType > >() )
-        {
-        }
+        geode::uuid term_id;
+        double value;
+        double tolerance{ 0.05 };
     };
 } // namespace geode

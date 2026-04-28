@@ -21,13 +21,16 @@
  *
  */
 #include <geode/geometry/point.hpp>
-#include <geode/stochastic/models/energy_terms/density_term.hpp>
+#include <geode/stochastic/inference/statistic_objective.hpp>
+#include <geode/stochastic/models/energy_terms/energy_term_builder.hpp>
+#include <geode/stochastic/models/energy_terms/energy_term_config.hpp>
 #include <geode/stochastic/models/gibbs_energy.hpp>
 #include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
 #include <geode/stochastic/sampling/mcmc/simulation_runner.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
+#include <geode/stochastic/spatial/single_object_features/single_object_feature_config.hpp>
 namespace
 {
     struct SetDescription
@@ -40,8 +43,7 @@ namespace
 
     struct PoissonDensityDescription
     {
-        std::string name;
-        double density;
+        geode::SingleObjectTermConfig density_term_config;
         double target_count;
     };
 
@@ -50,7 +52,7 @@ namespace
     {
     public:
         PoissonSimulationRunner( const geode::SpatialDomain< 2 >& domain )
-            : geode::SimulationRunner< geode::Point2D >( domain ) {};
+            : geode::SimulationRunner< geode::Point2D >( domain ){};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {
@@ -68,14 +70,10 @@ namespace
             auto proposal_kernel =
                 std::make_unique< geode::ProposalKernel< geode::Point2D > >();
 
-            // Mapping set names -> UUID
-            std::unordered_map< std::string, geode::uuid > name_to_uuid;
-
             // Step 1: create object sets and samplers
             for( const auto& set_desc : set_descriptors_ )
             {
                 const auto set_id = this->object_sets_.add_set( set_desc.name );
-                name_to_uuid[set_desc.name] = set_id;
 
                 this->set_samplers_.push_back(
                     std::make_unique< geode::UniformPointSetSampler< 2 > >(
@@ -89,16 +87,10 @@ namespace
             // Step 2: create energy terms
             for( const auto& energy_desc : density_descriptors_ )
             {
-                const auto set_id = name_to_uuid.at( energy_desc.name );
-
                 this->ordered_energy_terms_.push_back(
-                    this->energy_terms_collection_.add_energy_term(
-                        std::make_unique<
-                            geode::DensityTerm< geode::Point2D > >(
-                            absl::StrCat( energy_desc.name, "_density" ),
-                            energy_desc.density,
-                            std::vector< geode::uuid >{ set_id },
-                            this->domain_ ) ) );
+                    this->energy_terms_collection_.add_energy_term( std::move(
+                        build_energy_term( energy_desc.density_term_config,
+                            this->object_sets_, this->domain_ ) ) ) );
 
                 this->ordered_target_statistics_.push_back(
                     energy_desc.target_count );
@@ -181,9 +173,12 @@ namespace
 
             // --- Energy term description
             PoissonDensityDescription densityA;
-            densityA.name = "A";
-            densityA.density = 0.3;
+            densityA.density_term_config.term_name = "density";
+            densityA.density_term_config.object_set_names = { "A" };
+            densityA.density_term_config.lambda = 0.3;
             densityA.target_count = 30.0;
+            densityA.density_term_config.object_feature =
+                geode::ObjectInDomainFeatureConfig{};
 
             PoissonSimulationRunner runner( domain );
             runner.add_set_descriptor( setA );
@@ -203,6 +198,7 @@ namespace
             sim_config.printer = printer_config;
 
             auto statistic_monitoring = runner.run( engine, sim_config );
+
             runner.check_statistics( statistic_monitoring );
         }
 
@@ -227,9 +223,29 @@ namespace
         SetDescription set03{ "set03", 4.0, 1.0, 1.0 };
 
         // --- Energy term descriptions
-        PoissonDensityDescription density01{ "set01", 0.1, 10.0 };
-        PoissonDensityDescription density02{ "set02", 0.4, 40.0 };
-        PoissonDensityDescription density03{ "set03", 0.3, 30.0 };
+        PoissonDensityDescription density01;
+        density01.density_term_config.term_name = "density01";
+        density01.density_term_config.object_set_names = { "set01" };
+        density01.density_term_config.lambda = 0.1;
+        density01.target_count = 10.0;
+        density01.density_term_config.object_feature =
+            geode::ObjectInDomainFeatureConfig{};
+
+        PoissonDensityDescription density02;
+        density02.density_term_config.term_name = "density02";
+        density02.density_term_config.object_set_names = { "set02" };
+        density02.density_term_config.lambda = 0.4;
+        density02.target_count = 40.0;
+        density02.density_term_config.object_feature =
+            geode::ObjectInDomainFeatureConfig{};
+
+        PoissonDensityDescription density03;
+        density03.density_term_config.term_name = "density03";
+        density03.density_term_config.object_set_names = { "set03" };
+        density03.density_term_config.lambda = 0.3;
+        density03.target_count = 30.0;
+        density03.density_term_config.object_feature =
+            geode::ObjectInDomainFeatureConfig{};
 
         PoissonSimulationRunner runner( domain );
         runner.add_set_descriptor( set01 );

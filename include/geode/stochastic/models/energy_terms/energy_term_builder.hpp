@@ -30,9 +30,10 @@
 #include <variant>
 #include <vector>
 
-#include <geode/stochastic/models/energy_terms/density_term.hpp>
+#include <geode/stochastic/models/energy_terms/energy_term.hpp>
 #include <geode/stochastic/models/energy_terms/energy_term_config.hpp>
 #include <geode/stochastic/models/energy_terms/pairwise_term.hpp>
+#include <geode/stochastic/models/energy_terms/single_object_term.hpp>
 
 #include <geode/stochastic/spatial/object_sets.hpp>
 #include <geode/stochastic/spatial/single_object_features/single_object_feature.hpp>

@@ -97,7 +97,6 @@ namespace geode
             double sum = 0.0;
             this->for_each_object_in_sets(
                 state, this->impacted_set_ids(), [&]( const ObjectId& obj_id ) {
-                    DEBUG( sum );
                     const auto& obj = state.get_object( obj_id );
                     sum += feature_->evaluate( obj, this->domain() );
                 } );
