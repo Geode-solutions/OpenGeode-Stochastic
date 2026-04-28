@@ -47,7 +47,7 @@ void test_reproducibility()
         // Define a uniform distribution
         geode::UniformClosed< int > dist;
         dist.min_value = 1;
-        dist.min_value = 100;
+        dist.max_value = 100;
 
         // Sample more values to check sequence reproducibility
         for( const auto value : geode::Range{ 100 } )
