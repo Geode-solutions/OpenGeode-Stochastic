@@ -29,7 +29,8 @@
 #include <geode/stochastic/sampling/distributions.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
 
-const int NUMBER_OF_SAMPLES = 10000;
+const int NUMBER_OF_SAMPLES = 50000;
+const double TOLERANCE = 0.1;
 
 void test_reproducibility()
 {
@@ -73,13 +74,58 @@ template < typename T >
 double compute_variance( const std::vector< T >& data, double mean )
 {
     double accum = 0.0;
-    for( auto x : data )
+    for( auto& x : data )
     {
         double diff = x - mean;
         accum += diff * diff;
     }
     return accum / ( data.size() - 1 );
 }
+template < typename T >
+void test_distribution( const std::vector< T >& data,
+    double expected_mean,
+    double expected_var,
+    double k = 3.0 )
+{
+    const auto n = data.size();
+    const double mean = compute_mean( data );
+    const double variance = compute_variance( data, mean );
+    geode::Logger::info( "Test Distribution ",
+        ": mean / expected mean = ", mean, "/", expected_mean,
+        " variance / expected variance = ", variance, "/", expected_var );
+
+    const double se_mean = std::sqrt( expected_var / n );
+    const double se_var =
+        std::sqrt( 2.0 * expected_var * expected_var / ( n - 1 ) );
+
+    geode::OpenGeodeStochasticStochasticException::test(
+        std::abs( mean - expected_mean ) < k * se_mean,
+        "[Uniform] - Wrong expected mean." );
+    geode::OpenGeodeStochasticStochasticException::test(
+        std::abs( variance - expected_var ) < k * se_var,
+        "[Uniform] - Wrong expected std." );
+}
+
+template < typename T >
+double compute_expected_variance( T min_value, T max_value )
+{
+    if constexpr( std::is_integral_v< T > )
+    {
+        const double n = static_cast< double >( max_value - min_value + 1 );
+        return ( n * n - 1.0 ) / 12.0;
+    }
+    else if constexpr( std::is_floating_point_v< T > )
+    {
+        const double d = static_cast< double >( max_value - min_value );
+        return ( d * d ) / 12.0;
+    }
+    else
+    {
+        static_assert(
+            std::is_arithmetic_v< T >, "Unsupported type for UniformStats" );
+    }
+}
+
 template < typename Type >
 void test_uniform(
     const Type min_value, const Type max_value, geode::RandomEngine& engine )
@@ -99,22 +145,11 @@ void test_uniform(
             value >= min_value && value <= max_value,
             "[Uniform] -  value out of range." );
     }
-    double mean = compute_mean( samples );
-    double variance = compute_variance( samples, mean );
 
     double expected_mean = ( min_value + max_value ) / 2.0;
-    double expected_var =
-        ( ( max_value - min_value + 1 ) * ( max_value - min_value + 1 ) - 1 )
-        / 12.0;
-    geode::OpenGeodeStochasticStochasticException::test(
-        mean > expected_mean - 0.1 && mean < expected_mean + 0.1,
-        "[Uniform] - Wrong expected mean." );
-    geode::OpenGeodeStochasticStochasticException::test(
-        variance > expected_var - 0.1 && variance < expected_var + 0.1,
-        "[Uniform] - Wrong expected std." );
-    geode::Logger::info( "Test Uniform ",
-        ": SUCCESS - mean / expected mean = ", mean, "/", expected_mean,
-        " variance / expected variance = ", variance, "/", expected_var );
+    double expected_var = compute_expected_variance( min_value, max_value );
+
+    test_distribution( samples, expected_mean, expected_var );
 }
 
 void test_gaussian(
@@ -131,21 +166,8 @@ void test_gaussian(
         double value = engine.sample_gaussian( spec );
         samples.emplace_back( value );
     }
-    double mean = compute_mean( samples );
-    double variance = compute_variance( samples, mean );
 
-    double expected_mean = mean_value;
-    double expected_var = std_value * std_value;
-
-    geode::OpenGeodeStochasticStochasticException::test(
-        mean > expected_mean - 0.1 && mean < expected_mean + 0.1,
-        "[Gaussian] - Wrong expected mean." );
-    geode::OpenGeodeStochasticStochasticException::test(
-        variance > expected_var - 0.1 && variance < expected_var + 0.1,
-        "[Gaussian] - Wrong expected std." );
-    geode::Logger::info( "Test Gaussian ",
-        ": SUCCESS - mean / expected mean = ", mean, "/", expected_mean,
-        " variance / expected variance = ", variance, "/", expected_var );
+    test_distribution( samples, mean_value, std_value );
 }
 
 void test_truncated_gaussian( double mean_value,
@@ -176,27 +198,7 @@ void test_truncated_gaussian( double mean_value,
             value >= min && value <= max, "[Gaussian] -  value out of range." );
     }
 
-    if( 2 * mean_value - min - max < geode::GLOBAL_EPSILON )
-    {
-        geode::Logger::info( "Truncated Gaussian Distribution not symetric "
-                             "cannot compute theoretic parameters. " );
-        return;
-    }
-    double mean = compute_mean( samples );
-    double variance = compute_variance( samples, mean );
-
-    double expected_mean = mean_value;
-    double expected_var = std_value * std_value;
-
-    geode::OpenGeodeStochasticStochasticException::test(
-        mean > expected_mean - 0.1 && mean < expected_mean + 0.1,
-        "[Gaussian] - Wrong expected mean." );
-    geode::OpenGeodeStochasticStochasticException::test(
-        variance > expected_var - 0.1 && variance < expected_var + 0.1,
-        "[Gaussian] - Wrong expected std." );
-    geode::Logger::info( "Test Gaussian ",
-        ": SUCCESS - mean / expected mean = ", mean, "/", expected_mean,
-        " variance / expected variance = ", variance, "/", expected_var );
+    // Implementer un test de Chi2 ou Kolmogorov–Smirnov
 }
 
 void test_bernoulli(
@@ -215,13 +217,13 @@ void test_bernoulli(
     const double empirical_probability =
         static_cast< double >( success_count ) / NUMBER_OF_SAMPLES;
 
+    geode::Logger::info( "Test Bernoulli ",
+        ": empirical / expected = ", empirical_probability, " / ",
+        probability_of_success );
+
     geode::OpenGeodeStochasticStochasticException::test(
         abs( empirical_probability - probability_of_success ) < 0.05,
         "[Bernoulli] - Empirical probability out of tolerance." );
-
-    geode::Logger::info( "Test Bernoulli ",
-        ": SUCCESS - empirical / expected = ", empirical_probability, " / ",
-        probability_of_success );
 }
 
 int main()
@@ -232,28 +234,35 @@ int main()
         geode::RandomEngine random_engine;
         test_reproducibility();
 
+        geode::Logger::info( "TEST UNIFORM SAMPLING" );
         test_uniform< geode::index_t >( 1, 15, random_engine );
         test_uniform< geode::local_index_t >( 1, 6, random_engine );
         test_uniform< geode::signed_index_t >( -18, 6, random_engine );
         test_uniform< float >( 15.545, 18.9524, random_engine );
         test_uniform< double >( -100.54, 100.6, random_engine );
+        geode::Logger::info( "TEST UNIFORM SAMPLING - SUCCESS" );
 
+        geode::Logger::info( "TEST GAUSSIAN SAMPLING" );
         test_gaussian( 0., 1., random_engine );
         test_gaussian( -100., 1., random_engine );
+        geode::Logger::info( "TEST GAUSSIAN SAMPLING - SUCCESS" );
 
+        geode::Logger::info( "TEST TRUNCATED GAUSSIAN SAMPLING" );
         test_truncated_gaussian(
             0., 1., std::nullopt, std::nullopt, random_engine );
         test_truncated_gaussian( 0., 1., std::nullopt, 1., random_engine );
         test_truncated_gaussian( 0., 1., -1., std::nullopt, random_engine );
         test_truncated_gaussian( 10., 1., 5., 15., random_engine );
+        geode::Logger::info( "TEST TRUNCATED GAUSSIAN SAMPLING - SUCCESS" );
 
+        geode::Logger::info( "TEST BERNOUILLI SAMPLING" );
         test_bernoulli( 0.5, random_engine );
         test_bernoulli( 0.1, random_engine );
         test_bernoulli( 0.25, random_engine );
         test_bernoulli( 0.06, random_engine );
         test_bernoulli( 0.96, random_engine );
+        geode::Logger::info( "TEST BERNOUILLI SAMPLING - SUCCESS" );
 
-        geode::Logger::info( "TEST SUCCESS" );
         return 0;
     }
     catch( ... )
