@@ -36,7 +36,7 @@ namespace geode
         MoveResult< ObjectType > proposed_move;
         ObjectRef< ObjectType > new_object()
         {
-            OpenGeodeStochasticStochasticException::check(
+            OpenGeodeStochasticStochasticException::check_exception(
                 proposed_move.new_object.has_value(), nullptr,
                 OpenGeodeException::TYPE::data,
                 "[Proposal] Proposal has no new_object" );
@@ -46,7 +46,7 @@ namespace geode
 
         ObjectId old_object_id()
         {
-            OpenGeodeStochasticStochasticException::check(
+            OpenGeodeStochasticStochasticException::check_exception(
                 proposed_move.old_object_id.has_value(), nullptr,
                 OpenGeodeException::TYPE::data,
                 "[Proposal] Proposal has no old_object_id" );
@@ -70,8 +70,8 @@ namespace geode
         Proposal< ObjectType > propose( const ObjectSets< ObjectType >& current,
             RandomEngine& engine ) const
         {
-            OpenGeodeStochasticStochasticException::check( !set_moves_.empty(),
-                nullptr, OpenGeodeException::TYPE::data,
+            OpenGeodeStochasticStochasticException::check_exception(
+                !set_moves_.empty(), nullptr, OpenGeodeException::TYPE::data,
                 "[MCMC Proposal Kernel] - no move are defined in the Kernel." );
             auto rnd = engine.sample_uniform( uniform_distribution_closed_ );
             for( const auto proba_id : Range{ cumulative_probs_.size() } )
@@ -131,7 +131,7 @@ namespace geode
                 probabilities.begin(), probabilities.end(), 0.0 );
 
             // Ensure total > 0
-            OpenGeodeStochasticStochasticException::check(
+            OpenGeodeStochasticStochasticException::check_exception(
                 total > GLOBAL_EPSILON, nullptr,
                 OpenGeodeException::TYPE::internal,
                 "[MCMC Proposal Kernel] - Total "

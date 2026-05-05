@@ -41,7 +41,7 @@ namespace geode
     template < typename Type >
     const Type& ObjectSet< Type >::get_fixed_object( index_t index ) const
     {
-        OpenGeodeStochasticStochasticException::check(
+        OpenGeodeStochasticStochasticException::check_exception(
             index < fixed_objects_.size(), nullptr,
             OpenGeodeException::TYPE::data,
             "[ObjectSet] - index for fixed object out of range." );
@@ -51,7 +51,7 @@ namespace geode
     template < typename Type >
     const Type& ObjectSet< Type >::get_free_object( index_t index ) const
     {
-        OpenGeodeStochasticStochasticException::check(
+        OpenGeodeStochasticStochasticException::check_exception(
             index < free_objects_.size(), nullptr,
             OpenGeodeException::TYPE::data,
             "[ObjectSet] - index for free object out of range." );
@@ -75,7 +75,7 @@ namespace geode
     template < typename Type >
     void ObjectSet< Type >::update_free_object( index_t index, Type&& object )
     {
-        OpenGeodeStochasticStochasticException::check(
+        OpenGeodeStochasticStochasticException::check_exception(
             index < free_objects_.size(), nullptr,
             OpenGeodeException::TYPE::data,
             "[ObjectSet] - free object index out of range." );
@@ -86,8 +86,8 @@ namespace geode
     void ObjectSet< Type >::remove_free_object( index_t index )
     {
         const index_t last = free_objects_.size() - 1;
-        OpenGeodeStochasticStochasticException::check( index <= last, nullptr,
-            OpenGeodeException::TYPE::data,
+        OpenGeodeStochasticStochasticException::check_exception( index <= last,
+            nullptr, OpenGeodeException::TYPE::data,
             "[ObjectSet] - free object index out of range." );
         if( index != last )
         {

@@ -40,8 +40,8 @@ namespace geode
         double change_ratio )
     {
         const auto total_ratio = birth_ratio + death_ratio;
-        OpenGeodeStochasticStochasticException::check( total_ratio > 0.,
-            nullptr, OpenGeodeException::TYPE::data,
+        OpenGeodeStochasticStochasticException::check_exception(
+            total_ratio > 0., nullptr, OpenGeodeException::TYPE::data,
             "BIRTH+DEATH ratio must be positive" );
 
         const auto p_birth = birth_ratio / total_ratio;
@@ -78,8 +78,8 @@ namespace geode
             double death_prob )
     {
         auto birth_death_prob = birth_prob + death_prob;
-        OpenGeodeStochasticStochasticException::check( birth_death_prob < 1.,
-            nullptr, OpenGeodeException::TYPE::data,
+        OpenGeodeStochasticStochasticException::check_exception(
+            birth_death_prob < 1., nullptr, OpenGeodeException::TYPE::data,
             "[Proposal Kernel] - changes should be allowed." );
         auto kernel = std::make_unique< ProposalKernel< ObjectType > >();
         kernel->add_move(

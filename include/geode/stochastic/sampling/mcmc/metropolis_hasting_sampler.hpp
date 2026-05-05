@@ -55,7 +55,7 @@ namespace geode
             : gibbs_energy_{ energy_term_collection },
               proposal_kernel_( std::move( proposal_kernel ) )
         {
-            OpenGeodeStochasticStochasticException::check(
+            OpenGeodeStochasticStochasticException::check_exception(
                 proposal_kernel_ != nullptr, nullptr,
                 OpenGeodeException::TYPE::data, "[MH] null proposal kernel" );
         }
@@ -107,8 +107,9 @@ namespace geode
 
         void set_beta( double b )
         {
-            OpenGeodeStochasticStochasticException::check( b >= 0.0, nullptr,
-                OpenGeodeException::TYPE::data, "[MH] beta must be >= 0" );
+            OpenGeodeStochasticStochasticException::check_exception( b >= 0.0,
+                nullptr, OpenGeodeException::TYPE::data,
+                "[MH] beta must be >= 0" );
             if( b == 0 )
             {
                 Logger::info(

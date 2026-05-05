@@ -49,7 +49,7 @@ namespace geode
         distribution_registry = {
             { UniformClosed< double >::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check(
+                    OpenGeodeStochasticStochasticException::check_exception(
                         desc.min_value && desc.max_value, nullptr,
                         OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "
@@ -62,7 +62,7 @@ namespace geode
                 } },
             { UniformClosedOpen< double >::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check(
+                    OpenGeodeStochasticStochasticException::check_exception(
                         desc.min_value && desc.max_value, nullptr,
                         OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "
@@ -75,7 +75,7 @@ namespace geode
                 } },
             { Gaussian::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check(
+                    OpenGeodeStochasticStochasticException::check_exception(
                         desc.mean && desc.standard_deviation, nullptr,
                         OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "
@@ -88,7 +88,7 @@ namespace geode
                 } },
             { TruncatedGaussian::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check(
+                    OpenGeodeStochasticStochasticException::check_exception(
                         desc.mean && desc.standard_deviation, nullptr,
                         OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "
@@ -104,7 +104,7 @@ namespace geode
                 } },
             { VonMises::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check(
+                    OpenGeodeStochasticStochasticException::check_exception(
                         desc.mean && desc.kappa, nullptr,
                         OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "
@@ -117,7 +117,7 @@ namespace geode
                 } },
             { TruncatedLogNormal::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check(
+                    OpenGeodeStochasticStochasticException::check_exception(
                         desc.mean && desc.standard_deviation, nullptr,
                         OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "
@@ -133,7 +133,7 @@ namespace geode
                 } },
             { TruncatedPowerLaw::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check(
+                    OpenGeodeStochasticStochasticException::check_exception(
                         desc.alpha.has_value(), nullptr,
                         OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "

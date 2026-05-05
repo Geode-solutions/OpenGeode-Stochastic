@@ -50,7 +50,7 @@ namespace geode
 
         double transition_probability() const
         {
-            OpenGeodeStochasticStochasticException::check(
+            OpenGeodeStochasticStochasticException::check_exception(
                 std::isfinite( log_forward_prob )
                     && std::isfinite( log_backward_prob ),
                 nullptr, OpenGeodeException::TYPE::data,
@@ -116,7 +116,7 @@ namespace geode
             double proportion_weight )
             : sampler_( sampler ), proportion_weight_{ proportion_weight }
         {
-            OpenGeodeStochasticStochasticException::check(
+            OpenGeodeStochasticStochasticException::check_exception(
                 proportion_weight_ > 0., nullptr,
                 OpenGeodeException::TYPE::data,
                 "[Move] - the weight factor for a move should be in higher "
@@ -187,7 +187,7 @@ namespace geode
 
         void initialize_probability( double probability ) override
         {
-            OpenGeodeStochasticStochasticException::check(
+            OpenGeodeStochasticStochasticException::check_exception(
                 birth_ratio_ > 0. && birth_ratio_ < 1., nullptr,
                 OpenGeodeException::TYPE::data,
                 "[BirthDeathMove]-the ratio of birth over mover should be in "

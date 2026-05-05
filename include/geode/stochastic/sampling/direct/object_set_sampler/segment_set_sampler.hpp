@@ -45,8 +45,8 @@ namespace geode
               azimuth_{ azimuth }
         {
             auto volume = domain_.extended_n_volume();
-            OpenGeodeStochasticStochasticException::check( volume != 0.,
-                nullptr, OpenGeodeException::TYPE::data,
+            OpenGeodeStochasticStochasticException::check_exception(
+                volume != 0., nullptr, OpenGeodeException::TYPE::data,
                 "[SegmentSetSampler] - Undefined Extended Bounding "
                 "Box (volume ==0)." );
             this->log_pdf_ = -std::log( volume );

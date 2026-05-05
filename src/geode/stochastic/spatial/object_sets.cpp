@@ -12,9 +12,9 @@ namespace geode
         const uuid& set_id ) const
     {
         auto it = sets_.find( set_id );
-        OpenGeodeStochasticStochasticException::check( it != sets_.end(),
-            nullptr, OpenGeodeException::TYPE::data, "[ObjectSet] - group (",
-            set_id.string(), ") is not defined." );
+        OpenGeodeStochasticStochasticException::check_exception(
+            it != sets_.end(), nullptr, OpenGeodeException::TYPE::data,
+            "[ObjectSet] - group (", set_id.string(), ") is not defined." );
         return it->second;
     }
 
@@ -97,8 +97,8 @@ namespace geode
         new_set.set_name( name );
         const auto new_set_id = new_set.id();
         auto [it, inserted] = sets_.emplace( new_set_id, std::move( new_set ) );
-        OpenGeodeStochasticStochasticException::check( inserted, new_set_id,
-            OpenGeodeException::TYPE::data, "[ObjectSet]- group (",
+        OpenGeodeStochasticStochasticException::check_exception( inserted,
+            new_set_id, OpenGeodeException::TYPE::data, "[ObjectSet]- group (",
             new_set_id.string(), ") already exists." );
         return new_set_id;
     }
@@ -127,11 +127,11 @@ namespace geode
     void ObjectSets< Type >::update_free_object(
         const ObjectId& old_object_id, Type&& new_object )
     {
-        OpenGeodeStochasticStochasticException::check( !old_object_id.fixed,
-            nullptr, OpenGeodeException::TYPE::data,
+        OpenGeodeStochasticStochasticException::check_exception(
+            !old_object_id.fixed, nullptr, OpenGeodeException::TYPE::data,
             "[ObjectSet]- cannot modify fixed object." );
         auto& set = get_set( old_object_id.set_id );
-        OpenGeodeStochasticStochasticException::check(
+        OpenGeodeStochasticStochasticException::check_exception(
             old_object_id.index < set.nb_objects(), nullptr,
             OpenGeodeException::TYPE::data,
             "[ObjectSet]- index of object to update out of range." );
@@ -145,8 +145,8 @@ namespace geode
     void ObjectSets< Type >::remove_free_object( const ObjectId& object_id )
     {
         auto& set = get_set( object_id.set_id );
-        OpenGeodeStochasticStochasticException::check( !object_id.fixed,
-            nullptr, OpenGeodeException::TYPE::data,
+        OpenGeodeStochasticStochasticException::check_exception(
+            !object_id.fixed, nullptr, OpenGeodeException::TYPE::data,
             "[ObjectSet]- Cannot remove fixed object." );
         const auto& obj_to_remove = get_object( object_id );
         neighborhood_.remove( object_bounding_box( obj_to_remove ), object_id );

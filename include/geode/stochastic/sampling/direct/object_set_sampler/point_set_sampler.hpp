@@ -40,14 +40,14 @@ namespace geode
             : ObjectSetSampler< Point< dimension > >{}, domain_( domain )
         {
             auto volume = domain_.extended_n_volume();
-            OpenGeodeStochasticStochasticException::check( volume != 0.,
-                nullptr, OpenGeodeException::TYPE::data,
+            OpenGeodeStochasticStochasticException::check_exception(
+                volume != 0., nullptr, OpenGeodeException::TYPE::data,
                 "[PointSetSampler] - Undefined Extended Bounding "
                 "Box (volume ==0)." );
             this->log_pdf_ = -std::log( volume );
             step_move_ = define_step_for_move();
-            OpenGeodeStochasticStochasticException::check( step_move_ > 0.,
-                nullptr, OpenGeodeException::TYPE::data,
+            OpenGeodeStochasticStochasticException::check_exception(
+                step_move_ > 0., nullptr, OpenGeodeException::TYPE::data,
                 "[PointSetSampler] - Undefined step length for move (value == ",
                 step_move_, ")." );
         }

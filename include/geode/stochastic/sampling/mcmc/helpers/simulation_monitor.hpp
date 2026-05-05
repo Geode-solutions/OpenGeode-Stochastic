@@ -45,7 +45,7 @@ namespace geode
 
         void add_realization( const std::vector< double >& values )
         {
-            OpenGeodeStochasticStochasticException::check(
+            OpenGeodeStochasticStochasticException::check_exception(
                 values.size() == means_.size(), nullptr,
                 OpenGeodeException::TYPE::data,
                 "[StatisticsMonitor] - Mismatch between realization size and "

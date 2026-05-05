@@ -40,12 +40,12 @@ namespace geode
               extended_domain_{ domain }
         {
             auto volume = domain_.n_volume();
-            OpenGeodeStochasticStochasticException::check( volume > 0., nullptr,
-                OpenGeodeException::TYPE::data,
+            OpenGeodeStochasticStochasticException::check_exception(
+                volume > 0., nullptr, OpenGeodeException::TYPE::data,
                 "[SpatialDomain] - Undefined Spatial Domain (volume == ",
                 volume, ")." );
-            OpenGeodeStochasticStochasticException::check( buffer_size_ >= 0.0,
-                nullptr, OpenGeodeException::TYPE::data,
+            OpenGeodeStochasticStochasticException::check_exception(
+                buffer_size_ >= 0.0, nullptr, OpenGeodeException::TYPE::data,
                 "[SpatialDomain] buffer size must be non-negative ( buffer "
                 "== ",
                 buffer_size_, ")" );
