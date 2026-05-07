@@ -42,37 +42,40 @@ void test_spatial_domain_2D()
     auto domain = init_domain();
 
     // Test volumes
-    OPENGEODE_EXCEPTION(
-        domain.n_volume() == 1.0, "[Test] Domain volume wrong." );
-    OPENGEODE_EXCEPTION( domain.extended_n_volume() == 4,
-        "[Test] Extended domain volume wrong." ); // (1+0.5*2)^2
+    geode::OpenGeodeStochasticStochasticException::test(
+        domain.n_volume() == 1.0, "Domain volume wrong." );
+    geode::OpenGeodeStochasticStochasticException::test(
+        domain.extended_n_volume() == 4,
+        "Extended domain volume wrong." ); // (1+0.5*2)^2
 
     // Test points inside domain
     geode::Point2D inside{ { 0.5, 0.5 } };
     geode::Point2D boundary{ { 1., 1. } };
     geode::Point2D outside{ { 1.4, 1.4 } };
 
-    OPENGEODE_EXCEPTION(
-        domain.contains( inside ), "[Test] Point inside should be contained." );
-    OPENGEODE_EXCEPTION( domain.contains( boundary ),
-        "[Test] Boundary point should be contained." );
-    OPENGEODE_EXCEPTION( !domain.contains( outside ),
-        "[Test] Point outside should not be contained." );
+    geode::OpenGeodeStochasticStochasticException::test(
+        domain.contains( inside ), "Point inside should be contained." );
+    geode::OpenGeodeStochasticStochasticException::test(
+        domain.contains( boundary ), "Boundary point should be contained." );
+    geode::OpenGeodeStochasticStochasticException::test(
+        !domain.contains( outside ), "Point outside should not be contained." );
 
-    OPENGEODE_EXCEPTION( domain.extended_contains( outside ),
-        "[Test] Point outside original but in buffer should be contained." );
+    geode::OpenGeodeStochasticStochasticException::test(
+        domain.extended_contains( outside ),
+        "Point outside original but in buffer should be contained." );
 
     // Test SpatialDomainChecker for points
-    OPENGEODE_EXCEPTION( SpatialDomainChecker< Point2D >::is_anchored_in_domain(
-                             domain, inside ),
-        "[Test] anchored_in_domain failed for inside point" );
-    OPENGEODE_EXCEPTION(
+    geode::OpenGeodeStochasticStochasticException::test(
+        SpatialDomainChecker< Point2D >::is_anchored_in_domain(
+            domain, inside ),
+        "anchored_in_domain failed for inside point" );
+    geode::OpenGeodeStochasticStochasticException::test(
         !SpatialDomainChecker< Point2D >::is_anchored_in_domain(
             domain, outside ),
-        "[Test] anchored_in_domain failed for outside point" );
-    OPENGEODE_EXCEPTION(
+        "anchored_in_domain failed for outside point" );
+    geode::OpenGeodeStochasticStochasticException::test(
         SpatialDomainChecker< Point2D >::intersects_domain( domain, boundary ),
-        "[Test] intersects_domain failed for boundary point" );
+        "intersects_domain failed for boundary point" );
 
     // Test segments
     geode::OwnerSegment2D seg_inside{ geode::Point2D{ { 0.1, 0.1 } },
@@ -86,48 +89,48 @@ void test_spatial_domain_2D()
     geode::OwnerSegment2D seg_cross{ geode::Point2D{ { -0.5, 0.5 } },
         geode::Point2D{ { 1.5, 0.5 } } };
 
-    OPENGEODE_EXCEPTION(
+    geode::OpenGeodeStochasticStochasticException::test(
         SpatialDomainChecker< OwnerSegment2D >::is_anchored_in_domain(
             domain, seg_inside ),
-        "[Test] Segment inside VOI should be anchored." );
-    OPENGEODE_EXCEPTION(
+        "Segment inside VOI should be anchored." );
+    geode::OpenGeodeStochasticStochasticException::test(
         SpatialDomainChecker< OwnerSegment2D >::is_anchored_in_domain(
             domain, seg_partial_anchored ),
-        "[Test] Segment with lower left extremity inside VOI should be "
+        "Segment with lower left extremity inside VOI should be "
         "anchored." );
-    OPENGEODE_EXCEPTION(
+    geode::OpenGeodeStochasticStochasticException::test(
         !SpatialDomainChecker< OwnerSegment2D >::is_anchored_in_domain(
             domain, seg_partial ),
-        "[Test] Segment with lower left extremity outside VOI is not anchored "
+        "Segment with lower left extremity outside VOI is not anchored "
         "by definition." );
-    OPENGEODE_EXCEPTION(
+    geode::OpenGeodeStochasticStochasticException::test(
         !SpatialDomainChecker< OwnerSegment2D >::is_anchored_in_domain(
             domain, seg_outside ),
-        "[Test] Segment completely outside should not be anchored." );
+        "Segment completely outside should not be anchored." );
 
-    OPENGEODE_EXCEPTION(
+    geode::OpenGeodeStochasticStochasticException::test(
         SpatialDomainChecker< OwnerSegment2D >::intersects_domain(
             domain, seg_inside ),
-        "[Test] Segment inside VOI should intersect." );
-    OPENGEODE_EXCEPTION(
+        "Segment inside VOI should intersect." );
+    geode::OpenGeodeStochasticStochasticException::test(
         SpatialDomainChecker< OwnerSegment2D >::intersects_domain(
             domain, seg_partial ),
-        "[Test] Segment partially in VOI should intersect." );
-    OPENGEODE_EXCEPTION(
+        "Segment partially in VOI should intersect." );
+    geode::OpenGeodeStochasticStochasticException::test(
         !SpatialDomainChecker< OwnerSegment2D >::intersects_domain(
             domain, seg_outside ),
-        "[Test] Segment completely outside should not intersect." );
-    OPENGEODE_EXCEPTION(
+        "Segment completely outside should not intersect." );
+    geode::OpenGeodeStochasticStochasticException::test(
         SpatialDomainChecker< OwnerSegment2D >::intersects_domain(
             domain, seg_cross ),
-        "[Test] Segment crossing the voi should intersect." );
+        "Segment crossing the voi should intersect." );
 }
 
 int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
 
         test_spatial_domain_2D();

@@ -38,7 +38,7 @@ namespace
         double result =
             interaction.evaluate( geode::ObjectRef< geode::Point2D >{ p1, id },
                 geode::ObjectRef< geode::Point2D >{ p2, id } );
-        OPENGEODE_EXCEPTION( result == 1.0,
+        geode::OpenGeodeStochasticStochasticException::test( result == 1.0,
             "[EuclideanCutoffInteraction] Failed for inside cutoff case." );
     }
     void test_no_interaction()
@@ -52,7 +52,7 @@ namespace
         double result =
             interaction.evaluate( geode::ObjectRef< geode::Point2D >{ p1, id },
                 geode::ObjectRef< geode::Point2D >{ p2, id } );
-        OPENGEODE_EXCEPTION( result == 0.0,
+        geode::OpenGeodeStochasticStochasticException::test( result == 0.0,
             "[EuclideanCutoffInteraction] Failed for outside cutoff case." );
     }
     void test_limit_interaction()
@@ -66,7 +66,7 @@ namespace
         double result =
             interaction.evaluate( geode::ObjectRef< geode::Point2D >{ p1, id },
                 geode::ObjectRef< geode::Point2D >{ p2, id } );
-        OPENGEODE_EXCEPTION( result == 1.0,
+        geode::OpenGeodeStochasticStochasticException::test( result == 1.0,
             "[EuclideanCutoffInteraction] Failed for exact cutoff case." );
     }
 } // namespace
@@ -75,7 +75,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
 
         test_interaction();
         test_no_interaction();

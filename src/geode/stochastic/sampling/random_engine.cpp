@@ -49,7 +49,9 @@ namespace
     // https://web.archive.org/web/20150910005011/http://home.online.no/~pjacklam
     double normal_quantile( double p )
     {
-        OPENGEODE_EXCEPTION( p >= 0.0 && p <= 1.0,
+        geode::OpenGeodeStochasticStochasticException::check_exception(
+            p >= 0.0 && p <= 1.0, nullptr,
+            geode::OpenGeodeException::TYPE::data,
             "[normal_quantile] - p must be in (0,1). Check the consistencies "
             "between min,mean and max values." );
 
@@ -145,7 +147,9 @@ namespace geode
         template < typename Type >
         Type sample_uniform( const UniformClosed< Type >& law )
         {
-            OPENGEODE_ASSERT( law.min_value <= law.max_value,
+            OpenGeodeStochasticStochasticException::check_exception(
+                law.min_value <= law.max_value, nullptr,
+                OpenGeodeException::TYPE::data,
                 "[Uniform sampling] - Wrong range ", law.min_value,
                 " is not <= than ", law.max_value, "." );
             return absl::Uniform(
@@ -155,7 +159,9 @@ namespace geode
         template < typename Type >
         Type sample_uniform( const UniformClosedOpen< Type >& law )
         {
-            OPENGEODE_ASSERT( law.min_value < law.max_value,
+            OpenGeodeStochasticStochasticException::check_exception(
+                law.min_value < law.max_value, nullptr,
+                OpenGeodeException::TYPE::data,
                 "[Uniform sampling] - Wrong range ", law.min_value,
                 " is not < than ", law.max_value, "." );
             return absl::Uniform( absl::IntervalClosedOpen, rand_gen_,
@@ -164,9 +170,11 @@ namespace geode
 
         double sample_gaussian( const Gaussian& law )
         {
-            OPENGEODE_ASSERT( law.standard_deviation > 0
-                                  && std::isfinite( law.standard_deviation )
-                                  && std::isfinite( law.mean ),
+            OpenGeodeStochasticStochasticException::check_exception(
+                law.standard_deviation > 0
+                    && std::isfinite( law.standard_deviation )
+                    && std::isfinite( law.mean ),
+                nullptr, OpenGeodeException::TYPE::data,
                 "[Gaussian sampling] - Infinite "
                 "parameters or negative standard deviation N(",
                 law.mean, law.standard_deviation, ")." );
@@ -176,9 +184,11 @@ namespace geode
 
         double sample_truncated_gaussian( const TruncatedGaussian& law )
         {
-            OPENGEODE_ASSERT( law.standard_deviation > 0
-                                  && std::isfinite( law.standard_deviation )
-                                  && std::isfinite( law.mean ),
+            OpenGeodeStochasticStochasticException::check_exception(
+                law.standard_deviation > 0
+                    && std::isfinite( law.standard_deviation )
+                    && std::isfinite( law.mean ),
+                nullptr, OpenGeodeException::TYPE::data,
                 "[Gaussian sampling] - Infinite parameters or "
                 "negative standard deviation N(",
                 law.mean, ",", law.standard_deviation, ")." );
@@ -188,7 +198,8 @@ namespace geode
             const double min = law.min_value.value_or(
                 -std::numeric_limits< double >::infinity() );
 
-            OPENGEODE_ASSERT( min < max,
+            OpenGeodeStochasticStochasticException::check_exception( min < max,
+                nullptr, OpenGeodeException::TYPE::data,
                 "[Gaussian sampling] - Wrong truncation range ", min,
                 " is not < than ", max, "." );
 
@@ -204,7 +215,8 @@ namespace geode
             F_min = std::max( F_min, geode::GLOBAL_EPSILON );
             F_max = std::min( F_max, 1.0 - geode::GLOBAL_EPSILON );
 
-            OPENGEODE_EXCEPTION( F_min < F_max,
+            OpenGeodeStochasticStochasticException::check_exception(
+                F_min < F_max, nullptr, OpenGeodeException::TYPE::data,
                 "[Gaussian sampling] - truncation "
                 "range is extreme please check inputs" );
 
@@ -218,8 +230,9 @@ namespace geode
 
         double sample_von_mises( const VonMises& law )
         {
-            OPENGEODE_ASSERT(
-                law.concentration >= 0.0 && std::isfinite( law.mean ),
+            OpenGeodeStochasticStochasticException::check_exception(
+                law.concentration >= 0.0 && std::isfinite( law.mean ), nullptr,
+                OpenGeodeException::TYPE::data,
                 "[VonMises sampling] - Invalid parameters: mean=", law.mean,
                 ", concentration=", law.concentration, "." );
 
@@ -284,9 +297,11 @@ namespace geode
         double sample_truncated_lognormal( const TruncatedLogNormal& law )
         {
             // Basic sanity checks
-            OPENGEODE_ASSERT( law.standard_deviation > 0
-                                  && std::isfinite( law.standard_deviation )
-                                  && std::isfinite( law.mean ),
+            OpenGeodeStochasticStochasticException::check_exception(
+                law.standard_deviation > 0
+                    && std::isfinite( law.standard_deviation )
+                    && std::isfinite( law.mean ),
+                nullptr, OpenGeodeException::TYPE::data,
                 "[Truncated LogNormal sampling] - Infinite parameters or "
                 "negative standard deviation N(",
                 law.mean, ", ", law.standard_deviation, ")." );
@@ -296,7 +311,8 @@ namespace geode
             const double max_val = law.max_value.value_or(
                 std::numeric_limits< double >::infinity() );
 
-            OPENGEODE_ASSERT( min_val < max_val,
+            OpenGeodeStochasticStochasticException::check_exception(
+                min_val < max_val, nullptr, OpenGeodeException::TYPE::data,
                 "[Truncated LogNormal sampling] - Wrong truncation range ",
                 min_val, " is not < than ", max_val, "." );
 
@@ -315,7 +331,8 @@ namespace geode
             double F_max =
                 std::min( normal_cdf( zmax ), 1.0 - geode::GLOBAL_EPSILON );
 
-            OPENGEODE_EXCEPTION( F_min < F_max,
+            OpenGeodeStochasticStochasticException::check_exception(
+                F_min < F_max, nullptr, OpenGeodeException::TYPE::data,
                 "[Truncated LogNormal sampling] - truncation "
                 "range is extreme please chack inputs" );
 
@@ -330,8 +347,9 @@ namespace geode
 
         double sample_truncated_powerlaw( const TruncatedPowerLaw& law )
         {
-            OPENGEODE_ASSERT(
-                law.alpha > 0, "Power-law exponent alpha must be > 0" );
+            OpenGeodeStochasticStochasticException::check_exception(
+                law.alpha > 0, nullptr, OpenGeodeException::TYPE::data,
+                "Power-law exponent alpha must be > 0" );
 
             // Set bounds
             const double xmin = law.min_value.value_or(
@@ -339,7 +357,9 @@ namespace geode
             const double xmax = law.max_value.value_or(
                 std::numeric_limits< double >::infinity() );
 
-            OPENGEODE_ASSERT( xmin < xmax, "Truncated power-law: min >= max" );
+            OpenGeodeStochasticStochasticException::check_exception(
+                xmin < xmax, nullptr, OpenGeodeException::TYPE::data,
+                "Truncated power-law: min >= max" );
 
             // Sample uniform
             std::uniform_real_distribution< double > uniform( 0.0, 1.0 );
@@ -377,8 +397,9 @@ namespace geode
 
         bool sample_bernoulli( double probability_of_success )
         {
-            OPENGEODE_ASSERT(
+            OpenGeodeStochasticStochasticException::check_exception(
                 probability_of_success >= 0. && probability_of_success <= 1.0,
+                nullptr, OpenGeodeException::TYPE::data,
                 "Bernoulli sampling cannot be done since ",
                 probability_of_success, " is not in [0.,1.]." );
             return absl::bernoulli_distribution( probability_of_success )(
