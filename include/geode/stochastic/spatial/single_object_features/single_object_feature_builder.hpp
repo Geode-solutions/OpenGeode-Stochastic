@@ -34,6 +34,7 @@ namespace geode
         build_single_object_feature_impl(
             const ObjectInDomainFeatureConfig& cfg )
     {
+        geode_unused( cfg );
         return std::make_unique< ObjectInDomainFeature< ObjectType > >();
     };
 
