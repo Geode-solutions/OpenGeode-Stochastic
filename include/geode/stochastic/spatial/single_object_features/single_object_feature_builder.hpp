@@ -68,8 +68,10 @@ namespace geode
     std::unique_ptr< SingleObjectFeature< ObjectType > >
         build_single_object_feature_impl( const std::monostate& )
     {
-        throw OpenGeodeException( "[SingleObjectFeatureBuilder] object feature "
-                                  "config not initialized" );
+        throw OpenGeodeStochasticStochasticException{ nullptr,
+            OpenGeodeException::TYPE::data,
+            "[SingleObjectFeatureBuilder] object feature "
+            "config not initialized" };
     }
 
     template < typename ObjectType >

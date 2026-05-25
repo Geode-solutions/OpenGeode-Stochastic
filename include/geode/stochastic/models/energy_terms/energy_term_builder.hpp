@@ -154,8 +154,9 @@ namespace geode
         const ObjectSets< ObjectType >&,
         const SpatialDomain< ObjectType::dim >& )
     {
-        throw OpenGeodeException(
-            "[EnergyTermBuilder] energy term config not initialized" );
+        throw OpenGeodeStochasticStochasticException{ nullptr,
+            OpenGeodeException::TYPE::data,
+            "[EnergyTermBuilder] energy term config not initialized" };
     }
     template < typename ObjectType >
     std::unique_ptr< EnergyTerm< ObjectType > > build_energy_term(

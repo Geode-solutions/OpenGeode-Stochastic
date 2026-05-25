@@ -193,8 +193,9 @@ namespace geode
             std::ofstream file( absolute_path, mode );
             if( !file.is_open() )
             {
-                throw geode::OpenGeodeException(
-                    "Cannot open file: " + absolute_path.string() );
+                throw geode::OpenGeodeStochasticStochasticException{ nullptr,
+                    OpenGeodeException::TYPE::data,
+                    "Cannot open file: " + absolute_path.string() };
             }
             return file;
         }

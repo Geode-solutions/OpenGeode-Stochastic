@@ -47,19 +47,22 @@ namespace geode
             auto term_idx = energy_terms_.size();
 
             const auto term_name = term->name();
-            OPENGEODE_EXCEPTION( term_name.has_value(),
+            OpenGeodeStochasticStochasticException::check_exception(
+                term_name.has_value(), nullptr, OpenGeodeException::TYPE::data,
                 absl::StrCat( "[EnergyTermCollection]- Energy Term name is not "
                               "defined." ) );
             const auto term_uuid = term->id();
             auto [it, inserted_uuid] =
                 name_to_uuid_.emplace( term_name.value(), term_uuid );
-            OPENGEODE_EXCEPTION( inserted_uuid,
+            OpenGeodeStochasticStochasticException::check_exception(
+                inserted_uuid, nullptr, OpenGeodeException::TYPE::data,
                 absl::StrCat( "[EnergyTermCollection]- Energy Term named ",
                     term_name.value(), " already exists." ) );
 
             auto [it2, inserted_index] =
                 uuid_to_index_.emplace( term_uuid, term_idx );
-            OPENGEODE_EXCEPTION( inserted_index,
+            OpenGeodeStochasticStochasticException::check_exception(
+                inserted_index, nullptr, OpenGeodeException::TYPE::data,
                 absl::StrCat( "[EnergyTermCollection]- Energy Term  ",
                     term_uuid.string(), " already exists." ) );
 
@@ -75,7 +78,9 @@ namespace geode
         [[nodiscard]] index_t get_term_index( const uuid& term_uuid ) const
         {
             auto term_it = uuid_to_index_.find( term_uuid );
-            OPENGEODE_EXCEPTION( term_it != uuid_to_index_.end(),
+            OpenGeodeStochasticStochasticException::check_exception(
+                term_it != uuid_to_index_.end(), nullptr,
+                OpenGeodeException::TYPE::data,
                 absl::StrCat( "[EnergyTermCollection] Unknown energy term: ",
                     term_uuid.string() ) );
             return term_it->second;
@@ -90,7 +95,9 @@ namespace geode
         [[nodiscard]] uuid get_term_uuid( std::string_view name ) const
         {
             auto uuid_it = name_to_uuid_.find( name );
-            OPENGEODE_EXCEPTION( uuid_it != name_to_uuid_.end(),
+            OpenGeodeStochasticStochasticException::check_exception(
+                uuid_it != name_to_uuid_.end(), nullptr,
+                OpenGeodeException::TYPE::data,
                 absl::StrCat(
                     "[EnergyTermCollection] Unknown energy term: ", name ) );
             return uuid_it->second;

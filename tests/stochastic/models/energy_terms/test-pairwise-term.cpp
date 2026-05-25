@@ -163,28 +163,29 @@ void test_pairwise_term_zero_gamma(
         "gamma<epsilon should be infinite" );
 
     // --- delta_change VOI → VOI
-    geode::ObjectId obj_id{ 0, false, set_id };
+    geode::ObjectId obj_id{ 1, false, set_id };
     delta = term->delta_log_change( pattern, obj_id, p4_ref );
     geode::OpenGeodeStochasticStochasticException::test( std::isinf( delta ),
         "[PairwiseTerm] delta_log_change VOI->VOI with "
         "gamma<epsilon should be infinite" );
 
     // --- delta_change buffer → VOI
-    geode::ObjectId old_buffer{ 2, false, set_id };
+    geode::ObjectId old_buffer{ 0, false, set_id };
     delta = term->delta_log_change( pattern, old_buffer, p4_ref );
     geode::OpenGeodeStochasticStochasticException::test( std::isinf( delta ),
         "[PairwiseTerm] delta_log_change buffer->VOI with "
-        "gamma<epsilon should be infinite" );
+        "gamma<epsilon should be infinite, but is ",
+        delta );
 
     // --- delta_change VOI → buffer
     delta = term->delta_log_change( pattern, obj_id, buffer_ref );
     geode::OpenGeodeStochasticStochasticException::test( std::isinf( delta ),
         "[PairwiseTerm] delta_log_change VOI->buffer with "
-        "gamma<epsilon should be infinite" );
+        "gamma<epsilon should be infinite, but is ",
+        delta );
 
     // --- delta_remove VOI
     delta = term->delta_log_remove( pattern, obj_id );
-    DEBUG( delta );
     geode::OpenGeodeStochasticStochasticException::test( delta == 0,
         "[PairwiseTerm] delta_log_remove VOI with "
         "gamma<epsilon should be infinite" );
@@ -226,14 +227,6 @@ int main()
         pw_interaction_cfg.gamma = 0.9999 * geode::GLOBAL_EPSILON;
         test_pairwise_term_zero_gamma( pw_interaction_cfg, pattern, domain );
 
-        //            test_normal_positive_pairwise( 0.5, pattern, set_id );
-        //            test_normal_positive_pairwise(
-        //                geode::GLOBAL_EPSILON, pattern, set_id );
-        //            test_normal_positive_pairwise( 2.0, pattern, set_id );
-
-        //            test_zero_pairwise( 0., pattern, set_id );
-        //            test_zero_pairwise(
-        //                0.9999 * geode::GLOBAL_EPSILON, pattern, set_id );
         geode::Logger::info( "TEST SUCCESS" );
         return 0;
     }

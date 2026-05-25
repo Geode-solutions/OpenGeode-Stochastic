@@ -28,7 +28,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
 
         std::string set_name1 = "set01";
@@ -70,7 +70,7 @@ int main()
         auto model =
             geode::build_model< geode::Point2D >( config, object_sets, domain );
         geode::Logger::info( model->terms().size() );
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             model->terms().size() == 5, "Collection not created" );
         return 0;
     }

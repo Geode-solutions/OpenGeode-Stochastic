@@ -70,7 +70,9 @@ namespace geode
 
         ObjectSetSampler< ObjectType >& sampler( const index_t sampler_id )
         {
-            OPENGEODE_EXCEPTION( sampler_id < samplers_.size(),
+            OpenGeodeStochasticStochasticException::check_exception(
+                sampler_id < samplers_.size(), nullptr,
+                OpenGeodeException::TYPE::data,
                 "[STATE DYNAMICS]: Sampler out of range." );
             return samplers_[sampler_id].get();
         }

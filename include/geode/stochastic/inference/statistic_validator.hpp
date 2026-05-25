@@ -41,7 +41,9 @@ namespace geode
                 const double mean = monitor.mean( target.term_id );
                 const double rel_error = std::abs( mean - target.value )
                                          / ( std::abs( target.value ) + 1e-12 );
-                //                OPENGEODE_EXCEPTION( rel_error < t.tolerance,
+                //                OpenGeodeStochasticStochasticException::check_exception(
+                //                rel_error < t.tolerance, nullptr,
+                //                OpenGeodeException::TYPE::data,
                 //                    "[StatisticsValidator] Failure for term ",
                 //                    t.term_id.string(), "\n  mean    = ",
                 //                    mean,

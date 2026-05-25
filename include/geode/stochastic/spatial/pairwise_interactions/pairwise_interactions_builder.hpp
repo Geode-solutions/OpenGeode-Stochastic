@@ -58,8 +58,9 @@ namespace geode
     std::unique_ptr< PairwiseInteraction< ObjectType > >
         build_pairwise_interaction_impl( const std::monostate& )
     {
-        throw OpenGeodeException(
-            "[PairWiseInteractionBuilder] interaction config not initialized" );
+        throw OpenGeodeStochasticStochasticException{ nullptr,
+            OpenGeodeException::TYPE::data,
+            "[PairWiseInteractionBuilder] interaction config not initialized" };
     }
 
     template < typename ObjectType >

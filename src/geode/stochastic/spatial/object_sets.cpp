@@ -12,7 +12,8 @@ namespace geode
         const uuid& set_id ) const
     {
         auto it = uuid_to_index_.find( set_id );
-        OPENGEODE_EXCEPTION( it != uuid_to_index_.end(),
+        OpenGeodeStochasticStochasticException::check_exception(
+            it != uuid_to_index_.end(), nullptr, OpenGeodeException::TYPE::data,
             "[ObjectSet] - group (", set_id.string(), ") is not defined." );
         return sets_[it->second];
     }
@@ -99,14 +100,15 @@ namespace geode
         new_set.set_name( name );
         auto [it_set_name, set_uuid_inserted] =
             name_to_uuid_.emplace( name, set_uuid );
-        OPENGEODE_EXCEPTION(
-            set_uuid_inserted, absl::StrCat( "[ObjectSet]- group named ", name,
-                                   " already exists." ) );
+        OpenGeodeStochasticStochasticException::check_exception(
+            set_uuid_inserted, nullptr, OpenGeodeException::TYPE::data,
+            "[ObjectSet]- group named ", name, " already exists." );
 
         auto [it_set_uuid, set_index_inserted] =
             uuid_to_index_.emplace( set_uuid, set_index );
-        OPENGEODE_EXCEPTION( set_index_inserted, "[ObjectSet]- group (",
-            set_uuid.string(), ") already exists." );
+        OpenGeodeStochasticStochasticException::check_exception(
+            set_index_inserted, nullptr, OpenGeodeException::TYPE::data,
+            "[ObjectSet]- group (", set_uuid.string(), ") already exists." );
         return set_uuid;
     }
 
@@ -198,9 +200,10 @@ namespace geode
         {
             return set_uuid->second;
         }
-        throw OpenGeodeException(
+        throw OpenGeodeStochasticStochasticException{ nullptr,
+            OpenGeodeException::TYPE::data,
             "[ObjectSets] ObjectSet uuid accessor - group named ", name,
-            " does not exist." );
+            " does not exist." };
     }
 
     template < typename Type >

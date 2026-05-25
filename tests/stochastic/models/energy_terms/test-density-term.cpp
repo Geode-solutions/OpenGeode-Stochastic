@@ -151,7 +151,7 @@ int main()
 
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::ObjectSets< geode::Point2D > pattern;
         auto set_id = init_object_set( pattern );
         auto domain = init_domain();
