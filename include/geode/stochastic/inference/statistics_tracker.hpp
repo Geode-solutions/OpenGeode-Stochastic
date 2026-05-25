@@ -31,12 +31,12 @@ namespace geode
             {
                 auto& value = values[value_id];
                 auto& mean = means_[value_id];
-                auto& m2 = m2_[value_id]; // somme des carrés
+                auto& sum_of_squares = m2_[value_id];
 
-                double delta = value - mean;
+                const auto delta = value - mean;
                 mean += delta / count_;
-                double delta2 = value - mean;
-                m2 += delta * delta2;
+                const auto delta2 = value - mean;
+                sum_of_squares += delta * delta2;
             }
         }
 
@@ -79,8 +79,8 @@ namespace geode
     private:
         const Model< ObjectType >& model_;
 
-        std::vector< double > means_{};
-        std::vector< double > m2_{};
+        std::vector< double > means_;
+        std::vector< double > m2_;
         index_t count_{ 0 };
     };
 } // namespace geode

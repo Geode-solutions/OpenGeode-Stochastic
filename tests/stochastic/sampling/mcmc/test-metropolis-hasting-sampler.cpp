@@ -50,7 +50,7 @@ namespace
             geode::MetropolisHastings< geode::Point2D >::acceptance_prob_helper(
                 -1.0 );
         geode::OpenGeodeStochasticStochasticException::test(
-            std::abs( val - std::exp( -1.0 ) ) < 1e-12,
+            std::fabs( val - std::exp( -1.0 ) ) < 1e-12,
             "[MH test] acceptance_prob_helper wrong for -1.0." );
     }
 

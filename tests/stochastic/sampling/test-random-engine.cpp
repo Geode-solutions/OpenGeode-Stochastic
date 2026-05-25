@@ -98,10 +98,10 @@ void test_distribution_mean_and_variance( const std::vector< T >& data,
         std::sqrt( 2.0 * expected_var * expected_var / ( n - 1 ) );
 
     geode::OpenGeodeStochasticStochasticException::test(
-        std::abs( mean - expected_mean ) < k * se_mean,
+        std::fabs( mean - expected_mean ) < k * se_mean,
         "[Uniform] - Wrong expected mean." );
     geode::OpenGeodeStochasticStochasticException::test(
-        std::abs( variance - expected_var ) < k * se_var,
+        std::fabs( variance - expected_var ) < k * se_var,
         "[Uniform] - Wrong expected std." );
 }
 

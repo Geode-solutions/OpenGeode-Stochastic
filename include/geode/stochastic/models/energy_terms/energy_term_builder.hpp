@@ -66,39 +66,8 @@ namespace geode
     std::pair< std::vector< geode::uuid >,
         absl::flat_hash_map< uuid, std::vector< uuid > > >
         pairwise_builder_initialize_interactions_helper(
-            const std::vector< std::pair< uuid, uuid > >& interacting_sets )
-    {
-        std::vector< geode::uuid > interacting_set_ids;
-        absl::flat_hash_map< uuid, std::vector< uuid > >
-            objectset_adjacency_map;
-        interacting_set_ids.reserve( 2 * interacting_sets.size() );
-        objectset_adjacency_map.reserve( 2 * interacting_sets.size() );
-        for( const auto& [set1, set2] : interacting_sets )
-        {
-            objectset_adjacency_map[set1].push_back( set2 );
-            objectset_adjacency_map[set2].push_back( set1 );
+            const std::vector< std::pair< uuid, uuid > >& interacting_sets );
 
-            interacting_set_ids.push_back( set1 );
-            interacting_set_ids.push_back( set2 );
-        }
-
-        absl::c_sort( interacting_set_ids );
-        interacting_set_ids.erase( std::unique( interacting_set_ids.begin(),
-                                       interacting_set_ids.end() ),
-            interacting_set_ids.end() );
-        interacting_set_ids.shrink_to_fit();
-
-        for( auto& [_, adjacent_set_uuids] : objectset_adjacency_map )
-        {
-            geode_unused( _ );
-            absl::c_sort( adjacent_set_uuids );
-            adjacent_set_uuids.erase( std::unique( adjacent_set_uuids.begin(),
-                                          adjacent_set_uuids.end() ),
-                adjacent_set_uuids.end() );
-            adjacent_set_uuids.shrink_to_fit();
-        }
-        return std::make_pair( interacting_set_ids, objectset_adjacency_map );
-    }
     template < typename ObjectType >
     std::unique_ptr< EnergyTerm< ObjectType > > build_pairwise_term(
         const PairwiseTermConfig& cfg,
@@ -107,11 +76,9 @@ namespace geode
     {
         auto set_id_interactions =
             object_sets.get_set_uuid_pairs( cfg.object_set_names_interactions );
-
         auto [interacting_set_ids, adjacent_set_uuids] =
             pairwise_builder_initialize_interactions_helper(
                 set_id_interactions );
-
         auto interaction =
             build_pairwise_interaction< ObjectType >( cfg.interaction_config );
 
@@ -148,6 +115,7 @@ namespace geode
             "Unsupported EnergyTermConfig type" );
         return nullptr;
     }
+
     template < typename ObjectType >
     std::unique_ptr< EnergyTerm< ObjectType > > build_energy_term_impl(
         const std::monostate&,
@@ -156,8 +124,9 @@ namespace geode
     {
         throw OpenGeodeStochasticStochasticException{ nullptr,
             OpenGeodeException::TYPE::data,
-            "[EnergyTermBuilder] energy term config not initialized" };
+            "[EnergyTermBuilder] Energy term config not initialized" };
     }
+
     template < typename ObjectType >
     std::unique_ptr< EnergyTerm< ObjectType > > build_energy_term(
         const EnergyTermConfig& cfg,

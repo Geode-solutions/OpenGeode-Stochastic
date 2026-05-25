@@ -109,7 +109,7 @@ namespace geode
     {
         auto seg_extremities = segment.vertices();
 
-        const double length = length_inside_box(
+        const auto length = length_inside_box(
             seg_extremities[0], seg_extremities[1], domain.box() );
 
         return inv_length_ * length;

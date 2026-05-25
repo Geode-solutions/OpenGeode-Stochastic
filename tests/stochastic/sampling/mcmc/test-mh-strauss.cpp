@@ -171,7 +171,7 @@ namespace
                 const auto expected_mean =
                     this->ordered_target_statistics_[stat_id];
                 auto target_vs_mean_error =
-                    std::abs( computed_means[stat_id] - expected_mean );
+                    std::fabs( computed_means[stat_id] - expected_mean );
                 if( expected_mean > 0 )
                 {
                     target_vs_mean_error /= expected_mean;

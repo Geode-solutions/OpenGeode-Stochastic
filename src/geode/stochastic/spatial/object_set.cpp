@@ -44,7 +44,7 @@ namespace geode
         OpenGeodeStochasticStochasticException::check_exception(
             index < fixed_objects_.size(), nullptr,
             OpenGeodeException::TYPE::data,
-            "[ObjectSet] - index for fixed object out of range." );
+            "[ObjectSet] Index for fixed object out of range." );
         return fixed_objects_[index];
     }
 
@@ -78,7 +78,7 @@ namespace geode
         OpenGeodeStochasticStochasticException::check_exception(
             index < free_objects_.size(), nullptr,
             OpenGeodeException::TYPE::data,
-            "[ObjectSet] - free object index out of range." );
+            "[ObjectSet] Index for free object out of range." );
         free_objects_[index] = std::move( object );
     }
 
@@ -88,7 +88,7 @@ namespace geode
         const index_t last = free_objects_.size() - 1;
         OpenGeodeStochasticStochasticException::check_exception( index <= last,
             nullptr, OpenGeodeException::TYPE::data,
-            "[ObjectSet] - free object index out of range." );
+            "[ObjectSet] index for free object out of range." );
         if( index != last )
         {
             std::swap( free_objects_[index], free_objects_[last] );

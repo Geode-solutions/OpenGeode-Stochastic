@@ -53,7 +53,7 @@ namespace geode
                     OpenGeodeStochasticStochasticException::check_exception(
                         desc.min_value && desc.max_value, nullptr,
                         OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
+                        "[DoubleSampler] Incomplete description for "
                         "Uniform distribution need at least min "
                         "and max values" );
                     UniformClosed< double > dist;
@@ -66,7 +66,7 @@ namespace geode
                     OpenGeodeStochasticStochasticException::check_exception(
                         desc.min_value && desc.max_value, nullptr,
                         OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
+                        "[DoubleSampler] Incomplete description for "
                         "Uniform distribution need at least min "
                         "and max values" );
                     UniformClosedOpen< double > dist;
@@ -79,7 +79,7 @@ namespace geode
                     OpenGeodeStochasticStochasticException::check_exception(
                         desc.mean && desc.standard_deviation, nullptr,
                         OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
+                        "[DoubleSampler] Incomplete description for "
                         "Gaussian distribution need at least mean "
                         "and standard deviation values" );
                     Gaussian dist;
@@ -92,7 +92,7 @@ namespace geode
                     OpenGeodeStochasticStochasticException::check_exception(
                         desc.mean && desc.standard_deviation, nullptr,
                         OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
+                        "[DoubleSampler] Incomplete description for "
                         "Truncated Gaussian distribution need at least mean "
                         "and standard deviation values" );
                     TruncatedGaussian dist;
@@ -108,7 +108,7 @@ namespace geode
                     OpenGeodeStochasticStochasticException::check_exception(
                         desc.mean && desc.kappa, nullptr,
                         OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
+                        "[DoubleSampler] Incomplete description for "
                         "Von Mises distribution need at least mean "
                         "and concentration (kappa) values" );
                     VonMises dist;
@@ -121,7 +121,7 @@ namespace geode
                     OpenGeodeStochasticStochasticException::check_exception(
                         desc.mean && desc.standard_deviation, nullptr,
                         OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
+                        "[DoubleSampler] Incomplete description for "
                         "TruncatedLogNormal distribution need mean "
                         "and standard deviation values of the underlying "
                         "normal distribution." );
@@ -137,7 +137,7 @@ namespace geode
                     OpenGeodeStochasticStochasticException::check_exception(
                         desc.alpha.has_value(), nullptr,
                         OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
+                        "[DoubleSampler] Incomplete description for "
                         "TruncatedPowerLaw distribution need power law "
                         "exponent (alpha)." );
                     TruncatedPowerLaw dist;
@@ -156,7 +156,8 @@ namespace geode
         {
             throw OpenGeodeStochasticStochasticException{ nullptr,
                 OpenGeodeException::TYPE::data,
-                "Unknown distribution type: ", desc.distribution_type.get() };
+                "[DoubleSampler] Unknown distribution type: ",
+                desc.distribution_type.get() };
         }
         return it->second( desc );
     }

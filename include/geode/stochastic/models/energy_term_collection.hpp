@@ -49,21 +49,21 @@ namespace geode
             const auto term_name = term->name();
             OpenGeodeStochasticStochasticException::check_exception(
                 term_name.has_value(), nullptr, OpenGeodeException::TYPE::data,
-                absl::StrCat( "[EnergyTermCollection]- Energy Term name is not "
+                absl::StrCat( "[EnergyTermCollection] Energy Term name is not "
                               "defined." ) );
             const auto term_uuid = term->id();
             auto [it, inserted_uuid] =
                 name_to_uuid_.emplace( term_name.value(), term_uuid );
             OpenGeodeStochasticStochasticException::check_exception(
                 inserted_uuid, nullptr, OpenGeodeException::TYPE::data,
-                absl::StrCat( "[EnergyTermCollection]- Energy Term named ",
+                absl::StrCat( "[EnergyTermCollection] Energy Term named ",
                     term_name.value(), " already exists." ) );
 
             auto [it2, inserted_index] =
                 uuid_to_index_.emplace( term_uuid, term_idx );
             OpenGeodeStochasticStochasticException::check_exception(
                 inserted_index, nullptr, OpenGeodeException::TYPE::data,
-                absl::StrCat( "[EnergyTermCollection]- Energy Term  ",
+                absl::StrCat( "[EnergyTermCollection] Energy Term  ",
                     term_uuid.string(), " already exists." ) );
 
             energy_terms_.emplace_back( std::move( term ) );

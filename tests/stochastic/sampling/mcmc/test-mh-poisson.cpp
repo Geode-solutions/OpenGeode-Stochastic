@@ -56,7 +56,7 @@ namespace
     {
     public:
         PoissonSimulationRunner( const geode::SpatialDomain< 2 >& domain )
-            : geode::SimulationRunner< geode::Point2D >( domain ) {};
+            : geode::SimulationRunner< geode::Point2D >( domain ){};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {
@@ -131,7 +131,7 @@ namespace
             //                    this->ordered_target_statistics_[stat_id];
             //
             //                const auto target_vs_mean_error =
-            //                    std::abs( computed_means[stat_id] -
+            //                    std::fabs( computed_means[stat_id] -
             //                    expected_means ) / expected_means;
             //
             //                geode::OpenGeodeStochasticStochasticException::test(
@@ -143,7 +143,7 @@ namespace
             //                    : ", target_vs_mean_error );
             //
             //                const auto target_vs_variance_error =
-            //                    std::abs( computed_variances[stat_id] -
+            //                    std::fabs( computed_variances[stat_id] -
             //                    expected_means ) / expected_means;
             //
             //                geode::OpenGeodeStochasticStochasticException::test(

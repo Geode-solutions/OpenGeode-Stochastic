@@ -54,7 +54,7 @@ namespace geode
                 std::isfinite( log_forward_prob )
                     && std::isfinite( log_backward_prob ),
                 nullptr, OpenGeodeException::TYPE::data,
-                "[Proposal Probabilities] Non-finite proposal "
+                "[ProposalProbabilities] Non-finite proposal "
                 "log-probabilities" );
             return log_backward_prob - log_forward_prob;
         }
@@ -119,8 +119,7 @@ namespace geode
             OpenGeodeStochasticStochasticException::check_exception(
                 proportion_weight_ > 0., nullptr,
                 OpenGeodeException::TYPE::data,
-                "[Move] - the weight factor for a move should be in higher "
-                "than 0. (here = ",
+                "[Move] The weight factor for a move should be > 0. (here = ",
                 proportion_weight_, ")" );
             initialize_probability( 1. );
         }
@@ -190,7 +189,7 @@ namespace geode
             OpenGeodeStochasticStochasticException::check_exception(
                 birth_ratio_ > 0. && birth_ratio_ < 1., nullptr,
                 OpenGeodeException::TYPE::data,
-                "[BirthDeathMove]-the ratio of birth over mover should be in "
+                "[BirthDeathMove] The ratio of birth moves should be in "
                 "]0,1[. (here = ",
                 birth_ratio_, ")" );
             log_p_birth_ = std::log( probability * birth_ratio_ );

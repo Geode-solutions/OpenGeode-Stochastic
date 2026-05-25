@@ -38,18 +38,19 @@ namespace geode
         {
             for( const auto& target : targets )
             {
-                const double mean = monitor.mean( target.term_id );
-                const double rel_error = std::abs( mean - target.value )
-                                         / ( std::abs( target.value ) + 1e-12 );
-                //                OpenGeodeStochasticStochasticException::check_exception(
-                //                rel_error < t.tolerance, nullptr,
-                //                OpenGeodeException::TYPE::data,
-                //                    "[StatisticsValidator] Failure for term ",
-                //                    t.term_id.string(), "\n  mean    = ",
-                //                    mean,
-                //                    "\n  target  = ", target.value, "\n  error
-                //                    = ", rel_error,
-                //                    "\n  tol     = ", target.tolerance );
+                const auto mean = monitor.mean( target.term_id );
+                const auto rel_error = std::fabs( mean - target.value )
+                                       / ( std::fabs( target.value ) + 1e-12 );
+                OpenGeodeStochasticStochasticException::check_exception(
+                    rel_error < target.tolerance, nullptr,
+                    OpenGeodeException::TYPE::result,
+                    "[StatisticsValidator] Failure for term ",
+                    t.term_id.string(), "\n  mean    = ", mean,
+                    "\n  target  = ", target.value,
+                    "\n  error
+                    = ", rel_error,
+                      "\n  tol     = ",
+                    target.tolerance );
             }
         }
     };

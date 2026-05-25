@@ -47,7 +47,7 @@ namespace geode
             auto volume = domain_.extended_n_volume();
             OpenGeodeStochasticStochasticException::check_exception(
                 volume != 0., nullptr, OpenGeodeException::TYPE::data,
-                "[SegmentSetSampler] - Undefined Extended Bounding "
+                "[UniformSegmentSetSampler] Undefined Extended Bounding "
                 "Box (volume ==0)." );
             this->log_pdf_ = -std::log( volume );
         }

@@ -42,7 +42,7 @@ namespace geode::detail
         {
             OpenGeodeStochasticStochasticException::check_exception(
                 param >= 0., nullptr, OpenGeodeException::TYPE::data,
-                "[Gibbs energy term] - The model parameter cannot be "
+                "[EnergyTerm] Model parameter cannot be "
                 "negative." );
 
             if( param >= geode::GLOBAL_EPSILON )

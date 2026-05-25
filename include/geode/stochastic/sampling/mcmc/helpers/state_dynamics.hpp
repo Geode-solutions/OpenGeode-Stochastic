@@ -72,8 +72,8 @@ namespace geode
         {
             OpenGeodeStochasticStochasticException::check_exception(
                 sampler_id < samplers_.size(), nullptr,
-                OpenGeodeException::TYPE::data,
-                "[STATE DYNAMICS]: Sampler out of range." );
+                OpenGeodeException::TYPE::internal,
+                "[StateDynamics]: Sampler out of range." );
             return samplers_[sampler_id].get();
         }
 

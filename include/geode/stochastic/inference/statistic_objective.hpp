@@ -40,8 +40,8 @@ namespace geode
 
             for( const auto& target : targets )
             {
-                const double mean = monitor.mean( target.term_id );
-                const double diff = mean - target.value;
+                const auto mean = monitor.mean( target.term_id );
+                const auto diff = mean - target.value;
 
                 loss += diff * diff;
             }

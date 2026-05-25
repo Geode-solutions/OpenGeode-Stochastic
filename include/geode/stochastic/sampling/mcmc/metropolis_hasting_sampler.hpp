@@ -55,7 +55,8 @@ namespace geode
         {
             OpenGeodeStochasticStochasticException::check_exception(
                 proposal_kernel_ != nullptr, nullptr,
-                OpenGeodeException::TYPE::data, "[MH] null proposal kernel" );
+                OpenGeodeException::TYPE::data,
+                "[MetropolisHastings] Proposal kernel is not defined." );
         }
 
         StepResult< ObjectType > step(
@@ -107,28 +108,27 @@ namespace geode
         {
             OpenGeodeStochasticStochasticException::check_exception( b >= 0.0,
                 nullptr, OpenGeodeException::TYPE::data,
-                "[MH] beta must be >= 0" );
+                "[MetropolisHastings] The teperature (beta) must be >= 0" );
             if( b == 0 )
             {
-                Logger::info(
-                    "[Metropolis Hastings] - beta == 0 all move will be "
-                    "accepted - Uniform sampling." );
+                Logger::info( "[MetropolisHastings] beta == 0 all move will be "
+                              "accepted - Uniform sampling." );
             }
             if( b < 1 )
             {
                 Logger::info(
-                    "[Metropolis Hastings] - beta < 1 moves that increase "
+                    "[MetropolisHastings] beta < 1 moves that increase "
                     "energy are more likely to be accepted - Hot system "
                     "introduce randomness for exploration." );
             }
             if( b == 1 )
             {
-                Logger::info( "[Metropolis Hastings] - beta == 1 default "
+                Logger::info( "[MetropolisHastings] beta == 1 default "
                               "choice no temperature - only consider energy." );
             }
             if( b > 1 )
             {
-                Logger::info( "[Metropolis Hastings] - beta > 1 moves that "
+                Logger::info( "[MetropolisHastings] beta > 1 moves that "
                               "increase energy are less likely to be accepted "
                               "- Cold system to ensure convergence but may "
                               "find local minimum randomness." );

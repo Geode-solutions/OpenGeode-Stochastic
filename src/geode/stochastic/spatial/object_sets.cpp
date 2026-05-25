@@ -14,7 +14,7 @@ namespace geode
         auto it = uuid_to_index_.find( set_id );
         OpenGeodeStochasticStochasticException::check_exception(
             it != uuid_to_index_.end(), nullptr, OpenGeodeException::TYPE::data,
-            "[ObjectSet] - group (", set_id.string(), ") is not defined." );
+            "[ObjectSets] Group (", set_id.string(), ") is not defined." );
         return sets_[it->second];
     }
 
@@ -102,13 +102,13 @@ namespace geode
             name_to_uuid_.emplace( name, set_uuid );
         OpenGeodeStochasticStochasticException::check_exception(
             set_uuid_inserted, nullptr, OpenGeodeException::TYPE::data,
-            "[ObjectSet]- group named ", name, " already exists." );
+            "[ObjectSet]- Group named ", name, " already exists." );
 
         auto [it_set_uuid, set_index_inserted] =
             uuid_to_index_.emplace( set_uuid, set_index );
         OpenGeodeStochasticStochasticException::check_exception(
             set_index_inserted, nullptr, OpenGeodeException::TYPE::data,
-            "[ObjectSet]- group (", set_uuid.string(), ") already exists." );
+            "[ObjectSets] Group (", set_uuid.string(), ") already exists." );
         return set_uuid;
     }
 
@@ -138,12 +138,12 @@ namespace geode
     {
         OpenGeodeStochasticStochasticException::check_exception(
             !old_object_id.fixed, nullptr, OpenGeodeException::TYPE::data,
-            "[ObjectSet]- cannot modify fixed object." );
+            "[ObjectSets]- Cannot modify a fixed object." );
         auto& set = get_set( old_object_id.set_id );
         OpenGeodeStochasticStochasticException::check_exception(
             old_object_id.index < set.nb_objects(), nullptr,
-            OpenGeodeException::TYPE::data,
-            "[ObjectSet]- index of object to update out of range." );
+            OpenGeodeException::TYPE::internal,
+            "[ObjectSets] Index of an object to change is out of range." );
         auto old_box = object_bounding_box( get_object( old_object_id ) );
         auto new_box = object_bounding_box( new_object );
         neighborhood_.update( old_box, new_box, old_object_id );
@@ -155,8 +155,8 @@ namespace geode
     {
         auto& set = get_set( object_id.set_id );
         OpenGeodeStochasticStochasticException::check_exception(
-            !object_id.fixed, nullptr, OpenGeodeException::TYPE::data,
-            "[ObjectSet]- Cannot remove fixed object." );
+            !object_id.fixed, nullptr, OpenGeodeException::TYPE::internal,
+            "[ObjectSets] Cannot remove fixed object." );
         const auto& obj_to_remove = get_object( object_id );
         neighborhood_.remove( object_bounding_box( obj_to_remove ), object_id );
 
@@ -202,7 +202,7 @@ namespace geode
         }
         throw OpenGeodeStochasticStochasticException{ nullptr,
             OpenGeodeException::TYPE::data,
-            "[ObjectSets] ObjectSet uuid accessor - group named ", name,
+            "[ObjectSets] ObjectSet uuid accessor of group named ", name,
             " does not exist." };
     }
 

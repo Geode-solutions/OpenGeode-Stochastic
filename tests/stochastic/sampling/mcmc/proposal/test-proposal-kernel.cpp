@@ -91,7 +91,7 @@ namespace
                         "0." );
 
                     geode::OpenGeodeStochasticStochasticException::test(
-                        std::abs(
+                        std::fabs(
                             proposed_move.proposal_probabilities
                                 .log_backward_prob
                             - ( std::log( 0.8 * 0.5 )

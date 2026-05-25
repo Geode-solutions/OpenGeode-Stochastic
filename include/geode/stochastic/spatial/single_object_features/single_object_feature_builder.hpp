@@ -20,13 +20,13 @@
  * SOFTWARE.
  *
  */
+#pragma once
 
 #include <variant>
 
 #include <geode/stochastic/spatial/single_object_features/segment_length_feature.hpp>
 #include <geode/stochastic/spatial/single_object_features/single_object_feature_config.hpp>
 
-#pragma once
 namespace geode
 {
     template < typename ObjectType >
@@ -49,9 +49,9 @@ namespace geode
         }
         else
         {
-            throw std::runtime_error(
-                "SegmentLengthInsideBoxFeature not valid for this "
-                "ObjectType" );
+            throw OpenGeodeStochasticStochasticException{ nullptr,
+                OpenGeodeException::TYPE::data,
+                "SegmentLengthInsideBoxFeature not valid for this ObjectType" };
         }
     }
 

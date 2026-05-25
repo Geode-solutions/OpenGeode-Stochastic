@@ -32,6 +32,7 @@ add_geode_library(
         "sampling/direct/double_sampler.cpp"
         "sampling/direct/point_uniform_sampler.cpp"
         "sampling/direct/segment_uniform_sampler.cpp"
+        "models/energy_terms/energy_term_builder.cpp"
         "sampling/distributions.cpp"
         "sampling/random_engine.cpp"
         "common.cpp"

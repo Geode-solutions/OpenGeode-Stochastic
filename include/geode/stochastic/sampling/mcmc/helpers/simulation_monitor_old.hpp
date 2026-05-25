@@ -48,7 +48,7 @@ namespace geode
             OpenGeodeStochasticStochasticException::check_exception(
                 values.size() == means_.size(), nullptr,
                 OpenGeodeException::TYPE::data,
-                "[StatisticsMonitor] - Mismatch between realization size and "
+                "[StatisticsTracker] Mismatch between realization size and "
                 "expected number of statistics." );
             ++count_;
             for( size_t i = 0; i < values.size(); ++i )
