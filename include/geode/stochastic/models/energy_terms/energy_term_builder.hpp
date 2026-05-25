@@ -58,13 +58,14 @@ namespace geode
         auto object_feature =
             build_single_object_feature< ObjectType >( cfg.object_feature );
 
-        return std::make_unique< geode::SingleObjectTerm< ObjectType > >(
+        return std::make_unique< SingleObjectTerm< ObjectType > >(
             cfg.term_name, cfg.lambda, std::move( set_ids ), domain,
             std::move( object_feature ) );
     }
 
-    std::pair< std::vector< geode::uuid >,
+    std::pair< std::vector< uuid >,
         absl::flat_hash_map< uuid, std::vector< uuid > > >
+        opengeode_stochastic_stochastic_api
         pairwise_builder_initialize_interactions_helper(
             const std::vector< std::pair< uuid, uuid > >& interacting_sets );
 
