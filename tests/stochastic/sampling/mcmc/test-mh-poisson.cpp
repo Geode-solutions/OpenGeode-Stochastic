@@ -21,7 +21,8 @@
  *
  */
 #include <geode/geometry/point.hpp>
-#include <geode/stochastic/inference/statistic_objective.hpp>
+#include <geode/stochastic/inference/statistics_tools.hpp>
+#include <geode/stochastic/inference/target_statistics.hpp>
 #include <geode/stochastic/models/energy_terms/energy_term_builder.hpp>
 #include <geode/stochastic/models/energy_terms/energy_term_config.hpp>
 #include <geode/stochastic/models/gibbs_energy.hpp>
@@ -39,17 +40,9 @@ namespace
         double birth_ratio{ 1.0 };
         double death_ratio{ 1.0 };
         double change_ratio{ 1.0 };
-
-        double target_count;
     };
+
     using PoissonDensityDescription = geode::SingleObjectTermConfig;
-    //    struct PoissonDensityDescription
-    //    {
-    //        std::string density_name;
-    //
-    //        std::vector< std::string > objectset_names{};
-    //        double density_value{ 1.0 };
-    //    };
 
     class PoissonSimulationRunner
         : public geode::SimulationRunner< geode::Point2D >
@@ -69,13 +62,18 @@ namespace
             density_descriptors_.push_back( descriptor );
         }
 
+        void add_target_statistics(
+            const geode::TargetStatisticConfig& statistic_descriptor )
+        {
+            targeted_statistics_descriptors_.push_back( statistic_descriptor );
+        }
+
         std::unique_ptr< geode::ProposalKernel< geode::Point2D > >
             create_sets_and_set_samplers()
         {
             auto proposal_kernel =
                 std::make_unique< geode::ProposalKernel< geode::Point2D > >();
 
-            // Step 1: create object sets and samplers
             for( const auto& set_desc : set_descriptors_ )
             {
                 const auto set_id = this->object_sets_.add_set( set_desc.name );
@@ -101,6 +99,16 @@ namespace
 
             model_ = std::move( geode::build_model< geode::Point2D >(
                 config, object_sets_, domain_ ) );
+            create_target_statistics();
+        }
+
+        void create_target_statistics()
+        {
+            target_statistics_.emplace( *model_ );
+            for( const auto& target_stat : targeted_statistics_descriptors_ )
+            {
+                target_statistics_->set_target( target_stat );
+            }
         }
 
         void initialize() override
@@ -111,6 +119,7 @@ namespace
             this->mh_sampler_ =
                 std::make_unique< geode::MetropolisHastings< geode::Point2D > >(
                     *model_, std::move( proposal_kernel ) );
+            create_target_statistics();
         }
 
         void check_statistics( const geode::StatisticsTracker< geode::Point2D >&
@@ -161,6 +170,8 @@ namespace
         geode::BoundingBox2D box_;
         std::vector< SetDescription > set_descriptors_;
         std::vector< PoissonDensityDescription > density_descriptors_;
+        std::vector< geode::TargetStatisticConfig >
+            targeted_statistics_descriptors_;
     };
 
     void test_single_type_poisson()
@@ -192,12 +203,14 @@ namespace
             densityA.term_name = "density";
             densityA.object_set_names = { "A" };
             densityA.lambda = 0.3;
-            // densityA.target_count = 30.0;
             densityA.object_feature = geode::ObjectInDomainFeatureConfig{};
+
+            geode::TargetStatisticConfig statA{ "density", 30.0, 0.15 };
 
             PoissonSimulationRunner runner( domain );
             runner.add_set_descriptor( setA );
             runner.add_density_descriptor( densityA );
+            runner.add_target_statistics( statA );
             runner.initialize();
 
             // run simulation
@@ -212,9 +225,9 @@ namespace
             sim_config.burn_in_steps = 1000;
             sim_config.printer = printer_config;
 
-            auto statistic_monitoring = runner.run( engine, sim_config );
-
-            runner.check_statistics( statistic_monitoring );
+            auto statistic_tracker = runner.run( engine, sim_config );
+            geode::statistics::validate(
+                statistic_tracker, runner.target_statistics() );
         }
 
         geode::Logger::info( "--> SUCCESS!" );
@@ -242,22 +255,25 @@ namespace
         density01.term_name = "density01";
         density01.object_set_names = { "set01" };
         density01.lambda = 0.1;
-        // density01.target_count = 10.0;
         density01.object_feature = geode::ObjectInDomainFeatureConfig{};
+
+        geode::TargetStatisticConfig stat01{ "density01", 10.0, 0.15 };
 
         PoissonDensityDescription density02;
         density02.term_name = "density02";
         density02.object_set_names = { "set02" };
         density02.lambda = 0.4;
-        // density02.target_count = 40.0;
         density02.object_feature = geode::ObjectInDomainFeatureConfig{};
+
+        geode::TargetStatisticConfig stat02{ "density02", 40.0, 0.15 };
 
         PoissonDensityDescription density03;
         density03.term_name = "density03";
         density03.object_set_names = { "set03" };
         density03.lambda = 0.3;
-        // density03.target_count = 30.0;
         density03.object_feature = geode::ObjectInDomainFeatureConfig{};
+
+        geode::TargetStatisticConfig stat03{ "density03", 30.0, 0.15 };
 
         PoissonSimulationRunner runner( domain );
         runner.add_set_descriptor( set01 );
@@ -267,6 +283,10 @@ namespace
         runner.add_density_descriptor( density01 );
         runner.add_density_descriptor( density02 );
         runner.add_density_descriptor( density03 );
+
+        runner.add_target_statistics( stat01 );
+        runner.add_target_statistics( stat02 );
+        runner.add_target_statistics( stat03 );
 
         runner.initialize();
 
@@ -281,8 +301,9 @@ namespace
         sim_config.burn_in_steps = 3000;
         sim_config.printer = printer_config;
 
-        auto statistic_monitoring = runner.run( engine, sim_config );
-        runner.check_statistics( statistic_monitoring );
+        auto statistic_tracker = runner.run( engine, sim_config );
+        geode::statistics::validate(
+            statistic_tracker, runner.target_statistics() );
 
         geode::Logger::info( "--> SUCCESS!" );
     }

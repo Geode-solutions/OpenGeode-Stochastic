@@ -24,6 +24,8 @@
 #pragma once
 #include <geode/stochastic/common.hpp>
 #include <geode/stochastic/inference/statistics_tracker.hpp>
+#include <geode/stochastic/inference/target_statistics.hpp>
+
 #include <geode/stochastic/models/energy_term_collection.hpp>
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_printer.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
@@ -64,7 +66,7 @@ namespace geode
     {
     public:
         SimulationRunner( const SpatialDomain< ObjectType::dim >& domain )
-            : domain_( domain ) {};
+            : domain_( domain ){};
         virtual ~SimulationRunner() = default;
 
         virtual void initialize() = 0;
@@ -117,14 +119,21 @@ namespace geode
             return stats_monitor;
         }
 
-        const ObjectSets< ObjectType >& state_realization() const
+        [[nodiscard]] const TargetStatistics< ObjectType >&
+            target_statistics() const
+        {
+            OpenGeodeStochasticStochasticException::check_exception(
+                target_statistics_.has_value(), nullptr,
+                OpenGeodeException::TYPE::data,
+                "[SimulationRunner] Target statistics not initialized" );
+
+            return *target_statistics_;
+        }
+
+        [[nodiscard]] const ObjectSets< ObjectType >& state_realization() const
         {
             return object_sets_;
         }
-
-    protected:
-        // void initialize_sets_and_samplers() = 0;
-        // void initialize_model() = 0;
 
     protected:
         SpatialDomain< ObjectType::dim > domain_;
@@ -134,5 +143,7 @@ namespace geode
             set_samplers_;
         std::unique_ptr< Model< ObjectType > > model_;
         std::unique_ptr< geode::MetropolisHastings< ObjectType > > mh_sampler_;
+
+        std::optional< TargetStatistics< ObjectType > > target_statistics_;
     };
 } // namespace geode
