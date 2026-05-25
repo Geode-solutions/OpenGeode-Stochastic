@@ -26,7 +26,7 @@
 
 namespace geode
 {
-    class SegmentLengthInsideBoxFeature
+    class opengeode_stochastic_stochastic_api SegmentLengthInsideBoxFeature
         : public SingleObjectFeature< OwnerSegment2D >
     {
     public:
