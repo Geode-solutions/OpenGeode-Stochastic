@@ -23,7 +23,7 @@
 
 #include <geode/basic/assert.hpp>
 #include <geode/basic/logger.hpp>
-#include <geode/stochastic/sampling/mcmc/helpers/simulation_monitor.hpp>
+#include <geode/stochastic/inference/statistics_tracker.hpp>
 
 #include <cmath>
 #include <vector>
@@ -32,35 +32,36 @@ namespace
 {
     void test_statistics_monitor_basic()
     {
-        geode::Logger::info( "TEST - StatisticsMonitor basic functionality" );
+        geode::Logger::info( "TEST - StatisticsTracker basic functionality" );
 
         // --- Create monitor with 3 energy terms
-        geode::StatisticsMonitor monitor( 3 );
+        geode::StatisticsTracker monitor;
 
         // --- Add 2 realizations
         monitor.add_realization( { 1.0, 2.0, 3.0 } );
         monitor.add_realization( { 2.0, 3.0, 4.0 } );
 
         // --- Check count
-        OPENGEODE_EXCEPTION( monitor.statiscal_count() == 2, "Count mismatch" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            monitor.statiscal_count() == 2, "Count mismatch" );
 
         const auto& means = monitor.means();
         const auto& variances = monitor.variances();
 
         // --- Check means
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             std::fabs( means[0] - 1.5 ) < 1e-12, "Mean[0] incorrect" );
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             std::fabs( means[1] - 2.5 ) < 1e-12, "Mean[1] incorrect" );
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             std::fabs( means[2] - 3.5 ) < 1e-12, "Mean[2] incorrect" );
 
         // --- Check variances
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             std::fabs( variances[0] - 0.5 ) < 1e-12, "Variance[0] incorrect" );
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             std::fabs( variances[1] - 0.5 ) < 1e-12, "Variance[1] incorrect" );
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             std::fabs( variances[2] - 0.5 ) < 1e-12, "Variance[2] incorrect" );
 
         geode::Logger::info( "--> SUCCESS!" );
@@ -71,7 +72,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
         test_statistics_monitor_basic();
         return 0;

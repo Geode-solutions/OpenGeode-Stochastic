@@ -22,4 +22,4 @@ import opengeode
 
 from opengeode_stochastic_py_stochastic import *
 
-StochasticLibrary.initialize()
+OpenGeodeStochasticStochasticLibrary.initialize()

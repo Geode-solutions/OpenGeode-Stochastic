@@ -20,23 +20,15 @@
  * SOFTWARE.
  *
  */
-
 #pragma once
-
-#include <limits>
-
-#include <geode/basic/common.hpp>
-#include <geode/basic/library.hpp>
-#include <geode/basic/logger.hpp>
-
-#include <geode/stochastic/opengeode_stochastic_stochastic_export.hpp>
-#include <geode/stochastic/project.hpp>
+#include <geode/basic/uuid.hpp>
 
 namespace geode
 {
-    OPENGEODE_LIBRARY(
-        opengeode_stochastic_stochastic_api, OpenGeodeStochastic, Stochastic );
-
-    static constexpr double LOG_PROB_INVALID =
-        -std::numeric_limits< double >::infinity();
+    struct TargetStatistic
+    {
+        geode::uuid term_id;
+        double value;
+        double tolerance{ 0.05 };
+    };
 } // namespace geode

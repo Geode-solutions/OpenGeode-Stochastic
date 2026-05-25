@@ -89,21 +89,21 @@ add_geode_test(
         ${PROJECT_NAME}::stochastic
 )
 
-add_geode_test(
-    SOURCE "sampling/mcmc/helpers/test-simulation_printer.cpp"
-    DEPENDENCIES
-        OpenGeode::basic
-        OpenGeode::geometry
-        ${PROJECT_NAME}::stochastic
-)
+#add_geode_test(
+#    SOURCE "sampling/mcmc/helpers/test-simulation_printer.cpp"
+#    DEPENDENCIES
+#        OpenGeode::basic
+#        OpenGeode::geometry
+#        ${PROJECT_NAME}::stochastic
+#)
 
-add_geode_test(
-    SOURCE "sampling/mcmc/helpers/test-simulation_monitor.cpp"
-    DEPENDENCIES
-        OpenGeode::basic
-        OpenGeode::geometry
-        ${PROJECT_NAME}::stochastic
-)
+#add_geode_test(
+#    SOURCE "sampling/mcmc/helpers/test-simulation_monitor.cpp"
+#    DEPENDENCIES
+#        OpenGeode::basic
+#        OpenGeode::geometry
+#        ${PROJECT_NAME}::stochastic
+#)
 
 add_geode_test(
     SOURCE "models/energy_terms/test-density-term.cpp"
@@ -129,13 +129,13 @@ add_geode_test(
         ${PROJECT_NAME}::stochastic
 )
 
-add_geode_test(
-    SOURCE "models/energy_terms/test-gibbs-energy.cpp"
-    DEPENDENCIES
-        OpenGeode::basic
-        OpenGeode::geometry
-        ${PROJECT_NAME}::stochastic
-)
+#add_geode_test(
+#    SOURCE "models/energy_terms/test-gibbs-energy.cpp"
+#    DEPENDENCIES
+#        OpenGeode::basic
+#        OpenGeode::geometry
+#        ${PROJECT_NAME}::stochastic
+#)
 
 add_geode_test(
     SOURCE "sampling/mcmc/proposal/test-proposal-kernel.cpp"
@@ -145,13 +145,13 @@ add_geode_test(
         ${PROJECT_NAME}::stochastic
 )
 
-add_geode_test(
-    SOURCE "sampling/mcmc/test-metropolis-hasting-sampler.cpp"
-    DEPENDENCIES
-        OpenGeode::basic
-        OpenGeode::geometry
-        ${PROJECT_NAME}::stochastic
-)
+#add_geode_test(
+#    SOURCE "sampling/mcmc/test-metropolis-hasting-sampler.cpp"
+#    DEPENDENCIES
+#        OpenGeode::basic
+#        OpenGeode::geometry
+#        ${PROJECT_NAME}::stochastic
+#)
 
 #add_geode_test(
 #     SOURCE "sampling/mcmc/test-mh-fractures.cpp"

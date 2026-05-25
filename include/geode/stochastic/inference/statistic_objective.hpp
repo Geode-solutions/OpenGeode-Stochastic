@@ -22,43 +22,31 @@
  */
 #pragma once
 
-#include <absl/container/btree_map.h>
-#include <absl/strings/str_join.h>
+#include <absl/container/flat_hash_map.h>
+#include <geode/stochastic/inference/statistics_tracker.hpp>
+#include <geode/stochastic/inference/target_statistic.hpp>
 
-#include <geode/basic/uuid.hpp>
-
-#include <string>
-#include <variant>
-#include <vector>
-
-#include <geode/stochastic/models/energy_term_collection.hpp>
-#include <geode/stochastic/models/energy_terms/energy_term_builder.hpp>
-#include <geode/stochastic/models/energy_terms/energy_term_config.hpp>
-
-#include <geode/stochastic/spatial/object_sets.hpp>
-#include <geode/stochastic/spatial/spatial_domain.hpp>
 namespace geode
 {
 
-    struct ModelConfig
-    {
-        std::vector< EnergyTermConfig > terms;
-    };
-
     template < typename ObjectType >
-    EnergyTermCollection< ObjectType > build_energy_term_collection(
-        const ModelConfig& config,
-        const ObjectSets< ObjectType >& object_sets,
-        const SpatialDomain< ObjectType::dim >& domain )
+    class StatisticObjective
     {
-        EnergyTermCollection< ObjectType > collection;
-
-        for( const auto& term_cfg : config.terms )
+    public:
+        double compute_loss( const StatisticsTracker< ObjectType >& monitor,
+            const std::vector< TargetStatistic >& targets ) const
         {
-            auto term_id = collection.add_energy_term(
-                build_term< ObjectType >( term_cfg, object_sets, domain ) );
-        }
+            double loss = 0.0;
 
-        return collection;
-    }
+            for( const auto& target : targets )
+            {
+                const double mean = monitor.mean( target.term_id );
+                const double diff = mean - target.value;
+
+                loss += diff * diff;
+            }
+
+            return loss;
+        }
+    };
 } // namespace geode

@@ -20,30 +20,16 @@
  * SOFTWARE.
  *
  */
+
 #pragma once
 
-#include <geode/stochastic/common.hpp>
-
-#include <geode/stochastic/models/energy_terms/single_object_term.hpp>
+#include <geode/basic/assert.hpp>
 
 namespace geode
 {
-    FORWARD_DECLARATION_DIMENSION_CLASS( OwnerSegment );
-    ALIAS_2D( OwnerSegment );
-} // namespace geode
-
-namespace geode
-{
-    class opengeode_stochastic_stochastic_api IntensityTerm
-        : public SingleObjectTerm< OwnerSegment2D,
-              std::function< double( const OwnerSegment2D&,
-                  const SpatialDomain< OwnerSegment2D::dim >& ) > >
+    class OpenGeodeStochasticException : public OpenGeodeException
     {
-    public:
-        explicit IntensityTerm( std::string_view name,
-            double lambda,
-            std::vector< uuid > targeted_set_ids,
-            double caracteristic_length,
-            const SpatialDomain< OwnerSegment2D::dim >& domain );
+    protected:
+        using OpenGeodeException::OpenGeodeException;
     };
 } // namespace geode

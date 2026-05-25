@@ -40,9 +40,10 @@ namespace geode::detail
     {
         explicit EnergyScale( double param )
         {
-            OPENGEODE_EXCEPTION( param >= 0.,
-                "[Gibbs energy term] - The model parameter "
-                "cannot be negative." );
+            OpenGeodeStochasticStochasticException::check_exception(
+                param >= 0., nullptr, OpenGeodeException::TYPE::data,
+                "[Gibbs energy term] - The model parameter cannot be "
+                "negative." );
 
             if( param >= geode::GLOBAL_EPSILON )
             {
@@ -89,13 +90,17 @@ namespace geode
     public:
         explicit EnergyTerm( std::string_view name,
             double param,
-            std::vector< uuid >&& targeted_set_ids,
+            std::vector< uuid >&& impacted_set_ids,
             const SpatialDomain< ObjectType::dim >& domain )
             : energy_scale_{ param },
-              targeted_set_ids_{ std::move( targeted_set_ids ) },
+              impacted_set_ids_{ std::move( impacted_set_ids ) },
               domain_( domain )
         {
-            std::sort( targeted_set_ids_.begin(), targeted_set_ids_.end() );
+            absl::c_sort( impacted_set_ids_ );
+            impacted_set_ids_.erase( std::unique( impacted_set_ids_.begin(),
+                                         impacted_set_ids_.end() ),
+                impacted_set_ids_.end() );
+            impacted_set_ids_.shrink_to_fit();
             IdentifierBuilder builder( *this );
             builder.set_name( name );
         }
@@ -107,9 +112,9 @@ namespace geode
             return energy_scale_.parameter();
         }
 
-        [[nodiscard]] const std::vector< uuid >& targeted_set_ids() const
+        [[nodiscard]] const std::vector< uuid >& impacted_set_ids() const
         {
-            return targeted_set_ids_;
+            return impacted_set_ids_;
         }
 
         /// Energy contribution for a given statistic multiplier
@@ -143,9 +148,9 @@ namespace geode
                 absl::StrCat( "Term : ", name().value_or( id().string() ),
                     "; uuid: ", id().string(),
                     " parameter value: ", energy_scale_.parameter(),
-                    " applyied on ", targeted_set_ids_.size(),
+                    " applyied on ", impacted_set_ids_.size(),
                     " object subsets -->" );
-            for( const auto& set_id : targeted_set_ids_ )
+            for( const auto& set_id : impacted_set_ids_ )
             {
                 absl::StrAppend( &message, "\t", set_id.string() );
             }
@@ -153,10 +158,10 @@ namespace geode
         }
 
     protected:
-        [[nodiscard]] bool is_targeted_set( const uuid& set_id ) const
+        [[nodiscard]] bool is_impacted_set( const uuid& set_id ) const
         {
             return std::binary_search(
-                targeted_set_ids_.begin(), targeted_set_ids_.end(), set_id );
+                impacted_set_ids_.begin(), impacted_set_ids_.end(), set_id );
         }
 
         [[nodiscard]] const SpatialDomain< ObjectType::dim >& domain() const
@@ -164,30 +169,24 @@ namespace geode
             return domain_;
         }
 
-        //        bool intersects_domain( const ObjectType& obj ) const
-        //        {
-        //            return SpatialDomainChecker< ObjectType
-        //            >::intersects_domain(
-        //                domain_, obj );
-        //        }
-
         template < typename Func >
-        void for_each_targeted_object(
-            const ObjectSets< ObjectType >& state, Func&& do_apply ) const
+        void for_each_object_in_sets( const ObjectSets< ObjectType >& state,
+            const std::vector< uuid >& set_ids,
+            Func&& do_apply ) const
         {
-            for( const auto& targeted_set_id : targeted_set_ids_ )
+            for( const auto& set_id : set_ids )
             {
-                for( const auto set_id :
-                    state.get_objects_in_set( targeted_set_id ) )
+                for( const auto object_ids :
+                    state.get_objects_in_set( set_id ) )
                 {
-                    std::forward< Func >( do_apply )( set_id );
+                    std::forward< Func >( do_apply )( object_ids );
                 }
             }
         }
 
     private:
         detail::EnergyScale energy_scale_;
-        std::vector< uuid > targeted_set_ids_;
+        std::vector< uuid > impacted_set_ids_;
         const SpatialDomain< ObjectType::dim >& domain_;
     };
 } // namespace geode

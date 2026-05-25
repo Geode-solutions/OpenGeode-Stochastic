@@ -23,20 +23,32 @@
 
 #pragma once
 
-#include <limits>
-
-#include <geode/basic/common.hpp>
-#include <geode/basic/library.hpp>
-#include <geode/basic/logger.hpp>
-
-#include <geode/stochastic/opengeode_stochastic_stochastic_export.hpp>
-#include <geode/stochastic/project.hpp>
+#include <geode/stochastic/spatial/spatial_domain.hpp>
 
 namespace geode
 {
-    OPENGEODE_LIBRARY(
-        opengeode_stochastic_stochastic_api, OpenGeodeStochastic, Stochastic );
+    template < typename ObjectType >
+    class SingleObjectFeature
+    {
+    public:
+        virtual ~SingleObjectFeature() = default;
 
-    static constexpr double LOG_PROB_INVALID =
-        -std::numeric_limits< double >::infinity();
+        virtual double evaluate( const ObjectType& obj,
+            const SpatialDomain< ObjectType::dim >& domain ) const = 0;
+    };
+
+    template < typename ObjectType >
+    class ObjectInDomainFeature : public SingleObjectFeature< ObjectType >
+    {
+    public:
+        double evaluate( const ObjectType& obj,
+            const SpatialDomain< ObjectType::dim >& domain ) const override
+        {
+            return SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
+                       domain, obj )
+                       ? 1.0
+                       : 0.0;
+        }
+    };
+
 } // namespace geode

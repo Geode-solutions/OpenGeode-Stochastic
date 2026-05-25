@@ -91,7 +91,9 @@ namespace geode
 
         void add_x_node_monitoring( double beta_x_node )
         {
-            OPENGEODE_EXCEPTION( beta_x_node <= 1.0 && beta_x_node >= 0.,
+            OpenGeodeStochasticStochasticException::check_exception(
+                beta_x_node <= 1.0 && beta_x_node >= 0., nullptr,
+                OpenGeodeException::TYPE::data,
                 "[FractureSimulationRunner] x node should be inhibitated, "
                 "please provise a value in [0., 1.]." );
             beta_x_node_ = beta_x_node;
@@ -225,10 +227,10 @@ namespace geode
                 return;
             }
             const auto set_id = set_name_to_uuid_.at( set_desc.name );
-            auto interaction =
-                std::make_unique< MinimalDistanceCutoff< OwnerSegment2D > >(
-                    set_desc.minimal_spacing,
-                    PairwiseInteraction< OwnerSegment2D >::SCOPE::same_set );
+            auto interaction = std::make_unique<
+                EuclideanCutoffInteraction< OwnerSegment2D > >(
+                set_desc.minimal_spacing,
+                PairwiseInteraction< OwnerSegment2D >::SCOPE::same_set );
 
             this->ordered_energy_terms_.push_back(
                 this->energy_terms_collection_.add_energy_term(
@@ -248,10 +250,10 @@ namespace geode
                 {
                     set_uuids.push_back( id );
                 }
-                auto interaction =
-                    std::make_unique< MinimalDistanceCutoff< OwnerSegment2D > >(
-                        0., PairwiseInteraction<
-                                OwnerSegment2D >::SCOPE::different_set );
+                auto interaction = std::make_unique<
+                    EuclideanCutoffInteraction< OwnerSegment2D > >(
+                    0., PairwiseInteraction<
+                            OwnerSegment2D >::SCOPE::different_set );
 
                 this->ordered_energy_terms_.push_back(
                     this->energy_terms_collection_.add_energy_term(

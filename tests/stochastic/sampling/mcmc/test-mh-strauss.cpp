@@ -158,7 +158,7 @@ namespace
         }
 
         void check_statistics(
-            const geode::StatisticsMonitor& statistic_monitoring ) const
+            const geode::StatisticsTracker& statistic_monitoring ) const
         {
             const auto& computed_means = statistic_monitoring.means();
 
@@ -177,9 +177,9 @@ namespace
                     target_vs_mean_error /= expected_mean;
                 }
 
-                OPENGEODE_EXCEPTION( target_vs_mean_error < 0.1,
-                    "[MH test] Statistic value ", computed_means[stat_id],
-                    " for energy term: ",
+                geode::OpenGeodeStochasticStochasticException::test(
+                    target_vs_mean_error < 0.1, "[MH test] Statistic value ",
+                    computed_means[stat_id], " for energy term: ",
                     term.name().value_or( term.id().string() ),
                     " not close enough to expected value ", expected_mean,
                     " --> error: ", target_vs_mean_error );
@@ -339,7 +339,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
         test_single_type_strauss();
         test_multitype_strauss();

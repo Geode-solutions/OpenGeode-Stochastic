@@ -21,22 +21,22 @@
  *
  */
 
+#include <variant>
+
 #pragma once
-
-#include <limits>
-
-#include <geode/basic/common.hpp>
-#include <geode/basic/library.hpp>
-#include <geode/basic/logger.hpp>
-
-#include <geode/stochastic/opengeode_stochastic_stochastic_export.hpp>
-#include <geode/stochastic/project.hpp>
-
 namespace geode
 {
-    OPENGEODE_LIBRARY(
-        opengeode_stochastic_stochastic_api, OpenGeodeStochastic, Stochastic );
+    struct ObjectInDomainFeatureConfig
+    {
+    };
 
-    static constexpr double LOG_PROB_INVALID =
-        -std::numeric_limits< double >::infinity();
+    struct SegmentLengthInsideBoxFeatureConfig
+    {
+        double characteristic_length;
+    };
+
+    using SingleObjectFeatureConfig = std::variant< std::monostate,
+        ObjectInDomainFeatureConfig,
+        SegmentLengthInsideBoxFeatureConfig >;
+
 } // namespace geode

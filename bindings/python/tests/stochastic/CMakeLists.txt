@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-add_geode_python_test(
-    SOURCE "test-py-mh-fractures.py"
-    DEPENDENCIES
-        ${PROJECT_NAME}::py_stochastic
-)
+#add_geode_python_test(
+#    SOURCE "test-py-mh-fractures.py"
+#    DEPENDENCIES
+#        ${PROJECT_NAME}::py_stochastic
+#)

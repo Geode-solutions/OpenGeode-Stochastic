@@ -22,6 +22,8 @@
  */
 #pragma once
 
+#include <absl/container/flat_hash_map.h>
+
 #include <geode/basic/range.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 #include <geode/stochastic/spatial/pairwise_interactions/distance_cutoff.hpp>
@@ -30,18 +32,20 @@
 
 namespace geode
 {
-    // rename PairwiseInteractionTerm
     template < typename ObjectType >
     class PairwiseTerm : public EnergyTerm< ObjectType >
     {
     public:
         explicit PairwiseTerm( std::string_view name,
             double gamma,
-            std::vector< uuid > targeted_set_ids,
-            std::unique_ptr< PairwiseInteraction< ObjectType > > interaction,
-            const SpatialDomain< ObjectType::dim >& domain )
+            std::vector< uuid >&& impacted_set_ids,
+            const SpatialDomain< ObjectType::dim >& domain,
+            absl::flat_hash_map< uuid, std::vector< uuid > >&&
+                objectset_adjacency_map,
+            std::unique_ptr< PairwiseInteraction< ObjectType > > interaction )
             : EnergyTerm< ObjectType >(
-                  name, gamma, std::move( targeted_set_ids ), domain ),
+                  name, gamma, std::move( impacted_set_ids ), domain ),
+              objectset_adjacency_map_( std::move( objectset_adjacency_map ) ),
               interaction_( std::move( interaction ) )
         {
         }
@@ -57,30 +61,12 @@ namespace geode
             const ObjectSets< ObjectType >& state,
             const ObjectRef< ObjectType >& new_object ) const final
         {
-            if( !this->is_targeted_set( new_object.set_id ) )
+            if( !this->is_impacted_set( new_object.set_id ) )
             {
                 return 0.0;
             }
-            double delta = 0.0;
-            const auto neighbors =
-                state.neighbors( new_object.object, this->targeted_set_ids(),
-                    interaction_->neighborhood_searching_distance() );
-            for( const auto& neigh_id : neighbors )
-            {
-                geode::ObjectRef< ObjectType > neigh_object{
-                    state.get_object( neigh_id ), neigh_id.set_id
-                };
-                // is that really the good test?
-                // intersect?
-                if( SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
-                        this->domain(), new_object.object )
-                    || SpatialDomainChecker<
-                        ObjectType >::is_anchored_in_domain( this->domain(),
-                        neigh_object.object ) )
-                {
-                    delta += interaction_->evaluate( new_object, neigh_object );
-                }
-            }
+            auto delta = compute_local_interactions_with_neighbors(
+                new_object, std::nullopt, state );
             return this->contribution( delta );
         }
 
@@ -88,32 +74,14 @@ namespace geode
             const ObjectSets< ObjectType >& state,
             const ObjectId& object_id ) const override
         {
-            if( !this->is_targeted_set( object_id.set_id ) )
+            if( !this->is_impacted_set( object_id.set_id ) )
             {
                 return 0.0;
             }
-            double delta = 0.0;
-            ObjectRef< ObjectType > object_to_remove{
-                state.get_object( object_id ), object_id.set_id
-            };
-            const auto neighbors =
-                state.neighbors( object_id, this->targeted_set_ids(),
-                    interaction_->neighborhood_searching_distance() );
-            for( auto neigh_id : neighbors )
-            {
-                ObjectRef< ObjectType > neigh_object{
-                    state.get_object( neigh_id ), neigh_id.set_id
-                };
-                if( SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
-                        this->domain(), object_to_remove.object )
-                    || SpatialDomainChecker<
-                        ObjectType >::is_anchored_in_domain( this->domain(),
-                        neigh_object.object ) )
-                {
-                    delta += interaction_->evaluate(
-                        object_to_remove, neigh_object );
-                }
-            }
+            ObjectRef< ObjectType > old_object{ state.get_object( object_id ),
+                object_id.set_id };
+            auto delta = compute_local_interactions_with_neighbors(
+                old_object, object_id, state );
             return this->contribution( -delta );
         }
 
@@ -122,58 +90,14 @@ namespace geode
             const ObjectId& old_object_id,
             const ObjectRef< ObjectType >& new_object ) const override
         {
-            if( !this->is_targeted_set( old_object_id.set_id )
-                || !this->is_targeted_set( new_object.set_id ) )
-            {
-                return 0.0;
-            }
-            double delta = 0.0;
-
-            // Remove old object's interactions
-            ObjectRef< ObjectType > object_to_remove{
+            auto delta_new = compute_local_interactions_with_neighbors(
+                new_object, old_object_id, state );
+            ObjectRef< ObjectType > old_object{
                 state.get_object( old_object_id ), old_object_id.set_id
             };
-            const auto old_neighbors =
-                state.neighbors( old_object_id, this->targeted_set_ids(),
-                    interaction_->neighborhood_searching_distance() );
-            for( auto neigh_id : old_neighbors )
-            {
-                ObjectRef< ObjectType > neigh_object{
-                    state.get_object( neigh_id ), neigh_id.set_id
-                };
-                if( SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
-                        this->domain(), object_to_remove.object )
-                    || SpatialDomainChecker<
-                        ObjectType >::is_anchored_in_domain( this->domain(),
-                        neigh_object.object ) )
-                {
-                    delta -= interaction_->evaluate(
-                        object_to_remove, neigh_object );
-                }
-            }
-
-            // Add new object's interactions
-            const auto new_neighbors =
-                state.neighbors( new_object.object, this->targeted_set_ids(),
-                    interaction_->neighborhood_searching_distance() );
-            for( auto neigh_id : new_neighbors )
-            {
-                if( old_object_id == neigh_id )
-                {
-                    continue; // avoid double-counting
-                }
-                ObjectRef< ObjectType > neigh_object{
-                    state.get_object( neigh_id ), neigh_id.set_id
-                };
-                if( SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
-                        this->domain(), new_object.object )
-                    || SpatialDomainChecker<
-                        ObjectType >::is_anchored_in_domain( this->domain(),
-                        neigh_object.object ) )
-                {
-                    delta += interaction_->evaluate( new_object, neigh_object );
-                }
-            }
+            auto delta_old = compute_local_interactions_with_neighbors(
+                old_object, old_object_id, state );
+            auto delta = delta_new - delta_old;
             return this->contribution( delta );
         }
 
@@ -181,57 +105,82 @@ namespace geode
             const ObjectSets< ObjectType >& state ) const override
         {
             double sum = 0.0;
-            this->for_each_targeted_object( state, [&]( const ObjectId&
-                                                           obj_id ) {
-                const auto& cur_obj = state.get_object( obj_id );
-                if( !SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
-                        this->domain(), cur_obj ) )
-                {
-                    return;
-                }
-                ObjectRef< ObjectType > object{ cur_obj, obj_id.set_id };
-                const auto neighbors =
-                    state.neighbors( obj_id, this->targeted_set_ids(),
-                        interaction_->neighborhood_searching_distance() );
-                for( const auto& neigh_obj_id : neighbors )
-                {
-                    if( !is_new_pair( cur_obj, obj_id, neigh_obj_id ) )
-                    {
-                        continue;
-                    }
-                    ObjectRef< ObjectType > neigh_object{
-                        state.get_object( neigh_obj_id ), neigh_obj_id.set_id
-                    };
-
-                    sum += interaction_->evaluate( object, neigh_object );
-                }
-            } );
+            this->for_each_object_in_sets( state, this->impacted_set_ids(),
+                [&]( const ObjectId& cur_obj_id ) {
+                    sum += accumulate_interactions_with_neighbors(
+                        cur_obj_id, state );
+                } );
             return sum;
         }
 
     private:
-        [[nodiscard]] bool is_new_pair( const ObjectType& obj,
-            const ObjectId& obj_id,
-            const ObjectId& neigh_obj_id ) const
+        double compute_local_interactions_with_neighbors(
+            const ObjectRef< ObjectType >& object_ref,
+            std::optional< ObjectId > exclude_id,
+            const ObjectSets< ObjectType >& state ) const
         {
-            if( !SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
-                    this->domain(), obj ) )
+            double sum = 0.0;
+            const auto neighbors = state.neighbors( object_ref.object,
+                objectset_adjacency_map_.at( object_ref.set_id ),
+                interaction_->neighborhood_searching_distance(), exclude_id );
+            for( const auto& neigh_id : neighbors )
             {
-                return true;
+                ObjectRef< ObjectType > neigh_object{
+                    state.get_object( neigh_id ), neigh_id.set_id
+                };
+                if( !is_any_in_domain(
+                        object_ref.object, neigh_object.object ) )
+                {
+                    continue;
+                }
+                sum += interaction_->evaluate( object_ref, neigh_object );
             }
-            if( neigh_obj_id.set_id < obj_id.set_id )
+            return sum;
+        }
+
+        double accumulate_interactions_with_neighbors(
+            const ObjectId& object_id,
+            const ObjectSets< ObjectType >& state ) const
+        {
+            const auto& cur_obj = state.get_object( object_id );
+            if( !is_in_domain( cur_obj ) )
             {
-                return false;
+                return 0.;
             }
-            if( neigh_obj_id.set_id == obj_id.set_id
-                && neigh_obj_id.index <= obj_id.index )
+            double sum = 0.0;
+            const auto neighbors = state.neighbors( cur_obj,
+                objectset_adjacency_map_.at( object_id.set_id ),
+                interaction_->neighborhood_searching_distance(), object_id );
+            ObjectRef< ObjectType > object_ref{ cur_obj, object_id.set_id };
+            for( const auto& neigh_id : neighbors )
             {
-                return false;
+                const auto& neigh_obj = state.get_object( neigh_id );
+                if( neigh_id < object_id && is_in_domain( neigh_obj ) )
+                {
+                    continue;
+                }
+                ObjectRef< ObjectType > neigh_object{ neigh_obj,
+                    neigh_id.set_id };
+                sum += interaction_->evaluate( object_ref, neigh_object );
             }
-            return true;
+            return sum;
+        }
+
+        bool is_any_in_domain(
+            const ObjectType& object1, const ObjectType& object2 ) const
+        {
+            return is_in_domain( object1 ) || is_in_domain( object2 );
+        }
+
+        bool is_in_domain( const ObjectType& object ) const
+        {
+            return SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
+                this->domain(), object );
         }
 
     private:
+        absl::flat_hash_map< uuid, std::vector< uuid > >
+            objectset_adjacency_map_;
         std::unique_ptr< PairwiseInteraction< ObjectType > > interaction_;
     };
 } // namespace geode

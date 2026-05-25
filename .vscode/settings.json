@@ -1,8 +1,9 @@
 {
-    "C_Cpp.default.cppStandard": "c++11",
+    "C_Cpp.default.cppStandard": "c++17",
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/include",
         "${workspaceFolder}/build/include",
+        "${workspaceFolder:OpenGeode}/include",
         "${workspaceFolder:OpenGeode}/build/opengeode/include",
         "${workspaceFolder:OpenGeode}/build/third_party/abseil/install/include",
         "${workspaceFolder:OpenGeode}/build/third_party/bitsery/install/include",
@@ -14,6 +15,7 @@
         "${workspaceFolder}/include",
         "${workspaceFolder}/src",
         "${workspaceFolder}/build/include",
+        "${workspaceFolder:OpenGeode}/include",
         "${workspaceFolder:OpenGeode}/build/opengeode/include",
         "${workspaceFolder:OpenGeode}/build/third_party/abseil/install/include",
         "${workspaceFolder:OpenGeode}/build/third_party/bitsery/install/include",

@@ -20,11 +20,15 @@
  * SOFTWARE.
  *
  */
-#include <geode/stochastic/models/energy_terms/intensity_term.hpp>
-
 #include <geode/geometry/point.hpp>
+#include <geode/stochastic/models/energy_terms/energy_term_builder.hpp>
+#include <geode/stochastic/models/energy_terms/energy_term_config.hpp>
+
 #include <geode/stochastic/spatial/object_sets.hpp>
+#include <geode/stochastic/spatial/single_object_features/single_object_feature_config.hpp>
 #include <geode/stochastic/spatial/spatial_domain.hpp>
+
+const std::string set_name{ "segments" };
 
 geode::uuid init_segment_set(
     geode::ObjectSets< geode::OwnerSegment2D >& pattern )
@@ -43,7 +47,7 @@ geode::uuid init_segment_set(
     Segment s_buffer{ geode::Point2D{ { 2.0, 2.0 } },
         geode::Point2D{ { 3.0, 3.0 } } }; // clipped = 0.0
 
-    auto set_id = pattern.add_set( "segments" );
+    auto set_id = pattern.add_set( set_name );
     pattern.add_object( std::move( s1 ), set_id, false );
     pattern.add_object( std::move( s2 ), set_id, false );
     pattern.add_object( std::move( s_buffer ), set_id, false );
@@ -59,18 +63,16 @@ geode::SpatialDomain< 2 > init_domain()
     return geode::SpatialDomain< 2 >{ box, 0.5 };
 }
 
-void run_intensity_test( double lambda,
-    double characteristic_length,
+void run_intensity_test( const geode::SingleObjectTermConfig& term_config,
     const geode::ObjectSets< geode::OwnerSegment2D >& pattern,
-    const geode::uuid& set_id,
-    const geode::SpatialDomain< 2 >& domain )
+    const geode::SpatialDomain< 2 >& domain,
+    double characteristic_length )
 {
-    geode::IntensityTerm term(
-        "intensity", lambda, { set_id }, characteristic_length, domain );
-
+    auto term = build_energy_term( term_config, pattern, domain );
+    const auto& set_id = pattern.get_set_uuid( set_name );
     const double neg_log_lambda =
-        ( lambda > 0. ? -std::log( lambda )
-                      : std::numeric_limits< double >::infinity() );
+        ( term_config.lambda > 0. ? -std::log( term_config.lambda )
+                                  : std::numeric_limits< double >::infinity() );
 
     // Total clipped length inside domain:
     // s1: 1.0
@@ -80,12 +82,12 @@ void run_intensity_test( double lambda,
     const double scaled_total = total_length / characteristic_length;
 
     const double expected_total =
-        ( lambda > 0. ? neg_log_lambda * scaled_total
-                      : std::numeric_limits< double >::infinity() );
+        ( term_config.lambda > 0. ? neg_log_lambda * scaled_total
+                                  : std::numeric_limits< double >::infinity() );
 
     // --- Total log
-    double total = term.total_log( pattern );
-    OPENGEODE_EXCEPTION(
+    double total = term->total_log( pattern );
+    geode::OpenGeodeStochasticStochasticException::test(
         total == expected_total, "[IntensityTerm] total_log wrong" );
 
     // --- Delta add (segment fully inside)
@@ -94,11 +96,12 @@ void run_intensity_test( double lambda,
     geode::ObjectRef< geode::OwnerSegment2D > ref_inside{ s_inside, set_id };
 
     double expected_add =
-        ( lambda > 0. ? neg_log_lambda * ( 1.0 / characteristic_length )
-                      : std::numeric_limits< double >::infinity() );
+        ( term_config.lambda > 0.
+                ? neg_log_lambda * ( 1.0 / characteristic_length )
+                : std::numeric_limits< double >::infinity() );
 
-    double delta = term.delta_log_add( pattern, ref_inside );
-    OPENGEODE_EXCEPTION(
+    double delta = term->delta_log_add( pattern, ref_inside );
+    geode::OpenGeodeStochasticStochasticException::test(
         delta == expected_add, "[IntensityTerm] delta_log_add inside wrong" );
 
     // --- Delta add outside domain
@@ -106,27 +109,28 @@ void run_intensity_test( double lambda,
         geode::Point2D{ { 3.0, 3.0 } } };
     geode::ObjectRef< geode::OwnerSegment2D > ref_out{ s_outside, set_id };
 
-    delta = term.delta_log_add( pattern, ref_out );
-    OPENGEODE_EXCEPTION(
+    delta = term->delta_log_add( pattern, ref_out );
+    geode::OpenGeodeStochasticStochasticException::test(
         delta == 0.0, "[IntensityTerm] delta_log_add outside wrong" );
 
     // --- Delta remove (first segment)
     geode::ObjectId obj_id{ 0, false, set_id };
-    double expected_remove = ( lambda > 0. ? -expected_add : 0.0 );
+    double expected_remove = ( term_config.lambda > 0. ? -expected_add : 0.0 );
 
-    delta = term.delta_log_remove( pattern, obj_id );
-    OPENGEODE_EXCEPTION(
+    delta = term->delta_log_remove( pattern, obj_id );
+    geode::OpenGeodeStochasticStochasticException::test(
         delta == expected_remove, "[IntensityTerm] delta_log_remove wrong" );
 
     // --- Delta change: inside → outside
-    delta = term.delta_log_change( pattern, obj_id, ref_out );
-    OPENGEODE_EXCEPTION( delta == expected_remove,
+    delta = term->delta_log_change( pattern, obj_id, ref_out );
+    geode::OpenGeodeStochasticStochasticException::test(
+        delta == expected_remove,
         "[IntensityTerm] delta_log_change inside→outside wrong" );
 
     // --- Delta change: outside → inside
     geode::ObjectId buffer_id{ 2, false, set_id };
-    delta = term.delta_log_change( pattern, buffer_id, ref_inside );
-    OPENGEODE_EXCEPTION( delta == expected_add,
+    delta = term->delta_log_change( pattern, buffer_id, ref_inside );
+    geode::OpenGeodeStochasticStochasticException::test( delta == expected_add,
         "[IntensityTerm] delta_log_change outside→inside wrong" );
 
     // --- Delta change: inside → inside (same length)
@@ -134,8 +138,8 @@ void run_intensity_test( double lambda,
         geode::Point2D{ { 0.8, 0.0 } } }; // length still 1
     geode::ObjectRef< geode::OwnerSegment2D > ref_same{ s_same, set_id };
 
-    delta = term.delta_log_change( pattern, obj_id, ref_same );
-    OPENGEODE_EXCEPTION(
+    delta = term->delta_log_change( pattern, obj_id, ref_same );
+    geode::OpenGeodeStochasticStochasticException::test(
         delta == 0.0, "[IntensityTerm] delta_log_change inside→inside wrong" );
 }
 
@@ -143,7 +147,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
 
         geode::ObjectSets< geode::OwnerSegment2D > pattern;
@@ -152,11 +156,21 @@ int main()
 
         const double L0 = 1.0;
 
-        run_intensity_test( 0.5, L0, pattern, set_id, domain );
-        run_intensity_test(
-            geode::GLOBAL_EPSILON, L0, pattern, set_id, domain );
-        run_intensity_test( 50.0, L0, pattern, set_id, domain );
-        run_intensity_test( 0.0, L0, pattern, set_id, domain );
+        geode::SingleObjectTermConfig term_config;
+        geode::SegmentLengthInsideBoxFeatureConfig object_length{ L0 };
+
+        term_config.term_name = "intensity";
+        term_config.object_set_names = { set_name };
+        term_config.lambda = 0.5;
+        term_config.object_feature = object_length;
+
+        run_intensity_test( term_config, pattern, domain, L0 );
+        term_config.lambda = geode::GLOBAL_EPSILON;
+        run_intensity_test( term_config, pattern, domain, L0 );
+        term_config.lambda = 50.0;
+        run_intensity_test( term_config, pattern, domain, L0 );
+        term_config.lambda = 0.0;
+        run_intensity_test( term_config, pattern, domain, L0 );
     }
     catch( ... )
     {

@@ -22,7 +22,7 @@
  *
  */
 
-#include <geode/stochastic/models/energy_terms/intensity_term.hpp>
+#include <geode/stochastic/spatial/single_object_features/segment_length_feature.hpp>
 
 #include <geode/stochastic/spatial/object_sets.hpp>
 
@@ -95,27 +95,23 @@ namespace
             ( clipped_dx * clipped_dx ) + ( clipped_dy * clipped_dy ) );
     }
 } // namespace
+
 namespace geode
 {
-    IntensityTerm::IntensityTerm( std::string_view name,
-        double lambda,
-        std::vector< uuid > targeted_set_ids,
-        double caracteristic_length,
-        const SpatialDomain< OwnerSegment2D::dim >& domain )
-        : SingleObjectTerm< OwnerSegment2D,
-              std::function< double( const OwnerSegment2D&,
-                  const SpatialDomain< OwnerSegment2D::dim >& ) > >(
-              name,
-              lambda,
-              std::move( targeted_set_ids ),
-              1.0 / caracteristic_length,
-              []( const OwnerSegment2D& segment,
-                  const SpatialDomain< OwnerSegment2D::dim >& spatial_domain ) {
-                  auto seg_extremities = segment.vertices();
-                  return length_inside_box( seg_extremities[0],
-                      seg_extremities[1], spatial_domain.box() );
-              },
-              domain )
+    SegmentLengthInsideBoxFeature::SegmentLengthInsideBoxFeature(
+        double characteristic_length )
+        : inv_length_( 1.0 / characteristic_length )
     {
+    }
+
+    double SegmentLengthInsideBoxFeature::evaluate(
+        const OwnerSegment2D& segment, const SpatialDomain< 2 >& domain ) const
+    {
+        auto seg_extremities = segment.vertices();
+
+        const double length = length_inside_box(
+            seg_extremities[0], seg_extremities[1], domain.box() );
+
+        return inv_length_ * length;
     }
 } // namespace geode

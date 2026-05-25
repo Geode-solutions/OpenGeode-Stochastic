@@ -39,7 +39,9 @@ namespace geode
         MoveResult< ObjectType > proposed_move;
         ObjectRef< ObjectType > new_object()
         {
-            OPENGEODE_EXCEPTION( proposed_move.new_object.has_value(),
+            OpenGeodeStochasticStochasticException::check_exception(
+                proposed_move.new_object.has_value(), nullptr,
+                OpenGeodeException::TYPE::data,
                 "[Proposal] Proposal has no new_object" );
             return ObjectRef< ObjectType >{ proposed_move.new_object.value(),
                 set_id };
@@ -47,7 +49,9 @@ namespace geode
 
         ObjectId old_object_id()
         {
-            OPENGEODE_EXCEPTION( proposed_move.old_object_id.has_value(),
+            OpenGeodeStochasticStochasticException::check_exception(
+                proposed_move.old_object_id.has_value(), nullptr,
+                OpenGeodeException::TYPE::data,
                 "[Proposal] Proposal has no old_object_id" );
             return ObjectId{ proposed_move.old_object_id.value(), false,
                 set_id };
@@ -69,7 +73,8 @@ namespace geode
         Proposal< ObjectType > propose( const ObjectSets< ObjectType >& current,
             RandomEngine& engine ) const
         {
-            OPENGEODE_EXCEPTION( !set_moves_.empty(),
+            OpenGeodeStochasticStochasticException::check_exception(
+                !set_moves_.empty(), nullptr, OpenGeodeException::TYPE::data,
                 "[MCMC Proposal Kernel] - no move are defined in the Kernel." );
             auto rnd = engine.sample_uniform( uniform_distribution_closed_ );
             for( const auto proba_id : Range{ cumulative_probs_.size() } )
@@ -82,12 +87,10 @@ namespace geode
                             current.get_set( set_id ), engine ) };
                 }
             }
-            throw OpenGeodeException(
+            throw OpenGeodeStochasticStochasticException{ nullptr,
+                OpenGeodeException::TYPE::internal,
                 "[MCMC Proposal Kernel]: Should not be reached move pdf is "
-                "correctly set." );
-            return Proposal< ObjectType >{ uuid{},
-                set_moves_.back().second->propose_move(
-                    current.get_set( uuid{} ), engine ) };
+                "correctly set." };
         }
 
         void add_move(
@@ -131,7 +134,9 @@ namespace geode
                 probabilities.begin(), probabilities.end(), 0.0 );
 
             // Ensure total > 0
-            OPENGEODE_EXCEPTION( total > GLOBAL_EPSILON,
+            OpenGeodeStochasticStochasticException::check_exception(
+                total > GLOBAL_EPSILON, nullptr,
+                OpenGeodeException::TYPE::internal,
                 "[MCMC Proposal Kernel] - Total "
                 "probability is zero in Kernel." );
 

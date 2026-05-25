@@ -32,14 +32,14 @@ namespace
     void test_acceptance_prob_helper()
     {
         // log_accept >= 0 → prob = 1
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             geode::MetropolisHastings< geode::Point2D >::acceptance_prob_helper(
                 0.5 )
                 == 1.0,
             "[MH test] acceptance_prob_helper wrong for positive log_accept." );
 
         // very negative → prob = 0
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             geode::MetropolisHastings< geode::Point2D >::acceptance_prob_helper(
                 -800.0 )
                 == 0.0,
@@ -49,14 +49,15 @@ namespace
         double val =
             geode::MetropolisHastings< geode::Point2D >::acceptance_prob_helper(
                 -1.0 );
-        OPENGEODE_EXCEPTION( std::abs( val - std::exp( -1.0 ) ) < 1e-12,
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::abs( val - std::exp( -1.0 ) ) < 1e-12,
             "[MH test] acceptance_prob_helper wrong for -1.0." );
     }
 
     void test_beta_setter( geode::MetropolisHastings< geode::Point2D >& mh )
     {
         mh.set_beta( 0.5 );
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             mh.beta() == 0.5, "[MH test] beta not set correctly." );
 
         bool exception_thrown = false;
@@ -68,7 +69,7 @@ namespace
         {
             exception_thrown = true;
         }
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             exception_thrown, "[MH test] negative beta did not throw." );
     }
 
@@ -90,7 +91,7 @@ namespace
             auto result = mh.step( state, engine );
             // Invariant: fixed object must remain
 
-            OPENGEODE_EXCEPTION(
+            geode::OpenGeodeStochasticStochasticException::test(
                 result.decision == geode::MHDecision::Accepted
                     || result.decision == geode::MHDecision::Rejected,
                 "[MH test] decision should be Accepted or Rejected." );
@@ -153,7 +154,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
 
         geode::Point2D min_point{ { 0., 0. } };
         geode::Point2D max_point{ { 10., 10. } };
@@ -189,7 +190,8 @@ int main()
         state.add_object( geode::Point2D{ { 3., 3. } }, set_id, true );
 
         test_steps( mh, state );
-        // OPENGEODE_EXCEPTION( state.get_set( set_id ).nb_fixed_objects() == 2
+        // geode::OpenGeodeStochasticStochasticException::test( state.get_set(
+        // set_id ).nb_fixed_objects() == 2
         // );
 
         test_beta_setter( mh );

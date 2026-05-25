@@ -28,16 +28,16 @@
 namespace geode
 {
 
-    class StatisticsMonitor
+    class StatisticsTracker
     {
     public:
-        StatisticsMonitor( StatisticsMonitor&& ) = default;
-        StatisticsMonitor( const StatisticsMonitor& ) = default;
-        StatisticsMonitor& operator=( StatisticsMonitor&& ) noexcept = default;
-        StatisticsMonitor& operator=(
-            const StatisticsMonitor& ) noexcept = default;
+        StatisticsTracker( StatisticsTracker&& ) = default;
+        StatisticsTracker( const StatisticsTracker& ) = default;
+        StatisticsTracker& operator=( StatisticsTracker&& ) noexcept = default;
+        StatisticsTracker& operator=(
+            const StatisticsTracker& ) noexcept = default;
 
-        StatisticsMonitor( const index_t nb_energy_terms )
+        StatisticsTracker( const index_t nb_energy_terms )
         {
             means_.resize( nb_energy_terms, 0.0 );
             variances_.resize( nb_energy_terms, 0.0 );
@@ -45,7 +45,9 @@ namespace geode
 
         void add_realization( const std::vector< double >& values )
         {
-            OPENGEODE_EXCEPTION( values.size() == means_.size(),
+            OpenGeodeStochasticStochasticException::check_exception(
+                values.size() == means_.size(), nullptr,
+                OpenGeodeException::TYPE::data,
                 "[StatisticsMonitor] - Mismatch between realization size and "
                 "expected number of statistics." );
             ++count_;

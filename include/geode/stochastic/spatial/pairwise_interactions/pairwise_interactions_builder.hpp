@@ -21,33 +21,57 @@
  *
  */
 
+#include <geode/stochastic/spatial/pairwise_interactions/pairwise_interactions_config.hpp>
 #include <variant>
 
 #pragma once
 namespace geode
 {
     template < typename ObjectType >
-    std::unique_ptr< PairwiseInteraction< ObjectType > > build_interaction(
-        const PairwiseInteractionConfig& cfg )
+    std::unique_ptr< PairwiseInteraction< ObjectType > >
+        build_pairwise_interaction_impl(
+            const EuclideanDistanceCutoffConfig& cfg )
+    {
+        return std::make_unique< CenterEuclideanDistanceCutoff< ObjectType > >(
+            cfg.threshold );
+    }
+
+    template < typename ObjectType >
+    std::unique_ptr< PairwiseInteraction< ObjectType > >
+        build_pairwise_interaction_impl(
+            const MinimalDistanceCutoffConfig& cfg )
+    {
+        return std::make_unique< MinimalDistanceCutoff< ObjectType > >(
+            cfg.threshold );
+    }
+
+    template < typename ObjectType, typename NewInteractionConfig >
+    std::unique_ptr< PairwiseInteraction< ObjectType > >
+        build_pairwise_interaction_impl( const NewInteractionConfig& )
+    {
+        static_assert( sizeof( NewInteractionConfig ) == 0,
+            "Unsupported PairwiseInteractionConfig type" );
+        return nullptr;
+    }
+
+    template < typename ObjectType >
+    std::unique_ptr< PairwiseInteraction< ObjectType > >
+        build_pairwise_interaction_impl( const std::monostate& )
+    {
+        throw OpenGeodeStochasticStochasticException{ nullptr,
+            OpenGeodeException::TYPE::data,
+            "[PairWiseInteractionBuilder] interaction config not initialized" };
+    }
+
+    template < typename ObjectType >
+    std::unique_ptr< PairwiseInteraction< ObjectType > >
+        build_pairwise_interaction( const PairwiseInteractionConfig& cfg )
     {
         return std::visit(
-            [&]( auto&& c )
+            [&]( auto&& interaction_cfg )
                 -> std::unique_ptr< PairwiseInteraction< ObjectType > > {
-                using T = std::decay_t< decltype( c ) >;
-
-                if constexpr( std::is_same_v< T,
-                                  EuclideanCenterDistanceConfig > )
-                {
-                    return std::make_unique<
-                        EuclideanCenterDistance< ObjectType > >(
-                        c.threshold, c.weight );
-                }
-                else if constexpr( std::is_same_v< T,
-                                       HausdorffDistanceConfig > )
-                {
-                    return std::make_unique< HausdorffDistance< ObjectType > >(
-                        c.threshold, c.weight );
-                }
+                return build_pairwise_interaction_impl< ObjectType >(
+                    interaction_cfg );
             },
             cfg );
     }

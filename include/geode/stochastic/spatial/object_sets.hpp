@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <absl/container/btree_map.h>
+#include <absl/container/flat_hash_map.h>
 
 #include <geode/basic/uuid.hpp>
 
@@ -70,27 +70,28 @@ namespace geode
         void update_free_object( const ObjectId& object_id, Type&& object );
         void remove_free_object( const ObjectId& object_id );
 
-        // Object neighbor search by ObjectId (always excludes self)
-        std::vector< ObjectId > neighbors( const ObjectId& object_id,
-            const std::vector< uuid >& targeted_set_ids,
-            double searching_distance ) const;
-        // Object neighbor search by arbitrary object (return self if in the
-        // object_set)
         std::vector< ObjectId > neighbors( const Type& object,
             const std::vector< uuid >& targeted_set_ids,
-            double searching_distance ) const;
+            double searching_distance,
+            std::optional< ObjectId > exclude_id ) const;
 
         std::string string() const;
 
-        std::vector< uuid > get_existing_set_uuids(
-            const std::vector< std::string > set_names ) const;
+        uuid get_set_uuid( std::string_view set_name ) const;
+        std::vector< uuid > get_set_uuids(
+            const std::vector< std::string >& set_names ) const;
+        std::vector< std::pair< uuid, uuid > > get_set_uuid_pairs(
+            const std::vector< std::pair< std::string, std::string > >&
+                set_name_pairs ) const;
 
     private:
         ObjectSet< Type >& get_set( const uuid& set_id );
 
     private:
-        absl::btree_map< std::string, geode::uuid > object_set_name_to_uuid_;
-        absl::btree_map< uuid, ObjectSet< Type > > sets_;
+        absl::flat_hash_map< std::string, uuid > name_to_uuid_;
+        absl::flat_hash_map< uuid, index_t > uuid_to_index_;
+        std::vector< ObjectSet< Type > > sets_;
+
         ObjectNeighborhood< Type::dim > neighborhood_;
     };
 } // namespace geode

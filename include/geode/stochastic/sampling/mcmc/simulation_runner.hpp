@@ -23,8 +23,8 @@
 
 #pragma once
 #include <geode/stochastic/common.hpp>
+#include <geode/stochastic/inference/statistics_tracker.hpp>
 #include <geode/stochastic/models/energy_term_collection.hpp>
-#include <geode/stochastic/sampling/mcmc/helpers/simulation_monitor.hpp>
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_printer.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
 #include <geode/stochastic/spatial/spatial_domain.hpp>
@@ -64,7 +64,7 @@ namespace geode
     {
     public:
         SimulationRunner( const SpatialDomain< ObjectType::dim >& domain )
-            : domain_( domain ){};
+            : domain_( domain ) {};
         virtual ~SimulationRunner() = default;
 
         virtual void initialize() = 0;
@@ -76,7 +76,7 @@ namespace geode
             return object_sets_;
         }
 
-        StatisticsMonitor run(
+        StatisticsTracker< ObjectType > run(
             RandomEngine& engine, const SimulationConfigurator& config )
         {
             if( config.burn_in_steps > 0 )
@@ -85,13 +85,13 @@ namespace geode
             }
 
             // Initialize monitoring
-            StatisticsMonitor stats_monitor( energy_terms_collection_.size() );
-            std::unique_ptr< SimulationPrinter > printer;
+            StatisticsTracker< ObjectType > stats_monitor( *model_ );
+            std::unique_ptr< SimulationPrinter< ObjectType > > printer;
 
             if( config.printer.has_value() )
             {
-                printer = std::make_unique< SimulationPrinter >(
-                    config.printer.value() );
+                printer = std::make_unique< SimulationPrinter< ObjectType > >(
+                    *model_, config.printer.value() );
             }
 
             for( const auto realization : Range{ config.realizations } )
@@ -99,21 +99,19 @@ namespace geode
                 mh_sampler_->walk(
                     object_sets_, engine, config.metropolis_hasting_steps );
 
-                const auto stats = state_statistics();
+                const auto stats = model_->compute_statistics( object_sets_ );
                 stats_monitor.add_realization( stats );
 
                 if( printer )
                 {
-                    printer->print_statistics(
-                        stats, model_energy_term_names() );
+                    printer->print_statistics( stats );
                     printer->print_object_sets( object_sets_, realization );
                 }
             }
 
             if( printer )
             {
-                printer->print_statistics_summary(
-                    stats_monitor, model_energy_term_names() );
+                printer->print_statistics_summary( stats_monitor );
             }
 
             return stats_monitor;
@@ -124,48 +122,17 @@ namespace geode
             return object_sets_;
         }
 
-        std::vector< double > state_statistics() const
-        {
-            std::vector< double > statistic_values;
-            statistic_values.reserve( ordered_energy_terms_.size() );
-
-            for( const auto& energy_term_uuid : ordered_energy_terms_ )
-            {
-                const auto& term =
-                    energy_terms_collection_.get( energy_term_uuid );
-                statistic_values.push_back( term.statistic( object_sets_ ) );
-            }
-
-            return statistic_values;
-        }
-
-        std::string model_energy_term_names() const
-        {
-            std::vector< std::string > term_names;
-            term_names.reserve( ordered_energy_terms_.size() );
-
-            for( const auto& energy_term_uuid : ordered_energy_terms_ )
-            {
-                const auto& term =
-                    energy_terms_collection_.get( energy_term_uuid );
-                term_names.push_back(
-                    term.name().value_or( term.id().string() ) );
-            }
-
-            return absl::StrCat( absl::StrJoin( term_names, " ; " ), "\n" );
-        }
+    protected:
+        // void initialize_sets_and_samplers() = 0;
+        // void initialize_model() = 0;
 
     protected:
         SpatialDomain< ObjectType::dim > domain_;
-        std::vector< std::unique_ptr< geode::ObjectSetSampler< ObjectType > > >
-            set_samplers_;
-
-        std::vector< geode::uuid > ordered_energy_terms_;
-        std::vector< double > ordered_target_statistics_;
-
-        EnergyTermCollection< ObjectType > energy_terms_collection_;
-        std::unique_ptr< geode::MetropolisHastings< ObjectType > > mh_sampler_;
 
         ObjectSets< ObjectType > object_sets_;
+        std::vector< std::unique_ptr< geode::ObjectSetSampler< ObjectType > > >
+            set_samplers_;
+        std::unique_ptr< Model< ObjectType > > model_;
+        std::unique_ptr< geode::MetropolisHastings< ObjectType > > mh_sampler_;
     };
 } // namespace geode

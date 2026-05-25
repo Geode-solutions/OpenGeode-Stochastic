@@ -24,7 +24,7 @@
 #pragma once
 
 #include <geode/stochastic/common.hpp>
-#include <geode/stochastic/models/gibbs_energy.hpp>
+#include <geode/stochastic/models/model.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/proposal_kernel.hpp>
 
 namespace geode
@@ -49,14 +49,13 @@ namespace geode
     class MetropolisHastings
     {
     public:
-        MetropolisHastings(
-            const EnergyTermCollection< ObjectType >& energy_term_collection,
+        MetropolisHastings( const Model< ObjectType >& model,
             std::unique_ptr< ProposalKernel< ObjectType > > proposal_kernel )
-            : gibbs_energy_{ energy_term_collection },
-              proposal_kernel_( std::move( proposal_kernel ) )
+            : model_{ model }, proposal_kernel_( std::move( proposal_kernel ) )
         {
-            OPENGEODE_ASSERT(
-                proposal_kernel_ != nullptr, "[MH] null proposal kernel" );
+            OpenGeodeStochasticStochasticException::check_exception(
+                proposal_kernel_ != nullptr, nullptr,
+                OpenGeodeException::TYPE::data, "[MH] null proposal kernel" );
         }
 
         StepResult< ObjectType > step(
@@ -106,34 +105,33 @@ namespace geode
 
         void set_beta( double b )
         {
-            OPENGEODE_EXCEPTION( b >= 0.0, "[MH] beta must be >= 0" );
+            OpenGeodeStochasticStochasticException::check_exception( b >= 0.0,
+                nullptr, OpenGeodeException::TYPE::data,
+                "[MH] beta must be >= 0" );
             if( b == 0 )
             {
-                geode::Logger::info(
+                Logger::info(
                     "[Metropolis Hastings] - beta == 0 all move will be "
                     "accepted - Uniform sampling." );
             }
             if( b < 1 )
             {
-                geode::Logger::info(
+                Logger::info(
                     "[Metropolis Hastings] - beta < 1 moves that increase "
-                    "energy are "
-                    "more likely to be accepted - Hot system introduce "
-                    "randomness for exploration." );
+                    "energy are more likely to be accepted - Hot system "
+                    "introduce randomness for exploration." );
             }
             if( b == 1 )
             {
-                geode::Logger::info( "[Metropolis Hastings] - beta == 1 "
-                                     "default choice no temperature "
-                                     "- only consider energy." );
+                Logger::info( "[Metropolis Hastings] - beta == 1 default "
+                              "choice no temperature - only consider energy." );
             }
             if( b > 1 )
             {
-                geode::Logger::info(
-                    "[Metropolis Hastings] - beta > 1 moves that increase "
-                    "energy are "
-                    "less likely to be accepted - Cold system to ensure "
-                    "convergence but may find local minimum randomness." );
+                Logger::info( "[Metropolis Hastings] - beta > 1 moves that "
+                              "increase energy are less likely to be accepted "
+                              "- Cold system to ensure convergence but may "
+                              "find local minimum randomness." );
             }
             beta_ = b;
         }
@@ -189,7 +187,7 @@ namespace geode
         {
             const auto new_object = proposal.new_object();
             const auto delta_log_energy =
-                gibbs_energy_.delta_log_add( state, new_object );
+                model_.energy().delta_log_add( state, new_object );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
                 []( auto& state, auto& proposal ) {
                     state.add_object(
@@ -204,7 +202,7 @@ namespace geode
         {
             const auto old_object_id = proposal.old_object_id();
             const auto delta_log_energy =
-                gibbs_energy_.delta_log_remove( state, old_object_id );
+                model_.energy().delta_log_remove( state, old_object_id );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
                 []( auto& state, auto& proposal ) {
                     state.remove_free_object( proposal.old_object_id() );
@@ -217,7 +215,7 @@ namespace geode
         {
             const auto new_object = proposal.new_object();
             const auto old_object_id = proposal.old_object_id();
-            const auto delta_log_energy = gibbs_energy_.delta_log_change(
+            const auto delta_log_energy = model_.energy().delta_log_change(
                 state, old_object_id, new_object );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
                 []( auto& state, auto& proposal ) {
@@ -228,7 +226,7 @@ namespace geode
         };
 
     private:
-        GibbsEnergy< ObjectType > gibbs_energy_;
+        const Model< ObjectType >& model_;
         std::unique_ptr< ProposalKernel< ObjectType > > proposal_kernel_;
         double beta_{ 1.0 };
     };
