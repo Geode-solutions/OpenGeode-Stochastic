@@ -87,7 +87,7 @@ void run_intensity_test( const geode::SingleObjectTermConfig& term_config,
 
     // --- Total log
     double total = term->total_log( pattern );
-    OPENGEODE_EXCEPTION(
+    geode::OpenGeodeStochasticStochasticException::test(
         total == expected_total, "[IntensityTerm] total_log wrong" );
 
     // --- Delta add (segment fully inside)
@@ -101,7 +101,7 @@ void run_intensity_test( const geode::SingleObjectTermConfig& term_config,
                 : std::numeric_limits< double >::infinity() );
 
     double delta = term->delta_log_add( pattern, ref_inside );
-    OPENGEODE_EXCEPTION(
+    geode::OpenGeodeStochasticStochasticException::test(
         delta == expected_add, "[IntensityTerm] delta_log_add inside wrong" );
 
     // --- Delta add outside domain
@@ -110,7 +110,7 @@ void run_intensity_test( const geode::SingleObjectTermConfig& term_config,
     geode::ObjectRef< geode::OwnerSegment2D > ref_out{ s_outside, set_id };
 
     delta = term->delta_log_add( pattern, ref_out );
-    OPENGEODE_EXCEPTION(
+    geode::OpenGeodeStochasticStochasticException::test(
         delta == 0.0, "[IntensityTerm] delta_log_add outside wrong" );
 
     // --- Delta remove (first segment)
@@ -118,18 +118,19 @@ void run_intensity_test( const geode::SingleObjectTermConfig& term_config,
     double expected_remove = ( term_config.lambda > 0. ? -expected_add : 0.0 );
 
     delta = term->delta_log_remove( pattern, obj_id );
-    OPENGEODE_EXCEPTION(
+    geode::OpenGeodeStochasticStochasticException::test(
         delta == expected_remove, "[IntensityTerm] delta_log_remove wrong" );
 
     // --- Delta change: inside → outside
     delta = term->delta_log_change( pattern, obj_id, ref_out );
-    OPENGEODE_EXCEPTION( delta == expected_remove,
+    geode::OpenGeodeStochasticStochasticException::test(
+        delta == expected_remove,
         "[IntensityTerm] delta_log_change inside→outside wrong" );
 
     // --- Delta change: outside → inside
     geode::ObjectId buffer_id{ 2, false, set_id };
     delta = term->delta_log_change( pattern, buffer_id, ref_inside );
-    OPENGEODE_EXCEPTION( delta == expected_add,
+    geode::OpenGeodeStochasticStochasticException::test( delta == expected_add,
         "[IntensityTerm] delta_log_change outside→inside wrong" );
 
     // --- Delta change: inside → inside (same length)
@@ -138,7 +139,7 @@ void run_intensity_test( const geode::SingleObjectTermConfig& term_config,
     geode::ObjectRef< geode::OwnerSegment2D > ref_same{ s_same, set_id };
 
     delta = term->delta_log_change( pattern, obj_id, ref_same );
-    OPENGEODE_EXCEPTION(
+    geode::OpenGeodeStochasticStochasticException::test(
         delta == 0.0, "[IntensityTerm] delta_log_change inside→inside wrong" );
 }
 
@@ -146,7 +147,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
 
         geode::ObjectSets< geode::OwnerSegment2D > pattern;

@@ -43,7 +43,7 @@ void test_sample_bounding_box(
     for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
     {
         auto value = spec_box.sample_uniform( engine );
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             box.contains( value ), "[Point Box sampler] - point out of box." );
     }
 }
@@ -91,7 +91,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
 
         test_box_sampling1D();
         test_box_sampling2D();

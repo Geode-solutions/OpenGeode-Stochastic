@@ -67,7 +67,7 @@ namespace
 
         runner.initialize();
 
-        //        OPENGEODE_EXCEPTION(
+        //        geode::OpenGeodeStochasticStochasticException::test(
         //            runner.state_realization().nb_fixed_objects() == 2 );
         // run simulation
         geode::SimulationPrinterConfigurator printer_config;
@@ -83,7 +83,7 @@ namespace
         auto statistic_monitoring = runner.run( engine, sim_config );
         runner.check_statistics( statistic_monitoring );
 
-        //        OPENGEODE_EXCEPTION(
+        //        geode::OpenGeodeStochasticStochasticException::test(
         //            runner.state_realization().nb_fixed_objects() == 2 );
         geode::Logger::info( "--> SUCCESS!" );
     }
@@ -173,7 +173,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
         test_fracture_simulator();
         test_two_fracture_sets_simulator();

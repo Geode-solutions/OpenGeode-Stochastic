@@ -29,7 +29,7 @@ namespace
     {
         geode::ObjectSet< geode::Point2D > set;
 
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             set.empty(), "[TestObjectSet] - Set should start empty" );
 
         const auto idx0 =
@@ -39,14 +39,15 @@ namespace
         const auto idx2 =
             set.add_fixed_object( geode::Point2D{ { 2.0, 2.0 } } );
 
-        OPENGEODE_EXCEPTION( set.nb_objects() == 3,
+        geode::OpenGeodeStochasticStochasticException::test(
+            set.nb_objects() == 3,
             "[TestObjectSet] - Set size should be 3 after insertions" );
-        OPENGEODE_EXCEPTION( !set.empty(),
+        geode::OpenGeodeStochasticStochasticException::test( !set.empty(),
             "[TestObjectSet] - Set should not be empty after insertions" );
 
         const auto& p = set.get_fixed_object( idx1 );
         const auto result = geode::Point2D{ { 1.0, 1.0 } };
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             p == result, "[TestObjectSet] - Wrong object value at index 1" );
     }
 
@@ -61,7 +62,7 @@ namespace
 
         const auto& updated = set.get_free_object( idx1 );
         const auto new_point = geode::Point2D{ { 5.0, 5.0 } };
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             updated == new_point, "[TestObjectSet] - Object update failed" );
     }
 
@@ -74,12 +75,13 @@ namespace
 
         set.remove_free_object( 0 ); // remove the second object (free)
 
-        OPENGEODE_EXCEPTION( set.nb_objects() == 2,
+        geode::OpenGeodeStochasticStochasticException::test(
+            set.nb_objects() == 2,
             "[TestObjectSet] - Set size should be 2 after removal" );
 
         const auto& last = set.get_free_object( 0 );
         const auto result = geode::Point2D{ { 2.0, 2.0 } };
-        OPENGEODE_EXCEPTION( last == result,
+        geode::OpenGeodeStochasticStochasticException::test( last == result,
             "[TestObjectSet] - Remaining objects not shifted "
             "properly after removal" );
     }
@@ -92,7 +94,7 @@ namespace
         const auto& const_set = set;
         const auto& p = const_set.get_fixed_object( 0 );
         const auto result = geode::Point2D{ { 10.0, 10.0 } };
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             p == result, "[TestObjectSet] - Const access mismatch" );
     }
 
@@ -103,7 +105,8 @@ namespace
         set.add_free_object( geode::Point2D{ { 1.0, 1.0 } } );
 
         const auto desc = set.string();
-        OPENGEODE_EXCEPTION( desc.find( "2 objects" ) != std::string::npos,
+        geode::OpenGeodeStochasticStochasticException::test(
+            desc.find( "2 objects" ) != std::string::npos,
             "[TestObjectSet] - string() output incorrect" );
     }
 
@@ -117,33 +120,42 @@ namespace
         auto f1 = set.add_fixed_object( geode::Point2D{ { 1., 1. } } );
         // ici u0 est changé? doije retourner l indice?
 
-        OPENGEODE_EXCEPTION( set.nb_fixed_objects() == 2, "2 fixed objects" );
-        OPENGEODE_EXCEPTION( set.nb_free_objects() == 1, "one free object" );
-        OPENGEODE_EXCEPTION( f0 == 0 && f1 == 1 );
+        geode::OpenGeodeStochasticStochasticException::test(
+            set.nb_fixed_objects() == 2, "2 fixed objects" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            set.nb_free_objects() == 1, "one free object" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            f0 == 0 && f1 == 1 );
 
         // Add 2 free objects
         auto u1 = set.add_free_object( geode::Point2D{ { 2., 2. } } );
         auto u2 = set.add_free_object( geode::Point2D{ { 3., 3. } } );
 
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             set.nb_fixed_objects() == 2, "still two fixed object" );
-        OPENGEODE_EXCEPTION( set.nb_free_objects() == 3, "three free objects" );
-        OPENGEODE_EXCEPTION( u1 == 1 && u2 == 2 );
+        geode::OpenGeodeStochasticStochasticException::test(
+            set.nb_free_objects() == 3, "three free objects" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            u1 == 1 && u2 == 2 );
 
         // Remove first fixed object
         // set.remove_fixed_object( 0 );
 
         // Invariant
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             set.nb_free_objects() == 3, "still 3 free objects" );
-        OPENGEODE_EXCEPTION( set.nb_objects() == 5, "5 total objects" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            set.nb_objects() == 5, "5 total objects" );
 
         // Remove a free object
         set.remove_free_object( 2 );
 
-        OPENGEODE_EXCEPTION( set.nb_fixed_objects() == 2, "still one fixed" );
-        OPENGEODE_EXCEPTION( set.nb_free_objects() == 2, "two remining free" );
-        OPENGEODE_EXCEPTION( set.nb_objects() == 4, "4 object at last" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            set.nb_fixed_objects() == 2, "still one fixed" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            set.nb_free_objects() == 2, "two remining free" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            set.nb_objects() == 4, "4 object at last" );
     }
 } // namespace
 
@@ -152,7 +164,7 @@ int main()
     try
     {
         geode::Logger::info( "TEST ObjectSet" );
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
 
         test_add_and_access();
         test_update_object();

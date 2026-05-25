@@ -69,7 +69,7 @@ void test_pairwise_term( const geode::PairwiseTermConfig& term_config,
     // --- total_log
     double total = term->total_log( pattern );
     // Only VOI-anchored interactions counted in statistic: p1-p2
-    OPENGEODE_EXCEPTION(
+    geode::OpenGeodeStochasticStochasticException::test(
         total == term->contribution( 1 ), "[PairwiseTerm] total_log wrong" );
 
     // --- delta_add VOI → VOI
@@ -77,7 +77,8 @@ void test_pairwise_term( const geode::PairwiseTermConfig& term_config,
     geode::ObjectRef< geode::Point2D > p4_ref{ p4, set_id };
     double delta = term->delta_log_add( pattern, p4_ref );
     // interacts with p1 and p2 → 2 pairs
-    OPENGEODE_EXCEPTION( delta == term->contribution( 2 ),
+    geode::OpenGeodeStochasticStochasticException::test(
+        delta == term->contribution( 2 ),
         "[PairwiseTerm] delta_log_add VOI wrong" );
 
     // --- delta_add buffer → buffer (outside VOI, inside buffer)
@@ -86,14 +87,16 @@ void test_pairwise_term( const geode::PairwiseTermConfig& term_config,
     delta = term->delta_log_add( pattern, buffer_ref );
     // energy counts interactions: buffer interacts with p2,p3 (p3 is in
     // buffer) → 2 pairs
-    OPENGEODE_EXCEPTION( delta == term->contribution( 1 ),
+    geode::OpenGeodeStochasticStochasticException::test(
+        delta == term->contribution( 1 ),
         "[PairwiseTerm] delta_log_add buffer wrong" );
 
     // --- delta_change VOI → VOI
     geode::ObjectId obj_id{ 1, false, set_id }; // p1
     delta = term->delta_log_change( pattern, obj_id, p4_ref );
     // p1 replaced by p4: interacts with p2 → add 1 interaction
-    OPENGEODE_EXCEPTION( delta == term->contribution( 1 ),
+    geode::OpenGeodeStochasticStochasticException::test(
+        delta == term->contribution( 1 ),
         "[PairwiseTerm] delta_log_change VOI->VOI wrong" );
 
     // --- delta_change buffer → VOI
@@ -103,7 +106,8 @@ void test_pairwise_term( const geode::PairwiseTermConfig& term_config,
     // added
     // (+p4 pairs (+2)) net change = 1
     double expected_delta = term->contribution( 1 ); // adjust based on count
-    OPENGEODE_EXCEPTION( delta == expected_delta,
+    geode::OpenGeodeStochasticStochasticException::test(
+        delta == expected_delta,
         "[PairwiseTerm] delta_log_change buffer->VOI wrong" );
 
     // --- delta_change VOI → buffer
@@ -111,19 +115,22 @@ void test_pairwise_term( const geode::PairwiseTermConfig& term_config,
     // p1 → buffer: p1 old interaction = 0
     // p4  → p_buffer interaction with p2 +1
     expected_delta = term->contribution( 1 );
-    OPENGEODE_EXCEPTION( delta == expected_delta,
+    geode::OpenGeodeStochasticStochasticException::test(
+        delta == expected_delta,
         "[PairwiseTerm] delta_log_change VOI->buffer wrong" );
 
     // --- delta_remove VOI
     delta = term->delta_log_remove( pattern, obj_id );
     // p1 removed: no interaction with p2 removed
-    OPENGEODE_EXCEPTION( delta == term->contribution( 0 ),
+    geode::OpenGeodeStochasticStochasticException::test(
+        delta == term->contribution( 0 ),
         "[PairwiseTerm] delta_log_remove VOI wrong" );
 
     // --- statistic (only anchored objects in VOI)
     double stat = term->statistic( pattern );
     // p1,p2 anchored → 1 pair
-    OPENGEODE_EXCEPTION( stat == 1., "[PairwiseTerm] statistic wrong" );
+    geode::OpenGeodeStochasticStochasticException::test(
+        stat == 1., "[PairwiseTerm] statistic wrong" );
 }
 
 void test_pairwise_term_zero_gamma(
@@ -137,61 +144,63 @@ void test_pairwise_term_zero_gamma(
 
     // --- total_log
     double total = term->total_log( pattern );
-    OPENGEODE_EXCEPTION( std::isinf( total ),
+    geode::OpenGeodeStochasticStochasticException::test( std::isinf( total ),
         "[PairwiseTerm] total_log with gamma<epsilon should be infinite" );
 
     // --- delta_add VOI → VOI
     geode::Point2D p4{ { 0.5, 0.5 } };
     geode::ObjectRef< geode::Point2D > p4_ref{ p4, set_id };
     double delta = term->delta_log_add( pattern, p4_ref );
-    OPENGEODE_EXCEPTION( std::isinf( delta ),
+    geode::OpenGeodeStochasticStochasticException::test( std::isinf( delta ),
         "[PairwiseTerm] delta_log_add with gamma<epsilon should be infinite" );
 
     // --- delta_add buffer → buffer
     geode::Point2D p_buffer{ { 1.2, 1.2 } };
     geode::ObjectRef< geode::Point2D > buffer_ref{ p_buffer, set_id };
     delta = term->delta_log_add( pattern, buffer_ref );
-    OPENGEODE_EXCEPTION( std::isinf( delta ),
+    geode::OpenGeodeStochasticStochasticException::test( std::isinf( delta ),
         "[PairwiseTerm] delta_log_add buffer with "
         "gamma<epsilon should be infinite" );
 
     // --- delta_change VOI → VOI
-    geode::ObjectId obj_id{ 1, false, set_id };
+    geode::ObjectId obj_id{ 0, false, set_id };
     delta = term->delta_log_change( pattern, obj_id, p4_ref );
-    OPENGEODE_EXCEPTION( std::isinf( delta ),
+    geode::OpenGeodeStochasticStochasticException::test( std::isinf( delta ),
         "[PairwiseTerm] delta_log_change VOI->VOI with "
         "gamma<epsilon should be infinite" );
 
     // --- delta_change buffer → VOI
-    geode::ObjectId old_buffer{ 0, false, set_id };
+    geode::ObjectId old_buffer{ 2, false, set_id };
     delta = term->delta_log_change( pattern, old_buffer, p4_ref );
-    OPENGEODE_EXCEPTION( std::isinf( delta ),
+    geode::OpenGeodeStochasticStochasticException::test( std::isinf( delta ),
         "[PairwiseTerm] delta_log_change buffer->VOI with "
         "gamma<epsilon should be infinite" );
 
     // --- delta_change VOI → buffer
     delta = term->delta_log_change( pattern, obj_id, buffer_ref );
-    OPENGEODE_EXCEPTION( std::isinf( delta ),
+    geode::OpenGeodeStochasticStochasticException::test( std::isinf( delta ),
         "[PairwiseTerm] delta_log_change VOI->buffer with "
         "gamma<epsilon should be infinite" );
 
     // --- delta_remove VOI
     delta = term->delta_log_remove( pattern, obj_id );
     DEBUG( delta );
-    OPENGEODE_EXCEPTION( delta == 0, "[PairwiseTerm] delta_log_remove VOI with "
-                                     "gamma<epsilon should be infinite" );
+    geode::OpenGeodeStochasticStochasticException::test( delta == 0,
+        "[PairwiseTerm] delta_log_remove VOI with "
+        "gamma<epsilon should be infinite" );
 
     // --- statistic (only anchored objects in VOI)
     double stat = term->statistic( pattern );
     // p1,p2 anchored → 1 pair
-    OPENGEODE_EXCEPTION( stat == 1., "[PairwiseTerm] statistic wrong" );
+    geode::OpenGeodeStochasticStochasticException::test(
+        stat == 1., "[PairwiseTerm] statistic wrong" );
 }
 
 int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
 
         geode::ObjectSets< geode::Point2D > pattern;

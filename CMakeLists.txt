@@ -31,6 +31,12 @@ option(OPENGEODE_STOCHASTIC_WITH_PYTHON "Compile Python bindings" OFF)
 # Get MyModule dependencies
 find_package(OpenGeode REQUIRED CONFIG)
 
+install(
+    FILES include/geode/stochastic/project.hpp
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/geode/stochastic
+    COMPONENT public
+)
+
 # ------------------------------------------------------------------------------------------------
 # Configure the OpenGeode-Stochastic libraries
 add_subdirectory(src/geode/stochastic)

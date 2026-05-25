@@ -38,8 +38,10 @@
 PYBIND11_MODULE( opengeode_stochastic_py_stochastic, module )
 {
     module.doc() = "OpenGeode-Stochastic Python binding";
-    pybind11::class_< geode::StochasticLibrary >( module, "StochasticLibrary" )
-        .def( "initialize", &geode::StochasticLibrary::initialize );
+    pybind11::class_< geode::OpenGeodeStochasticStochasticLibrary >(
+        module, "OpenGeodeStochasticStochasticLibrary" )
+        .def( "initialize",
+            &geode::OpenGeodeStochasticStochasticLibrary::initialize );
 
     geode::define_spatial_domain( module );
 

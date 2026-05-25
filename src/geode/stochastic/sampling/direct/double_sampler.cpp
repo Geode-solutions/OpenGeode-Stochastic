@@ -50,7 +50,9 @@ namespace geode
         distribution_registry = {
             { UniformClosed< double >::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OPENGEODE_EXCEPTION( desc.min_value && desc.max_value,
+                    OpenGeodeStochasticStochasticException::check_exception(
+                        desc.min_value && desc.max_value, nullptr,
+                        OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "
                         "Uniform distribution need at least min "
                         "and max values" );
@@ -61,7 +63,9 @@ namespace geode
                 } },
             { UniformClosedOpen< double >::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OPENGEODE_EXCEPTION( desc.min_value && desc.max_value,
+                    OpenGeodeStochasticStochasticException::check_exception(
+                        desc.min_value && desc.max_value, nullptr,
+                        OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "
                         "Uniform distribution need at least min "
                         "and max values" );
@@ -72,7 +76,9 @@ namespace geode
                 } },
             { Gaussian::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OPENGEODE_EXCEPTION( desc.mean && desc.standard_deviation,
+                    OpenGeodeStochasticStochasticException::check_exception(
+                        desc.mean && desc.standard_deviation, nullptr,
+                        OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "
                         "Gaussian distribution need at least mean "
                         "and standard deviation values" );
@@ -83,7 +89,9 @@ namespace geode
                 } },
             { TruncatedGaussian::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OPENGEODE_EXCEPTION( desc.mean && desc.standard_deviation,
+                    OpenGeodeStochasticStochasticException::check_exception(
+                        desc.mean && desc.standard_deviation, nullptr,
+                        OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "
                         "Truncated Gaussian distribution need at least mean "
                         "and standard deviation values" );
@@ -97,7 +105,9 @@ namespace geode
                 } },
             { VonMises::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OPENGEODE_EXCEPTION( desc.mean && desc.kappa,
+                    OpenGeodeStochasticStochasticException::check_exception(
+                        desc.mean && desc.kappa, nullptr,
+                        OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "
                         "Von Mises distribution need at least mean "
                         "and concentration (kappa) values" );
@@ -108,7 +118,9 @@ namespace geode
                 } },
             { TruncatedLogNormal::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OPENGEODE_EXCEPTION( desc.mean && desc.standard_deviation,
+                    OpenGeodeStochasticStochasticException::check_exception(
+                        desc.mean && desc.standard_deviation, nullptr,
+                        OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "
                         "TruncatedLogNormal distribution need mean "
                         "and standard deviation values of the underlying "
@@ -122,7 +134,9 @@ namespace geode
                 } },
             { TruncatedPowerLaw::distribution_type_static(),
                 []( const DoubleSampler::DistributionDescription& desc ) {
-                    OPENGEODE_EXCEPTION( desc.alpha,
+                    OpenGeodeStochasticStochasticException::check_exception(
+                        desc.alpha.has_value(), nullptr,
+                        OpenGeodeException::TYPE::data,
                         "[DoubleSampler] - Incomplete description for "
                         "TruncatedPowerLaw distribution need power law "
                         "exponent (alpha)." );
@@ -139,8 +153,11 @@ namespace geode
     {
         auto it = distribution_registry.find( desc.distribution_type );
         if( it == distribution_registry.end() )
-            throw geode::OpenGeodeException( absl::StrCat(
-                "Unknown distribution type: ", desc.distribution_type.get() ) );
+        {
+            throw OpenGeodeStochasticStochasticException{ nullptr,
+                OpenGeodeException::TYPE::data,
+                "Unknown distribution type: ", desc.distribution_type.get() };
+        }
         return it->second( desc );
     }
 
@@ -186,21 +203,36 @@ namespace geode
             [&engine]( auto&& d ) {
                 using D = std::decay_t< decltype( d ) >;
                 if constexpr( std::is_same_v< D, UniformClosed< double > > )
+                {
                     return engine.sample_uniform< double >( d );
+                }
                 if constexpr( std::is_same_v< D, UniformClosedOpen< double > > )
+                {
                     return engine.sample_uniform< double >( d );
+                }
                 if constexpr( std::is_same_v< D, Gaussian > )
+                {
                     return engine.sample_gaussian( d );
+                }
                 if constexpr( std::is_same_v< D, TruncatedGaussian > )
+                {
                     return engine.sample_truncated_gaussian( d );
+                }
                 if constexpr( std::is_same_v< D, VonMises > )
+                {
                     return engine.sample_von_mises( d );
+                }
                 if constexpr( std::is_same_v< D, TruncatedLogNormal > )
+                {
                     return engine.sample_truncated_lognormal( d );
+                }
                 if constexpr( std::is_same_v< D, TruncatedPowerLaw > )
+                {
                     return engine.sample_truncated_powerlaw( d );
-                throw OpenGeodeException( "DoubleSampler - Unsupported "
-                                          "distribution for double" );
+                }
+                throw OpenGeodeStochasticStochasticException{ nullptr,
+                    OpenGeodeException::TYPE::data,
+                    "DoubleSampler - Unsupported distribution for double" };
             },
             dist );
     }

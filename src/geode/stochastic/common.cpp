@@ -28,7 +28,7 @@
 
 namespace geode
 {
-    OPENGEODE_LIBRARY_IMPLEMENTATION( Stochastic )
+    OPENGEODE_LIBRARY_IMPLEMENTATION( OpenGeodeStochastic, Stochastic )
     {
         /* Here the functions to call when initializing the library
          * For exemple: registers, ...

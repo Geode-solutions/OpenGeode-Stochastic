@@ -65,38 +65,44 @@ void test_gibbs_energy()
             std::move( interaction ), domain ) );
     geode_unused( pwterm_id );
 
-    OPENGEODE_EXCEPTION( energy_terms.size() == 2,
+    geode::OpenGeodeStochasticStochasticException::test(
+        energy_terms.size() == 2,
         "[test gibbs] Wrong number of components after adding terms." );
 
     geode::GibbsEnergy< geode::Point2D > gibbs_energy( energy_terms );
 
     // Check total log-energy is finite
     double total_energy = gibbs_energy.total_log_energy( pattern );
-    OPENGEODE_EXCEPTION( std::isfinite( total_energy ),
+    geode::OpenGeodeStochasticStochasticException::test(
+        std::isfinite( total_energy ),
         "[test gibbs] Total energy should be finite." );
 
     // Add new point to test delta_add
     geode::Point2D p3{ { 2., 2. } };
     geode::ObjectRef< geode::Point2D > p_ref{ p3, set_id };
     double delta_add = gibbs_energy.delta_log_add( pattern, p_ref );
-    OPENGEODE_EXCEPTION( std::isfinite( delta_add ),
+    geode::OpenGeodeStochasticStochasticException::test(
+        std::isfinite( delta_add ),
         "[test gibbs] Delta add should be finite." );
 
     geode::ObjectId obj_id{ 0, false, set_id };
     // Remove point test
     double delta_remove = gibbs_energy.delta_log_remove( pattern, obj_id );
-    OPENGEODE_EXCEPTION( std::isfinite( delta_remove ),
+    geode::OpenGeodeStochasticStochasticException::test(
+        std::isfinite( delta_remove ),
         "[test gibbs] Delta remove should be finite." );
 
     // Change point test
     double delta_change =
         gibbs_energy.delta_log_change( pattern, obj_id, p_ref );
-    OPENGEODE_EXCEPTION( std::isfinite( delta_change ),
+    geode::OpenGeodeStochasticStochasticException::test(
+        std::isfinite( delta_change ),
         "[test gibbs] Delta change should be finite." );
 
     // Clear components and verify
     energy_terms.clear();
-    OPENGEODE_EXCEPTION( energy_terms.size() == 0,
+    geode::OpenGeodeStochasticStochasticException::test(
+        energy_terms.size() == 0,
         "[test gibbs] Components not cleared properly." );
 }
 
@@ -104,7 +110,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         test_gibbs_energy();
         geode::Logger::info( "MH TEST GIBBS ENERGY SUCCESS" );
         return 0;

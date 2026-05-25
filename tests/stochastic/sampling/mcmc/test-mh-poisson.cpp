@@ -134,20 +134,20 @@ namespace
             //                    std::abs( computed_means[stat_id] -
             //                    expected_means ) / expected_means;
             //
-            //                OPENGEODE_EXCEPTION( target_vs_mean_error < 0.05,
-            //                    "[MH test] statistic value ",
-            //                    computed_means[stat_id], " for energy term: ",
-            //                    term.name().value_or( term.id().string() ),
-            //                    " not close enough to expected value ",
-            //                    expected_means, " --> error : ",
-            //                    target_vs_mean_error );
+            //                geode::OpenGeodeStochasticStochasticException::test(
+            //                    target_vs_mean_error < 0.05, "[MH test]
+            //                    statistic value ", computed_means[stat_id], "
+            //                    for energy term: ", term.name().value_or(
+            //                    term.id().string() ), " not close enough to
+            //                    expected value ", expected_means, " --> error
+            //                    : ", target_vs_mean_error );
             //
             //                const auto target_vs_variance_error =
             //                    std::abs( computed_variances[stat_id] -
             //                    expected_means ) / expected_means;
             //
-            //                OPENGEODE_EXCEPTION( target_vs_variance_error <
-            //                0.15,
+            //                geode::OpenGeodeStochasticStochasticException::test(
+            //                    target_vs_variance_error < 0.15,
             //                    "[MH test] variance of statistic ",
             //                    computed_variances[stat_id], " for energy
             //                    term: ", term.name().value_or(
@@ -292,7 +292,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
         test_single_type_poisson();
         test_multitype_poisson();

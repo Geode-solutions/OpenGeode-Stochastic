@@ -44,19 +44,21 @@ namespace
 
         const std::filesystem::path temp_folder = config.output_folder;
         const auto stats_path = temp_folder / config.statistics_filename;
-        OPENGEODE_EXCEPTION( std::filesystem::exists( stats_path ),
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::filesystem::exists( stats_path ),
             "Statistics file not created" );
 
         std::ifstream stats_file( stats_path );
         std::string line;
         std::getline( stats_file, line );
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             line == "# Simulation Statistics", "Header not correctly written" );
         std::getline( stats_file, line );
-        OPENGEODE_EXCEPTION( line == "EnergyTerm1;EnergyTerm2;EnergyTerm3",
+        geode::OpenGeodeStochasticStochasticException::test(
+            line == "EnergyTerm1;EnergyTerm2;EnergyTerm3",
             "Header not correctly written" );
         std::getline( stats_file, line );
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             line == "1 ; 2.5 ; 3.7", "Statistics line not correctly written" );
 
         geode::Logger::info( "--> Success!" );
@@ -79,21 +81,22 @@ namespace
         const auto summary_path =
             temp_folder / config.statistics_summary_filename;
 
-        OPENGEODE_EXCEPTION( std::filesystem::exists( summary_path ),
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::filesystem::exists( summary_path ),
             "Summary file not created" );
 
         std::ifstream summary_file( summary_path );
         std::string content(
             ( std::istreambuf_iterator< char >( summary_file ) ),
             std::istreambuf_iterator< char >() );
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             content.find( "EnergyTerm1;EnergyTerm2" ) != std::string::npos,
             "Energy term names missing" );
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             content.find( "2" ) != std::string::npos, "Count missing" );
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             content.find( "1 ; 2" ) != std::string::npos, "Means missing" );
-        OPENGEODE_EXCEPTION(
+        geode::OpenGeodeStochasticStochasticException::test(
             content.find( "0 ; 0" ) != std::string::npos, "Variances missing" );
 
         geode::Logger::info( "--> Success!" );
@@ -117,7 +120,8 @@ namespace
         const std::filesystem::path temp_folder = config.output_folder;
 
         const auto obj_path = temp_folder / "pattern_0.txt";
-        OPENGEODE_EXCEPTION( std::filesystem::exists( obj_path ),
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::filesystem::exists( obj_path ),
             "Object sets file not created" );
 
         geode::Logger::info( "--> Success!" );
@@ -129,7 +133,7 @@ int main()
 {
     try
     {
-        geode::StochasticLibrary::initialize();
+        geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
 
         const std::filesystem::path temp_folder =
