@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2019 - 2026 Geode-solutions
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
 #pragma once
 
 #include <absl/container/flat_hash_map.h>
@@ -49,14 +72,19 @@ namespace geode
             return energy_terms_.size();
         }
 
-        [[nodiscard]] const EnergyTerm< ObjectType >& get(
-            const uuid& term_id ) const
+        [[nodiscard]] index_t get_term_index( const uuid& term_uuid ) const
         {
-            auto term_it = uuid_to_index_.find( term_id );
+            auto term_it = uuid_to_index_.find( term_uuid );
             OPENGEODE_EXCEPTION( term_it != uuid_to_index_.end(),
                 absl::StrCat( "[EnergyTermCollection] Unknown energy term: ",
-                    term_id.string() ) );
-            return *energy_terms_[term_it->second];
+                    term_uuid.string() ) );
+            return term_it->second;
+        }
+
+        [[nodiscard]] const EnergyTerm< ObjectType >& get(
+            const uuid& term_uuid ) const
+        {
+            return *energy_terms_[get_term_index( term_uuid )];
         }
 
         [[nodiscard]] uuid get_term_uuid( std::string_view name ) const

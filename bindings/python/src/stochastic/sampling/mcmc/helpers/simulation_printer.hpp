@@ -64,7 +64,7 @@ namespace geode
         //                &SimulationPrinter::print_statistics_summary,
         //                pybind11::arg( "monitor" ),
         //                pybind11::arg( "energy_term_names" ) = "",
-        //                "Print statistics summary from a StatisticsMonitor."
+        //                "Print statistics summary from a StatisticsTracker."
         //                );
     }
 } // namespace geode

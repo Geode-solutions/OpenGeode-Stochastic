@@ -55,48 +55,77 @@ namespace geode
     public:
         Model() = delete;
         Model( EnergyTermCollection< ObjectType >&& energy_terms )
-            : terms_( std::move( energy_terms ) ), energy_{ terms_ }
+            : terms_collection_( std::move( energy_terms ) ),
+              energy_{ terms_collection_ }
         {
         }
 
-        const EnergyTermCollection< ObjectType >& terms() const
+        [[nodiscard]] index_t nb_terms() const
         {
-            return terms_;
+            return terms_collection_.size();
         }
 
-        const GibbsEnergy< ObjectType >& energy() const
+        [[nodiscard]] const EnergyTermCollection< ObjectType >& terms() const
+        {
+            return terms_collection_;
+        }
+
+        [[nodiscard]] index_t term_index( const uuid& term_uuid ) const
+        {
+            return terms_collection_.get_term_index( term_uuid );
+        }
+
+        [[nodiscard]] const GibbsEnergy< ObjectType >& energy() const
         {
             return energy_;
         }
 
-        absl::flat_hash_map< uuid, double > compute_statistics(
+        [[nodiscard]] std::vector< double > compute_statistics(
             const ObjectSets< ObjectType >& state ) const
         {
-            absl::flat_hash_map< uuid, double > stats;
-            stats.reserve( terms_.size() );
-
-            for( const auto& term_ptr : terms_.energy_terms() )
+            std::vector< double > statistic_values;
+            statistic_values.reserve( terms_collection_.size() );
+            for( const auto& term : terms_collection_.energy_terms() )
             {
-                stats.emplace( term_ptr->id(), term_ptr->statistic( state ) );
+                statistic_values.emplace_back( term->statistic( state ) );
             }
-
-            return stats;
+            return statistic_values;
         }
 
-        absl::flat_hash_map< uuid, double > compute_statistics(
+        [[nodiscard]] double compute_statistic(
             const ObjectSets< ObjectType >& state, const uuid& term_uuid ) const
         {
-            const auto& term = terms_.get( term_uuid );
+            const auto& term = terms_collection_.get( term_uuid );
             return term.statistic( state );
         }
 
+        [[nodiscard]] std::string term_name( const uuid& term_uuid ) const
+        {
+            const auto& term = terms_collection_.get( term_uuid );
+            return term.name().value_or( "unnamed" );
+        }
+
+        [[nodiscard]] std::vector< std::string > term_names() const
+        {
+            std::vector< std::string > names;
+            names.reserve( terms_collection_.size() );
+
+            for( const auto& term : terms_collection_.energy_terms() )
+            {
+                names.emplace_back( term->name().value_or( "unnamed" ) );
+            }
+
+            return names;
+        }
+
     private:
-        EnergyTermCollection< ObjectType > terms_;
+        EnergyTermCollection< ObjectType > terms_collection_;
         GibbsEnergy< ObjectType > energy_;
     };
 
     template < typename ObjectType >
-    Model< ObjectType > build_model( const ModelConfig& config,
+    std::unique_ptr< Model< ObjectType > > build_model(
+        const ModelConfig& config,
         const ObjectSets< ObjectType >& object_sets,
         const SpatialDomain< ObjectType::dim >& domain )
     {
@@ -108,6 +137,7 @@ namespace geode
                 term_cfg, object_sets, domain ) );
         }
 
-        return Model< ObjectType >{ std::move( collection ) };
+        return std::make_unique< Model< ObjectType > >(
+            std::move( collection ) );
     }
 } // namespace geode

@@ -38,7 +38,7 @@ add_geode_library(
     PUBLIC_HEADERS
         #"inference/abc_shadow.hpp"
         "inference/statistic_objective.hpp"
-        "inference/statistic_monitor.hpp"
+        "inference/statistics_tracker.hpp"
         "inference/target_statistic.hpp"
         "inference/statistic_validator.hpp"
         "spatial/object_set.hpp"
@@ -65,7 +65,7 @@ add_geode_library(
         "sampling/direct/segment_uniform_sampler.hpp"
         #"sampling/mcmc/helpers/fracture_simulation_runner.hpp"
         "sampling/mcmc/helpers/simulation_printer.hpp"
-        "sampling/mcmc/helpers/simulation_monitor.hpp"
+        #"sampling/mcmc/helpers/simulation_monitor.hpp"
         "models/energy_terms/energy_term.hpp"
         "models/energy_terms/pairwise_term.hpp"
         "models/energy_terms/single_object_term.hpp"

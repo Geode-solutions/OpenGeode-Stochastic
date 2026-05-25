@@ -82,7 +82,7 @@ namespace geode
             interacting_set_ids.push_back( set2 );
         }
 
-        std::sort( interacting_set_ids.begin(), interacting_set_ids.end() );
+        absl::c_sort( interacting_set_ids );
         interacting_set_ids.erase( std::unique( interacting_set_ids.begin(),
                                        interacting_set_ids.end() ),
             interacting_set_ids.end() );
@@ -91,7 +91,7 @@ namespace geode
         for( auto& [_, adjacent_set_uuids] : objectset_adjacency_map )
         {
             geode_unused( _ );
-            std::sort( adjacent_set_uuids.begin(), adjacent_set_uuids.end() );
+            absl::c_sort( adjacent_set_uuids );
             adjacent_set_uuids.erase( std::unique( adjacent_set_uuids.begin(),
                                           adjacent_set_uuids.end() ),
                 adjacent_set_uuids.end() );

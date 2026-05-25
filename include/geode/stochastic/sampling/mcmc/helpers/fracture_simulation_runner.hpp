@@ -160,7 +160,7 @@ namespace geode
     //        }
     //
     //        void check_statistics(
-    //            const StatisticsMonitor& statistic_monitoring ) const
+    //            const StatisticsTracker& statistic_monitoring ) const
     //        {
     //            const auto& computed_means = statistic_monitoring.means();
     //

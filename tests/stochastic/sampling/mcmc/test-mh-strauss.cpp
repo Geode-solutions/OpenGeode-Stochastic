@@ -158,7 +158,7 @@ namespace
         }
 
         void check_statistics(
-            const geode::StatisticsMonitor& statistic_monitoring ) const
+            const geode::StatisticsTracker& statistic_monitoring ) const
         {
             const auto& computed_means = statistic_monitoring.means();
 

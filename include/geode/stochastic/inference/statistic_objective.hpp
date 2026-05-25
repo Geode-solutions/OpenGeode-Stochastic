@@ -23,7 +23,7 @@
 #pragma once
 
 #include <absl/container/flat_hash_map.h>
-#include <geode/stochastic/inference/statistic_monitor.hpp>
+#include <geode/stochastic/inference/statistics_tracker.hpp>
 #include <geode/stochastic/inference/target_statistic.hpp>
 
 namespace geode
@@ -33,7 +33,7 @@ namespace geode
     class StatisticObjective
     {
     public:
-        double compute_loss( const StatMonitor& monitor,
+        double compute_loss( const StatisticsTracker< ObjectType >& monitor,
             const std::vector< TargetStatistic >& targets ) const
         {
             double loss = 0.0;

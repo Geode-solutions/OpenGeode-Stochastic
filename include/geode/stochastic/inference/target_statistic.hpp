@@ -21,6 +21,7 @@
  *
  */
 #pragma once
+#include <geode/basic/uuid.hpp>
 
 namespace geode
 {

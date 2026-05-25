@@ -69,9 +69,9 @@ int main()
 
         auto model =
             geode::build_model< geode::Point2D >( config, object_sets, domain );
-        geode::Logger::info( model.terms().size() );
+        geode::Logger::info( model->terms().size() );
         OPENGEODE_EXCEPTION(
-            model.terms().size() == 5, "Collection not created" );
+            model->terms().size() == 5, "Collection not created" );
         return 0;
     }
     catch( ... )

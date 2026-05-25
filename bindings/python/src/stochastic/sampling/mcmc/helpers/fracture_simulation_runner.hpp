@@ -88,7 +88,7 @@ namespace geode
             //                pybind11::arg( "engine" ), pybind11::arg( "steps"
             //                ), "Run simulation for a fixed number of steps." )
             .def( "run",
-                static_cast< StatisticsMonitor ( FractureSimulationRunner::* )(
+                static_cast< StatisticsTracker ( FractureSimulationRunner::* )(
                     RandomEngine&, const SimulationConfigurator& ) >(
                     &FractureSimulationRunner::run ),
                 pybind11::arg( "engine" ), pybind11::arg( "config" ),

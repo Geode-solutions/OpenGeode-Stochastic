@@ -95,7 +95,7 @@ namespace geode
               impacted_set_ids_{ std::move( impacted_set_ids ) },
               domain_( domain )
         {
-            std::sort( impacted_set_ids_.begin(), impacted_set_ids_.end() );
+            absl::c_sort( impacted_set_ids_ );
             impacted_set_ids_.erase( std::unique( impacted_set_ids_.begin(),
                                          impacted_set_ids_.end() ),
                 impacted_set_ids_.end() );
