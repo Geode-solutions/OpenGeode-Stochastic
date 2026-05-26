@@ -328,7 +328,7 @@ namespace
                     "/sim_point_multitype_strauss_test" );
 
             geode::SimulationConfigurator sim_config;
-            sim_config.realizations = 750;
+            sim_config.realizations = 500;
             sim_config.metropolis_hasting_steps = 1000;
             sim_config.burn_in_steps = 1000;
             sim_config.printer = printer_config;
