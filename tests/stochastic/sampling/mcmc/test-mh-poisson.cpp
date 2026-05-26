@@ -49,7 +49,7 @@ namespace
     {
     public:
         PoissonSimulationRunner( const geode::SpatialDomain< 2 >& domain )
-            : geode::SimulationRunner< geode::Point2D >( domain ) {};
+            : geode::SimulationRunner< geode::Point2D >( domain ){};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {
@@ -122,52 +122,7 @@ namespace
             create_target_statistics();
         }
 
-        void check_statistics( const geode::StatisticsTracker< geode::Point2D >&
-                statistic_monitoring ) const
-        {
-            //            const auto& computed_means =
-            //            statistic_monitoring.means(); const auto&
-            //            computed_variances = statistic_monitoring.variances();
-            //
-            //            for( const auto stat_id :
-            //                geode::Range{
-            //                this->energy_terms_collection_.size() } )
-            //            {
-            //                const auto& term = energy_terms_collection_.get(
-            //                    ordered_energy_terms_[stat_id] );
-            //
-            //                const auto expected_means =
-            //                    this->ordered_target_statistics_[stat_id];
-            //
-            //                const auto target_vs_mean_error =
-            //                    std::fabs( computed_means[stat_id] -
-            //                    expected_means ) / expected_means;
-            //
-            //                geode::OpenGeodeStochasticStochasticException::test(
-            //                    target_vs_mean_error < 0.05, "[MH test]
-            //                    statistic value ", computed_means[stat_id], "
-            //                    for energy term: ", term.name().value_or(
-            //                    term.id().string() ), " not close enough to
-            //                    expected value ", expected_means, " --> error
-            //                    : ", target_vs_mean_error );
-            //
-            //                const auto target_vs_variance_error =
-            //                    std::fabs( computed_variances[stat_id] -
-            //                    expected_means ) / expected_means;
-            //
-            //                geode::OpenGeodeStochasticStochasticException::test(
-            //                    target_vs_variance_error < 0.15,
-            //                    "[MH test] variance of statistic ",
-            //                    computed_variances[stat_id], " for energy
-            //                    term: ", term.name().value_or(
-            //                    term.id().string() ), " not close enough to
-            //                    expected value ", expected_means, " --> error
-            //                    : ", target_vs_variance_error );
-            //            }
-        }
-
     private:
-        geode::BoundingBox2D box_;
         std::vector< SetDescription > set_descriptors_;
         std::vector< PoissonDensityDescription > density_descriptors_;
         std::vector< geode::TargetStatisticConfig >

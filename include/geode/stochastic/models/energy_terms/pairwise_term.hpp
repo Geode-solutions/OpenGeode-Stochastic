@@ -119,10 +119,16 @@ namespace geode
             std::optional< ObjectId > exclude_id,
             const ObjectSets< ObjectType >& state ) const
         {
-            double sum = 0.0;
+            const auto impacted_set_it =
+                objectset_adjacency_map_.find( object_ref.set_id );
+            if( impacted_set_it == objectset_adjacency_map_.end() )
+            {
+                return 0.;
+            }
             const auto neighbors = state.neighbors( object_ref.object,
-                objectset_adjacency_map_.at( object_ref.set_id ),
+                impacted_set_it->second,
                 interaction_->neighborhood_searching_distance(), exclude_id );
+            double sum = 0.0;
             for( const auto& neigh_id : neighbors )
             {
                 ObjectRef< ObjectType > neigh_object{
@@ -147,11 +153,17 @@ namespace geode
             {
                 return 0.;
             }
-            double sum = 0.0;
+            const auto impacted_set_it =
+                objectset_adjacency_map_.find( object_id.set_id );
+            if( impacted_set_it == objectset_adjacency_map_.end() )
+            {
+                return 0.;
+            }
             const auto neighbors = state.neighbors( cur_obj,
-                objectset_adjacency_map_.at( object_id.set_id ),
+                impacted_set_it->second,
                 interaction_->neighborhood_searching_distance(), object_id );
             ObjectRef< ObjectType > object_ref{ cur_obj, object_id.set_id };
+            double sum = 0.0;
             for( const auto& neigh_id : neighbors )
             {
                 const auto& neigh_obj = state.get_object( neigh_id );

@@ -49,7 +49,7 @@ namespace geode
                 OpenGeodeStochasticStochasticException::check_exception(
                     rel_error < targets.tolerance( term_uuid ), nullptr,
                     OpenGeodeException::TYPE::result,
-                    "[StatisticsValidator] Failure for term ",
+                    "[StatisticsValidator] Failure \n --> term ",
                     model.term_name( term_uuid ), "\n  mean    = ", mean,
                     "\n  target  = ", target, "\n  error   = ", rel_error,
                     "\n  tol     = ", targets.tolerance( term_uuid ) );
