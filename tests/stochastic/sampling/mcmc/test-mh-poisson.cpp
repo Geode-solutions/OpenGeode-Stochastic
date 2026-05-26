@@ -50,7 +50,7 @@ namespace
     public:
         explicit PoissonSimulationRunner(
             const geode::SpatialDomain< 2 >& domain )
-            : geode::SimulationRunner< geode::Point2D >( domain ){};
+            : geode::SimulationRunner< geode::Point2D >( domain ) {};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {
