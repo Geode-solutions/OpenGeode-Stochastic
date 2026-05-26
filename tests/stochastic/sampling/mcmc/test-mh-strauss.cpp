@@ -34,6 +34,8 @@
 
 namespace
 {
+    // NOLINTBEGIN(readability-magic-numbers)
+
     struct SetDescription
     {
         std::string name;
@@ -101,11 +103,11 @@ namespace
             geode::ModelConfig config;
             for( const auto& energy_desc : density_descriptors_ )
             {
-                config.terms.push_back( energy_desc );
+                config.terms.emplace_back( energy_desc );
             }
             for( const auto& interaction_desc : interaction_descriptors_ )
             {
-                config.terms.push_back( interaction_desc );
+                config.terms.emplace_back( interaction_desc );
             }
 
             model_ = std::move( geode::build_model< geode::Point2D >(
@@ -149,7 +151,6 @@ namespace
 
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test-single-STRAUSS@" );
-
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
         box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
@@ -158,45 +159,45 @@ namespace
         std::array< double, 5 > gamma_values{ 0, 0.3, 0.5, 0.7, 1.0 };
         std::array< double, 5 > nb_points{ 19.5, 24.4, 31.3, 36.1, 50. };
         std::array< double, 5 > nb_interactions{ 0, 4.7, 9.8, 18.7, 50.3 };
-
         for( const auto config : geode::Range{ gamma_values.size() } )
         {
             // --- Object set
-            SetDescription setA;
-            setA.name = "A";
-            setA.birth_ratio = 1.0;
-            setA.death_ratio = 1.0;
-            setA.change_ratio = 1.0;
+            SetDescription set_a;
+            set_a.name = "A";
+            set_a.birth_ratio = 1.0;
+            set_a.death_ratio = 1.0;
+            set_a.change_ratio = 1.0;
 
             // --- Energy term description
-            PoissonDensityDescription densityA;
-            densityA.term_name = "densityA";
-            densityA.object_set_names = { "A" };
-            densityA.lambda = 0.5;
-            densityA.object_feature = geode::ObjectInDomainFeatureConfig{};
+            PoissonDensityDescription density_a;
+            density_a.term_name = "density_a";
+            density_a.object_set_names = { "A" };
+            density_a.lambda = 0.5;
+            density_a.object_feature = geode::ObjectInDomainFeatureConfig{};
 
-            geode::TargetStatisticConfig statA{ "densityA", nb_points[config],
+            geode::TargetStatisticConfig stat_a{ "density_a", nb_points[config],
                 0.1 };
 
             // --- Intra-set pairwise interaction (Strauss process)
-            PairwiseInteractionDescription intraA;
-            intraA.term_name = "interactionA";
-            intraA.object_set_names_interactions = { { "A", "A" } };
-            intraA.gamma = gamma_values[config];
+            PairwiseInteractionDescription interaction_a;
+            interaction_a.term_name = "interactionA";
+            interaction_a.object_set_names_interactions = { { "A", "A" } };
+            interaction_a.gamma = gamma_values[config];
 
-            intraA.interaction_config = geode::MinimalDistanceCutoffConfig{
-                1.
-            }; /// ici cela devrait etre un paramètre utilisateur
+            interaction_a.interaction_config =
+                geode::MinimalDistanceCutoffConfig{
+                    1.
+                }; /// ici cela devrait etre un paramètre utilisateur
 
-            geode::TargetStatisticConfig stat_intra_A{ "interactionA",
+            geode::TargetStatisticConfig stat_intra_a{ "interactionA",
                 nb_interactions[config], 0.1 };
 
             StraussSimulationRunner runner( domain );
-            runner.add_set_descriptor( setA );
-            runner.add_density_descriptor( densityA );
-            runner.add_interaction_descriptor( intraA );
-            runner.add_target_statistics( statA );
-            runner.add_target_statistics( stat_intra_A );
+            runner.add_set_descriptor( set_a );
+            runner.add_density_descriptor( density_a );
+            runner.add_interaction_descriptor( interaction_a );
+            runner.add_target_statistics( stat_a );
+            runner.add_target_statistics( stat_intra_a );
             runner.initialize();
 
             // run simulation
@@ -356,4 +357,5 @@ int main()
     {
         return geode::geode_lippincott();
     }
+    // NOLINTEND(readability-magic-numbers)
 }

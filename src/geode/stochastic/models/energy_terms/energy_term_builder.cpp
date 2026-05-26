@@ -20,7 +20,6 @@
  * SOFTWARE.
  *
  */
-#pragma once
 
 #include <geode/stochastic/models/energy_terms/energy_term_builder.hpp>
 

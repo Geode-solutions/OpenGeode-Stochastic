@@ -34,6 +34,8 @@
 #include <geode/stochastic/spatial/single_object_features/single_object_feature_config.hpp>
 namespace
 {
+    // NOLINTBEGIN(readability-magic-numbers)
+
     struct SetDescription
     {
         std::string name;
@@ -48,8 +50,9 @@ namespace
         : public geode::SimulationRunner< geode::Point2D >
     {
     public:
-        PoissonSimulationRunner( const geode::SpatialDomain< 2 >& domain )
-            : geode::SimulationRunner< geode::Point2D >( domain ) {};
+        explicit PoissonSimulationRunner(
+            const geode::SpatialDomain< 2 >& domain )
+            : geode::SimulationRunner< geode::Point2D >( domain ){};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {
@@ -94,7 +97,7 @@ namespace
             geode::ModelConfig config;
             for( const auto& energy_desc : density_descriptors_ )
             {
-                config.terms.push_back( energy_desc );
+                config.terms.emplace_back( energy_desc );
             }
 
             model_ = std::move( geode::build_model< geode::Point2D >(
@@ -147,25 +150,25 @@ namespace
         for( const auto config : geode::Range{ birth_ratio.size() } )
         {
             // --- Set description
-            SetDescription setA;
-            setA.name = "A";
-            setA.birth_ratio = birth_ratio[config];
-            setA.death_ratio = 1.0;
-            setA.change_ratio = change_ratio[config];
+            SetDescription set_a;
+            set_a.name = "A";
+            set_a.birth_ratio = birth_ratio[config];
+            set_a.death_ratio = 1.0;
+            set_a.change_ratio = change_ratio[config];
 
             // --- Energy term description
-            PoissonDensityDescription densityA;
-            densityA.term_name = "density";
-            densityA.object_set_names = { "A" };
-            densityA.lambda = 0.3;
-            densityA.object_feature = geode::ObjectInDomainFeatureConfig{};
+            PoissonDensityDescription density_a;
+            density_a.term_name = "density";
+            density_a.object_set_names = { "A" };
+            density_a.lambda = 0.3;
+            density_a.object_feature = geode::ObjectInDomainFeatureConfig{};
 
-            geode::TargetStatisticConfig statA{ "density", 30.0, 0.15 };
+            geode::TargetStatisticConfig stat_a{ "density", 30.0, 0.15 };
 
             PoissonSimulationRunner runner( domain );
-            runner.add_set_descriptor( setA );
-            runner.add_density_descriptor( densityA );
-            runner.add_target_statistics( statA );
+            runner.add_set_descriptor( set_a );
+            runner.add_density_descriptor( density_a );
+            runner.add_target_statistics( stat_a );
             runner.initialize();
 
             // run simulation
@@ -278,4 +281,5 @@ int main()
     {
         return geode::geode_lippincott();
     }
+    // NOLINTEND(readability-magic-numbers)
 }
