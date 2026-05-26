@@ -66,7 +66,7 @@ namespace geode
     {
     public:
         SimulationRunner( const SpatialDomain< ObjectType::dim >& domain )
-            : domain_( domain ){};
+            : domain_( domain ) {};
         virtual ~SimulationRunner() = default;
 
         virtual void initialize() = 0;
