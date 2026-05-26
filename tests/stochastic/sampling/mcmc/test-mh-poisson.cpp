@@ -50,7 +50,7 @@ namespace
     public:
         explicit PoissonSimulationRunner(
             const geode::SpatialDomain< 2 >& domain )
-            : geode::SimulationRunner< geode::Point2D >( domain ) {};
+            : geode::SimulationRunner< geode::Point2D >( domain ){};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {
@@ -137,7 +137,7 @@ namespace
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test-single-POISSON@" );
 
-        // NOLINT(*-magic-numbers)
+        // NOLINTBEGIN(*-magic-numbers)
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
         box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
@@ -145,11 +145,8 @@ namespace
 
         std::array< double, 4 > birth_ratio{ 0.1, 0.5, 2., 4. };
         std::array< double, 4 > change_ratio{ 0., 1., 1., 0. };
-        // NOLINTEND(*-magic-numbers)
         for( const auto config : geode::Range{ birth_ratio.size() } )
         {
-            // NOLINT(*-magic-numbers)
-
             // --- Set description
             SetDescription set_a;
             set_a.name = "A";
@@ -183,12 +180,12 @@ namespace
             sim_config.metropolis_hasting_steps = 1000;
             sim_config.burn_in_steps = 1000;
             sim_config.printer = printer_config;
-            // NOLINTEND(*-magic-numbers)
 
             auto statistic_tracker = runner.run( engine, sim_config );
             geode::statistics::validate(
                 statistic_tracker, runner.target_statistics() );
         }
+        // NOLINTEND(*-magic-numbers)
 
         geode::Logger::info( "--> SUCCESS!" );
     }
@@ -199,7 +196,7 @@ namespace
 
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test-POISSON-multi@" );
-        // NOLINT(*-magic-numbers)
+        // NOLINTBEGIN(*-magic-numbers)
 
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
