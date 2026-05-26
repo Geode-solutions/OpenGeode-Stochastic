@@ -49,7 +49,8 @@ namespace
         : public geode::SimulationRunner< geode::Point2D >
     {
     public:
-        StraussSimulationRunner( const geode::SpatialDomain< 2 >& domain )
+        explicit StraussSimulationRunner(
+            const geode::SpatialDomain< 2 >& domain )
             : geode::SimulationRunner< geode::Point2D >( domain )
         {
         }
