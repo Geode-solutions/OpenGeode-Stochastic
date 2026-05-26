@@ -34,7 +34,6 @@
 #include <geode/stochastic/spatial/single_object_features/single_object_feature_config.hpp>
 namespace
 {
-    // NOLINT(*-magic-numbers)
     struct SetDescription
     {
         std::string name;
@@ -138,6 +137,7 @@ namespace
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test-single-POISSON@" );
 
+        // NOLINT(*-magic-numbers)
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
         box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
@@ -145,9 +145,11 @@ namespace
 
         std::array< double, 4 > birth_ratio{ 0.1, 0.5, 2., 4. };
         std::array< double, 4 > change_ratio{ 0., 1., 1., 0. };
-
+        // NOLINTEND(*-magic-numbers)
         for( const auto config : geode::Range{ birth_ratio.size() } )
         {
+            // NOLINT(*-magic-numbers)
+
             // --- Set description
             SetDescription set_a;
             set_a.name = "A";
@@ -181,6 +183,7 @@ namespace
             sim_config.metropolis_hasting_steps = 1000;
             sim_config.burn_in_steps = 1000;
             sim_config.printer = printer_config;
+            // NOLINTEND(*-magic-numbers)
 
             auto statistic_tracker = runner.run( engine, sim_config );
             geode::statistics::validate(
@@ -196,6 +199,7 @@ namespace
 
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test-POISSON-multi@" );
+        // NOLINT(*-magic-numbers)
 
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
@@ -257,6 +261,7 @@ namespace
         sim_config.metropolis_hasting_steps = 1000;
         sim_config.burn_in_steps = 3000;
         sim_config.printer = printer_config;
+        // NOLINTEND(*-magic-numbers)
 
         auto statistic_tracker = runner.run( engine, sim_config );
         geode::statistics::validate(
@@ -280,5 +285,4 @@ int main()
     {
         return geode::geode_lippincott();
     }
-    // NOLINTEND(*-magic-numbers)
 }

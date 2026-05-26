@@ -34,7 +34,6 @@
 
 namespace
 {
-    // NOLINT(*-magic-numbers)
     struct SetDescription
     {
         std::string name;
@@ -150,6 +149,7 @@ namespace
 
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test-single-STRAUSS@" );
+        // NOLINT(*-magic-numbers)
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
         box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
@@ -158,8 +158,10 @@ namespace
         std::array< double, 5 > gamma_values{ 0, 0.3, 0.5, 0.7, 1.0 };
         std::array< double, 5 > nb_points{ 19.5, 24.4, 31.3, 36.1, 50. };
         std::array< double, 5 > nb_interactions{ 0, 4.7, 9.8, 18.7, 50.3 };
+        // NOLINTEND(*-magic-numbers)
         for( const auto config : geode::Range{ gamma_values.size() } )
         {
+            // NOLINT(*-magic-numbers)
             // --- Object set
             SetDescription set_a;
             set_a.name = "A";
@@ -210,6 +212,7 @@ namespace
             sim_config.metropolis_hasting_steps = 1000;
             sim_config.burn_in_steps = 1000;
             sim_config.printer = printer_config;
+            // NOLINTEND(*-magic-numbers)
 
             auto statistic_tracker = runner.run( engine, sim_config );
             geode::statistics::validate(
@@ -226,7 +229,7 @@ namespace
 
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test-multi-STRAUSS@" );
-
+        // NOLINT(*-magic-numbers)
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
         box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
@@ -238,9 +241,10 @@ namespace
         std::array< double, 3 > nb_points03{ 14.6, 19.4, 30. };
         std::array< double, 3 > nb_interactions01{ 0, 15, 59.8 };
         std::array< double, 3 > nb_interactions02{ 37.2, 70, 174 };
-
+        // NOLINTEND(*-magic-numbers)
         for( const auto config : geode::Range{ gamma_values.size() } )
         {
+            // NOLINT(*-magic-numbers)
             // --- Sets
             SetDescription set01{ "set01", 1.0, 3.0, 1.0 };
             SetDescription set02{ "set02", 3.0, 0.5, 1.0 };
@@ -332,6 +336,7 @@ namespace
             sim_config.metropolis_hasting_steps = 1000;
             sim_config.burn_in_steps = 1000;
             sim_config.printer = printer_config;
+            // NOLINTEND(*-magic-numbers)
 
             auto statistic_tracker = runner.run( engine, sim_config );
             geode::statistics::validate(
@@ -356,5 +361,4 @@ int main()
     {
         return geode::geode_lippincott();
     }
-    // NOLINTEND(*-magic-numbers)
 }
