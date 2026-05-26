@@ -34,8 +34,7 @@
 #include <geode/stochastic/spatial/single_object_features/single_object_feature_config.hpp>
 namespace
 {
-    // NOLINTBEGIN(readability-magic-numbers)
-
+    // NOLINT(*-magic-numbers)
     struct SetDescription
     {
         std::string name;
@@ -52,7 +51,7 @@ namespace
     public:
         explicit PoissonSimulationRunner(
             const geode::SpatialDomain< 2 >& domain )
-            : geode::SimulationRunner< geode::Point2D >( domain ) {};
+            : geode::SimulationRunner< geode::Point2D >( domain ){};
 
         void add_set_descriptor( const SetDescription& descriptor )
         {
@@ -281,5 +280,5 @@ int main()
     {
         return geode::geode_lippincott();
     }
-    // NOLINTEND(readability-magic-numbers)
+    // NOLINTEND(*-magic-numbers)
 }

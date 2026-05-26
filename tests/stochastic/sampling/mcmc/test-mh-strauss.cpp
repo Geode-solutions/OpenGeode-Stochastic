@@ -34,8 +34,7 @@
 
 namespace
 {
-    // NOLINTBEGIN(readability-magic-numbers)
-
+    // NOLINT(*-magic-numbers)
     struct SetDescription
     {
         std::string name;
@@ -357,5 +356,5 @@ int main()
     {
         return geode::geode_lippincott();
     }
-    // NOLINTEND(readability-magic-numbers)
+    // NOLINTEND(*-magic-numbers)
 }
