@@ -62,7 +62,7 @@ namespace geode
     {
     public:
         SimulationRunner( SimulationContext< ObjectType >&& context )
-            : context_( std::move( context ) ){};
+            : context_( std::move( context ) ) {};
         virtual ~SimulationRunner() = default;
 
         const ObjectSets< ObjectType >& run(
