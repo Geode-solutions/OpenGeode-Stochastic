@@ -27,50 +27,47 @@
 #include <geode/stochastic/inference/statistics_tracker.hpp>
 #include <geode/stochastic/inference/target_statistics.hpp>
 
-namespace geode
+namespace geode::statistics
 {
-    namespace statistics
+    template < typename ObjectType >
+    void validate( const StatisticsTracker< ObjectType >& tracker,
+        const TargetStatistics< ObjectType >& targets )
     {
-        template < typename ObjectType >
-        void validate( const StatisticsTracker< ObjectType >& tracker,
-            const TargetStatistics< ObjectType >& targets )
+        const auto& model = targets.model();
+
+        for( const auto& term_uuid : targets.active_terms() )
         {
-            const auto& model = targets.model();
+            const auto mean = tracker.mean( term_uuid );
+            const auto target = targets.target( term_uuid );
 
-            for( const auto& term_uuid : targets.active_terms() )
-            {
-                const auto mean = tracker.mean( term_uuid );
-                const auto target = targets.target( term_uuid );
+            const auto rel_error =
+                std::fabs( mean - target )
+                / ( std::fabs( target ) + geode::GLOBAL_EPSILON );
 
-                const auto rel_error =
-                    std::fabs( mean - target )
-                    / ( std::fabs( target ) + geode::GLOBAL_EPSILON );
+            OpenGeodeStochasticStochasticException::check_exception(
+                rel_error < targets.tolerance( term_uuid ), nullptr,
+                OpenGeodeException::TYPE::result,
+                "[StatisticsValidator] Failure \n --> term ",
+                model.term_name( term_uuid ), "\n  mean    = ", mean,
+                "\n  target  = ", target, "\n  error   = ", rel_error,
+                "\n  tol     = ", targets.tolerance( term_uuid ) );
+        }
+    }
 
-                OpenGeodeStochasticStochasticException::check_exception(
-                    rel_error < targets.tolerance( term_uuid ), nullptr,
-                    OpenGeodeException::TYPE::result,
-                    "[StatisticsValidator] Failure for term ",
-                    model.term_name( term_uuid ), "\n  mean    = ", mean,
-                    "\n  target  = ", target, "\n  error   = ", rel_error,
-                    "\n  tol     = ", targets.tolerance( term_uuid ) );
-            }
+    template < typename ObjectType >
+    double quadratic_loss( const StatisticsTracker< ObjectType >& tracker,
+        const TargetStatistics< ObjectType >& targets )
+    {
+        double loss = 0.0;
+
+        for( const auto& term_uuid : targets.active_terms() )
+        {
+            const auto diff =
+                tracker.mean( term_uuid ) - targets.value( term_uuid );
+
+            loss += diff * diff;
         }
 
-        template < typename ObjectType >
-        double quadratic_loss( const StatisticsTracker< ObjectType >& tracker,
-            const TargetStatistics< ObjectType >& targets )
-        {
-            double loss = 0.0;
-
-            for( const auto& term_uuid : targets.active_terms() )
-            {
-                const auto diff =
-                    tracker.mean( term_uuid ) - targets.value( term_uuid );
-
-                loss += diff * diff;
-            }
-
-            return loss;
-        }
-    } // namespace statistics
-} // namespace geode
+        return loss;
+    }
+} // namespace geode::statistics

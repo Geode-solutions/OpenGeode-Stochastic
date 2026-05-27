@@ -24,6 +24,8 @@
 
 #include <variant>
 
+#include <geode/stochastic/common.hpp>
+
 #include <geode/stochastic/spatial/single_object_features/segment_length_feature.hpp>
 #include <geode/stochastic/spatial/single_object_features/single_object_feature_config.hpp>
 
@@ -52,22 +54,25 @@ namespace geode
         {
             throw OpenGeodeStochasticStochasticException{ nullptr,
                 OpenGeodeException::TYPE::data,
-                "SegmentLengthInsideBoxFeature not valid for this ObjectType" };
+                "[SingleObjectFeatureBuilder] SegmentLengthInsideBoxFeature "
+                "not valid for this ObjectType" };
         }
     }
 
     template < typename ObjectType, typename NewObjectFeatureConfig >
     std::unique_ptr< SingleObjectFeature< ObjectType > >
-        build_single_object_feature_impl( const NewObjectFeatureConfig& )
+        build_single_object_feature_impl(
+            const NewObjectFeatureConfig& /*unused*/ )
     {
         static_assert( sizeof( NewObjectFeatureConfig ) == 0,
-            "Unsupported SingleObjectFeatureConfig type" );
+            "[SingleObjectFeatureBuilder] Unsupported "
+            "SingleObjectFeatureConfig type" );
         return nullptr;
     }
 
     template < typename ObjectType >
     std::unique_ptr< SingleObjectFeature< ObjectType > >
-        build_single_object_feature_impl( const std::monostate& )
+        build_single_object_feature_impl( const std::monostate& /*unused*/ )
     {
         throw OpenGeodeStochasticStochasticException{ nullptr,
             OpenGeodeException::TYPE::data,
@@ -80,7 +85,7 @@ namespace geode
         build_single_object_feature( const SingleObjectFeatureConfig& cfg )
     {
         return std::visit(
-            [&]( auto&& interaction_cfg )
+            []( auto&& interaction_cfg )
                 -> std::unique_ptr< SingleObjectFeature< ObjectType > > {
                 return build_single_object_feature_impl< ObjectType >(
                     interaction_cfg );

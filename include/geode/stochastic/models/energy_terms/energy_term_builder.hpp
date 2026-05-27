@@ -30,6 +30,8 @@
 #include <variant>
 #include <vector>
 
+#include <geode/stochastic/common.hpp>
+
 #include <geode/stochastic/models/energy_terms/energy_term.hpp>
 #include <geode/stochastic/models/energy_terms/energy_term_config.hpp>
 #include <geode/stochastic/models/energy_terms/pairwise_term.hpp>
@@ -108,9 +110,9 @@ namespace geode
 
     template < typename ObjectType, typename NewEnergyTypeConfig >
     std::unique_ptr< EnergyTerm< ObjectType > > build_energy_term_impl(
-        const NewEnergyTypeConfig&,
-        const ObjectSets< ObjectType >&,
-        const SpatialDomain< ObjectType::dim >& )
+        const NewEnergyTypeConfig& /*unused*/,
+        const ObjectSets< ObjectType >& /*unused*/,
+        const SpatialDomain< ObjectType::dim >& /*unused*/ )
     {
         static_assert( sizeof( NewEnergyTypeConfig ) == 0,
             "Unsupported EnergyTermConfig type" );
@@ -119,9 +121,9 @@ namespace geode
 
     template < typename ObjectType >
     std::unique_ptr< EnergyTerm< ObjectType > > build_energy_term_impl(
-        const std::monostate&,
-        const ObjectSets< ObjectType >&,
-        const SpatialDomain< ObjectType::dim >& )
+        const std::monostate& /*unused*/,
+        const ObjectSets< ObjectType >& /*unused*/,
+        const SpatialDomain< ObjectType::dim >& /*unused*/ )
     {
         throw OpenGeodeStochasticStochasticException{ nullptr,
             OpenGeodeException::TYPE::data,
@@ -135,7 +137,7 @@ namespace geode
         const SpatialDomain< ObjectType::dim >& domain )
     {
         return std::visit(
-            [&]( const auto& term_cfg )
+            [&object_sets, &domain]( const auto& term_cfg )
                 -> std::unique_ptr< EnergyTerm< ObjectType > > {
                 return build_energy_term_impl< ObjectType >(
                     term_cfg, object_sets, domain );

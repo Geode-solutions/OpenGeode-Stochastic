@@ -20,7 +20,6 @@
  * SOFTWARE.
  *
  */
-#pragma once
 
 #include <geode/stochastic/models/energy_terms/energy_term_builder.hpp>
 
@@ -63,12 +62,12 @@ namespace
 
 namespace geode
 {
-    std::pair< std::vector< geode::uuid >,
+    std::pair< std::vector< uuid >,
         absl::flat_hash_map< uuid, std::vector< uuid > > >
         pairwise_builder_initialize_interactions_helper(
             const std::vector< std::pair< uuid, uuid > >& interacting_sets )
     {
-        std::vector< geode::uuid > interacting_set_ids;
+        std::vector< uuid > interacting_set_ids;
         absl::flat_hash_map< uuid, std::vector< uuid > >
             objectset_adjacency_map;
 

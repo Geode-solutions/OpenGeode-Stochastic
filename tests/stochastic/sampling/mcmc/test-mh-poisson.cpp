@@ -48,7 +48,8 @@ namespace
         : public geode::SimulationRunner< geode::Point2D >
     {
     public:
-        PoissonSimulationRunner( const geode::SpatialDomain< 2 >& domain )
+        explicit PoissonSimulationRunner(
+            const geode::SpatialDomain< 2 >& domain )
             : geode::SimulationRunner< geode::Point2D >( domain ) {};
 
         void add_set_descriptor( const SetDescription& descriptor )
@@ -94,7 +95,7 @@ namespace
             geode::ModelConfig config;
             for( const auto& energy_desc : density_descriptors_ )
             {
-                config.terms.push_back( energy_desc );
+                config.terms.emplace_back( energy_desc );
             }
 
             model_ = std::move( geode::build_model< geode::Point2D >(
@@ -122,52 +123,7 @@ namespace
             create_target_statistics();
         }
 
-        void check_statistics( const geode::StatisticsTracker< geode::Point2D >&
-                statistic_monitoring ) const
-        {
-            //            const auto& computed_means =
-            //            statistic_monitoring.means(); const auto&
-            //            computed_variances = statistic_monitoring.variances();
-            //
-            //            for( const auto stat_id :
-            //                geode::Range{
-            //                this->energy_terms_collection_.size() } )
-            //            {
-            //                const auto& term = energy_terms_collection_.get(
-            //                    ordered_energy_terms_[stat_id] );
-            //
-            //                const auto expected_means =
-            //                    this->ordered_target_statistics_[stat_id];
-            //
-            //                const auto target_vs_mean_error =
-            //                    std::fabs( computed_means[stat_id] -
-            //                    expected_means ) / expected_means;
-            //
-            //                geode::OpenGeodeStochasticStochasticException::test(
-            //                    target_vs_mean_error < 0.05, "[MH test]
-            //                    statistic value ", computed_means[stat_id], "
-            //                    for energy term: ", term.name().value_or(
-            //                    term.id().string() ), " not close enough to
-            //                    expected value ", expected_means, " --> error
-            //                    : ", target_vs_mean_error );
-            //
-            //                const auto target_vs_variance_error =
-            //                    std::fabs( computed_variances[stat_id] -
-            //                    expected_means ) / expected_means;
-            //
-            //                geode::OpenGeodeStochasticStochasticException::test(
-            //                    target_vs_variance_error < 0.15,
-            //                    "[MH test] variance of statistic ",
-            //                    computed_variances[stat_id], " for energy
-            //                    term: ", term.name().value_or(
-            //                    term.id().string() ), " not close enough to
-            //                    expected value ", expected_means, " --> error
-            //                    : ", target_vs_variance_error );
-            //            }
-        }
-
     private:
-        geode::BoundingBox2D box_;
         std::vector< SetDescription > set_descriptors_;
         std::vector< PoissonDensityDescription > density_descriptors_;
         std::vector< geode::TargetStatisticConfig >
@@ -181,6 +137,7 @@ namespace
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test-single-POISSON@" );
 
+        // NOLINTBEGIN(*-magic-numbers)
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
         box.add_point( geode::Point2D{ { 10.0, 10.0 } } );
@@ -188,29 +145,28 @@ namespace
 
         std::array< double, 4 > birth_ratio{ 0.1, 0.5, 2., 4. };
         std::array< double, 4 > change_ratio{ 0., 1., 1., 0. };
-
         for( const auto config : geode::Range{ birth_ratio.size() } )
         {
             // --- Set description
-            SetDescription setA;
-            setA.name = "A";
-            setA.birth_ratio = birth_ratio[config];
-            setA.death_ratio = 1.0;
-            setA.change_ratio = change_ratio[config];
+            SetDescription set_a;
+            set_a.name = "A";
+            set_a.birth_ratio = birth_ratio[config];
+            set_a.death_ratio = 1.0;
+            set_a.change_ratio = change_ratio[config];
 
             // --- Energy term description
-            PoissonDensityDescription densityA;
-            densityA.term_name = "density";
-            densityA.object_set_names = { "A" };
-            densityA.lambda = 0.3;
-            densityA.object_feature = geode::ObjectInDomainFeatureConfig{};
+            PoissonDensityDescription density_a;
+            density_a.term_name = "density";
+            density_a.object_set_names = { "A" };
+            density_a.lambda = 0.3;
+            density_a.object_feature = geode::ObjectInDomainFeatureConfig{};
 
-            geode::TargetStatisticConfig statA{ "density", 30.0, 0.15 };
+            geode::TargetStatisticConfig stat_a{ "density", 30.0, 0.15 };
 
             PoissonSimulationRunner runner( domain );
-            runner.add_set_descriptor( setA );
-            runner.add_density_descriptor( densityA );
-            runner.add_target_statistics( statA );
+            runner.add_set_descriptor( set_a );
+            runner.add_density_descriptor( density_a );
+            runner.add_target_statistics( stat_a );
             runner.initialize();
 
             // run simulation
@@ -229,6 +185,7 @@ namespace
             geode::statistics::validate(
                 statistic_tracker, runner.target_statistics() );
         }
+        // NOLINTEND(*-magic-numbers)
 
         geode::Logger::info( "--> SUCCESS!" );
     }
@@ -239,6 +196,7 @@ namespace
 
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test-POISSON-multi@" );
+        // NOLINTBEGIN(*-magic-numbers)
 
         geode::BoundingBox2D box;
         box.add_point( geode::Point2D{ { 0.0, 0.0 } } );
@@ -300,6 +258,7 @@ namespace
         sim_config.metropolis_hasting_steps = 1000;
         sim_config.burn_in_steps = 3000;
         sim_config.printer = printer_config;
+        // NOLINTEND(*-magic-numbers)
 
         auto statistic_tracker = runner.run( engine, sim_config );
         geode::statistics::validate(
