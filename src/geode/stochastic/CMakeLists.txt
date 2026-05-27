@@ -64,6 +64,7 @@ add_geode_library(
         "sampling/direct/point_uniform_sampler.hpp"
         "sampling/direct/segment_uniform_sampler.hpp"
         #"sampling/mcmc/helpers/fracture_simulation_runner.hpp"
+        "sampling/mcmc/helpers/simulation_context.hpp"
         "sampling/mcmc/helpers/simulation_printer.hpp"
         "models/energy_terms/energy_term.hpp"
         "models/energy_terms/pairwise_term.hpp"

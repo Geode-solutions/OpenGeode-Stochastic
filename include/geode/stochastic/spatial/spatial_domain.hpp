@@ -33,11 +33,16 @@ namespace geode
     class SpatialDomain
     {
     public:
-        SpatialDomain(
-            const BoundingBox< dimension >& domain, double buffer_size )
+        SpatialDomain( const SpatialDomain& ) = default;
+        SpatialDomain( SpatialDomain&& ) noexcept = default;
+
+        SpatialDomain& operator=( const SpatialDomain& ) = default;
+        SpatialDomain& operator=( SpatialDomain&& ) noexcept = default;
+
+        SpatialDomain( BoundingBox< dimension > domain, double buffer_size )
             : domain_{ domain },
               buffer_size_{ buffer_size },
-              extended_domain_{ domain }
+              extended_domain_{ domain_ }
         {
             auto volume = domain_.n_volume();
             OpenGeodeStochasticStochasticException::check_exception(
@@ -53,6 +58,7 @@ namespace geode
             {
                 extended_domain_.extends( buffer_size_ );
             }
+            Logger::info( domain_.string(), "  ", extended_domain_.string() );
         }
 
         const BoundingBox< dimension > box() const
@@ -88,6 +94,13 @@ namespace geode
         const BoundingBox< dimension > extended_box() const
         {
             return extended_domain_;
+        }
+
+        std::string string() const
+        {
+            return absl::StrCat( "Spatial Domain --> center ", domain_.string(),
+                " extended: ", extended_domain_.string(),
+                " buffer: ", buffer_size_ );
         }
 
     private:
@@ -132,4 +145,21 @@ namespace geode
             return domain.box().intersects( seg );
         }
     };
+
+    template < index_t dimension >
+    struct SpatialDomainConfig
+    {
+        Point< dimension > min_point;
+        Point< dimension > max_point;
+        double buffer_size{ 0.0 };
+    };
+
+    template < index_t dimension >
+    SpatialDomain< dimension > build_spatial_domain(
+        const SpatialDomainConfig< dimension >& config )
+    {
+        BoundingBox< dimension > box{ config.min_point, config.max_point };
+        Logger::info( box.string() );
+        return SpatialDomain{ std::move( box ), config.buffer_size };
+    }
 } // namespace geode

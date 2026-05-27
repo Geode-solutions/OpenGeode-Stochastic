@@ -118,6 +118,11 @@ namespace geode
             return names;
         }
 
+        [[nodiscard]] std::string string() const
+        {
+            return terms_collection_.string();
+        }
+
     private:
         EnergyTermCollection< ObjectType > terms_collection_;
         GibbsEnergy< ObjectType > energy_;
