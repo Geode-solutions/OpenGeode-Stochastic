@@ -106,7 +106,7 @@ namespace geode
         {
             double sum = 0.0;
             this->for_each_object_in_sets( state, this->impacted_set_ids(),
-                [&]( const ObjectId& cur_obj_id ) {
+                [&state]( const ObjectId& cur_obj_id ) {
                     sum += accumulate_interactions_with_neighbors(
                         cur_obj_id, state );
                 } );

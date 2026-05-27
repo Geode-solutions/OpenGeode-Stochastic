@@ -108,9 +108,9 @@ namespace geode
 
     template < typename ObjectType, typename NewEnergyTypeConfig >
     std::unique_ptr< EnergyTerm< ObjectType > > build_energy_term_impl(
-        const NewEnergyTypeConfig&,
-        const ObjectSets< ObjectType >&,
-        const SpatialDomain< ObjectType::dim >& )
+        const NewEnergyTypeConfig& /*unused*/,
+        const ObjectSets< ObjectType >& /*unused*/,
+        const SpatialDomain< ObjectType::dim >& /*unused*/ )
     {
         static_assert( sizeof( NewEnergyTypeConfig ) == 0,
             "Unsupported EnergyTermConfig type" );
@@ -119,9 +119,9 @@ namespace geode
 
     template < typename ObjectType >
     std::unique_ptr< EnergyTerm< ObjectType > > build_energy_term_impl(
-        const std::monostate&,
-        const ObjectSets< ObjectType >&,
-        const SpatialDomain< ObjectType::dim >& )
+        const std::monostate& /*unused*/,
+        const ObjectSets< ObjectType >& /*unused*/,
+        const SpatialDomain< ObjectType::dim >& /*unused*/ )
     {
         throw OpenGeodeStochasticStochasticException{ nullptr,
             OpenGeodeException::TYPE::data,

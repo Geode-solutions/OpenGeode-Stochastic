@@ -21,6 +21,7 @@
  *
  */
 
+#include <geode/basic/assert.hpp>
 #include <geode/stochastic/spatial/pairwise_interactions/pairwise_interactions_config.hpp>
 #include <variant>
 
@@ -47,7 +48,8 @@ namespace geode
 
     template < typename ObjectType, typename NewInteractionConfig >
     std::unique_ptr< PairwiseInteraction< ObjectType > >
-        build_pairwise_interaction_impl( const NewInteractionConfig& )
+        build_pairwise_interaction_impl(
+            const NewInteractionConfig& /*unused*/ )
     {
         static_assert( sizeof( NewInteractionConfig ) == 0,
             "Unsupported PairwiseInteractionConfig type" );
@@ -56,7 +58,7 @@ namespace geode
 
     template < typename ObjectType >
     std::unique_ptr< PairwiseInteraction< ObjectType > >
-        build_pairwise_interaction_impl( const std::monostate& )
+        build_pairwise_interaction_impl( const std::monostate& /*unused*/ )
     {
         throw OpenGeodeStochasticStochasticException{ nullptr,
             OpenGeodeException::TYPE::data,
