@@ -21,7 +21,8 @@
  *
  */
 
-#include <geode/basic/assert.hpp>
+#include <geode/stochastic/common.hpp>
+
 #include <geode/stochastic/spatial/pairwise_interactions/pairwise_interactions_config.hpp>
 #include <variant>
 

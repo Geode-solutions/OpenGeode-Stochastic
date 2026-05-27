@@ -30,6 +30,8 @@
 #include <variant>
 #include <vector>
 
+#include <geode/stochastic/common.hpp>
+
 #include <geode/stochastic/models/energy_terms/energy_term.hpp>
 #include <geode/stochastic/models/energy_terms/energy_term_config.hpp>
 #include <geode/stochastic/models/energy_terms/pairwise_term.hpp>

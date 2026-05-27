@@ -24,7 +24,7 @@
 
 #include <variant>
 
-#include <geode/basic/assert.hpp>
+#include <geode/stochastic/common.hpp>
 
 #include <geode/stochastic/spatial/single_object_features/segment_length_feature.hpp>
 #include <geode/stochastic/spatial/single_object_features/single_object_feature_config.hpp>
