@@ -68,7 +68,7 @@ namespace geode
         build_pairwise_interaction( const PairwiseInteractionConfig& cfg )
     {
         return std::visit(
-            [&]( auto&& interaction_cfg )
+            []( auto&& interaction_cfg )
                 -> std::unique_ptr< PairwiseInteraction< ObjectType > > {
                 return build_pairwise_interaction_impl< ObjectType >(
                     interaction_cfg );

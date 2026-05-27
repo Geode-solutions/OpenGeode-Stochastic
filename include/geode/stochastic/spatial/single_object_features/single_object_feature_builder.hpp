@@ -80,7 +80,7 @@ namespace geode
         build_single_object_feature( const SingleObjectFeatureConfig& cfg )
     {
         return std::visit(
-            [&]( auto&& interaction_cfg )
+            []( auto&& interaction_cfg )
                 -> std::unique_ptr< SingleObjectFeature< ObjectType > > {
                 return build_single_object_feature_impl< ObjectType >(
                     interaction_cfg );

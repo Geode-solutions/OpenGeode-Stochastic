@@ -95,10 +95,10 @@ namespace geode
             const ObjectSets< ObjectType >& state ) const override
         {
             double sum = 0.0;
-            this->for_each_object_in_sets(
-                state, this->impacted_set_ids(), [&]( const ObjectId& obj_id ) {
+            this->for_each_object_in_sets( state, this->impacted_set_ids(),
+                [&state, &sum, this]( const ObjectId& obj_id ) {
                     const auto& obj = state.get_object( obj_id );
-                    sum += feature_->evaluate( obj, this->domain() );
+                    sum += this->feature_->evaluate( obj, this->domain() );
                 } );
             return sum;
         }

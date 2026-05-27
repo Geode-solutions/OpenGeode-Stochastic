@@ -135,7 +135,7 @@ namespace geode
         const SpatialDomain< ObjectType::dim >& domain )
     {
         return std::visit(
-            [&]( const auto& term_cfg )
+            [&object_sets, &domain]( const auto& term_cfg )
                 -> std::unique_ptr< EnergyTerm< ObjectType > > {
                 return build_energy_term_impl< ObjectType >(
                     term_cfg, object_sets, domain );
