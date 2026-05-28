@@ -36,99 +36,14 @@
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
 #include <geode/stochastic/sampling/mcmc/simulation_runner.hpp>
 
+#include <geode/stochastic/sampling/mcmc/proposal/object_set_dynamic_config.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 #include <geode/stochastic/spatial/single_object_features/single_object_feature_config.hpp>
+
 namespace
 {
-    struct SetDescription
-    {
-        std::string name;
-        double birth_ratio{ 1.0 };
-        double death_ratio{ 1.0 };
-        double change_ratio{ 1.0 };
-    };
 
     using PoissonDensityDescription = geode::SingleObjectTermConfig;
-
-    class PoissonConfig
-    {
-    public:
-        PoissonConfig() = default;
-
-        void add_domain_config( const geode::Point2D& min_p,
-            const geode::Point2D& max_p,
-            double buffer_size )
-        {
-            domain_config_.min_point = min_p;
-            domain_config_.max_point = max_p;
-            domain_config_.buffer_size = buffer_size;
-        }
-
-        void add_set_descriptor( const SetDescription& descriptor )
-        {
-            set_descriptors_.push_back( descriptor );
-        }
-
-        void add_density_descriptor(
-            const PoissonDensityDescription& descriptor )
-        {
-            density_descriptors_.push_back( descriptor );
-        }
-
-        [[nodiscard]] geode::SimulationContext< geode::Point2D > build() const
-        {
-            geode::SimulationContext< geode::Point2D > context;
-
-            context.domain = geode::build_spatial_domain( domain_config_ );
-            auto proposal_kernel = create_sets_and_set_samplers( context );
-            create_model( context );
-
-            context.mh_sampler =
-                std::make_unique< geode::MetropolisHastings< geode::Point2D > >(
-                    *context.model, std::move( proposal_kernel ) );
-            return context;
-        }
-
-    private:
-        std::unique_ptr< geode::ProposalKernel< geode::Point2D > >
-            create_sets_and_set_samplers(
-                geode::SimulationContext< geode::Point2D >& context ) const
-        {
-            auto proposal_kernel =
-                std::make_unique< geode::ProposalKernel< geode::Point2D > >();
-            for( const auto& set_desc : set_descriptors_ )
-            {
-                const auto set_id =
-                    context.object_sets->add_set( set_desc.name );
-                context.set_samplers.push_back(
-                    std::make_unique< geode::UniformPointSetSampler< 2 > >(
-                        *context.domain ) );
-                geode::add_birth_death_change_moves(
-                    context.set_samplers.back(), *proposal_kernel, set_id,
-                    set_desc.birth_ratio, set_desc.death_ratio,
-                    set_desc.change_ratio );
-            }
-            return proposal_kernel;
-        }
-
-        void create_model(
-            geode::SimulationContext< geode::Point2D >& context ) const
-        {
-            geode::ModelConfig config;
-            for( const auto& energy_desc : density_descriptors_ )
-            {
-                config.terms.emplace_back( energy_desc );
-            }
-
-            context.model = std::move( geode::build_model< geode::Point2D >(
-                config, *context.object_sets, *context.domain ) );
-        }
-
-    private:
-        geode::SpatialDomainConfig< 2 > domain_config_;
-        std::vector< SetDescription > set_descriptors_;
-        std::vector< PoissonDensityDescription > density_descriptors_;
-    };
 
     void test_single_type_poisson()
     {
@@ -143,18 +58,21 @@ namespace
 
         for( const auto config : geode::Range{ birth_ratio.size() } )
         {
-            PoissonConfig poisson_config;
+            geode::SimulationContextConfig< geode::Point2D > poisson_config;
             std::vector< geode::TargetStatisticConfig >
                 targeted_statistics_descriptors;
 
-            poisson_config.add_domain_config( geode::Point2D{ { 0.0, 0.0 } },
-                geode::Point2D{ { 10.0, 10.0 } }, 0. );
+            poisson_config.domain = { geode::Point2D{ { 0.0, 0.0 } },
+                geode::Point2D{ { 10.0, 10.0 } }, 0. };
             // --- Set description
-            SetDescription set_a;
+            geode::ObjectSetConfig set_a;
             set_a.name = "A";
-            set_a.birth_ratio = birth_ratio[config];
-            set_a.death_ratio = 1.0;
-            set_a.change_ratio = change_ratio[config];
+
+            geode::ObjectSetDynamicsConfig dyn_a;
+            dyn_a.name = "A";
+            dyn_a.birth_ratio = birth_ratio[config];
+            dyn_a.death_ratio = 1.0;
+            dyn_a.change_ratio = change_ratio[config];
 
             // --- Energy term description
             PoissonDensityDescription density_a;
@@ -166,11 +84,11 @@ namespace
             geode::TargetStatisticConfig stat_a{ "density", 30.0, 0.15 };
             targeted_statistics_descriptors.push_back( stat_a );
 
-            poisson_config.add_set_descriptor( set_a );
-            poisson_config.add_density_descriptor( density_a );
+            poisson_config.sets.emplace_back( set_a );
+            poisson_config.proposals.emplace_back( dyn_a );
+            poisson_config.model.terms.emplace_back( density_a );
 
-            auto context = poisson_config.build();
-
+            auto context = build_simulation_context( poisson_config );
             geode::SimulationRunner< geode::Point2D > runner{ std::move(
                 context ) };
 
@@ -202,17 +120,28 @@ namespace
 
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test-POISSON-multi@" );
-        PoissonConfig poisson_config;
-        std::vector< geode::TargetStatisticConfig >
-            targeted_statistics_descriptors;
+
+        geode::SimulationContextConfig< geode::Point2D > poisson_config;
+
         // NOLINTBEGIN(*-magic-numbers)
-        poisson_config.add_domain_config( geode::Point2D{ { 0.0, 0.0 } },
-            geode::Point2D{ { 10.0, 10.0 } }, 0. );
+        poisson_config.domain = { geode::Point2D{ { 0.0, 0.0 } },
+            geode::Point2D{ { 10.0, 10.0 } }, 0. };
 
         // --- Set descriptions
-        SetDescription set01{ "set01", 2.0, 3.0, 1.0 };
-        SetDescription set02{ "set02", 3.0, 0.5, 1.0 };
-        SetDescription set03{ "set03", 4.0, 1.0, 1.0 };
+        geode::ObjectSetConfig set01{ "set01" };
+        geode::ObjectSetConfig set02{ "set02" };
+        geode::ObjectSetConfig set03{ "set03" };
+        poisson_config.sets.emplace_back( set01 );
+        poisson_config.sets.emplace_back( set02 );
+        poisson_config.sets.emplace_back( set03 );
+
+        // --- proposal descriptions
+        geode::ObjectSetDynamicsConfig dyn01{ "set01", 2.0, 3.0, 1.0 };
+        geode::ObjectSetDynamicsConfig dyn02{ "set02", 3.0, 0.5, 1.0 };
+        geode::ObjectSetDynamicsConfig dyn03{ "set03", 4.0, 1.0, 1.0 };
+        poisson_config.proposals.emplace_back( dyn01 );
+        poisson_config.proposals.emplace_back( dyn02 );
+        poisson_config.proposals.emplace_back( dyn03 );
 
         // --- Energy term descriptions
         PoissonDensityDescription density01;
@@ -221,37 +150,25 @@ namespace
         density01.lambda = 0.1;
         density01.object_feature = geode::ObjectInDomainFeatureConfig{};
 
-        geode::TargetStatisticConfig stat01{ "density01", 10.0, 0.15 };
-        targeted_statistics_descriptors.push_back( stat01 );
-
         PoissonDensityDescription density02;
         density02.term_name = "density02";
         density02.object_set_names = { "set02" };
         density02.lambda = 0.4;
         density02.object_feature = geode::ObjectInDomainFeatureConfig{};
 
-        geode::TargetStatisticConfig stat02{ "density02", 40.0, 0.15 };
-        targeted_statistics_descriptors.push_back( stat02 );
-
         PoissonDensityDescription density03;
         density03.term_name = "density03";
         density03.object_set_names = { "set03" };
         density03.lambda = 0.3;
         density03.object_feature = geode::ObjectInDomainFeatureConfig{};
+        poisson_config.model.terms.emplace_back( density01 );
+        poisson_config.model.terms.emplace_back( density02 );
+        poisson_config.model.terms.emplace_back( density03 );
 
-        geode::TargetStatisticConfig stat03{ "density03", 30.0, 0.15 };
-        targeted_statistics_descriptors.push_back( stat03 );
+        auto context = build_simulation_context( poisson_config );
+        geode::SimulationRunner< geode::Point2D > runner{ std::move(
+            context ) };
 
-        poisson_config.add_set_descriptor( set01 );
-        poisson_config.add_set_descriptor( set02 );
-        poisson_config.add_set_descriptor( set03 );
-
-        poisson_config.add_density_descriptor( density01 );
-        poisson_config.add_density_descriptor( density02 );
-        poisson_config.add_density_descriptor( density03 );
-
-        geode::SimulationRunner< geode::Point2D > runner(
-            poisson_config.build() );
         // run simulation
         geode::SimulationPrinterConfigurator printer_config;
         printer_config.output_folder = absl::StrCat(
@@ -265,6 +182,16 @@ namespace
         // NOLINTEND(*-magic-numbers)
 
         auto statistic_tracker = runner.run( engine, sim_config );
+
+        std::vector< geode::TargetStatisticConfig >
+            targeted_statistics_descriptors;
+        geode::TargetStatisticConfig stat01{ "density01", 10.0, 0.15 };
+        targeted_statistics_descriptors.push_back( stat01 );
+        geode::TargetStatisticConfig stat02{ "density02", 40.0, 0.15 };
+        targeted_statistics_descriptors.push_back( stat02 );
+        geode::TargetStatisticConfig stat03{ "density03", 30.0, 0.15 };
+        targeted_statistics_descriptors.push_back( stat03 );
+
         geode::TargetStatistics target_stats{ runner.model(),
             targeted_statistics_descriptors };
         geode::statistics::validate( statistic_tracker, target_stats );

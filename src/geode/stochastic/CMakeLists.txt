@@ -76,6 +76,7 @@ add_geode_library(
         "models/model.hpp"
         "sampling/mcmc/proposal/classical_proposals.hpp"
         "sampling/mcmc/proposal/moves.hpp"
+        "sampling/mcmc/proposal/object_set_dynamic_config.hpp"
         "sampling/mcmc/proposal/proposal_kernel.hpp"
         "sampling/mcmc/metropolis_hasting_sampler.hpp"
         "sampling/mcmc/simulation_runner.hpp"

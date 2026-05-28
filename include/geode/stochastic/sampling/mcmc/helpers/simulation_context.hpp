@@ -26,15 +26,19 @@
 #include <geode/stochastic/common.hpp>
 
 #include <geode/stochastic/spatial/object_sets.hpp>
+#include <geode/stochastic/spatial/spatial_domain.hpp>
 
 #include <geode/stochastic/inference/target_statistics.hpp>
 
 #include <geode/stochastic/models/model.hpp>
 
 #include <geode/stochastic/sampling/direct/object_set_sampler/object_set_sampler.hpp>
-#include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
+#include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
 
-#include <geode/stochastic/spatial/spatial_domain.hpp>
+#include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
+
+#include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
+#include <geode/stochastic/sampling/mcmc/proposal/object_set_dynamic_config.hpp>
 
 namespace geode
 {
@@ -64,5 +68,89 @@ namespace geode
         std::unique_ptr< Model< ObjectType > > model;
         std::unique_ptr< geode::MetropolisHastings< ObjectType > > mh_sampler;
     };
+
+    template < typename ObjectType >
+    struct SimulationContextConfig
+    {
+        SpatialDomainConfig< ObjectType::dim > domain;
+
+        std::vector< ObjectSetConfig > sets;
+        std::vector< ObjectSetDynamicsConfig > proposals;
+
+        geode::ModelConfig model;
+    };
+
+    template < typename ObjectType >
+    [[nodiscard]] geode::SimulationContext< ObjectType >
+        build_simulation_context(
+            const SimulationContextConfig< ObjectType >& config )
+    {
+        geode::SimulationContext< ObjectType > context;
+
+        // -------------------------
+        // Domain
+        // -------------------------
+        context.domain = geode::build_spatial_domain( config.domain );
+
+        // -------------------------
+        // Sets
+        // -------------------------
+
+        //        auto proposal_kernel =
+        //            std::make_unique< geode::ProposalKernel< geode::Point2D >
+        //            >();
+        //        for( const auto& set_desc : set_descriptors_ )
+        //        {
+        //            const auto set_id = context.object_sets->add_set(
+        //            set_desc.name ); context.set_samplers.push_back(
+        //                std::make_unique< geode::UniformPointSetSampler< 2 >
+        //                >(
+        //                    *context.domain ) );
+        //            geode::add_birth_death_change_moves(
+        //            context.set_samplers.back(),
+        //                *proposal_kernel, set_id, set_desc.birth_ratio,
+        //                set_desc.death_ratio, set_desc.change_ratio );
+        //        }
+        //        return proposal_kernel;
+
+        for( const auto& set_cfg : config.sets )
+        {
+            const auto set_id = context.object_sets->add_set( set_cfg.name );
+            geode_unused( set_id );
+        }
+
+        // -------------------------
+        // Model
+        // -------------------------
+        context.model = geode::build_model< ObjectType >(
+            config.model, *context.object_sets, *context.domain );
+
+        // -------------------------
+        //  Proposal
+        // -------------------------
+        auto proposal_kernel =
+            std::make_unique< geode::ProposalKernel< ObjectType > >();
+        for( const auto& set_proposal : config.proposals )
+        {
+            const auto set_id =
+                context.object_sets->get_set_uuid( set_proposal.name );
+            context.set_samplers.push_back(
+                std::make_unique< geode::UniformPointSetSampler< 2 > >(
+                    *context.domain ) );
+
+            geode::add_birth_death_change_moves( context.set_samplers.back(),
+                *proposal_kernel, set_id, set_proposal.birth_ratio,
+                set_proposal.death_ratio, set_proposal.change_ratio );
+        }
+
+        // -------------------------
+        // MH sampler
+        // -------------------------
+        context.mh_sampler =
+            std::make_unique< geode::MetropolisHastings< geode::Point2D > >(
+                *context.model, std::move( proposal_kernel ) );
+
+        return context;
+    }
 
 } // namespace geode
