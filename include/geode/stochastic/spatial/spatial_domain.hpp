@@ -42,7 +42,7 @@ namespace geode
         SpatialDomain( BoundingBox< dimension > domain, double buffer_size )
             : domain_{ domain },
               buffer_size_{ buffer_size },
-              extended_domain_{ domain_ }
+              extended_domain_{ domain }
         {
             auto volume = domain_.n_volume();
             OpenGeodeStochasticStochasticException::check_exception(
@@ -58,7 +58,6 @@ namespace geode
             {
                 extended_domain_.extends( buffer_size_ );
             }
-            Logger::info( domain_.string(), "  ", extended_domain_.string() );
         }
 
         const BoundingBox< dimension > box() const
@@ -155,11 +154,12 @@ namespace geode
     };
 
     template < index_t dimension >
-    SpatialDomain< dimension > build_spatial_domain(
+    std::unique_ptr< SpatialDomain< dimension > > build_spatial_domain(
         const SpatialDomainConfig< dimension >& config )
     {
         BoundingBox< dimension > box{ config.min_point, config.max_point };
-        Logger::info( box.string() );
-        return SpatialDomain{ std::move( box ), config.buffer_size };
+
+        return std::make_unique< SpatialDomain< dimension > >(
+            std::move( box ), config.buffer_size );
     }
 } // namespace geode

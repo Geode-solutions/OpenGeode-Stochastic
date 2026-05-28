@@ -41,16 +41,11 @@ namespace geode
     template < typename ObjectType >
     struct SimulationContext
     {
-        explicit SimulationContext( SpatialDomain< ObjectType::dim > domain_in )
-            : domain( std::move( domain_in ) )
-        {
-        }
-
         std::string string() const
         {
             auto message = std::string{ "SimulationContext: " };
-            absl::StrAppend( &message, "\n\t --> ", domain.string() );
-            absl::StrAppend( &message, "\n\t --> ", object_sets.string() );
+            absl::StrAppend( &message, "\n\t --> ", domain->string() );
+            absl::StrAppend( &message, "\n\t --> ", object_sets->string() );
             absl::StrAppend(
                 &message, "\n\t --> ", set_samplers.size(), " Sets samplers " );
             absl::StrAppend( &message, "\n\t --> ", model->string() );
@@ -59,9 +54,11 @@ namespace geode
             return message;
         }
 
-        SpatialDomain< ObjectType::dim > domain;
+        std::unique_ptr< SpatialDomain< ObjectType::dim > > domain;
 
-        ObjectSets< ObjectType > object_sets;
+        std::unique_ptr< ObjectSets< ObjectType > > object_sets{
+            std::make_unique< ObjectSets< ObjectType > >()
+        };
         std::vector< std::unique_ptr< geode::ObjectSetSampler< ObjectType > > >
             set_samplers;
         std::unique_ptr< Model< ObjectType > > model;

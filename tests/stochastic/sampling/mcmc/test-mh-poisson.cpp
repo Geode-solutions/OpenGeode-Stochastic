@@ -83,9 +83,9 @@ namespace
 
         geode::SimulationContext< geode::Point2D > build() const
         {
-            geode::SimulationContext< geode::Point2D > context{
-                geode::build_spatial_domain( domain_config_ )
-            };
+            geode::SimulationContext< geode::Point2D > context;
+
+            context.domain = geode::build_spatial_domain( domain_config_ );
             auto proposal_kernel = create_sets_and_set_samplers( context );
             create_model( context );
 
@@ -103,16 +103,13 @@ namespace
         {
             auto proposal_kernel =
                 std::make_unique< geode::ProposalKernel< geode::Point2D > >();
-
             for( const auto& set_desc : set_descriptors_ )
             {
                 const auto set_id =
-                    context.object_sets.add_set( set_desc.name );
-
+                    context.object_sets->add_set( set_desc.name );
                 context.set_samplers.push_back(
                     std::make_unique< geode::UniformPointSetSampler< 2 > >(
-                        context.domain ) );
-
+                        *context.domain ) );
                 geode::add_birth_death_change_moves(
                     context.set_samplers.back(), *proposal_kernel, set_id,
                     set_desc.birth_ratio, set_desc.death_ratio,
@@ -131,7 +128,7 @@ namespace
             }
 
             context.model = std::move( geode::build_model< geode::Point2D >(
-                config, context.object_sets, context.domain ) );
+                config, *context.object_sets, *context.domain ) );
         }
 
         void create_target_statistics(
@@ -158,16 +155,16 @@ namespace
 
         geode::RandomEngine engine;
         engine.set_seed( "@mh-test-single-POISSON@" );
-
-        PoissonConfig poisson_config;
-        // NOLINTBEGIN(*-magic-numbers)
-        poisson_config.add_domain_config( geode::Point2D{ { 0.0, 0.0 } },
-            geode::Point2D{ { 10.0, 10.0 } }, 0. );
-
         std::array< double, 4 > birth_ratio{ 0.1, 0.5, 2., 4. };
         std::array< double, 4 > change_ratio{ 0., 1., 1., 0. };
+
         for( const auto config : geode::Range{ birth_ratio.size() } )
         {
+            PoissonConfig poisson_config;
+
+            // NOLINTBEGIN(*-magic-numbers)
+            poisson_config.add_domain_config( geode::Point2D{ { 0.0, 0.0 } },
+                geode::Point2D{ { 10.0, 10.0 } }, 0. );
             // --- Set description
             SetDescription set_a;
             set_a.name = "A";
@@ -188,8 +185,10 @@ namespace
             poisson_config.add_density_descriptor( density_a );
             poisson_config.add_target_statistics( stat_a );
 
-            geode::SimulationRunner< geode::Point2D > runner(
-                poisson_config.build() );
+            auto context = poisson_config.build();
+
+            geode::SimulationRunner< geode::Point2D > runner{ std::move(
+                context ) };
 
             // run simulation
             geode::SimulationPrinterConfigurator printer_config;

@@ -68,18 +68,17 @@ namespace geode
         const ObjectSets< ObjectType >& run(
             RandomEngine& engine, const index_t steps )
         {
-            context_.mh_sampler->walk( context_.object_sets, engine, steps );
-            return context_.object_sets;
+            context_.mh_sampler->walk( *context_.object_sets, engine, steps );
+            return *context_.object_sets;
         }
 
         StatisticsTracker< ObjectType > run(
             RandomEngine& engine, const SimulationConfigurator& config )
         {
-            Logger::info( context_.string() );
             if( config.burn_in_steps > 0 )
             {
                 context_.mh_sampler->walk(
-                    context_.object_sets, engine, config.burn_in_steps );
+                    *context_.object_sets, engine, config.burn_in_steps );
             }
 
             // Initialize monitoring
@@ -94,18 +93,18 @@ namespace geode
 
             for( const auto realization : Range{ config.realizations } )
             {
-                context_.mh_sampler->walk( context_.object_sets, engine,
+                context_.mh_sampler->walk( *context_.object_sets, engine,
                     config.metropolis_hasting_steps );
 
                 const auto stats =
-                    context_.model->compute_statistics( context_.object_sets );
+                    context_.model->compute_statistics( *context_.object_sets );
                 stats_monitor.add_realization( stats );
 
                 if( printer )
                 {
                     printer->print_statistics( stats );
                     printer->print_object_sets(
-                        context_.object_sets, realization );
+                        *context_.object_sets, realization );
                 }
             }
 
@@ -130,7 +129,7 @@ namespace geode
 
         [[nodiscard]] const ObjectSets< ObjectType >& state_realization() const
         {
-            return context_.object_sets;
+            return *context_.object_sets;
         }
 
     protected:
