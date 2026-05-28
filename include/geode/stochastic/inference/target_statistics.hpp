@@ -36,28 +36,22 @@ namespace geode
     class TargetStatistics
     {
     public:
-        explicit TargetStatistics( const Model< ObjectType >& model )
+        explicit TargetStatistics( const Model< ObjectType >& model,
+            const std::vector< TargetStatisticConfig >& statistic_targets )
             : model_( model )
         {
             values_.resize( model.nb_terms(), 0.0 );
             tolerances_.resize( model.nb_terms(), 0.0 );
             active_.resize( model.nb_terms(), false );
+            for( const auto& target : statistic_targets )
+            {
+                set_target( target );
+            }
         }
 
         const Model< ObjectType >& model() const
         {
             return model_;
-        }
-
-        void set_target( const TargetStatisticConfig& statistic )
-        {
-            const auto term_uuid =
-                model_.terms().get_term_uuid( statistic.term_name );
-            const auto idx = model_.term_index( term_uuid );
-
-            values_[idx] = statistic.value;
-            tolerances_[idx] = statistic.tolerance;
-            active_[idx] = true;
         }
 
         bool has_target( const uuid& term_uuid ) const
@@ -88,6 +82,18 @@ namespace geode
                 }
             }
             return active_terms_uuid;
+        }
+
+    private:
+        void set_target( const TargetStatisticConfig& statistic )
+        {
+            const auto term_uuid =
+                model_.terms().get_term_uuid( statistic.term_name );
+            const auto idx = model_.term_index( term_uuid );
+
+            values_[idx] = statistic.value;
+            tolerances_[idx] = statistic.tolerance;
+            active_[idx] = true;
         }
 
     private:

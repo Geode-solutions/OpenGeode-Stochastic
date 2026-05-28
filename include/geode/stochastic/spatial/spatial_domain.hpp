@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <geode/stochastic/common.hpp>
+
 #include <geode/geometry/basic_objects/segment.hpp>
 #include <geode/geometry/bounding_box.hpp>
 #include <geode/geometry/point.hpp>
@@ -32,12 +34,10 @@ namespace geode
     template < index_t dimension >
     class SpatialDomain
     {
-    public:
-        SpatialDomain( const SpatialDomain& ) = default;
-        SpatialDomain( SpatialDomain&& ) noexcept = default;
+        OPENGEODE_DISABLE_COPY_AND_MOVE( SpatialDomain );
 
-        SpatialDomain& operator=( const SpatialDomain& ) = default;
-        SpatialDomain& operator=( SpatialDomain&& ) noexcept = default;
+    public:
+        ~SpatialDomain() = default;
 
         SpatialDomain( BoundingBox< dimension > domain, double buffer_size )
             : domain_{ domain },
@@ -60,42 +60,43 @@ namespace geode
             }
         }
 
-        const BoundingBox< dimension > box() const
+        [[nodiscard]] const BoundingBox< dimension >& box() const
         {
             return domain_;
         }
 
-        bool contains( const Point< dimension >& point ) const
+        [[nodiscard]] bool contains( const Point< dimension >& point ) const
         {
             return domain_.contains( point );
         }
 
-        double n_volume() const
+        [[nodiscard]] double n_volume() const
         {
             return domain_.n_volume();
         }
 
-        double smallest_length() const
+        [[nodiscard]] double smallest_length() const
         {
             return std::get< 1 >( domain_.smallest_length() );
         }
 
-        bool extended_contains( const Point< dimension >& point ) const
+        [[nodiscard]] bool extended_contains(
+            const Point< dimension >& point ) const
         {
             return extended_domain_.contains( point );
         }
 
-        double extended_n_volume() const
+        [[nodiscard]] double extended_n_volume() const
         {
             return extended_domain_.n_volume();
         }
 
-        const BoundingBox< dimension > extended_box() const
+        [[nodiscard]] const BoundingBox< dimension >& extended_box() const
         {
             return extended_domain_;
         }
 
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             return absl::StrCat( "Spatial Domain --> center ", domain_.string(),
                 " extended: ", extended_domain_.string(),

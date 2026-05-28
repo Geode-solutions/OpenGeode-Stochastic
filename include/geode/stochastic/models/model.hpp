@@ -50,7 +50,7 @@ namespace geode
     template < typename ObjectType >
     class Model
     {
-        OPENGEODE_DISABLE_COPY( Model );
+        OPENGEODE_DISABLE_COPY_AND_MOVE( Model );
 
     public:
         Model() = delete;

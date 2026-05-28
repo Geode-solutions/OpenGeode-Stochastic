@@ -28,18 +28,26 @@
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_context.hpp>
 
 #include <absl/strings/str_join.h>
-
 namespace geode
 {
+    namespace detail
+    {
+        // NOLINTBEGIN(*-magic-numbers)
+        constexpr index_t default_realizations{ 1000 };
+        constexpr index_t default_simulation_steps{ 1000 };
+        constexpr index_t default_burn_in_steps{ 1000 };
+        // NOLINTEND(*-magic-numbers)
+    } // namespace detail
+
     struct SimulationConfigurator
     {
-        index_t realizations{ 1000 };
-        index_t metropolis_hasting_steps{ 1000 };
-        index_t burn_in_steps{ 1000 };
+        index_t realizations{ detail::default_realizations };
+        index_t metropolis_hasting_steps{ detail::default_simulation_steps };
+        index_t burn_in_steps{ detail::default_burn_in_steps };
 
         std::optional< SimulationPrinterConfigurator > printer{ std::nullopt };
 
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             auto message = absl::StrCat( "SimulationConfigurator: " );
             absl::StrAppend( &message, "\n\t --> ", realizations,
@@ -60,19 +68,22 @@ namespace geode
     template < typename ObjectType >
     class SimulationRunner
     {
+        OPENGEODE_DISABLE_COPY_AND_MOVE( SimulationRunner );
+
     public:
-        SimulationRunner( SimulationContext< ObjectType >&& context )
-            : context_( std::move( context ) ) {};
+        SimulationRunner() = delete;
+        explicit SimulationRunner( SimulationContext< ObjectType >&& context )
+            : context_( std::move( context ) ){};
         virtual ~SimulationRunner() = default;
 
-        const ObjectSets< ObjectType >& run(
+        [[nodiscard]] const ObjectSets< ObjectType >& run(
             RandomEngine& engine, const index_t steps )
         {
             context_.mh_sampler->walk( *context_.object_sets, engine, steps );
             return *context_.object_sets;
         }
 
-        StatisticsTracker< ObjectType > run(
+        [[nodiscard]] StatisticsTracker< ObjectType > run(
             RandomEngine& engine, const SimulationConfigurator& config )
         {
             if( config.burn_in_steps > 0 )
@@ -116,23 +127,17 @@ namespace geode
             return stats_monitor;
         }
 
-        [[nodiscard]] const TargetStatistics< ObjectType >&
-            target_statistics() const
-        {
-            OpenGeodeStochasticStochasticException::check_exception(
-                context_.target_statistics.has_value(), nullptr,
-                OpenGeodeException::TYPE::data,
-                "[SimulationRunner] Target statistics not initialized" );
-
-            return *context_.target_statistics;
-        }
-
         [[nodiscard]] const ObjectSets< ObjectType >& state_realization() const
         {
             return *context_.object_sets;
         }
 
-    protected:
+        [[nodiscard]] const Model< ObjectType >& model() const
+        {
+            return *context_.model;
+        }
+
+    private:
         SimulationContext< ObjectType > context_;
     };
 } // namespace geode

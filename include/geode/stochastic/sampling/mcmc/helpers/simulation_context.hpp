@@ -41,7 +41,7 @@ namespace geode
     template < typename ObjectType >
     struct SimulationContext
     {
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             auto message = std::string{ "SimulationContext: " };
             absl::StrAppend( &message, "\n\t --> ", domain->string() );
@@ -63,8 +63,6 @@ namespace geode
             set_samplers;
         std::unique_ptr< Model< ObjectType > > model;
         std::unique_ptr< geode::MetropolisHastings< ObjectType > > mh_sampler;
-
-        std::optional< TargetStatistics< ObjectType > > target_statistics;
     };
 
 } // namespace geode
