@@ -22,6 +22,7 @@
  */
 #pragma once
 #include <geode/basic/uuid.hpp>
+#include <geode/stochastic/models/model.hpp>
 
 namespace geode
 {
@@ -49,27 +50,27 @@ namespace geode
             }
         }
 
-        const Model< ObjectType >& model() const
+        [[nodiscard]] const Model< ObjectType >& model() const
         {
             return model_;
         }
 
-        bool has_target( const uuid& term_uuid ) const
+        [[nodiscard]] bool has_target( const uuid& term_uuid ) const
         {
             return active_[model_.term_index( term_uuid )];
         }
 
-        double target( const uuid& term_uuid ) const
+        [[nodiscard]] double target( const uuid& term_uuid ) const
         {
             return values_[model_.term_index( term_uuid )];
         }
 
-        double tolerance( const uuid& term_uuid ) const
+        [[nodiscard]] double tolerance( const uuid& term_uuid ) const
         {
             return tolerances_[model_.term_index( term_uuid )];
         }
 
-        std::vector< uuid > active_terms() const
+        [[nodiscard]] std::vector< uuid > active_terms() const
         {
             std::vector< uuid > active_terms_uuid;
 

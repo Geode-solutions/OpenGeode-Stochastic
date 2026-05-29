@@ -65,36 +65,40 @@ namespace geode
         ObjectSets( ObjectSets&& ) noexcept = default;
         ObjectSets& operator=( ObjectSets&& ) noexcept = default;
 
-        const ObjectSet< Type >& get_set( const uuid& set_id ) const;
-        const Type& get_object( const ObjectId& object_id ) const;
-        std::vector< ObjectId > get_all_object() const;
-        std::vector< ObjectId > get_objects_in_set( const uuid& set_id ) const;
+        [[nodiscard]] const ObjectSet< Type >& get_set(
+            const uuid& set_id ) const;
+        [[nodiscard]] const Type& get_object( const ObjectId& object_id ) const;
+        [[nodiscard]] std::vector< ObjectId > get_all_object() const;
+        [[nodiscard]] std::vector< ObjectId > get_objects_in_set(
+            const uuid& set_id ) const;
 
-        index_t nb_sets() const;
-        index_t nb_objects_in_set( const uuid& set_id ) const;
-        index_t nb_objects() const;
+        [[nodiscard]] index_t nb_sets() const;
+        [[nodiscard]] index_t nb_objects_in_set( const uuid& set_id ) const;
+        [[nodiscard]] index_t nb_objects() const;
 
-        uuid add_set( std::string_view name );
-        ObjectId add_object( Type&& object, const uuid& set_id, bool fixed );
-        void update_free_object( const ObjectId& object_id, Type&& object );
-        void remove_free_object( const ObjectId& object_id );
+        [[nodiscard]] uuid add_set( std::string_view name );
+        [[nodiscard]] ObjectId add_object(
+            Type&& object, const uuid& set_id, bool fixed );
+        [[nodiscard]] void update_free_object(
+            const ObjectId& object_id, Type&& object );
+        [[nodiscard]] void remove_free_object( const ObjectId& object_id );
 
-        std::vector< ObjectId > neighbors( const Type& object,
+        [[nodiscard]] std::vector< ObjectId > neighbors( const Type& object,
             const std::vector< uuid >& targeted_set_ids,
             double searching_distance,
             std::optional< ObjectId > exclude_id ) const;
 
-        std::string string() const;
+        [[nodiscard]] std::string string() const;
 
-        uuid get_set_uuid( std::string_view set_name ) const;
-        std::vector< uuid > get_set_uuids(
+        [[nodiscard]] uuid get_set_uuid( std::string_view set_name ) const;
+        [[nodiscard]] std::vector< uuid > get_set_uuids(
             const std::vector< std::string >& set_names ) const;
-        std::vector< std::pair< uuid, uuid > > get_set_uuid_pairs(
+        [[nodiscard]] std::vector< std::pair< uuid, uuid > > get_set_uuid_pairs(
             const std::vector< std::pair< std::string, std::string > >&
                 set_name_pairs ) const;
 
     private:
-        ObjectSet< Type >& get_set( const uuid& set_id );
+        [[nodiscard]] ObjectSet< Type >& get_set( const uuid& set_id );
 
     private:
         absl::flat_hash_map< std::string, uuid > name_to_uuid_;

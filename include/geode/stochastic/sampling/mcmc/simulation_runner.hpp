@@ -33,17 +33,17 @@ namespace geode
     namespace detail
     {
         // NOLINTBEGIN(*-magic-numbers)
-        constexpr index_t default_realizations{ 1000 };
-        constexpr index_t default_simulation_steps{ 1000 };
-        constexpr index_t default_burn_in_steps{ 1000 };
+        constexpr index_t DEFAULT_REALIZATIONS{ 1000 };
+        constexpr index_t DEFAULT_SIMULATION_STEPS{ 1000 };
+        constexpr index_t DEFAULT_BURN_IN_STEPS{ 1000 };
         // NOLINTEND(*-magic-numbers)
     } // namespace detail
 
     struct SimulationConfigurator
     {
-        index_t realizations{ detail::default_realizations };
-        index_t metropolis_hasting_steps{ detail::default_simulation_steps };
-        index_t burn_in_steps{ detail::default_burn_in_steps };
+        index_t realizations{ detail::DEFAULT_REALIZATIONS };
+        index_t metropolis_hasting_steps{ detail::DEFAULT_SIMULATION_STEPS };
+        index_t burn_in_steps{ detail::DEFAULT_BURN_IN_STEPS };
 
         std::optional< SimulationPrinterConfigurator > printer{ std::nullopt };
 
@@ -73,7 +73,7 @@ namespace geode
     public:
         SimulationRunner() = delete;
         explicit SimulationRunner( SimulationContext< ObjectType >&& context )
-            : context_( std::move( context ) ) {};
+            : context_( std::move( context ) ){};
         virtual ~SimulationRunner() = default;
 
         [[nodiscard]] const ObjectSets< ObjectType >& run(

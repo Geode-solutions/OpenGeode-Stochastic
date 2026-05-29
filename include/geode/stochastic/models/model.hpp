@@ -54,7 +54,9 @@ namespace geode
 
     public:
         Model() = delete;
-        Model( EnergyTermCollection< ObjectType >&& energy_terms )
+        ~Model() = default;
+
+        explicit Model( EnergyTermCollection< ObjectType >&& energy_terms )
             : terms_collection_( std::move( energy_terms ) ),
               energy_{ terms_collection_ }
         {

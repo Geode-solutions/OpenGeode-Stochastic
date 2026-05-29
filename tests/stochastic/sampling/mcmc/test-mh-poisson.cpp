@@ -179,7 +179,6 @@ namespace
         sim_config.metropolis_hasting_steps = 1000;
         sim_config.burn_in_steps = 3000;
         sim_config.printer = printer_config;
-        // NOLINTEND(*-magic-numbers)
 
         auto statistic_tracker = runner.run( engine, sim_config );
 
@@ -191,6 +190,7 @@ namespace
         targeted_statistics_descriptors.push_back( stat02 );
         geode::TargetStatisticConfig stat03{ "density03", 30.0, 0.15 };
         targeted_statistics_descriptors.push_back( stat03 );
+        // NOLINTEND(*-magic-numbers)
 
         geode::TargetStatistics target_stats{ runner.model(),
             targeted_statistics_descriptors };
