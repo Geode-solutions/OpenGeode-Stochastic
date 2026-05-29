@@ -29,7 +29,7 @@ namespace geode
 {
     struct ObjectSetDynamicsConfig
     {
-        std::string name{};
+        std::string name;
 
         double birth_ratio = 1.0;
         double death_ratio = 1.0;

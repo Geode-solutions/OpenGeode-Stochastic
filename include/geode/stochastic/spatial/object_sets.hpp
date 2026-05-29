@@ -62,6 +62,8 @@ namespace geode
 
     public:
         ObjectSets() noexcept = default;
+        ~ObjectSets() noexcept = default;
+
         ObjectSets( ObjectSets&& ) noexcept = default;
         ObjectSets& operator=( ObjectSets&& ) noexcept = default;
 

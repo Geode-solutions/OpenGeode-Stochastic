@@ -76,10 +76,10 @@ namespace geode
 
             for( const auto& term : model_.terms().energy_terms() )
             {
-                const auto& id = term->id();
-                if( active_[model_.term_index( id )] )
+                const auto& term_id = term->id();
+                if( active_[model_.term_index( term_id )] )
                 {
-                    active_terms_uuid.push_back( id );
+                    active_terms_uuid.push_back( term_id );
                 }
             }
             return active_terms_uuid;
