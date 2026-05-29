@@ -24,10 +24,13 @@
 #pragma once
 
 #include <geode/stochastic/sampling/random_engine.hpp>
+
 #include <geode/stochastic/spatial/object_sets.hpp>
+#include <geode/stochastic/spatial/spatial_domain.hpp>
 
 namespace geode
 {
+
     template < typename Type >
     class ObjectSetSampler
     {
@@ -55,4 +58,12 @@ namespace geode
     protected:
         double log_pdf_{ LOG_PROB_INVALID };
     };
+
+    template < typename ObjectType >
+    struct ObjectSamplerConfig;
+
+    template < typename ObjectType >
+    std::unique_ptr< ObjectSetSampler< ObjectType > > build_objectset_sampler(
+        const SpatialDomain< ObjectType::dim >& domain,
+        const ObjectSamplerConfig< ObjectType >& config );
 } // namespace geode

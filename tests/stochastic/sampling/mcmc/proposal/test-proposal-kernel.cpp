@@ -58,7 +58,8 @@ namespace
         box.add_point( max_point );
         geode::SpatialDomain domain( box, 0. );
 
-        geode::UniformPointSetSampler< 2 > sampler( domain );
+        geode::ObjectSamplerConfig< geode::Point2D > sampler_config;
+        geode::UniformPointSetSampler< 2 > sampler( domain, sampler_config );
 
         // Create classical birth-death-change kernel
         auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(

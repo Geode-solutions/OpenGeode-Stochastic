@@ -37,12 +37,12 @@ namespace geode
     {
     public:
         UniformSegmentSetSampler( const SpatialDomain< 2 >& domain,
-            const DoubleSampler::Distribution& length,
-            const DoubleSampler::Distribution& azimuth )
+            const ObjectSamplerConfig< Segment2D >& config )
             : ObjectSetSampler< OwnerSegment2D >{},
               domain_{ domain },
-              length_{ length },
-              azimuth_{ azimuth }
+              length_{ DoubleSampler::build_distribution( config.length ) },
+              azimuth_{ DoubleSampler::build_distribution( config.azimuth ) },
+              move_ratio_{ config.move_ratio }
         {
             auto volume = domain_.extended_n_volume();
             OpenGeodeStochasticStochasticException::check_exception(
@@ -62,14 +62,13 @@ namespace geode
         OwnerSegment2D change(
             const OwnerSegment2D& obj, RandomEngine& engine ) const override
         {
-            double ratio = 0.1;
             const auto& extremities = obj.vertices();
             const auto current =
                 static_cast< local_index_t >( engine.sample_bernoulli( 0.5 ) );
             const auto other = 1 - current;
 
             geode::Sphere< 2 > ball{ extremities[current],
-                ratio * obj.length() };
+                move_ratio_ * obj.length() };
 
             auto new_point = PointUniformSampler::sample< 2 >( engine, ball );
             constexpr index_t max_try{ 100 };
@@ -102,6 +101,24 @@ namespace geode
         const SpatialDomain< 2 >& domain_;
         DoubleSampler::Distribution length_;
         DoubleSampler::Distribution azimuth_;
+        double move_ratio_{ 0.1 };
     };
+
+    template <>
+    struct ObjectSamplerConfig< OwnerSegment2D >
+    {
+        double move_ratio = 0.1;
+
+        DoubleSampler::DistributionDescription length;
+        DoubleSampler::DistributionDescription azimuth;
+    };
+
+    template <>
+    std::unique_ptr< ObjectSetSampler< OwnerSegment2D > >
+        build_objectset_sampler( const SpatialDomain< 2 >& domain,
+            const ObjectSamplerConfig< OwnerSegment2D >& config )
+    {
+        return std::make_unique< UniformSegmentSetSampler >( domain, config );
+    }
 
 } // namespace geode

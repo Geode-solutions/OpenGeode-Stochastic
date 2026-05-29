@@ -59,20 +59,17 @@ namespace
         for( const auto config : geode::Range{ birth_ratio.size() } )
         {
             geode::SimulationContextConfig< geode::Point2D > poisson_config;
-            std::vector< geode::TargetStatisticConfig >
-                targeted_statistics_descriptors;
 
             poisson_config.domain = { geode::Point2D{ { 0.0, 0.0 } },
                 geode::Point2D{ { 10.0, 10.0 } }, 0. };
             // --- Set description
-            geode::ObjectSetConfig set_a;
+            geode::ObjectSetDefinition< geode::Point2D > set_a;
             set_a.name = "A";
-
-            geode::ObjectSetDynamicsConfig dyn_a;
-            dyn_a.name = "A";
-            dyn_a.birth_ratio = birth_ratio[config];
-            dyn_a.death_ratio = 1.0;
-            dyn_a.change_ratio = change_ratio[config];
+            set_a.sampler = geode::ObjectSamplerConfig< geode::Point2D >{};
+            set_a.dynamics.birth_ratio = birth_ratio[config];
+            set_a.dynamics.death_ratio = 1.0;
+            set_a.dynamics.change_ratio = change_ratio[config];
+            poisson_config.sets.emplace_back( set_a );
 
             // --- Energy term description
             PoissonDensityDescription density_a;
@@ -80,12 +77,6 @@ namespace
             density_a.object_set_names = { "A" };
             density_a.lambda = 0.3;
             density_a.object_feature = geode::ObjectInDomainFeatureConfig{};
-
-            geode::TargetStatisticConfig stat_a{ "density", 30.0, 0.15 };
-            targeted_statistics_descriptors.push_back( stat_a );
-
-            poisson_config.sets.emplace_back( set_a );
-            poisson_config.proposals.emplace_back( dyn_a );
             poisson_config.model.terms.emplace_back( density_a );
 
             auto context = build_simulation_context( poisson_config );
@@ -93,18 +84,25 @@ namespace
                 context ) };
 
             // run simulation
-            geode::SimulationPrinterConfigurator printer_config;
-            printer_config.output_folder =
-                absl::StrCat( printer_config.output_folder,
-                    "/sim_point_poisson_test_", config );
 
             geode::SimulationConfigurator sim_config;
             sim_config.realizations = 1000;
             sim_config.metropolis_hasting_steps = 1000;
             sim_config.burn_in_steps = 1000;
+
+            geode::SimulationPrinterConfigurator printer_config;
+            printer_config.output_folder =
+                absl::StrCat( printer_config.output_folder,
+                    "/sim_point_poisson_test_", config );
             sim_config.printer = printer_config;
 
             auto statistic_tracker = runner.run( engine, sim_config );
+
+            std::vector< geode::TargetStatisticConfig >
+                targeted_statistics_descriptors;
+            geode::TargetStatisticConfig stat_a{ "density", 30.0, 0.15 };
+            targeted_statistics_descriptors.push_back( stat_a );
+
             geode::TargetStatistics target_stats{ runner.model(),
                 targeted_statistics_descriptors };
             geode::statistics::validate( statistic_tracker, target_stats );
@@ -128,20 +126,29 @@ namespace
             geode::Point2D{ { 10.0, 10.0 } }, 0. };
 
         // --- Set descriptions
-        geode::ObjectSetConfig set01{ "set01" };
-        geode::ObjectSetConfig set02{ "set02" };
-        geode::ObjectSetConfig set03{ "set03" };
+        geode::ObjectSetDefinition< geode::Point2D > set01;
+        set01.name = "set01";
+        set01.sampler = geode::ObjectSamplerConfig< geode::Point2D >{};
+        set01.dynamics.birth_ratio = 2.0;
+        set01.dynamics.death_ratio = 3.0;
+        set01.dynamics.change_ratio = 1.0;
         poisson_config.sets.emplace_back( set01 );
-        poisson_config.sets.emplace_back( set02 );
-        poisson_config.sets.emplace_back( set03 );
 
-        // --- proposal descriptions
-        geode::ObjectSetDynamicsConfig dyn01{ "set01", 2.0, 3.0, 1.0 };
-        geode::ObjectSetDynamicsConfig dyn02{ "set02", 3.0, 0.5, 1.0 };
-        geode::ObjectSetDynamicsConfig dyn03{ "set03", 4.0, 1.0, 1.0 };
-        poisson_config.proposals.emplace_back( dyn01 );
-        poisson_config.proposals.emplace_back( dyn02 );
-        poisson_config.proposals.emplace_back( dyn03 );
+        geode::ObjectSetDefinition< geode::Point2D > set02;
+        set02.name = "set02";
+        set02.sampler = geode::ObjectSamplerConfig< geode::Point2D >{};
+        set02.dynamics.birth_ratio = 3.0;
+        set02.dynamics.death_ratio = 0.5;
+        set02.dynamics.change_ratio = 1.0;
+        poisson_config.sets.emplace_back( set02 );
+
+        geode::ObjectSetDefinition< geode::Point2D > set03;
+        set03.name = "set03";
+        set03.sampler = geode::ObjectSamplerConfig< geode::Point2D >{};
+        set03.dynamics.birth_ratio = 4.0;
+        set03.dynamics.death_ratio = 1.0;
+        set03.dynamics.change_ratio = 1.0;
+        poisson_config.sets.emplace_back( set03 );
 
         // --- Energy term descriptions
         PoissonDensityDescription density01;
@@ -149,20 +156,20 @@ namespace
         density01.object_set_names = { "set01" };
         density01.lambda = 0.1;
         density01.object_feature = geode::ObjectInDomainFeatureConfig{};
+        poisson_config.model.terms.emplace_back( density01 );
 
         PoissonDensityDescription density02;
         density02.term_name = "density02";
         density02.object_set_names = { "set02" };
         density02.lambda = 0.4;
         density02.object_feature = geode::ObjectInDomainFeatureConfig{};
+        poisson_config.model.terms.emplace_back( density02 );
 
         PoissonDensityDescription density03;
         density03.term_name = "density03";
         density03.object_set_names = { "set03" };
         density03.lambda = 0.3;
         density03.object_feature = geode::ObjectInDomainFeatureConfig{};
-        poisson_config.model.terms.emplace_back( density01 );
-        poisson_config.model.terms.emplace_back( density02 );
         poisson_config.model.terms.emplace_back( density03 );
 
         auto context = build_simulation_context( poisson_config );
@@ -170,14 +177,14 @@ namespace
             context ) };
 
         // run simulation
-        geode::SimulationPrinterConfigurator printer_config;
-        printer_config.output_folder = absl::StrCat(
-            printer_config.output_folder, "/sim_point_multitype_poisson_test" );
-
         geode::SimulationConfigurator sim_config;
         sim_config.realizations = 1500;
         sim_config.metropolis_hasting_steps = 1000;
         sim_config.burn_in_steps = 3000;
+
+        geode::SimulationPrinterConfigurator printer_config;
+        printer_config.output_folder = absl::StrCat(
+            printer_config.output_folder, "/sim_point_multitype_poisson_test" );
         sim_config.printer = printer_config;
 
         auto statistic_tracker = runner.run( engine, sim_config );

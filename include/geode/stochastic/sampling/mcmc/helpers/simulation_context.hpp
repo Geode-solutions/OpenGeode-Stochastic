@@ -70,12 +70,21 @@ namespace geode
     };
 
     template < typename ObjectType >
+    struct ObjectSetDefinition
+    {
+        std::string name;
+        std::vector< ObjectType > fixed_objects;
+
+        ObjectSamplerConfig< ObjectType > sampler;
+        ObjectSetDynamicsConfig dynamics;
+    };
+
+    template < typename ObjectType >
     struct SimulationContextConfig
     {
         SpatialDomainConfig< ObjectType::dim > domain;
 
-        std::vector< ObjectSetConfig > sets;
-        std::vector< ObjectSetDynamicsConfig > proposals;
+        std::vector< ObjectSetDefinition< ObjectType > > sets;
 
         geode::ModelConfig model;
     };
@@ -95,28 +104,17 @@ namespace geode
         // -------------------------
         // Sets
         // -------------------------
-
-        //        auto proposal_kernel =
-        //            std::make_unique< geode::ProposalKernel< geode::Point2D >
-        //            >();
-        //        for( const auto& set_desc : set_descriptors_ )
-        //        {
-        //            const auto set_id = context.object_sets->add_set(
-        //            set_desc.name ); context.set_samplers.push_back(
-        //                std::make_unique< geode::UniformPointSetSampler< 2 >
-        //                >(
-        //                    *context.domain ) );
-        //            geode::add_birth_death_change_moves(
-        //            context.set_samplers.back(),
-        //                *proposal_kernel, set_id, set_desc.birth_ratio,
-        //                set_desc.death_ratio, set_desc.change_ratio );
-        //        }
-        //        return proposal_kernel;
-
-        for( const auto& set_cfg : config.sets )
+        auto proposal_kernel =
+            std::make_unique< geode::ProposalKernel< ObjectType > >();
+        for( const auto& set_def : config.sets )
         {
-            const auto set_id = context.object_sets->add_set( set_cfg.name );
-            geode_unused( set_id );
+            auto set_id = context.object_sets->add_set( set_def.name );
+            auto sampler =
+                build_objectset_sampler( *context.domain, set_def.sampler );
+            geode::add_birth_death_change_moves( *sampler, *proposal_kernel,
+                set_id, set_def.dynamics.birth_ratio,
+                set_def.dynamics.death_ratio, set_def.dynamics.change_ratio );
+            context.set_samplers.emplace_back( std::move( sampler ) );
         }
 
         // -------------------------
@@ -124,24 +122,6 @@ namespace geode
         // -------------------------
         context.model = geode::build_model< ObjectType >(
             config.model, *context.object_sets, *context.domain );
-
-        // -------------------------
-        //  Proposal
-        // -------------------------
-        auto proposal_kernel =
-            std::make_unique< geode::ProposalKernel< ObjectType > >();
-        for( const auto& set_proposal : config.proposals )
-        {
-            const auto set_id =
-                context.object_sets->get_set_uuid( set_proposal.name );
-            context.set_samplers.push_back(
-                std::make_unique< geode::UniformPointSetSampler< 2 > >(
-                    *context.domain ) );
-
-            geode::add_birth_death_change_moves( context.set_samplers.back(),
-                *proposal_kernel, set_id, set_proposal.birth_ratio,
-                set_proposal.death_ratio, set_proposal.change_ratio );
-        }
 
         // -------------------------
         // MH sampler

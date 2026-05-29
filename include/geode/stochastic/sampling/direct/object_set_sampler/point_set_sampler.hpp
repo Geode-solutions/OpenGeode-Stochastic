@@ -36,7 +36,8 @@ namespace geode
     class UniformPointSetSampler : public ObjectSetSampler< Point< dimension > >
     {
     public:
-        UniformPointSetSampler( const SpatialDomain< dimension >& domain )
+        UniformPointSetSampler( const SpatialDomain< dimension >& domain,
+            const ObjectSamplerConfig< Point< dimension > >& config )
             : ObjectSetSampler< Point< dimension > >{}, domain_( domain )
         {
             auto volume = domain_.extended_n_volume();
@@ -45,7 +46,7 @@ namespace geode
                 "[UniformPointSetSampler] Undefined Extended Bounding "
                 "Box (volume ==0)." );
             this->log_pdf_ = -std::log( volume );
-            step_move_ = define_step_for_move();
+            step_move_ = define_step_for_move( config.move_ratio );
             OpenGeodeStochasticStochasticException::check_exception(
                 step_move_ > 0., nullptr, OpenGeodeException::TYPE::data,
                 "[UniformPointSetSampler] Undefined step length for move "
@@ -83,9 +84,8 @@ namespace geode
         }
 
     private:
-        double define_step_for_move()
+        double define_step_for_move( double ratio )
         {
-            double ratio = 0.1;
             return ratio * domain_.smallest_length();
         }
 
@@ -98,5 +98,21 @@ namespace geode
         const SpatialDomain< dimension >& domain_;
         double step_move_{ 0. };
     };
+
+    template < index_t dimension >
+    struct ObjectSamplerConfig< Point< dimension > >
+    {
+        // use to define the step for change move (move_ratio*domain volume)
+        double move_ratio = 0.1;
+    };
+
+    template < index_t dimension >
+    std::unique_ptr< ObjectSetSampler< Point2D > > build_objectset_sampler(
+        const SpatialDomain< 2 >& domain,
+        const ObjectSamplerConfig< Point< dimension > >& config )
+    {
+        return std::make_unique< UniformPointSetSampler< 2 > >(
+            domain, config );
+    }
 
 } // namespace geode
