@@ -76,12 +76,10 @@ namespace geode
         [[nodiscard]] index_t nb_objects_in_set( const uuid& set_id ) const;
         [[nodiscard]] index_t nb_objects() const;
 
-        [[nodiscard]] uuid add_set( std::string_view name );
-        [[nodiscard]] ObjectId add_object(
-            Type&& object, const uuid& set_id, bool fixed );
-        [[nodiscard]] void update_free_object(
-            const ObjectId& object_id, Type&& object );
-        [[nodiscard]] void remove_free_object( const ObjectId& object_id );
+        uuid add_set( std::string_view name );
+        ObjectId add_object( Type&& object, const uuid& set_id, bool fixed );
+        void update_free_object( const ObjectId& object_id, Type&& object );
+        void remove_free_object( const ObjectId& object_id );
 
         [[nodiscard]] std::vector< ObjectId > neighbors( const Type& object,
             const std::vector< uuid >& targeted_set_ids,
