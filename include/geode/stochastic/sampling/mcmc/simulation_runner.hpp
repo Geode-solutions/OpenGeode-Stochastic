@@ -73,7 +73,7 @@ namespace geode
     public:
         SimulationRunner() = delete;
         explicit SimulationRunner( SimulationContext< ObjectType >&& context )
-            : context_( std::move( context ) ){};
+            : context_( std::move( context ) ) {};
         virtual ~SimulationRunner() = default;
 
         [[nodiscard]] const ObjectSets< ObjectType >& run(
