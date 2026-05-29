@@ -23,27 +23,31 @@
 
 #pragma once
 #include <geode/stochastic/common.hpp>
-#include <geode/stochastic/inference/statistics_tracker.hpp>
-#include <geode/stochastic/inference/target_statistics.hpp>
-
-#include <geode/stochastic/models/energy_term_collection.hpp>
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_printer.hpp>
-#include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
-#include <geode/stochastic/spatial/spatial_domain.hpp>
+
+#include <geode/stochastic/sampling/mcmc/helpers/simulation_context.hpp>
 
 #include <absl/strings/str_join.h>
-
 namespace geode
 {
+    namespace detail
+    {
+        // NOLINTBEGIN(*-magic-numbers)
+        constexpr index_t DEFAULT_REALIZATIONS{ 1000 };
+        constexpr index_t DEFAULT_SIMULATION_STEPS{ 1000 };
+        constexpr index_t DEFAULT_BURN_IN_STEPS{ 1000 };
+        // NOLINTEND(*-magic-numbers)
+    } // namespace detail
+
     struct SimulationConfigurator
     {
-        index_t realizations{ 1000 };
-        index_t metropolis_hasting_steps{ 1000 };
-        index_t burn_in_steps{ 1000 };
+        index_t realizations{ detail::DEFAULT_REALIZATIONS };
+        index_t metropolis_hasting_steps{ detail::DEFAULT_SIMULATION_STEPS };
+        index_t burn_in_steps{ detail::DEFAULT_BURN_IN_STEPS };
 
         std::optional< SimulationPrinterConfigurator > printer{ std::nullopt };
 
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             auto message = absl::StrCat( "SimulationConfigurator: " );
             absl::StrAppend( &message, "\n\t --> ", realizations,
@@ -64,50 +68,56 @@ namespace geode
     template < typename ObjectType >
     class SimulationRunner
     {
+        OPENGEODE_DISABLE_COPY_AND_MOVE( SimulationRunner );
+
     public:
-        SimulationRunner( const SpatialDomain< ObjectType::dim >& domain )
-            : domain_( domain ) {};
+        SimulationRunner() = delete;
+        explicit SimulationRunner( SimulationContext< ObjectType >&& context )
+            : context_( std::move( context ) )
+        {
+        }
         virtual ~SimulationRunner() = default;
 
-        virtual void initialize() = 0;
-
-        const ObjectSets< ObjectType >& run(
+        [[nodiscard]] const ObjectSets< ObjectType >& run(
             RandomEngine& engine, const index_t steps )
         {
-            mh_sampler_->walk( object_sets_, engine, steps );
-            return object_sets_;
+            context_.mh_sampler->walk( *context_.object_sets, engine, steps );
+            return *context_.object_sets;
         }
 
-        StatisticsTracker< ObjectType > run(
+        [[nodiscard]] StatisticsTracker< ObjectType > run(
             RandomEngine& engine, const SimulationConfigurator& config )
         {
             if( config.burn_in_steps > 0 )
             {
-                mh_sampler_->walk( object_sets_, engine, config.burn_in_steps );
+                context_.mh_sampler->walk(
+                    *context_.object_sets, engine, config.burn_in_steps );
             }
 
             // Initialize monitoring
-            StatisticsTracker< ObjectType > stats_monitor( *model_ );
+            StatisticsTracker< ObjectType > stats_monitor( *context_.model );
             std::unique_ptr< SimulationPrinter< ObjectType > > printer;
 
             if( config.printer.has_value() )
             {
                 printer = std::make_unique< SimulationPrinter< ObjectType > >(
-                    *model_, config.printer.value() );
+                    *context_.model, config.printer.value() );
             }
 
             for( const auto realization : Range{ config.realizations } )
             {
-                mh_sampler_->walk(
-                    object_sets_, engine, config.metropolis_hasting_steps );
+                context_.mh_sampler->walk( *context_.object_sets, engine,
+                    config.metropolis_hasting_steps );
 
-                const auto stats = model_->compute_statistics( object_sets_ );
+                const auto stats =
+                    context_.model->compute_statistics( *context_.object_sets );
                 stats_monitor.add_realization( stats );
 
                 if( printer )
                 {
                     printer->print_statistics( stats );
-                    printer->print_object_sets( object_sets_, realization );
+                    printer->print_object_sets(
+                        *context_.object_sets, realization );
                 }
             }
 
@@ -119,31 +129,17 @@ namespace geode
             return stats_monitor;
         }
 
-        [[nodiscard]] const TargetStatistics< ObjectType >&
-            target_statistics() const
-        {
-            OpenGeodeStochasticStochasticException::check_exception(
-                target_statistics_.has_value(), nullptr,
-                OpenGeodeException::TYPE::data,
-                "[SimulationRunner] Target statistics not initialized" );
-
-            return *target_statistics_;
-        }
-
         [[nodiscard]] const ObjectSets< ObjectType >& state_realization() const
         {
-            return object_sets_;
+            return *context_.object_sets;
         }
 
-    protected:
-        SpatialDomain< ObjectType::dim > domain_;
+        [[nodiscard]] const Model< ObjectType >& model() const
+        {
+            return *context_.model;
+        }
 
-        ObjectSets< ObjectType > object_sets_;
-        std::vector< std::unique_ptr< geode::ObjectSetSampler< ObjectType > > >
-            set_samplers_;
-        std::unique_ptr< Model< ObjectType > > model_;
-        std::unique_ptr< geode::MetropolisHastings< ObjectType > > mh_sampler_;
-
-        std::optional< TargetStatistics< ObjectType > > target_statistics_;
+    private:
+        SimulationContext< ObjectType > context_;
     };
 } // namespace geode

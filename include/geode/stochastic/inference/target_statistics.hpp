@@ -22,6 +22,7 @@
  */
 #pragma once
 #include <geode/basic/uuid.hpp>
+#include <geode/stochastic/models/model.hpp>
 
 namespace geode
 {
@@ -36,19 +37,55 @@ namespace geode
     class TargetStatistics
     {
     public:
-        explicit TargetStatistics( const Model< ObjectType >& model )
+        explicit TargetStatistics( const Model< ObjectType >& model,
+            const std::vector< TargetStatisticConfig >& statistic_targets )
             : model_( model )
         {
             values_.resize( model.nb_terms(), 0.0 );
             tolerances_.resize( model.nb_terms(), 0.0 );
             active_.resize( model.nb_terms(), false );
+            for( const auto& target : statistic_targets )
+            {
+                set_target( target );
+            }
         }
 
-        const Model< ObjectType >& model() const
+        [[nodiscard]] const Model< ObjectType >& model() const
         {
             return model_;
         }
 
+        [[nodiscard]] bool has_target( const uuid& term_uuid ) const
+        {
+            return active_[model_.term_index( term_uuid )];
+        }
+
+        [[nodiscard]] double target( const uuid& term_uuid ) const
+        {
+            return values_[model_.term_index( term_uuid )];
+        }
+
+        [[nodiscard]] double tolerance( const uuid& term_uuid ) const
+        {
+            return tolerances_[model_.term_index( term_uuid )];
+        }
+
+        [[nodiscard]] std::vector< uuid > active_terms() const
+        {
+            std::vector< uuid > active_terms_uuid;
+
+            for( const auto& term : model_.terms().energy_terms() )
+            {
+                const auto& term_id = term->id();
+                if( active_[model_.term_index( term_id )] )
+                {
+                    active_terms_uuid.push_back( term_id );
+                }
+            }
+            return active_terms_uuid;
+        }
+
+    private:
         void set_target( const TargetStatisticConfig& statistic )
         {
             const auto term_uuid =
@@ -58,36 +95,6 @@ namespace geode
             values_[idx] = statistic.value;
             tolerances_[idx] = statistic.tolerance;
             active_[idx] = true;
-        }
-
-        bool has_target( const uuid& term_uuid ) const
-        {
-            return active_[model_.term_index( term_uuid )];
-        }
-
-        double target( const uuid& term_uuid ) const
-        {
-            return values_[model_.term_index( term_uuid )];
-        }
-
-        double tolerance( const uuid& term_uuid ) const
-        {
-            return tolerances_[model_.term_index( term_uuid )];
-        }
-
-        std::vector< uuid > active_terms() const
-        {
-            std::vector< uuid > active_terms_uuid;
-
-            for( const auto& term : model_.terms().energy_terms() )
-            {
-                const auto& id = term->id();
-                if( active_[model_.term_index( id )] )
-                {
-                    active_terms_uuid.push_back( id );
-                }
-            }
-            return active_terms_uuid;
         }
 
     private:

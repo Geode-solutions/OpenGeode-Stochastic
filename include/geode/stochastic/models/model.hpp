@@ -50,11 +50,13 @@ namespace geode
     template < typename ObjectType >
     class Model
     {
-        OPENGEODE_DISABLE_COPY( Model );
+        OPENGEODE_DISABLE_COPY_AND_MOVE( Model );
 
     public:
         Model() = delete;
-        Model( EnergyTermCollection< ObjectType >&& energy_terms )
+        ~Model() = default;
+
+        explicit Model( EnergyTermCollection< ObjectType >&& energy_terms )
             : terms_collection_( std::move( energy_terms ) ),
               energy_{ terms_collection_ }
         {
@@ -116,6 +118,11 @@ namespace geode
             }
 
             return names;
+        }
+
+        [[nodiscard]] std::string string() const
+        {
+            return terms_collection_.string();
         }
 
     private:
