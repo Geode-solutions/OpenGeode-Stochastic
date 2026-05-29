@@ -169,13 +169,13 @@ add_geode_test(
           ${PROJECT_NAME}::stochastic
  )
 
-# add_geode_test(
-#     SOURCE  "sampling/mcmc/test-mh-strauss.cpp"
-#     DEPENDENCIES
-#         OpenGeode::basic
-#         OpenGeode::geometry
-#         ${PROJECT_NAME}::stochastic
-# )
+add_geode_test(
+    SOURCE  "sampling/mcmc/test-mh-strauss.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
 
 
 add_geode_test(

@@ -25,20 +25,10 @@
 #include <geode/stochastic/inference/statistics_tools.hpp>
 #include <geode/stochastic/inference/target_statistics.hpp>
 
-#include <geode/stochastic/models/energy_terms/energy_term_builder.hpp>
-#include <geode/stochastic/models/energy_terms/energy_term_config.hpp>
-#include <geode/stochastic/models/gibbs_energy.hpp>
-
-#include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
-
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_context.hpp>
-#include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
-#include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
 #include <geode/stochastic/sampling/mcmc/simulation_runner.hpp>
 
-#include <geode/stochastic/sampling/mcmc/proposal/object_set_dynamic_config.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
-#include <geode/stochastic/spatial/single_object_features/single_object_feature_config.hpp>
 
 namespace
 {
@@ -86,8 +76,8 @@ namespace
             // run simulation
 
             geode::SimulationConfigurator sim_config;
-            sim_config.realizations = 1000;
-            sim_config.metropolis_hasting_steps = 1000;
+            sim_config.realizations = 2000;
+            sim_config.metropolis_hasting_steps = 100;
             sim_config.burn_in_steps = 1000;
 
             geode::SimulationPrinterConfigurator printer_config;
@@ -102,9 +92,9 @@ namespace
                 targeted_statistics_descriptors;
             geode::TargetStatisticConfig stat_a{ "density", 30.0, 0.15 };
             targeted_statistics_descriptors.push_back( stat_a );
-
             geode::TargetStatistics target_stats{ runner.model(),
                 targeted_statistics_descriptors };
+
             geode::statistics::validate( statistic_tracker, target_stats );
         }
         // NOLINTEND(*-magic-numbers)
@@ -178,9 +168,9 @@ namespace
 
         // run simulation
         geode::SimulationConfigurator sim_config;
-        sim_config.realizations = 1500;
-        sim_config.metropolis_hasting_steps = 1000;
-        sim_config.burn_in_steps = 3000;
+        sim_config.realizations = 2000;
+        sim_config.metropolis_hasting_steps = 100;
+        sim_config.burn_in_steps = 1000;
 
         geode::SimulationPrinterConfigurator printer_config;
         printer_config.output_folder = absl::StrCat(
