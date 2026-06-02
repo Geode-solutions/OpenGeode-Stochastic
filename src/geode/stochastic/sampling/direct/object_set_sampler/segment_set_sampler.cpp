@@ -21,8 +21,6 @@
  *
  */
 
-#pragma once
-
 #include <geode/stochastic/sampling/direct/object_set_sampler/segment_set_sampler.hpp>
 
 #include <geode/geometry/basic_objects/segment.hpp>
@@ -38,8 +36,7 @@ namespace geode
     UniformSegmentSetSampler::UniformSegmentSetSampler(
         const SpatialDomain< 2 >& domain,
         const ObjectSamplerConfig< OwnerSegment2D >& config )
-        : ObjectSetSampler< OwnerSegment2D >{},
-          domain_{ domain },
+        : domain_{ domain },
           length_{ DoubleSampler::create_distribution( config.length ) },
           azimuth_{ DoubleSampler::create_distribution( config.azimuth ) },
           move_ratio_{ config.move_ratio }

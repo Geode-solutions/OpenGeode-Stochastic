@@ -30,9 +30,9 @@ namespace
         std::vector< std::pair< std::string, std::string > >& interactions,
         const std::vector< std::string >& set_names )
     {
-        for( const auto id : geode::Range{ set_names.size() } )
+        for( const auto name_id : geode::Range{ set_names.size() } )
         {
-            interactions.emplace_back( set_names[id], set_names[id] );
+            interactions.emplace_back( set_names[name_id], set_names[name_id] );
         }
     }
 

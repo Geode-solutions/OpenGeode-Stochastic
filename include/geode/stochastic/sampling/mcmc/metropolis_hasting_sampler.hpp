@@ -29,7 +29,7 @@
 
 namespace geode
 {
-    enum struct MH_DECISION
+    enum struct MH_DECISION : local_index_t
     {
         accepted,
         rejected,

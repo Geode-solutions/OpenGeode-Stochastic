@@ -33,7 +33,9 @@ namespace geode
     template <>
     struct ObjectSamplerConfig< OwnerSegment2D >
     {
-        double move_ratio = 0.1;
+        // NOLINTBEGING(*-magic-numbers)
+        double move_ratio{ 0.1 };
+        // NOLINTEND(*-magic-numbers)
 
         DoubleSampler::DistributionDescription length;
         DoubleSampler::DistributionDescription azimuth;
@@ -59,7 +61,7 @@ namespace geode
         const SpatialDomain< 2 >& domain_;
         DoubleSampler::Distribution length_;
         DoubleSampler::Distribution azimuth_;
-        double move_ratio_{ 0.1 };
+        double move_ratio_;
     };
 
 } // namespace geode

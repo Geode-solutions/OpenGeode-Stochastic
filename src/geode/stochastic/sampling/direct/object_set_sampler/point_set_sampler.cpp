@@ -35,7 +35,9 @@ namespace geode
     UniformPointSetSampler< dimension >::UniformPointSetSampler(
         const SpatialDomain< dimension >& domain,
         const ObjectSamplerConfig< Point< dimension > >& config )
-        : ObjectSetSampler< Point< dimension > >{}, domain_{ domain }
+        : ObjectSetSampler< Point< dimension > >{},
+          domain_{ domain },
+          step_move_( define_step_for_move( config.move_ratio ) )
     {
         auto volume = domain_.extended_n_volume();
         OpenGeodeStochasticStochasticException::check_exception( volume != 0.,
@@ -43,7 +45,6 @@ namespace geode
             "[UniformPointSetSampler] Undefined Extended Bounding "
             "Box (volume ==0)." );
         this->set_log_pdf( -std::log( volume ) );
-        step_move_ = define_step_for_move( config.move_ratio );
         OpenGeodeStochasticStochasticException::check_exception(
             step_move_ > 0., nullptr, OpenGeodeException::TYPE::data,
             "[UniformPointSetSampler] Undefined step length for move "
