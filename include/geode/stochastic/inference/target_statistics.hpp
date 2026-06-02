@@ -26,11 +26,13 @@
 
 namespace geode
 {
+    constexpr double STATISTIC_TOLERANCE_VALUE{ 0.1 };
+
     struct TargetStatisticConfig
     {
         std::string term_name;
         double value;
-        double tolerance;
+        double tolerance{ STATISTIC_TOLERANCE_VALUE };
     };
 
     template < typename ObjectType >

@@ -34,7 +34,10 @@ namespace geode
     template < typename Type >
     class ObjectSetSampler
     {
+        OPENGEODE_DISABLE_COPY_AND_MOVE( ObjectSetSampler );
+
     public:
+        ObjectSetSampler() = default;
         virtual ~ObjectSetSampler() = default;
 
         [[nodiscard]] virtual Type sample( RandomEngine& engine ) const = 0;
@@ -53,9 +56,13 @@ namespace geode
         }
 
     protected:
-        virtual bool is_valid_object( const Type& obj ) const = 0;
+        [[nodiscard]] virtual bool is_valid_object( const Type& obj ) const = 0;
+        void set_log_pdf( double value )
+        {
+            log_pdf_ = value;
+        }
 
-    protected:
+    private:
         double log_pdf_{ LOG_PROB_INVALID };
     };
 

@@ -23,106 +23,38 @@
 
 #pragma once
 
-#include <geode/geometry/basic_objects/sphere.hpp>
-#include <geode/geometry/point.hpp>
-
 #include <geode/stochastic/sampling/direct/object_set_sampler/object_set_sampler.hpp>
-#include <geode/stochastic/sampling/direct/point_uniform_sampler.hpp>
-#include <geode/stochastic/spatial/spatial_domain.hpp>
 
 namespace geode
 {
+    template < index_t dimension >
+    struct ObjectSamplerConfig< Point< dimension > >
+    {
+        // use to define the step for change move (move_ratio*domain volume)
+        double move_ratio{ 0.1 };
+    };
+
     template < index_t dimension >
     class UniformPointSetSampler : public ObjectSetSampler< Point< dimension > >
     {
     public:
         UniformPointSetSampler( const SpatialDomain< dimension >& domain,
-            const ObjectSamplerConfig< Point< dimension > >& config )
-            : ObjectSetSampler< Point< dimension > >{}, domain_( domain )
-        {
-            auto volume = domain_.extended_n_volume();
-            OpenGeodeStochasticStochasticException::check_exception(
-                volume != 0., nullptr, OpenGeodeException::TYPE::data,
-                "[UniformPointSetSampler] Undefined Extended Bounding "
-                "Box (volume ==0)." );
-            this->log_pdf_ = -std::log( volume );
-            step_move_ = define_step_for_move( config.move_ratio );
-            OpenGeodeStochasticStochasticException::check_exception(
-                step_move_ > 0., nullptr, OpenGeodeException::TYPE::data,
-                "[UniformPointSetSampler] Undefined step length for move "
-                "(value == ",
-                step_move_, ")." );
-        }
+            const ObjectSamplerConfig< Point< dimension > >& config );
 
-        Point< dimension > sample( RandomEngine& engine ) const override
-        {
-            return PointUniformSampler::sample< dimension >(
-                engine, domain_.extended_box() );
-        }
+        [[nodiscard]] Point< dimension > sample(
+            RandomEngine& engine ) const override;
 
-        Point< dimension > change(
-            const Point< dimension >& obj, RandomEngine& engine ) const override
-        {
-            geode::Sphere< dimension > ball{ obj, step_move_ };
-
-            auto new_point =
-                PointUniformSampler::sample< dimension >( engine, ball );
-            constexpr index_t max_try{ 100 };
-            for( const auto try_id : geode::Range{ max_try } )
-            {
-                geode_unused( try_id );
-                if( domain_.extended_contains( new_point ) )
-                {
-                    return new_point;
-                }
-                new_point =
-                    PointUniformSampler::sample< dimension >( engine, ball );
-            }
-            throw OpenGeodeStochasticStochasticException{ nullptr,
-                OpenGeodeException::TYPE::internal,
-                "[UniformPointSetSampler] Cannot find a point in the "
-                "extended domain" };
-        }
+        [[nodiscard]] Point< dimension > change( const Point< dimension >& obj,
+            RandomEngine& engine ) const override;
 
     private:
-        double define_step_for_move( double ratio )
-        {
-            return ratio * domain_.smallest_length();
-        }
-
-        bool is_valid_object( const Point< dimension >& obj ) const override
-        {
-            return domain_.extended_contains( obj );
-        }
+        [[nodiscard]] double define_step_for_move( double ratio );
+        [[nodiscard]] bool is_valid_object(
+            const Point< dimension >& obj ) const override;
 
     private:
         const SpatialDomain< dimension >& domain_;
         double step_move_{ 0. };
     };
-
-    template < index_t dimension >
-    struct ObjectSamplerConfig< Point< dimension > >
-    {
-        // use to define the step for change move (move_ratio*domain volume)
-        double move_ratio = 0.1;
-    };
-
-    template <>
-    std::unique_ptr< ObjectSetSampler< Point2D > >
-        build_objectset_sampler< Point2D >( const SpatialDomain< 2 >& domain,
-            const ObjectSamplerConfig< Point2D >& config )
-    {
-        return std::make_unique< UniformPointSetSampler< 2 > >(
-            domain, config );
-    }
-
-    template <>
-    std::unique_ptr< ObjectSetSampler< Point3D > >
-        build_objectset_sampler< Point3D >( const SpatialDomain< 3 >& domain,
-            const ObjectSamplerConfig< Point3D >& config )
-    {
-        return std::make_unique< UniformPointSetSampler< 3 > >(
-            domain, config );
-    }
 
 } // namespace geode

@@ -1,9 +1,55 @@
-#pragma once
+/*
+ * Copyright (c) 2019 - 2026 Geode-solutions
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
 
 #include <geode/stochastic/applications/strauss_process.hpp>
 
 namespace
 {
+    template < typename ObjectType >
+    void add_intra_set_interactions(
+        std::vector< std::pair< std::string, std::string > >& interactions,
+        const std::vector< std::string >& set_names )
+    {
+        for( const auto id : geode::Range{ set_names.size() } )
+        {
+            interactions.emplace_back( set_names[id], set_names[id] );
+        }
+    }
+
+    template < typename ObjectType >
+    void add_inter_set_interactions(
+        std::vector< std::pair< std::string, std::string > >& interactions,
+        const std::vector< std::string >& set_names )
+    {
+        for( const auto id1 : geode::Range{ set_names.size() } )
+        {
+            for( const auto id2 : geode::Range{ id1 + 1, set_names.size() } )
+            {
+                interactions.emplace_back( set_names[id1], set_names[id2] );
+            }
+        }
+    }
+
     template < typename ObjectType >
     std::vector< std::pair< std::string, std::string > >
         build_interaction_set_names(
@@ -11,35 +57,19 @@ namespace
                 interaction_desc )
     {
         std::vector< std::pair< std::string, std::string > > interactions;
-
         const auto& set_names = interaction_desc.set_names;
-
-        if( set_names.empty()
-            || ( !interaction_desc.include_intra_set
-                 && !interaction_desc.include_inter_set ) )
+        if( set_names.empty() )
         {
             return interactions;
         }
-
-        for( const auto name1_id : geode::Range{ set_names.size() } )
+        if( interaction_desc.include_intra_set )
         {
-            if( interaction_desc.include_intra_set )
-            {
-                interactions.emplace_back(
-                    set_names[name1_id], set_names[name1_id] );
-            }
-
-            if( interaction_desc.include_inter_set )
-            {
-                for( const auto name2_id :
-                    geode::Range{ name1_id, set_names.size() } )
-                {
-                    interactions.emplace_back(
-                        set_names[name1_id], set_names[name2_id] );
-                }
-            }
+            add_intra_set_interactions< ObjectType >( interactions, set_names );
         }
-
+        if( interaction_desc.include_inter_set )
+        {
+            add_inter_set_interactions< ObjectType >( interactions, set_names );
+        }
         return interactions;
     }
 } // namespace
@@ -111,7 +141,7 @@ namespace geode
                 continue;
             }
             targets.push_back( geode::TargetStatisticConfig{
-                set_desc.density_name, *set_desc.expected_nb_objects, 0.1 } );
+                set_desc.density_name, *set_desc.expected_nb_objects } );
         }
         for( const auto& inter_desc : description.interactions )
         {
@@ -121,7 +151,7 @@ namespace geode
             }
             targets.push_back(
                 geode::TargetStatisticConfig{ inter_desc.interaction_name,
-                    *inter_desc.expected_nb_interactions, 0.1 } );
+                    *inter_desc.expected_nb_interactions } );
         }
 
         return targets;

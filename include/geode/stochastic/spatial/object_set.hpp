@@ -31,6 +31,8 @@ namespace geode
     template < typename Type >
     class ObjectSet : public Identifier
     {
+        OPENGEODE_DISABLE_COPY( ObjectSet );
+
     public:
         ObjectSet() noexcept = default;
         ObjectSet( ObjectSet&& ) noexcept = default;

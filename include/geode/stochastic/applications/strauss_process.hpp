@@ -13,8 +13,8 @@ namespace geode
 
         std::vector< std::string > set_names;
 
-        double gamma;
-        double distance;
+        double gamma{ 1. };
+        double distance{ 0. };
 
         bool include_intra_set{ true };
         bool include_inter_set{ false };

@@ -29,17 +29,17 @@
 
 namespace geode
 {
-    enum struct MHDecision
+    enum struct MH_DECISION
     {
-        Accepted,
-        Rejected,
-        Undecided
+        accepted,
+        rejected,
+        undecided
     };
 
     template < typename ObjectType >
     struct StepResult
     {
-        MHDecision decision{ MHDecision::Undecided };
+        MH_DECISION decision{ MH_DECISION::undecided };
         MoveType move_type{ MoveType::Invalid };
         double log_accept{ -std::numeric_limits< double >::infinity() };
         double delta_log_energy{ 0.0 };
@@ -91,7 +91,8 @@ namespace geode
             }
         }
 
-        ObjectSets< ObjectType > walk_copy( ObjectSets< ObjectType > initial,
+        [[nodiscard]] ObjectSets< ObjectType > walk_copy(
+            ObjectSets< ObjectType > initial,
             RandomEngine& engine,
             index_t nb_steps ) const
         {
@@ -99,61 +100,68 @@ namespace geode
             return initial;
         }
 
-        double beta() const
+        [[nodiscard]] double beta() const
         {
             return beta_;
         }
 
-        void set_beta( double b )
+        void set_beta( double beta )
         {
-            OpenGeodeStochasticStochasticException::check_exception( b >= 0.0,
-                nullptr, OpenGeodeException::TYPE::data,
+            OpenGeodeStochasticStochasticException::check_exception(
+                beta >= 0.0, nullptr, OpenGeodeException::TYPE::data,
                 "[MetropolisHastings] The teperature (beta) must be >= 0" );
-            if( b == 0 )
+            if( beta == 0 )
             {
                 Logger::info( "[MetropolisHastings] beta == 0 all move will be "
                               "accepted - Uniform sampling." );
             }
-            if( b < 1 )
+            if( beta < 1 )
             {
                 Logger::info(
                     "[MetropolisHastings] beta < 1 moves that increase "
                     "energy are more likely to be accepted - Hot system "
                     "introduce randomness for exploration." );
             }
-            if( b == 1 )
+            if( beta == 1 )
             {
                 Logger::info( "[MetropolisHastings] beta == 1 default "
                               "choice no temperature - only consider energy." );
             }
-            if( b > 1 )
+            if( beta > 1 )
             {
                 Logger::info( "[MetropolisHastings] beta > 1 moves that "
                               "increase energy are less likely to be accepted "
                               "- Cold system to ensure convergence but may "
                               "find local minimum randomness." );
             }
-            beta_ = b;
+            beta_ = beta;
         }
 
-        static double acceptance_prob_helper( double log_accept )
+        [[nodiscard]] static double acceptance_prob_helper( double log_accept )
         {
             if( std::isnan( log_accept ) )
+            {
                 return 0.0;
+            }
             if( log_accept >= 0.0 )
+            {
                 return 1.0;
+            }
             // prevent exponential overflow
             constexpr double LOG_MIN = -745.0;
             if( log_accept < LOG_MIN )
+            {
                 return 0.0;
+            }
             return std::exp( log_accept );
         }
 
     private:
-        double compute_log_accept(
+        [[nodiscard]] double compute_log_accept(
             double deltaU, const ProposalProbabilities& proposal_probas ) const
         {
-            return -beta_ * deltaU + proposal_probas.transition_probability();
+            return ( -beta_ * deltaU )
+                   + proposal_probas.transition_probability();
         }
 
         template < typename ApplyMove >
@@ -162,7 +170,7 @@ namespace geode
             ObjectSets< ObjectType >& state,
             RandomEngine& engine,
             const double delta_log_energy,
-            ApplyMove&& apply_move ) const
+            const ApplyMove& apply_move ) const
         {
             const auto& proposed_move = proposal.proposed_move;
             StepResult< ObjectType > step_result;
@@ -173,11 +181,12 @@ namespace geode
 
             double log_u = engine.sample_log();
             step_result.decision = ( log_u < step_result.log_accept )
-                                       ? MHDecision::Accepted
-                                       : MHDecision::Rejected;
-            if( step_result.decision == MHDecision::Accepted )
+                                       ? MH_DECISION::accepted
+                                       : MH_DECISION::rejected;
+            if( step_result.decision == MH_DECISION::accepted )
+            {
                 apply_move( state, proposal );
-
+            }
             return step_result;
         }
 
@@ -192,7 +201,7 @@ namespace geode
                 []( auto& cur_state, auto& accepted_proposal ) {
                     cur_state.add_object(
                         std::move( accepted_proposal.proposed_move.new_object
-                                .value() ),
+                                       .value() ),
                         accepted_proposal.set_id, false );
                 } );
         };
@@ -224,7 +233,7 @@ namespace geode
                     cur_state.update_free_object(
                         accepted_proposal.old_object_id(),
                         std::move( accepted_proposal.proposed_move.new_object
-                                .value() ) );
+                                       .value() ) );
                 } );
         };
 

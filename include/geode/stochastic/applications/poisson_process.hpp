@@ -13,7 +13,7 @@ namespace geode
         ObjectSamplerConfig< ObjectType > sampler;
 
         std::string density_name;
-        double lambda;
+        double lambda{ 0. };
         std::optional< double > expected_nb_objects;
 
         double birth_ratio{ 1.0 };

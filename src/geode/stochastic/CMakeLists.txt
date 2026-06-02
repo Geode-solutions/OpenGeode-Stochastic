@@ -29,6 +29,8 @@ add_geode_library(
         "spatial/object_neighborhood.cpp"
         "spatial/single_object_features/segment_length_feature.cpp"
         "spatial/pairwise_interactions/distance_cutoff.cpp"
+        "sampling/direct/object_set_sampler/segment_set_sampler.cpp"
+        "sampling/direct/object_set_sampler/point_set_sampler.cpp"
         "sampling/direct/ball_sampler.cpp"
         "sampling/direct/bounding_box_sampler.cpp"
         "sampling/direct/double_sampler.cpp"

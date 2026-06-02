@@ -92,23 +92,23 @@ namespace
             // Invariant: fixed object must remain
 
             geode::OpenGeodeStochasticStochasticException::test(
-                result.decision == geode::MHDecision::Accepted
-                    || result.decision == geode::MHDecision::Rejected,
-                "[MH test] decision should be Accepted or Rejected." );
+                result.decision == geode::MH_DECISION::accepted
+                    || result.decision == geode::MH_DECISION::rejected,
+                "[MH test] decision should be accepted or rejected." );
 
             // Log each step (optional: comment out if too verbose)
             //            geode::Logger::info( "Step: ", count,
             //                " move_type= ", static_cast< int >(
             //                result.move_type ), " decision= ", result.decision
-            //                == geode::MHDecision::Accepted ? "Accepted"
+            //                == geode::MH_DECISION::accepted ? "accepted"
             //                                                               :
-            //                                                               "Rejected",
+            //                                                               "rejected",
             //                " delta_log_energy = ", result.delta_log_energy,
             //                " log_accept = ", result.log_accept,
             //                " state_size = ", state.size() );
 
             // Keep track of accepted moves by type
-            if( result.decision == geode::MHDecision::Accepted )
+            if( result.decision == geode::MH_DECISION::accepted )
             {
                 nb_accepted++;
                 switch( result.move_type )
@@ -135,7 +135,7 @@ namespace
                     " Mean objects =  ",
                     static_cast< double >( stat_sum )
                         / static_cast< double >( count ),
-                    " nb accepted = ", nb_accepted, " Accepted(B/D/C) = ",
+                    " nb accepted = ", nb_accepted, " accepted(B/D/C) = ",
                     static_cast< double >( accepted_birth )
                         / static_cast< double >( nb_accepted ),
                     "  ",

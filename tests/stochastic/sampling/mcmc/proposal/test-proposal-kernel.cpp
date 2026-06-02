@@ -35,12 +35,11 @@ namespace
 {
     geode::uuid init_object_set( geode::ObjectSets< geode::Point2D >& pattern )
     {
-        geode::Point2D p1{ { 0., 0. } };
-        geode::Point2D p2{ { 1., 1. } };
-
+        // NOLINTBEGIN(*-magic-numbers)
         auto set_id = pattern.add_set( "default_name" );
-        pattern.add_object( std::move( p1 ), set_id, false );
-        pattern.add_object( std::move( p2 ), set_id, false );
+        pattern.add_object( geode::Point2D{ { 0., 0. } }, set_id, false );
+        pattern.add_object( geode::Point2D{ { 1., 1. } }, set_id, false );
+        // NOLINTEND(*-magic-numbers)
 
         return set_id;
     }
@@ -50,12 +49,10 @@ namespace
         geode::ObjectSets< geode::Point2D > config;
         auto set_id = init_object_set( config );
 
-        geode::Point2D min_point{ { 0., 0. } };
-        geode::Point2D max_point{ { 10., 100. } };
-
+        // NOLINTBEGIN(*-magic-numbers)
         geode::BoundingBox2D box;
-        box.add_point( min_point );
-        box.add_point( max_point );
+        box.add_point( geode::Point2D{ { 0., 0. } } );
+        box.add_point( geode::Point2D{ { 10., 100. } } );
         geode::SpatialDomain domain( box, 0. );
 
         geode::ObjectSamplerConfig< geode::Point2D > sampler_config;
@@ -67,10 +64,13 @@ namespace
 
         geode::RandomEngine engine;
 
-        bool saw_birth = false, saw_death = false, saw_change = false;
+        bool saw_birth = false;
+        bool saw_death = false;
+        bool saw_change = false;
 
-        for( const auto i : geode::Range{ 400 } )
+        for( const auto count : geode::Range{ 400 } )
         {
+            geode_unused( count );
             auto proposal = kernel->propose( config, engine );
             const auto& proposed_move = proposal.proposed_move;
 
@@ -174,6 +174,7 @@ namespace
             proposed_move.type == geode::MoveType::Birth
                 || proposed_move.type == geode::MoveType::Invalid,
             "[test proposal] On empty config, only Birth should be possible." );
+        // NOLINTEND(*-magic-numbers)
     }
 } // namespace
 int main()
