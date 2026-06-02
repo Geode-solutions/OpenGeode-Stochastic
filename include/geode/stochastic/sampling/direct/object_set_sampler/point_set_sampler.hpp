@@ -107,12 +107,21 @@ namespace geode
         double move_ratio = 0.1;
     };
 
-    template < index_t dimension >
-    std::unique_ptr< ObjectSetSampler< Point< dimension > > >
-        build_objectset_sampler( const SpatialDomain< dimension >& domain,
-            const ObjectSamplerConfig< Point< dimension > >& config )
+    template <>
+    std::unique_ptr< ObjectSetSampler< Point2D > >
+        build_objectset_sampler< Point2D >( const SpatialDomain< 2 >& domain,
+            const ObjectSamplerConfig< Point2D >& config )
     {
-        return std::make_unique< UniformPointSetSampler< dimension > >(
+        return std::make_unique< UniformPointSetSampler< 2 > >(
+            domain, config );
+    }
+
+    template <>
+    std::unique_ptr< ObjectSetSampler< Point3D > >
+        build_objectset_sampler< Point3D >( const SpatialDomain< 3 >& domain,
+            const ObjectSamplerConfig< Point3D >& config )
+    {
+        return std::make_unique< UniformPointSetSampler< 3 > >(
             domain, config );
     }
 
