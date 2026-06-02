@@ -70,6 +70,7 @@ namespace geode
             constexpr index_t max_try{ 100 };
             for( const auto try_id : geode::Range{ max_try } )
             {
+                geode_unused( try_id );
                 if( domain_.extended_contains( new_point ) )
                 {
                     return new_point;
@@ -107,11 +108,11 @@ namespace geode
     };
 
     template < index_t dimension >
-    std::unique_ptr< ObjectSetSampler< Point2D > > build_objectset_sampler(
-        const SpatialDomain< 2 >& domain,
-        const ObjectSamplerConfig< Point< dimension > >& config )
+    std::unique_ptr< ObjectSetSampler< Point< dimension > > >
+        build_objectset_sampler( const SpatialDomain< dimension >& domain,
+            const ObjectSamplerConfig< Point< dimension > >& config )
     {
-        return std::make_unique< UniformPointSetSampler< 2 > >(
+        return std::make_unique< UniformPointSetSampler< dimension > >(
             domain, config );
     }
 

@@ -150,8 +150,8 @@ namespace geode
         }
 
     private:
-        const double compute_log_accept( const double deltaU,
-            const ProposalProbabilities& proposal_probas ) const
+        double compute_log_accept(
+            double deltaU, const ProposalProbabilities& proposal_probas ) const
         {
             return -beta_ * deltaU + proposal_probas.transition_probability();
         }
@@ -189,10 +189,11 @@ namespace geode
             const auto delta_log_energy =
                 model_.energy().delta_log_add( state, new_object );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
-                []( auto& state, auto& proposal ) {
-                    state.add_object(
-                        std::move( proposal.proposed_move.new_object.value() ),
-                        proposal.set_id, false );
+                []( auto& cur_state, auto& accepted_proposal ) {
+                    cur_state.add_object(
+                        std::move( accepted_proposal.proposed_move.new_object
+                                       .value() ),
+                        accepted_proposal.set_id, false );
                 } );
         };
 
@@ -204,8 +205,9 @@ namespace geode
             const auto delta_log_energy =
                 model_.energy().delta_log_remove( state, old_object_id );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
-                []( auto& state, auto& proposal ) {
-                    state.remove_free_object( proposal.old_object_id() );
+                []( auto& cur_state, auto& accepted_proposal ) {
+                    cur_state.remove_free_object(
+                        accepted_proposal.old_object_id() );
                 } );
         };
 
@@ -218,10 +220,11 @@ namespace geode
             const auto delta_log_energy = model_.energy().delta_log_change(
                 state, old_object_id, new_object );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
-                []( auto& state, auto& proposal ) {
-                    state.update_free_object( proposal.old_object_id(),
-                        std::move(
-                            proposal.proposed_move.new_object.value() ) );
+                []( auto& cur_state, auto& accepted_proposal ) {
+                    cur_state.update_free_object(
+                        accepted_proposal.old_object_id(),
+                        std::move( accepted_proposal.proposed_move.new_object
+                                       .value() ) );
                 } );
         };
 

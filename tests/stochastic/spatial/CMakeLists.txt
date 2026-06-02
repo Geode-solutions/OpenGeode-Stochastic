@@ -18,7 +18,34 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-add_subdirectory(applications)
-add_subdirectory(models)
-add_subdirectory(sampling)
-add_subdirectory(spatial)
+add_geode_test(
+    SOURCE "test-object-set.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
+    SOURCE "test-object-sets.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
+    SOURCE "test-pairwise-interactions.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
+    SOURCE "test-spatial-domain.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)

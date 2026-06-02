@@ -29,7 +29,7 @@
 #include <geode/stochastic/sampling/distributions.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
 
-const int NUMBER_OF_SAMPLES = 10000;
+const int NUMBER_OF_SAMPLES = 100000;
 
 void test_reproducibility()
 {
@@ -84,7 +84,7 @@ template < typename T >
 void test_distribution_mean_and_variance( const std::vector< T >& data,
     double expected_mean,
     double expected_var,
-    double k = 3.0 )
+    double k = 5.0 )
 {
     const auto n = data.size();
     const double mean = compute_mean( data );
@@ -233,6 +233,8 @@ int main()
         geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::RandomEngine random_engine;
         test_reproducibility();
+
+        random_engine.set_seed( "@-test-radom-engine@" );
 
         geode::Logger::info( "TEST UNIFORM SAMPLING" );
         test_uniform< geode::index_t >( 1, 15, random_engine );

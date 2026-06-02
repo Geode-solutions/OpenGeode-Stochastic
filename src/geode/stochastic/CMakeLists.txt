@@ -22,6 +22,8 @@ add_geode_library(
     NAME stochastic
     FOLDER "geode/stochastic"
     SOURCES
+        "applications/poisson_process.cpp"
+        "applications/strauss_process.cpp"
         "spatial/object_set.cpp"
         "spatial/object_sets.cpp"
         "spatial/object_neighborhood.cpp"
@@ -37,6 +39,8 @@ add_geode_library(
         "sampling/random_engine.cpp"
         "common.cpp"
     PUBLIC_HEADERS
+        "applications/poisson_process.hpp"
+        "applications/strauss_process.hpp"
         #"inference/abc_shadow.hpp"
         "inference/statistics_tools.hpp"
         "inference/statistics_tracker.hpp"

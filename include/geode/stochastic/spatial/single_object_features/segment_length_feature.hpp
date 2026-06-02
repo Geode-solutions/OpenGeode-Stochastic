@@ -21,6 +21,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#pragma once
 
 #include <geode/stochastic/spatial/single_object_features/single_object_feature.hpp>
 

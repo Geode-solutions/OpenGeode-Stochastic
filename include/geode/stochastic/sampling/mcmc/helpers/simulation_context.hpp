@@ -82,6 +82,13 @@ namespace geode
     template < typename ObjectType >
     struct SimulationContextConfig
     {
+        ObjectSetDefinition< ObjectType >& add_set( absl::string_view name )
+        {
+            auto& set = sets.emplace_back();
+            set.name = name;
+            return set;
+        }
+
         SpatialDomainConfig< ObjectType::dim > domain;
 
         std::vector< ObjectSetDefinition< ObjectType > > sets;
@@ -127,7 +134,7 @@ namespace geode
         // MH sampler
         // -------------------------
         context.mh_sampler =
-            std::make_unique< geode::MetropolisHastings< geode::Point2D > >(
+            std::make_unique< geode::MetropolisHastings< ObjectType > >(
                 *context.model, std::move( proposal_kernel ) );
 
         return context;
