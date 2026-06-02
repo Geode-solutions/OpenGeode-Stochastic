@@ -192,7 +192,7 @@ namespace geode
                 []( auto& cur_state, auto& accepted_proposal ) {
                     cur_state.add_object(
                         std::move( accepted_proposal.proposed_move.new_object
-                                       .value() ),
+                                .value() ),
                         accepted_proposal.set_id, false );
                 } );
         };
@@ -224,7 +224,7 @@ namespace geode
                     cur_state.update_free_object(
                         accepted_proposal.old_object_id(),
                         std::move( accepted_proposal.proposed_move.new_object
-                                       .value() ) );
+                                .value() ) );
                 } );
         };
 
