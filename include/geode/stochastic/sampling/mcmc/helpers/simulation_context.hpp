@@ -116,6 +116,11 @@ namespace geode
         for( const auto& set_def : config.sets )
         {
             auto set_id = context.object_sets->add_set( set_def.name );
+            for( auto fixed_object : set_def.fixed_objects )
+            {
+                context.object_sets->add_object(
+                    std::move( fixed_object ), set_id, true );
+            }
             auto sampler =
                 build_objectset_sampler( *context.domain, set_def.sampler );
             geode::add_birth_death_change_moves( *sampler, *proposal_kernel,

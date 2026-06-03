@@ -18,13 +18,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-#add_geode_test(
-#     SOURCE "sampling/mcmc/test-mh-fractures.cpp"
-#     DEPENDENCIES
-#         OpenGeode::basic
-#         OpenGeode::geometry
-#         ${PROJECT_NAME}::stochastic
-#)
+add_geode_test(
+     SOURCE "test-fractures.cpp"
+     DEPENDENCIES
+         OpenGeode::basic
+         OpenGeode::geometry
+         ${PROJECT_NAME}::stochastic
+)
 
 add_geode_test(
       SOURCE "test-poisson-process.cpp"

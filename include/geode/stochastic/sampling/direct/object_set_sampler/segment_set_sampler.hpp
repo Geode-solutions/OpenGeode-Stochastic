@@ -37,8 +37,9 @@ namespace geode
         double move_ratio{ 0.1 };
         // NOLINTEND(*-magic-numbers)
 
-        DoubleSampler::DistributionDescription length;
-        DoubleSampler::DistributionDescription azimuth;
+        DoubleSampler::DistributionDescription length{ "length" };
+
+        DoubleSampler::DistributionDescription azimuth{ "azimuth" };
     };
 
     class UniformSegmentSetSampler : public ObjectSetSampler< OwnerSegment2D >

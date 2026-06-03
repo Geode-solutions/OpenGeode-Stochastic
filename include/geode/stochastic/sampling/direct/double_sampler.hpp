@@ -48,6 +48,13 @@ namespace geode
 
         struct DistributionDescription
         {
+            DistributionDescription( absl::string_view name_in )
+                : name{ name_in }
+            {
+            }
+
+            DistributionDescription() = default;
+
             std::string name{ "default_distribution" };
             DistributionType distribution_type;
 
