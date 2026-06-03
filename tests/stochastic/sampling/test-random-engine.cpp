@@ -28,6 +28,7 @@
 
 #include <geode/stochastic/sampling/distributions.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
+// NOLINTBEGIN(*-magic-numbers)
 namespace
 {
     const int NUMBER_OF_SAMPLES = 100000;
@@ -44,8 +45,6 @@ namespace
             // Create second engine with same seed
             geode::RandomEngine engine2;
             engine2.set_seed( seed );
-
-            // NOLINTBEGING(*-magic-numbers)
 
             // Define a uniform distribution
             geode::UniformClosed< int > dist;
@@ -65,7 +64,6 @@ namespace
             geode::Logger::info( "Test Reproducibility: ", seed, " SUCCESS " );
         }
         geode::Logger::info( "Test Reproducibility: SUCCESS " );
-        // NOLINTEND(*-magic-numbers)
     }
 
     template < typename T >
@@ -86,23 +84,23 @@ namespace
         }
         return accum / ( data.size() - 1 );
     }
+    // NOLINTBEGING(*-magic-numbers)
     template < typename T >
     void test_distribution_mean_and_variance( const std::vector< T >& data,
         double expected_mean,
         double expected_var,
         double k_coef = 5.0 )
     {
-        // NOLINTBEGING(*-magic-numbers)
-        const auto n = data.size();
+        const auto data_size = data.size();
         const double mean = compute_mean( data );
         const double variance = compute_variance( data, mean );
         geode::Logger::info( "Test Distribution ",
             ": mean / expected mean = ", mean, "/", expected_mean,
             " variance / expected variance = ", variance, "/", expected_var );
 
-        const double se_mean = std::sqrt( expected_var / n );
+        const double se_mean = std::sqrt( expected_var / data_size );
         const double se_var =
-            std::sqrt( 2.0 * expected_var * expected_var / ( n - 1 ) );
+            std::sqrt( 2.0 * expected_var * expected_var / ( data_size - 1 ) );
 
         geode::OpenGeodeStochasticStochasticException::test(
             std::fabs( mean - expected_mean ) < k_coef * se_mean,
@@ -110,14 +108,11 @@ namespace
         geode::OpenGeodeStochasticStochasticException::test(
             std::fabs( variance - expected_var ) < k_coef * se_var,
             "[Uniform] - Wrong expected std." );
-        // NOLINTEND(*-magic-numbers)
     }
 
     template < typename T >
     double compute_expected_variance( T min_value, T max_value )
     {
-        // NOLINTBEGIN(*-magic-numbers)
-
         if constexpr( std::is_integral_v< T > )
         {
             const auto distance =
@@ -135,7 +130,6 @@ namespace
             static_assert( std::is_arithmetic_v< T >,
                 "Unsupported type to compute theoretical variance." );
         }
-        // NOLINTEND(*-magic-numbers)
     }
 
     template < typename Type >
@@ -244,7 +238,6 @@ namespace
         geode::OpenGeodeStochasticStochasticException::test(
             abs( empirical_probability - probability_of_success ) < 0.05,
             "[Bernoulli] - Empirical probability out of tolerance." );
-        // NOLINTEND(*-magic-numbers)
     }
 } // namespace
 int main()
@@ -257,7 +250,6 @@ int main()
 
         random_engine.set_seed( "@-test-radom-engine@" );
 
-        // NOLINTBEGIN(*-magic-numbers)
         geode::Logger::info( "TEST UNIFORM SAMPLING" );
         test_uniform< geode::index_t >( 1, 15, random_engine );
         test_uniform< geode::local_index_t >( 1, 6, random_engine );
@@ -286,7 +278,6 @@ int main()
         test_bernoulli( 0.06, random_engine );
         test_bernoulli( 0.96, random_engine );
         geode::Logger::info( "TEST BERNOUILLI SAMPLING - SUCCESS" );
-        // NOLINTEND(*-magic-numbers)
         return 0;
     }
     catch( ... )
@@ -294,3 +285,4 @@ int main()
         return geode::geode_lippincott();
     }
 }
+// NOLINTEND(*-magic-numbers)
