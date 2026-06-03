@@ -12,7 +12,7 @@ namespace geode
     using FractureSimulationContext = SimulationContext< Fracture >;
     using FractureSimulationRunner = SimulationRunner< Fracture >;
 
-    struct FractureSetDescription
+    struct opengeode_stochastic_stochastic_api FractureSetDescription
     {
         std::string fset_name;
 
@@ -86,7 +86,7 @@ namespace geode
     //        std::optional< double > expected_nb_interactions;
     //    };
 
-    struct FractureNetworkDescription
+    struct opengeode_stochastic_stochastic_api FractureNetworkDescription
     {
         std::string fnet_name;
 
@@ -127,10 +127,13 @@ namespace geode
         //        }
     };
 
-    FractureSimulationContext build_fractures_simulation_context(
-        const FractureNetworkDescription& description );
+    opengeode_stochastic_stochastic_api FractureSimulationContext
+        build_fractures_simulation_context(
+            const FractureNetworkDescription& description );
 
-    std::vector< geode::TargetStatisticConfig > build_fractures_targeted_stat(
-        const FractureNetworkDescription& description );
+    opengeode_stochastic_stochastic_api
+        std::vector< geode::TargetStatisticConfig >
+        build_fractures_targeted_stat(
+            const FractureNetworkDescription& description );
 
 } // namespace geode
