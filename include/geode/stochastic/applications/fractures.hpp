@@ -21,14 +21,14 @@ namespace geode
         double death_ratio{ 1.0 };
         double change_ratio{ 1.0 };
 
-        std::string density_name() const
+        [[nodiscard]] std::string density_name() const
         {
             return absl::StrCat( fset_name, "_p20" );
         }
         double p20{ 0. };
         std::optional< double > expected_number;
 
-        std::string intensity_name() const
+        [[nodiscard]] std::string intensity_name() const
         {
             return absl::StrCat( fset_name, "_p21" );
         }
@@ -37,13 +37,13 @@ namespace geode
 
         std::vector< std::array< geode::Point2D, 2 > > observed_fractures;
 
-        std::string spacing_name() const
+        [[nodiscard]] std::string spacing_name() const
         {
             return absl::StrCat( fset_name, "_spacing" );
         }
         double minimal_spacing{ 0. };
 
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             auto message =
                 absl::StrCat( "FractureSetDescription: ", fset_name );
@@ -94,14 +94,15 @@ namespace geode
 
         std::vector< FractureSetDescription > fracture_sets;
 
-        FractureSetDescription& add_fracture_set( absl::string_view fset_name )
+        [[nodiscard]] FractureSetDescription& add_fracture_set(
+            absl::string_view fset_name )
         {
             auto& fracture_set = fracture_sets.emplace_back();
             fracture_set.fset_name = fset_name;
             return fracture_set;
         }
 
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             auto message =
                 absl::StrCat( "FractureNetworkDescription: ", fnet_name );

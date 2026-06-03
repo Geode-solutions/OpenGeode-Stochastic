@@ -33,7 +33,7 @@ namespace geode
     template <>
     struct ObjectSamplerConfig< OwnerSegment2D >
     {
-        // NOLINTBEGING(*-magic-numbers)
+        // NOLINTBEGIN(*-magic-numbers)
         double move_ratio{ 0.1 };
         // NOLINTEND(*-magic-numbers)
 

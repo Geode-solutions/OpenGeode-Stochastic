@@ -30,10 +30,10 @@ namespace
             fracture_extremities )
     {
         std::vector< geode::Fracture > fractures;
+        fractures.reserve( fracture_extremities.size() );
         for( const auto& extremities : fracture_extremities )
         {
-            fractures.emplace_back(
-                geode::OwnerSegment2D{ extremities[0], extremities[1] } );
+            fractures.emplace_back( extremities[0], extremities[1] );
         }
         return fractures;
     }
@@ -75,9 +75,10 @@ namespace geode
             intensity.term_name = fset_desc.intensity_name();
             intensity.object_set_names = { fset_desc.fset_name };
             intensity.lambda = fset_desc.p21;
-            constexpr double caracteristic_length = 1.0;
+            constexpr double CARACTERISTIC_LENGTH = 1.0; // mean fracture
+                                                         // length?
             intensity.object_feature =
-                SegmentLengthInsideBoxFeatureConfig{ caracteristic_length };
+                SegmentLengthInsideBoxFeatureConfig{ CARACTERISTIC_LENGTH };
             simulation_config.model.terms.emplace_back(
                 std::move( intensity ) );
 

@@ -24,16 +24,17 @@ namespace geode
     template < typename ObjectType >
     struct PoissonProcessDescription
     {
+        std::string process_name{ "Poisson" };
         SpatialDomainConfig< ObjectType::dim > domain;
 
         std::vector< PoissonSetDescription< ObjectType > > sets;
 
         PoissonSetDescription< ObjectType >& add_set(
-            absl::string_view set_name, absl::string_view density_name )
+            absl::string_view set_name )
         {
             auto& set = sets.emplace_back();
             set.set_name = set_name;
-            set.density_name = density_name;
+            set.density_name = absl::StrCat( set_name, "_density" );
             return set;
         }
     };

@@ -48,7 +48,7 @@ namespace geode
 
         struct DistributionDescription
         {
-            DistributionDescription( absl::string_view name_in )
+            explicit DistributionDescription( absl::string_view name_in )
                 : name{ name_in }
             {
             }
@@ -67,7 +67,7 @@ namespace geode
             std::optional< double >
                 alpha; // exponent parameter for power law distribution
 
-            std::string string() const
+            [[nodiscard]] std::string string() const
             {
                 auto message = absl::StrCat( "Distribution - ", name );
                 absl::StrAppend( &message,

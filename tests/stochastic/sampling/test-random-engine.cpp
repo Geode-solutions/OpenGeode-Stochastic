@@ -90,7 +90,7 @@ namespace
     void test_distribution_mean_and_variance( const std::vector< T >& data,
         double expected_mean,
         double expected_var,
-        double k = 5.0 )
+        double k_coef = 5.0 )
     {
         // NOLINTBEGING(*-magic-numbers)
         const auto n = data.size();
@@ -105,10 +105,10 @@ namespace
             std::sqrt( 2.0 * expected_var * expected_var / ( n - 1 ) );
 
         geode::OpenGeodeStochasticStochasticException::test(
-            std::fabs( mean - expected_mean ) < k * se_mean,
+            std::fabs( mean - expected_mean ) < k_coef * se_mean,
             "[Uniform] - Wrong expected mean." );
         geode::OpenGeodeStochasticStochasticException::test(
-            std::fabs( variance - expected_var ) < k * se_var,
+            std::fabs( variance - expected_var ) < k_coef * se_var,
             "[Uniform] - Wrong expected std." );
         // NOLINTEND(*-magic-numbers)
     }
@@ -116,17 +116,17 @@ namespace
     template < typename T >
     double compute_expected_variance( T min_value, T max_value )
     {
-        // NOLINTBEGING(*-magic-numbers)
+        // NOLINTBEGIN(*-magic-numbers)
 
         if constexpr( std::is_integral_v< T > )
         {
-            const double distance =
+            const auto distance =
                 static_cast< double >( max_value - min_value + 1 );
             return ( distance * distance - 1.0 ) / 12.0;
         }
         else if constexpr( std::is_floating_point_v< T > )
         {
-            const double distance =
+            const auto distance =
                 static_cast< double >( max_value - min_value );
             return ( distance * distance ) / 12.0;
         }
@@ -257,7 +257,7 @@ int main()
 
         random_engine.set_seed( "@-test-radom-engine@" );
 
-        // NOLINTBEGING(*-magic-numbers)
+        // NOLINTBEGIN(*-magic-numbers)
         geode::Logger::info( "TEST UNIFORM SAMPLING" );
         test_uniform< geode::index_t >( 1, 15, random_engine );
         test_uniform< geode::local_index_t >( 1, 6, random_engine );

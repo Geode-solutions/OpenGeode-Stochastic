@@ -52,7 +52,7 @@ namespace
             strauss.domain = { geode::Point2D{ { 0.0, 0.0 } },
                 geode::Point2D{ { 10.0, 10.0 } }, 1. };
 
-            auto& set_config = strauss.add_set( "set_A", "density_A" );
+            auto& set_config = strauss.add_set( "set_A" );
             set_config.lambda = 0.5;
             set_config.expected_nb_objects = nb_points[config];
 
@@ -115,21 +115,21 @@ namespace
             strauss.domain = { geode::Point2D{ { 0, 0 } },
                 geode::Point2D{ { 10, 10 } }, 2. };
 
-            auto& set_config_01 = strauss.add_set( "set01", "density_01" );
+            auto& set_config_01 = strauss.add_set( "set01" );
             set_config_01.lambda = 0.1;
             set_config_01.expected_nb_objects = 10;
             set_config_01.birth_ratio = 1.0;
             set_config_01.death_ratio = 3.0;
             set_config_01.change_ratio = 1.0;
 
-            auto& set_config_02 = strauss.add_set( "set02", "density_02" );
+            auto& set_config_02 = strauss.add_set( "set02" );
             set_config_02.lambda = 0.4;
             set_config_01.expected_nb_objects = 40;
             set_config_02.birth_ratio = 3.0;
             set_config_02.death_ratio = 0.5;
             set_config_02.change_ratio = 1.0;
 
-            auto& set_config_03 = strauss.add_set( "set03", "density_03" );
+            auto& set_config_03 = strauss.add_set( "set03" );
             set_config_03.lambda = 0.3;
             set_config_01.expected_nb_objects = 30;
             set_config_03.birth_ratio = 4.0;

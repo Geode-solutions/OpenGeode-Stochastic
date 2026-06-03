@@ -152,7 +152,8 @@ namespace geode
         Point< dimension > min_point;
         Point< dimension > max_point;
         double buffer_size{ 0.0 };
-        std::string string() const
+
+        [[nodiscard]] std::string string() const
         {
             std::string message = "Domain: ";
             absl::StrAppend(

@@ -47,7 +47,7 @@ namespace
             geode::PoissonProcessDescription< geode::Point2D > poisson;
             poisson.domain = { geode::Point2D{ { 0, 0 } },
                 geode::Point2D{ { 10, 10 } }, 0. };
-            auto& set_config = poisson.add_set( "set_A", "density_A" );
+            auto& set_config = poisson.add_set( "set_A" );
             set_config.lambda = 0.3;
             set_config.expected_nb_objects = 30;
             set_config.birth_ratio = birth_ratio[config];
@@ -96,21 +96,21 @@ namespace
         geode::PoissonProcessDescription< geode::Point2D > poisson;
         poisson.domain = { geode::Point2D{ { 0, 0 } },
             geode::Point2D{ { 10, 10 } }, 0. };
-        auto& set_config_01 = poisson.add_set( "set01", "density_01" );
+        auto& set_config_01 = poisson.add_set( "set01" );
         set_config_01.lambda = 0.1;
         set_config_01.expected_nb_objects = 10;
         set_config_01.birth_ratio = 2.0;
         set_config_01.death_ratio = 3.0;
         set_config_01.change_ratio = 1.0;
 
-        auto& set_config_02 = poisson.add_set( "set02", "density_02" );
+        auto& set_config_02 = poisson.add_set( "set02" );
         set_config_02.lambda = 0.4;
         set_config_01.expected_nb_objects = 40;
         set_config_02.birth_ratio = 3.0;
         set_config_02.death_ratio = 0.5;
         set_config_02.change_ratio = 1.0;
 
-        auto& set_config_03 = poisson.add_set( "set03", "density_03" );
+        auto& set_config_03 = poisson.add_set( "set03" );
         set_config_03.lambda = 0.3;
         set_config_01.expected_nb_objects = 30;
         set_config_03.birth_ratio = 4.0;
