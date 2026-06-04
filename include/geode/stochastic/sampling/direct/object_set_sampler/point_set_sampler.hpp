@@ -31,9 +31,8 @@ namespace geode
     struct ObjectSamplerConfig< Point< dimension > >
     {
         // use to define the step for change move (move_ratio*domain volume)
-        // NOLINTBEGIN(*-magic-numbers)
+        // NOLINTNEXTLINE(*-magic-numbers)
         double move_ratio{ 0.1 };
-        // NOLINTEND(*-magic-numbers)
     };
 
     template < index_t dimension >

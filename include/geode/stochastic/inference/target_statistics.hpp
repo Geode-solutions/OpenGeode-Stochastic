@@ -20,7 +20,9 @@
  * SOFTWARE.
  *
  */
+
 #pragma once
+
 #include <geode/basic/uuid.hpp>
 #include <geode/stochastic/models/model.hpp>
 

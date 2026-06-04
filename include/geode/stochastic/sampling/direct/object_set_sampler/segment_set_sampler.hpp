@@ -23,8 +23,6 @@
 
 #pragma once
 
-// #include <geode/geometry/basic_objects/segment.hpp>
-
 #include <geode/stochastic/sampling/direct/double_sampler.hpp>
 #include <geode/stochastic/sampling/direct/object_set_sampler/object_set_sampler.hpp>
 
@@ -33,9 +31,8 @@ namespace geode
     template <>
     struct ObjectSamplerConfig< OwnerSegment2D >
     {
-        // NOLINTBEGIN(*-magic-numbers)
+        // NOLINTNEXTLINE(*-magic-numbers)
         double move_ratio{ 0.1 };
-        // NOLINTEND(*-magic-numbers)
 
         DoubleSampler::DistributionDescription length{ "length" };
 
