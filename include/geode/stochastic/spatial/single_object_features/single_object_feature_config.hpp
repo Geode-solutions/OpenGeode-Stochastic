@@ -20,10 +20,10 @@
  * SOFTWARE.
  *
  */
+#pragma once
 
 #include <variant>
 
-#pragma once
 namespace geode
 {
     struct ObjectInDomainFeatureConfig

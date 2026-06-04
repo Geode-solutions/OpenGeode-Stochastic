@@ -18,7 +18,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-add_subdirectory(applications)
-add_subdirectory(models)
-add_subdirectory(sampling)
-add_subdirectory(spatial)
+add_geode_test(
+     SOURCE "test-fractures.cpp"
+     DEPENDENCIES
+         OpenGeode::basic
+         OpenGeode::geometry
+         ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
+      SOURCE "test-poisson-process.cpp"
+      DEPENDENCIES
+          OpenGeode::basic
+          OpenGeode::geometry
+          ${PROJECT_NAME}::stochastic
+ )
+
+add_geode_test(
+    SOURCE  "test-strauss-process.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+

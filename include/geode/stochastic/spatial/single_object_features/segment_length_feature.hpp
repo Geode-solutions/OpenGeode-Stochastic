@@ -21,6 +21,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#pragma once
 
 #include <geode/stochastic/spatial/single_object_features/single_object_feature.hpp>
 
@@ -32,7 +33,7 @@ namespace geode
     public:
         explicit SegmentLengthInsideBoxFeature( double characteristic_length );
 
-        double evaluate( const OwnerSegment2D& segment,
+        [[nodiscard]] double evaluate( const OwnerSegment2D& segment,
             const SpatialDomain< 2 >& domain ) const override;
 
     private:

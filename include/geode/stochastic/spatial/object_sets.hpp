@@ -46,15 +46,6 @@ namespace geode
 
 namespace geode
 {
-    struct ObjectSetConfig
-    {
-        std::string name;
-
-        double birth_ratio = 1.0;
-        double death_ratio = 1.0;
-        double change_ratio = 1.0;
-    };
-
     template < typename Type >
     class ObjectSets
     {

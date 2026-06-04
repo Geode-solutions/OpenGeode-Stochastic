@@ -152,6 +152,17 @@ namespace geode
         Point< dimension > min_point;
         Point< dimension > max_point;
         double buffer_size{ 0.0 };
+
+        [[nodiscard]] std::string string() const
+        {
+            std::string message = "Domain: ";
+            absl::StrAppend(
+                &message, "\n\t --> Min point: ", min_point.string() );
+            absl::StrAppend(
+                &message, "\n\t --> Max point: ", max_point.string() );
+            absl::StrAppend( &message, "\n\t --> Buffer size: ", buffer_size );
+            return message;
+        }
     };
 
     template < index_t dimension >

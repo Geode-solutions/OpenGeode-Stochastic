@@ -31,14 +31,17 @@ namespace geode
     template < typename Type >
     class ObjectSet : public Identifier
     {
+        OPENGEODE_DISABLE_COPY( ObjectSet );
+
     public:
         ObjectSet() noexcept = default;
+        ~ObjectSet() = default;
         ObjectSet( ObjectSet&& ) noexcept = default;
         ObjectSet& operator=( ObjectSet&& ) noexcept = default;
 
         void set_name( std::string_view name );
-        const Type& get_fixed_object( index_t index ) const;
-        const Type& get_free_object( index_t index ) const;
+        [[nodiscard]] const Type& get_fixed_object( index_t index ) const;
+        [[nodiscard]] const Type& get_free_object( index_t index ) const;
 
         index_t add_fixed_object( Type&& object );
 
@@ -46,13 +49,13 @@ namespace geode
         void update_free_object( index_t index, Type&& object );
         void remove_free_object( index_t index );
 
-        index_t nb_objects() const;
-        index_t nb_fixed_objects() const;
-        index_t nb_free_objects() const;
+        [[nodiscard]] index_t nb_objects() const;
+        [[nodiscard]] index_t nb_fixed_objects() const;
+        [[nodiscard]] index_t nb_free_objects() const;
 
-        bool empty() const;
+        [[nodiscard]] bool empty() const;
 
-        std::string string() const;
+        [[nodiscard]] std::string string() const;
 
     private:
         std::vector< Type > fixed_objects_;

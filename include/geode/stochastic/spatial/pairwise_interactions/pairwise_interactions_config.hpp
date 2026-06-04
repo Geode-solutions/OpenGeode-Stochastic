@@ -20,12 +20,12 @@
  * SOFTWARE.
  *
  */
+#pragma once
 
 #include <variant>
 
 #include <geode/stochastic/spatial/pairwise_interactions/distance_cutoff.hpp>
 
-#pragma once
 namespace geode
 {
     struct EuclideanDistanceCutoffConfig

@@ -18,7 +18,42 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-add_subdirectory(applications)
-add_subdirectory(models)
-add_subdirectory(sampling)
-add_subdirectory(spatial)
+add_geode_test(
+    SOURCE "energy_terms/test-density-term.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
+    SOURCE "energy_terms/test-intensity-term.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
+    SOURCE "energy_terms/test-pairwise-term.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+#add_geode_test(
+#    SOURCE "energy_terms/test-gibbs-energy.cpp"
+#    DEPENDENCIES
+#        OpenGeode::basic
+#        OpenGeode::geometry
+#        ${PROJECT_NAME}::stochastic
+#)
+
+#add_geode_test(
+#    SOURCE "energy_term-collection.cpp"
+#    DEPENDENCIES
+#        OpenGeode::basic
+#        OpenGeode::geometry
+#        ${PROJECT_NAME}::stochastic
+#)

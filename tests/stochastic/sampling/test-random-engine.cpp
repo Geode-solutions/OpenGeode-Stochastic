@@ -28,204 +28,218 @@
 
 #include <geode/stochastic/sampling/distributions.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
-
-const int NUMBER_OF_SAMPLES = 10000;
-
-void test_reproducibility()
+// NOLINTBEGIN(*-magic-numbers)
+namespace
 {
-    std::vector< std::string > seeds = { "same-seed", "geode-solutions",
-        "dfgzejhèçsodj", "&%;:!§" };
-    for( const auto seed : seeds )
-    { // Create first engine geode::
-        geode::RandomEngine engine1;
-        engine1.set_seed( seed );
+    const int NUMBER_OF_SAMPLES = 100000;
 
-        // Create second engine with same seed
-        geode::RandomEngine engine2;
-        engine2.set_seed( seed );
+    void test_reproducibility()
+    {
+        std::vector< std::string > seeds = { "same-seed", "geode-solutions",
+            "dfgzejhèçsodj", "&%;:!§" };
+        for( const auto& seed : seeds )
+        { // Create first engine geode::
+            geode::RandomEngine engine1;
+            engine1.set_seed( seed );
 
-        // Define a uniform distribution
-        geode::UniformClosed< int > dist;
-        dist.min_value = 1;
-        dist.max_value = 100;
+            // Create second engine with same seed
+            geode::RandomEngine engine2;
+            engine2.set_seed( seed );
 
-        // Sample more values to check sequence reproducibility
-        for( const auto value : geode::Range{ 100 } )
+            // Define a uniform distribution
+            geode::UniformClosed< int > dist;
+            dist.min_value = 1;
+            dist.max_value = 100;
+
+            // Sample more values to check sequence reproducibility
+            for( const auto value : geode::Range{ 100 } )
+            {
+                geode_unused( value );
+                geode::OpenGeodeStochasticStochasticException::test(
+                    engine1.sample_uniform( dist )
+                        == engine2.sample_uniform( dist ),
+                    "[REPRODUCIBILITY] - Same seed should produce same "
+                    "output." );
+            }
+            geode::Logger::info( "Test Reproducibility: ", seed, " SUCCESS " );
+        }
+        geode::Logger::info( "Test Reproducibility: SUCCESS " );
+    }
+
+    template < typename T >
+    double compute_mean( const std::vector< T >& data )
+    {
+        double sum = std::accumulate( data.begin(), data.end(), 0.0 );
+        return sum / data.size();
+    }
+
+    template < typename T >
+    double compute_variance( const std::vector< T >& data, double mean )
+    {
+        double accum = 0.0;
+        for( auto& x : data )
         {
+            double diff = x - mean;
+            accum += diff * diff;
+        }
+        return accum / ( data.size() - 1 );
+    }
+    // NOLINTBEGING(*-magic-numbers)
+    template < typename T >
+    void test_distribution_mean_and_variance( const std::vector< T >& data,
+        double expected_mean,
+        double expected_var,
+        double k_coef = 5.0 )
+    {
+        const auto data_size = data.size();
+        const double mean = compute_mean( data );
+        const double variance = compute_variance( data, mean );
+        geode::Logger::info( "Test Distribution ",
+            ": mean / expected mean = ", mean, "/", expected_mean,
+            " variance / expected variance = ", variance, "/", expected_var );
+
+        const double se_mean = std::sqrt( expected_var / data_size );
+        const double se_var =
+            std::sqrt( 2.0 * expected_var * expected_var / ( data_size - 1 ) );
+
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::fabs( mean - expected_mean ) < k_coef * se_mean,
+            "[Uniform] - Wrong expected mean." );
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::fabs( variance - expected_var ) < k_coef * se_var,
+            "[Uniform] - Wrong expected std." );
+    }
+
+    template < typename T >
+    double compute_expected_variance( T min_value, T max_value )
+    {
+        if constexpr( std::is_integral_v< T > )
+        {
+            const auto distance =
+                static_cast< double >( max_value - min_value + 1 );
+            return ( distance * distance - 1.0 ) / 12.0;
+        }
+        else if constexpr( std::is_floating_point_v< T > )
+        {
+            const auto distance =
+                static_cast< double >( max_value - min_value );
+            return ( distance * distance ) / 12.0;
+        }
+        else
+        {
+            static_assert( std::is_arithmetic_v< T >,
+                "Unsupported type to compute theoretical variance." );
+        }
+    }
+
+    template < typename Type >
+    void test_uniform( const Type min_value,
+        const Type max_value,
+        geode::RandomEngine& engine )
+    {
+        std::vector< Type > samples;
+        samples.reserve( NUMBER_OF_SAMPLES );
+
+        for( const auto count : geode::Range{ NUMBER_OF_SAMPLES } )
+        {
+            geode_unused( count );
+            geode::UniformClosed< Type > dist_closed;
+            dist_closed.min_value = min_value;
+            dist_closed.max_value = max_value;
+
+            Type value = engine.sample_uniform( dist_closed );
+            samples.emplace_back( value );
             geode::OpenGeodeStochasticStochasticException::test(
-                engine1.sample_uniform( dist )
-                    == engine2.sample_uniform( dist ),
-                "[REPRODUCIBILITY] - Same seed should produce same output." );
+                value >= min_value && value <= max_value,
+                "[Uniform] -  value out of range." );
         }
-        geode::Logger::info( "Test Reproducibility: ", seed, " SUCCESS " );
-    }
-    geode::Logger::info( "Test Reproducibility: SUCCESS " );
-}
 
-template < typename T >
-double compute_mean( const std::vector< T >& data )
-{
-    double sum = std::accumulate( data.begin(), data.end(), 0.0 );
-    return sum / data.size();
-}
+        double expected_mean = ( min_value + max_value ) / 2.0;
+        double expected_var = compute_expected_variance( min_value, max_value );
 
-template < typename T >
-double compute_variance( const std::vector< T >& data, double mean )
-{
-    double accum = 0.0;
-    for( auto& x : data )
-    {
-        double diff = x - mean;
-        accum += diff * diff;
-    }
-    return accum / ( data.size() - 1 );
-}
-template < typename T >
-void test_distribution_mean_and_variance( const std::vector< T >& data,
-    double expected_mean,
-    double expected_var,
-    double k = 3.0 )
-{
-    const auto n = data.size();
-    const double mean = compute_mean( data );
-    const double variance = compute_variance( data, mean );
-    geode::Logger::info( "Test Distribution ",
-        ": mean / expected mean = ", mean, "/", expected_mean,
-        " variance / expected variance = ", variance, "/", expected_var );
-
-    const double se_mean = std::sqrt( expected_var / n );
-    const double se_var =
-        std::sqrt( 2.0 * expected_var * expected_var / ( n - 1 ) );
-
-    geode::OpenGeodeStochasticStochasticException::test(
-        std::fabs( mean - expected_mean ) < k * se_mean,
-        "[Uniform] - Wrong expected mean." );
-    geode::OpenGeodeStochasticStochasticException::test(
-        std::fabs( variance - expected_var ) < k * se_var,
-        "[Uniform] - Wrong expected std." );
-}
-
-template < typename T >
-double compute_expected_variance( T min_value, T max_value )
-{
-    if constexpr( std::is_integral_v< T > )
-    {
-        const double distance =
-            static_cast< double >( max_value - min_value + 1 );
-        return ( distance * distance - 1.0 ) / 12.0;
-    }
-    else if constexpr( std::is_floating_point_v< T > )
-    {
-        const double distance = static_cast< double >( max_value - min_value );
-        return ( distance * distance ) / 12.0;
-    }
-    else
-    {
-        static_assert( std::is_arithmetic_v< T >,
-            "Unsupported type to compute theoretical variance." );
-    }
-}
-
-template < typename Type >
-void test_uniform(
-    const Type min_value, const Type max_value, geode::RandomEngine& engine )
-{
-    std::vector< Type > samples;
-    samples.reserve( NUMBER_OF_SAMPLES );
-
-    for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
-    {
-        geode::UniformClosed< Type > dist_closed;
-        dist_closed.min_value = min_value;
-        dist_closed.max_value = max_value;
-
-        Type value = engine.sample_uniform( dist_closed );
-        samples.emplace_back( value );
-        geode::OpenGeodeStochasticStochasticException::test(
-            value >= min_value && value <= max_value,
-            "[Uniform] -  value out of range." );
+        test_distribution_mean_and_variance(
+            samples, expected_mean, expected_var );
     }
 
-    double expected_mean = ( min_value + max_value ) / 2.0;
-    double expected_var = compute_expected_variance( min_value, max_value );
-
-    test_distribution_mean_and_variance( samples, expected_mean, expected_var );
-}
-
-void test_gaussian(
-    double mean_value, double std_value, geode::RandomEngine& engine )
-{
-    std::vector< double > samples;
-    samples.reserve( NUMBER_OF_SAMPLES );
-    geode::Gaussian spec;
-    spec.mean = mean_value;
-    spec.standard_deviation = std_value;
-
-    for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
+    void test_gaussian(
+        double mean_value, double std_value, geode::RandomEngine& engine )
     {
-        double value = engine.sample_gaussian( spec );
-        samples.emplace_back( value );
-    }
+        std::vector< double > samples;
+        samples.reserve( NUMBER_OF_SAMPLES );
+        geode::Gaussian spec;
+        spec.mean = mean_value;
+        spec.standard_deviation = std_value;
 
-    test_distribution_mean_and_variance( samples, mean_value, std_value );
-}
-
-void test_truncated_gaussian( double mean_value,
-    double std_value,
-    std::optional< double > min_value,
-    std::optional< double > max_value,
-    geode::RandomEngine& engine )
-{
-    const auto max =
-        max_value.value_or( std::numeric_limits< double >::infinity() );
-    const auto min =
-        min_value.value_or( -std::numeric_limits< double >::infinity() );
-
-    std::vector< double > samples;
-    samples.reserve( NUMBER_OF_SAMPLES );
-
-    geode::TruncatedGaussian spec;
-    spec.mean = mean_value;
-    spec.standard_deviation = std_value;
-    spec.min_value = min_value;
-    spec.max_value = max_value;
-
-    for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
-    {
-        double value = engine.sample_truncated_gaussian( spec );
-        samples.emplace_back( value );
-        geode::OpenGeodeStochasticStochasticException::test(
-            value >= min && value <= max, "[Gaussian] -  value out of range." );
-    }
-
-    // Implementer un test de Chi2 ou Kolmogorov–Smirnov
-}
-
-void test_bernoulli(
-    double probability_of_success, geode::RandomEngine& engine )
-{
-    int success_count = 0;
-
-    for( const auto i : geode::Range{ NUMBER_OF_SAMPLES } )
-    {
-        if( engine.sample_bernoulli( probability_of_success ) )
+        for( const auto count : geode::Range{ NUMBER_OF_SAMPLES } )
         {
-            ++success_count;
+            geode_unused( count );
+            double value = engine.sample_gaussian( spec );
+            samples.emplace_back( value );
         }
+
+        test_distribution_mean_and_variance( samples, mean_value, std_value );
     }
 
-    const double empirical_probability =
-        static_cast< double >( success_count ) / NUMBER_OF_SAMPLES;
+    void test_truncated_gaussian( double mean_value,
+        double std_value,
+        std::optional< double > min_value,
+        std::optional< double > max_value,
+        geode::RandomEngine& engine )
+    {
+        const auto max =
+            max_value.value_or( std::numeric_limits< double >::infinity() );
+        const auto min =
+            min_value.value_or( -std::numeric_limits< double >::infinity() );
 
-    geode::Logger::info( "Test Bernoulli ",
-        ": empirical / expected = ", empirical_probability, " / ",
-        probability_of_success );
+        std::vector< double > samples;
+        samples.reserve( NUMBER_OF_SAMPLES );
 
-    geode::OpenGeodeStochasticStochasticException::test(
-        abs( empirical_probability - probability_of_success ) < 0.05,
-        "[Bernoulli] - Empirical probability out of tolerance." );
-}
+        geode::TruncatedGaussian spec;
+        spec.mean = mean_value;
+        spec.standard_deviation = std_value;
+        spec.min_value = min_value;
+        spec.max_value = max_value;
 
+        for( const auto count : geode::Range{ NUMBER_OF_SAMPLES } )
+        {
+            geode_unused( count );
+            double value = engine.sample_truncated_gaussian( spec );
+            samples.emplace_back( value );
+            geode::OpenGeodeStochasticStochasticException::test(
+                value >= min && value <= max,
+                "[Gaussian] -  value out of range." );
+        }
+
+        // Implementer un test de Chi2 ou Kolmogorov–Smirnov
+    }
+
+    void test_bernoulli(
+        double probability_of_success, geode::RandomEngine& engine )
+    {
+        int success_count = 0;
+
+        for( const auto count : geode::Range{ NUMBER_OF_SAMPLES } )
+        {
+            geode_unused( count );
+            if( engine.sample_bernoulli( probability_of_success ) )
+            {
+                ++success_count;
+            }
+        }
+
+        const double empirical_probability =
+            static_cast< double >( success_count ) / NUMBER_OF_SAMPLES;
+
+        geode::Logger::info( "Test Bernoulli ",
+            ": empirical / expected = ", empirical_probability, " / ",
+            probability_of_success );
+
+        // NOLINTBEGING(*-magic-numbers)
+        geode::OpenGeodeStochasticStochasticException::test(
+            abs( empirical_probability - probability_of_success ) < 0.05,
+            "[Bernoulli] - Empirical probability out of tolerance." );
+    }
+} // namespace
 int main()
 {
     try
@@ -233,6 +247,8 @@ int main()
         geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::RandomEngine random_engine;
         test_reproducibility();
+
+        random_engine.set_seed( "@-test-radom-engine@" );
 
         geode::Logger::info( "TEST UNIFORM SAMPLING" );
         test_uniform< geode::index_t >( 1, 15, random_engine );
@@ -262,7 +278,6 @@ int main()
         test_bernoulli( 0.06, random_engine );
         test_bernoulli( 0.96, random_engine );
         geode::Logger::info( "TEST BERNOUILLI SAMPLING - SUCCESS" );
-
         return 0;
     }
     catch( ... )
@@ -270,3 +285,4 @@ int main()
         return geode::geode_lippincott();
     }
 }
+// NOLINTEND(*-magic-numbers)

@@ -20,13 +20,13 @@
  * SOFTWARE.
  *
  */
+#pragma once
 
 #include <geode/stochastic/common.hpp>
 
 #include <geode/stochastic/spatial/pairwise_interactions/pairwise_interactions_config.hpp>
 #include <variant>
 
-#pragma once
 namespace geode
 {
     template < typename ObjectType >
