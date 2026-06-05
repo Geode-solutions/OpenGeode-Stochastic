@@ -37,6 +37,20 @@ namespace
         }
         return fractures;
     }
+
+    std::vector< std::pair< std::string, std::string > > inter_set_interactions(
+        const std::vector< std::string >& set_names )
+    {
+        std::vector< std::pair< std::string, std::string > > interactions;
+        for( const auto id1 : geode::Range{ set_names.size() } )
+        {
+            for( const auto id2 : geode::Range{ id1 + 1, set_names.size() } )
+            {
+                interactions.emplace_back( set_names[id1], set_names[id2] );
+            }
+        }
+        return interactions;
+    }
 } // namespace
 
 namespace geode
@@ -44,6 +58,8 @@ namespace geode
     using FractureDensityDescription = SingleObjectTermConfig;
     using FractureIntensityDescription = SingleObjectTermConfig;
     using FractureSpacingDescription = PairwiseTermConfig;
+
+    using XNodeInteractionDescription = geode::PairwiseTermConfig;
 
     using FractureSimulationConfig = SimulationContextConfig< Fracture >;
 
@@ -53,9 +69,13 @@ namespace geode
         FractureSimulationConfig simulation_config;
         simulation_config.domain = fnet_desc.domain;
 
+        std::vector< std::string > set_names;
+        set_names.reserve( fnet_desc.fracture_sets.size() );
         for( const auto& fset_desc : fnet_desc.fracture_sets )
         {
             auto& fset = simulation_config.add_set( fset_desc.fset_name );
+
+            set_names.emplace_back( fset_desc.fset_name );
 
             fset.sampler = fset_desc.sampler;
             fset.dynamics.birth_ratio = fset_desc.birth_ratio;
@@ -90,6 +110,18 @@ namespace geode
             spacing.interaction_config =
                 geode::MinimalDistanceCutoffConfig{ fset_desc.minimal_spacing };
             simulation_config.model.terms.emplace_back( std::move( spacing ) );
+        }
+        if( set_names.size() > 1. )
+        {
+            XNodeInteractionDescription interaction;
+            interaction.term_name = fnet_desc.x_node_interaction_name();
+            interaction.object_set_names_interactions =
+                std::move( inter_set_interactions( set_names ) );
+            interaction.gamma = fnet_desc.beta_x_node;
+            interaction.interaction_config =
+                geode::MinimalDistanceCutoffConfig{ 0. };
+            simulation_config.model.terms.emplace_back(
+                std::move( interaction ) );
         }
 
         return build_simulation_context( simulation_config );

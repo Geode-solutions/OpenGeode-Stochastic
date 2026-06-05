@@ -94,21 +94,6 @@ namespace geode
         }
     };
 
-    //    struct FractureInterSetDescription
-    //    {
-    //        std::string interaction_name;
-    //
-    //        std::vector< std::string > set_names;
-    //
-    //        double gamma{ 1. };
-    //        double distance{ 0. };
-    //
-    //        bool include_intra_set{ true };
-    //        bool include_inter_set{ false };
-    //
-    //        std::optional< double > expected_nb_interactions;
-    //    };
-
     struct opengeode_stochastic_stochastic_api FractureNetworkDescription
     {
         std::string fnet_name;
@@ -125,6 +110,23 @@ namespace geode
             return fracture_set;
         }
 
+        void add_x_node_monitoring( double beta )
+        {
+            OpenGeodeStochasticStochasticException::check_exception(
+                beta <= 1.0 && beta >= 0., nullptr,
+                OpenGeodeException::TYPE::data,
+                "[FractureSimulationRunner] x node should be inhibitated, "
+                "please provise a value in [0., 1.]." );
+            beta_x_node = beta;
+        }
+
+        [[nodiscard]] std::string x_node_interaction_name() const
+        {
+            return absl::StrCat( fnet_name, "_x_node" );
+        }
+        double beta_x_node{ 1. };
+        std::optional< double > expected_x_node;
+
         [[nodiscard]] std::string string() const
         {
             auto message =
@@ -134,6 +136,8 @@ namespace geode
             {
                 absl::StrAppend( &message, "\n\t --> ", fset_desc.string() );
             }
+            absl::StrAppend( &message, "\n\t --> ", x_node_interaction_name(),
+                ": ", beta_x_node );
             return message;
         }
         //        std::vector< StraussInteractionDescription< ObjectType > >
