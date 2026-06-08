@@ -111,12 +111,12 @@ namespace geode
                 geode::MinimalDistanceCutoffConfig{ fset_desc.minimal_spacing };
             simulation_config.model.terms.emplace_back( std::move( spacing ) );
         }
-        if( set_names.size() > 1. )
+        if( set_names.size() > 1 )
         {
             XNodeInteractionDescription interaction;
             interaction.term_name = fnet_desc.x_node_interaction_name();
             interaction.object_set_names_interactions =
-                std::move( inter_set_interactions( set_names ) );
+                inter_set_interactions( set_names );
             interaction.gamma = fnet_desc.beta_x_node;
             interaction.interaction_config =
                 geode::MinimalDistanceCutoffConfig{ 0. };
