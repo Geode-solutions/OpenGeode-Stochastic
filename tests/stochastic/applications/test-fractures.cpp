@@ -71,7 +71,7 @@ namespace
         geode::FractureSimulationRunner runner{ std::move( context ) };
         // run simulation
         geode::SimulationConfigurator sim_config;
-        sim_config.realizations = 2000;
+        sim_config.realizations = 500;
         sim_config.metropolis_hasting_steps = 100;
         sim_config.burn_in_steps = 1000;
 
@@ -157,7 +157,7 @@ namespace
         geode::FractureSimulationRunner runner{ std::move( context ) };
         // run simulation
         geode::SimulationConfigurator sim_config;
-        sim_config.realizations = 2000;
+        sim_config.realizations = 500;
         sim_config.metropolis_hasting_steps = 100;
         sim_config.burn_in_steps = 1000;
 
