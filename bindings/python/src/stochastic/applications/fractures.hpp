@@ -22,6 +22,7 @@
  */
 #pragma once
 
+#include "../../common.hpp"
 #include <geode/stochastic/applications/fractures.hpp>
 
 namespace geode

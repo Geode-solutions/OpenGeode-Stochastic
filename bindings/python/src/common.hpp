@@ -32,51 +32,49 @@
 #include <absl/container/inlined_vector.h>
 #include <absl/types/span.h>
 
-namespace pybind11
+namespace pybind11::detail
 {
-    namespace detail
+
+    template < typename Type >
+    struct type_caster< absl::FixedArray< Type > >
+        : list_caster< absl::FixedArray< Type >, Type >
     {
-        template < typename Type >
-        struct type_caster< absl::FixedArray< Type > >
-            : list_caster< absl::FixedArray< Type >, Type >
-        {
-        };
+    };
 
-        template < typename Type, size_t dimension >
-        struct type_caster< absl::InlinedVector< Type, dimension > >
-            : list_caster< absl::InlinedVector< Type, dimension >, Type >
-        {
-        };
+    template < typename Type, size_t dimension >
+    struct type_caster< absl::InlinedVector< Type, dimension > >
+        : list_caster< absl::InlinedVector< Type, dimension >, Type >
+    {
+    };
 
-        template < typename Type >
-        struct type_caster< absl::Span< Type > >
-            : list_caster< absl::Span< Type >, Type >
-        {
-            using value_conv = make_caster< Type >;
+    template < typename Type >
+    struct type_caster< absl::Span< Type > >
+        : list_caster< absl::Span< Type >, Type >
+    {
+        using value_conv = make_caster< Type >;
 
-            bool load( handle src, bool convert )
+        bool load( handle src, bool convert )
+        {
+            cpp_.clear();
+            auto s = reinterpret_borrow< sequence >( src );
+            cpp_.reserve( s.size() );
+            for( auto it : s )
             {
-                cpp_.clear();
-                auto s = reinterpret_borrow< sequence >( src );
-                cpp_.reserve( s.size() );
-                for( auto it : s )
-                {
-                    value_conv conv;
-                    if( !conv.load( it, convert ) )
-                        return false;
-                    cpp_.push_back( cast_op< Type&& >( std::move( conv ) ) );
-                }
-                this->value = absl::MakeConstSpan( cpp_ );
-                return true;
+                value_conv conv;
+                if( !conv.load( it, convert ) )
+                    return false;
+                cpp_.push_back( cast_op< Type&& >( std::move( conv ) ) );
             }
+            this->value = absl::MakeConstSpan( cpp_ );
+            return true;
+        }
 
-            std::vector< typename std::remove_const< Type >::type > cpp_;
-        };
+        std::vector< typename std::remove_const< Type >::type > cpp_;
+    };
 
-        template < typename Key, typename Value >
-        struct type_caster< absl::flat_hash_map< Key, Value > >
-            : map_caster< absl::flat_hash_map< Key, Value >, Key, Value >
-        {
-        };
-    } // namespace detail
-} // namespace pybind11
+    template < typename Key, typename Value >
+    struct type_caster< absl::flat_hash_map< Key, Value > >
+        : map_caster< absl::flat_hash_map< Key, Value >, Key, Value >
+    {
+    };
+} // namespace pybind11::detail

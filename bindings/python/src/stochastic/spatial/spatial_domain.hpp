@@ -22,6 +22,8 @@
  */
 #pragma once
 
+#include "../../common.hpp"
+
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
 namespace

@@ -22,11 +22,13 @@
  */
 #pragma once
 
+#include "../../common.hpp"
+
 #include <geode/stochastic/inference/statistics_tracker.hpp>
 
 #include <geode/geometry/basic_objects/segment.hpp>
 
-namespace
+namespace geode
 {
 
     template < typename ObjectType >
@@ -49,9 +51,7 @@ namespace
                     tracker.statiscal_count(), ")" );
             } );
     }
-} // namespace
-namespace geode
-{
+
     void define_statistics_tracker( pybind11::module_& module )
     {
         define_statistics_tracker_impl< OwnerSegment2D >(

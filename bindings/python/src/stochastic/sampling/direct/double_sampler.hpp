@@ -22,6 +22,8 @@
  */
 #pragma once
 
+#include "../../../common.hpp"
+
 #include <geode/stochastic/sampling/direct/double_sampler.hpp>
 
 namespace geode
