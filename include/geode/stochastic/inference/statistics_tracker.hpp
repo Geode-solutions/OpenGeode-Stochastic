@@ -35,7 +35,8 @@ namespace geode
     class StatisticsTracker
     {
     public:
-        StatisticsTracker( const Model< ObjectType >& model ) : model_{ model }
+        explicit StatisticsTracker( const Model< ObjectType >& model )
+            : model_{ model }
         {
             means_.resize( model.nb_terms(), 0.0 );
             m2_.resize( model.nb_terms(), 0.0 );
@@ -51,7 +52,7 @@ namespace geode
             ++count_;
             for( const auto value_id : geode::Range{ values.size() } )
             {
-                auto& value = values[value_id];
+                const auto value = values[value_id];
                 auto& mean = means_[value_id];
                 auto& sum_of_squares = m2_[value_id];
 
