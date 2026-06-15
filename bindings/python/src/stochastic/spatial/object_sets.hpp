@@ -41,7 +41,7 @@ namespace geode
             .def( "nb_objects", &ObjectSets::nb_objects );
     }
 
-    void define_spatial_domain( pybind11::module& module )
+    void define_object_sets( pybind11::module& module )
     {
         define_object_sets_impl< Point2D >( module, "Point2D" );
         define_object_sets_impl< Point3D >( module, "Point3D" );
