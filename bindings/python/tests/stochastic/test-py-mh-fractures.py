@@ -137,7 +137,7 @@ def test_two_fracture_sets_simulator():
     printer_config.output_folder = os.path.join(printer_config.output_folder , "py_two_fracture_set")
     sim_config.printer = printer_config
 
-    statistic_tracker = runner.run( engine, sim_config );
+    statistic_tracker = runner.run( engine, sim_config )
 #    runner.check_statistics(statistic_monitoring)
     print("--> SUCCESS!")
 

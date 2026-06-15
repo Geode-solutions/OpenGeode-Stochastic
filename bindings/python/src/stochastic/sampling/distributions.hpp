@@ -20,6 +20,7 @@
  * SOFTWARE.
  *
  */
+#pragma once
 
 #include <geode/stochastic/sampling/distributions.hpp>
 

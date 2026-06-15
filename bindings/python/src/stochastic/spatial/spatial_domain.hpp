@@ -20,6 +20,7 @@
  * SOFTWARE.
  *
  */
+#pragma once
 
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
