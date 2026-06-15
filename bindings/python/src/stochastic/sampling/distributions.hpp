@@ -21,6 +21,7 @@
  *
  */
 #pragma once
+#include "../../common.hpp"
 
 #include <geode/stochastic/sampling/distributions.hpp>
 
