@@ -1,0 +1,126 @@
+/*
+ * Copyright (c) 2019 - 2026 Geode-solutions
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+#include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
+
+#include <geode/geometry/basic_objects/sphere.hpp>
+#include <geode/geometry/point.hpp>
+
+#include <geode/stochastic/sampling/direct/object_set_sampler/object_set_sampler.hpp>
+#include <geode/stochastic/sampling/direct/point_uniform_sampler.hpp>
+#include <geode/stochastic/spatial/spatial_domain.hpp>
+
+namespace geode
+{
+    template < index_t dimension >
+    UniformPointSetSampler< dimension >::UniformPointSetSampler(
+        const SpatialDomain< dimension >& domain,
+        const ObjectSamplerConfig< Point< dimension > >& config )
+        : ObjectSetSampler< Point< dimension > >{},
+          domain_{ domain },
+          step_move_( define_step_for_move( config.move_ratio ) )
+    {
+        auto volume = domain_.extended_n_volume();
+        OpenGeodeStochasticStochasticException::check_exception( volume != 0.,
+            nullptr, OpenGeodeException::TYPE::data,
+            "[UniformPointSetSampler] Undefined Extended Bounding "
+            "Box (volume ==0)." );
+        this->set_log_pdf( -std::log( volume ) );
+        OpenGeodeStochasticStochasticException::check_exception(
+            step_move_ > 0., nullptr, OpenGeodeException::TYPE::data,
+            "[UniformPointSetSampler] Undefined step length for move "
+            "(value == ",
+            step_move_, ")." );
+    }
+    template < index_t dimension >
+    Point< dimension > UniformPointSetSampler< dimension >::sample(
+        RandomEngine& engine ) const
+    {
+        return PointUniformSampler::sample< dimension >(
+            engine, domain_.extended_box() );
+    }
+
+    template < index_t dimension >
+    Point< dimension > UniformPointSetSampler< dimension >::change(
+        const Point< dimension >& obj, RandomEngine& engine ) const
+    {
+        geode::Sphere< dimension > ball{ obj, step_move_ };
+
+        auto new_point =
+            PointUniformSampler::sample< dimension >( engine, ball );
+        constexpr index_t MAX_TRY{ 100 };
+        for( const auto try_id : geode::Range{ MAX_TRY } )
+        {
+            geode_unused( try_id );
+            if( domain_.extended_contains( new_point ) )
+            {
+                return new_point;
+            }
+            new_point =
+                PointUniformSampler::sample< dimension >( engine, ball );
+        }
+        throw OpenGeodeStochasticStochasticException{ nullptr,
+            OpenGeodeException::TYPE::internal,
+            "[UniformPointSetSampler] Cannot find a point in the "
+            "extended domain" };
+    }
+
+    template < index_t dimension >
+    double UniformPointSetSampler< dimension >::define_step_for_move(
+        double ratio )
+    {
+        return ratio * domain_.smallest_length();
+    }
+
+    template < index_t dimension >
+    bool UniformPointSetSampler< dimension >::is_valid_object(
+        const Point< dimension >& obj ) const
+    {
+        return domain_.extended_contains( obj );
+    }
+
+    template class opengeode_stochastic_stochastic_api
+        UniformPointSetSampler< 2 >;
+    template class opengeode_stochastic_stochastic_api
+        UniformPointSetSampler< 3 >;
+
+    template <>
+    std::unique_ptr< ObjectSetSampler< Point2D > >
+        opengeode_stochastic_stochastic_api build_objectset_sampler< Point2D >(
+            const SpatialDomain< 2 >& domain,
+            const ObjectSamplerConfig< Point2D >& config )
+    {
+        return std::make_unique< UniformPointSetSampler< 2 > >(
+            domain, config );
+    }
+
+    template <>
+    opengeode_stochastic_stochastic_api
+        std::unique_ptr< ObjectSetSampler< Point3D > >
+        build_objectset_sampler< Point3D >( const SpatialDomain< 3 >& domain,
+            const ObjectSamplerConfig< Point3D >& config )
+    {
+        return std::make_unique< UniformPointSetSampler< 3 > >(
+            domain, config );
+    }
+
+} // namespace geode

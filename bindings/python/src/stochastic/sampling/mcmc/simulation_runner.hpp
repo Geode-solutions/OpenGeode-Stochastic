@@ -20,15 +20,20 @@
  * SOFTWARE.
  *
  */
+#pragma once
+
 #include "../../../common.hpp"
 
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_printer.hpp>
 #include <geode/stochastic/sampling/mcmc/simulation_runner.hpp>
 
+#include <geode/geometry/basic_objects/segment.hpp>
+
 namespace geode
 {
-    void define_simulation_runner( pybind11::module& module )
+    void define_simulation_configurator( pybind11::module& module )
     {
+        using SimulationConfigurator = geode::SimulationConfigurator;
         pybind11::class_< SimulationConfigurator >(
             module, "SimulationConfigurator" )
             .def( pybind11::init<>() )
@@ -51,4 +56,34 @@ namespace geode
                        + std::to_string( self.realizations ) + ">";
             } );
     }
+
+    template < typename object_type >
+    void define_simulation_runner(
+        pybind11::module_& module, const std::string& typestr )
+    {
+        using Runner = geode::SimulationRunner< object_type >;
+        const auto pyclass_name = absl::StrCat( typestr, "SimulationRunner" );
+
+        pybind11::class_< Runner >( module, pyclass_name.c_str() )
+            .def( "run",
+                pybind11::overload_cast< geode::RandomEngine&, geode::index_t >(
+                    &Runner::run ),
+                pybind11::arg( "engine" ), pybind11::arg( "steps" ),
+                pybind11::return_value_policy::reference_internal )
+
+            .def( "run",
+                pybind11::overload_cast< geode::RandomEngine&,
+                    const geode::SimulationConfigurator& >( &Runner::run ),
+                pybind11::arg( "engine" ), pybind11::arg( "config" ) )
+
+            .def( "state_realization", &Runner::state_realization,
+                pybind11::return_value_policy::reference_internal );
+    }
+
+    void define_simulation_configurator_and_runner( pybind11::module_& module )
+    {
+        define_simulation_configurator( module );
+        define_simulation_runner< OwnerSegment2D >( module, "Segment2D" );
+    }
+
 } // namespace geode

@@ -29,8 +29,8 @@ namespace
     void test_add_sets_and_objects()
     {
         ObjectSets< geode::Point2D > sets;
-        const auto set_id1 = sets.add_set( "default_name" );
-        const auto set_id2 = sets.add_set( "default_name" );
+        const auto set_id1 = sets.add_set( "default_name1" );
+        const auto set_id2 = sets.add_set( "default_name2" );
 
         geode::OpenGeodeStochasticStochasticException::test(
             sets.nb_sets() == 2, "[TestObjectSets] - Expected 2 sets" );
@@ -122,8 +122,9 @@ namespace
             sets.add_object( geode::Point2D{ { 5.0, 0.0 } }, set_id, false );
 
         std::vector< uuid > targeted_set_ids{ set_id };
-        const auto near_neighbors =
-            sets.neighbors( obj0, targeted_set_ids, 2.0 );
+
+        const auto near_neighbors = sets.neighbors(
+            sets.get_object( obj0 ), targeted_set_ids, 2.0, obj0 );
 
         geode::OpenGeodeStochasticStochasticException::test(
             near_neighbors.size() == 1,
@@ -145,7 +146,8 @@ namespace
 
         const geode::Point2D query{ { 0.5, 0.0 } };
         std::vector< uuid > targeted_set_ids{ set_id };
-        const auto nearby = sets.neighbors( query, targeted_set_ids, 1.0 );
+        const auto nearby =
+            sets.neighbors( query, targeted_set_ids, 1.0, std::nullopt );
 
         geode::OpenGeodeStochasticStochasticException::test( nearby.size() == 2,
             "[TestObjectSets] - Expected 2 neighbors near query object" );

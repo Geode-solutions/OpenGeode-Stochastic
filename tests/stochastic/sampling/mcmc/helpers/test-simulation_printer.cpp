@@ -22,7 +22,7 @@
  */
 
 #include <geode/stochastic/common.hpp>
-#include <geode/stochastic/sampling/mcmc/helpers/simulation_monitor.hpp>
+#include <geode/stochastic/inference/statistics_tracker.hpp>
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_printer.hpp>
 
 #include <filesystem>
@@ -71,7 +71,8 @@ namespace
             "[TEST] SimulationPrinter print statistics summary" );
 
         geode::SimulationPrinter printer( config );
-        geode::StatisticsMonitor monitor( 2 );
+
+        geode::StatisticsTracker tracker( 2 );
         monitor.add_realization( { 1, 2 } );
 
         printer.print_statistics_summary( monitor, "EnergyTerm1;EnergyTerm2" );

@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2019 - 2026 Geode-solutions
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
 
 #include <geode/stochastic/spatial/object_helpers.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
@@ -11,11 +33,12 @@ namespace geode
     const ObjectSet< Type >& ObjectSets< Type >::get_set(
         const uuid& set_id ) const
     {
-        auto it = sets_.find( set_id );
+        auto set_it = uuid_to_index_.find( set_id );
         OpenGeodeStochasticStochasticException::check_exception(
-            it != sets_.end(), nullptr, OpenGeodeException::TYPE::data,
-            "[ObjectSet] - group (", set_id.string(), ") is not defined." );
-        return it->second;
+            set_it != uuid_to_index_.end(), nullptr,
+            OpenGeodeException::TYPE::data, "[ObjectSets] Group (",
+            set_id.string(), ") is not defined." );
+        return sets_[set_it->second];
     }
 
     template < typename Type >
@@ -34,8 +57,9 @@ namespace geode
     {
         std::vector< ObjectId > result;
         result.reserve( nb_objects() );
-        for( const auto& [set_id, objs] : sets_ )
+        for( const auto& objs : sets_ )
         {
+            auto set_id = objs.id();
             for( const auto obj_id : geode::Range{ objs.nb_fixed_objects() } )
             {
                 result.push_back( { obj_id, true, set_id } );
@@ -82,9 +106,8 @@ namespace geode
     index_t ObjectSets< Type >::nb_objects() const
     {
         index_t nb_objects{ 0 };
-        for( const auto& [set_id, objs] : sets_ )
+        for( const auto& objs : sets_ )
         {
-            geode_unused( set_id );
             nb_objects += objs.nb_objects();
         }
         return nb_objects;
@@ -93,14 +116,23 @@ namespace geode
     template < typename Type >
     uuid ObjectSets< Type >::add_set( std::string_view name )
     {
-        ObjectSet< Type > new_set;
+        auto set_index = sets_.size();
+        auto& new_set = sets_.emplace_back( ObjectSet< Type >{} );
+        const auto set_uuid = new_set.id();
+
         new_set.set_name( name );
-        const auto new_set_id = new_set.id();
-        auto [it, inserted] = sets_.emplace( new_set_id, std::move( new_set ) );
-        OpenGeodeStochasticStochasticException::check_exception( inserted,
-            new_set_id, OpenGeodeException::TYPE::data, "[ObjectSet]- group (",
-            new_set_id.string(), ") already exists." );
-        return new_set_id;
+        auto [it_set_name, set_uuid_inserted] =
+            name_to_uuid_.emplace( name, set_uuid );
+        OpenGeodeStochasticStochasticException::check_exception(
+            set_uuid_inserted, nullptr, OpenGeodeException::TYPE::data,
+            "[ObjectSet]- Group named ", name, " already exists." );
+
+        auto [it_set_uuid, set_index_inserted] =
+            uuid_to_index_.emplace( set_uuid, set_index );
+        OpenGeodeStochasticStochasticException::check_exception(
+            set_index_inserted, nullptr, OpenGeodeException::TYPE::data,
+            "[ObjectSets] Group (", set_uuid.string(), ") already exists." );
+        return set_uuid;
     }
 
     template < typename Type >
@@ -129,12 +161,12 @@ namespace geode
     {
         OpenGeodeStochasticStochasticException::check_exception(
             !old_object_id.fixed, nullptr, OpenGeodeException::TYPE::data,
-            "[ObjectSet]- cannot modify fixed object." );
+            "[ObjectSets]- Cannot modify a fixed object." );
         auto& set = get_set( old_object_id.set_id );
         OpenGeodeStochasticStochasticException::check_exception(
             old_object_id.index < set.nb_objects(), nullptr,
-            OpenGeodeException::TYPE::data,
-            "[ObjectSet]- index of object to update out of range." );
+            OpenGeodeException::TYPE::internal,
+            "[ObjectSets] Index of an object to change is out of range." );
         auto old_box = object_bounding_box( get_object( old_object_id ) );
         auto new_box = object_bounding_box( new_object );
         neighborhood_.update( old_box, new_box, old_object_id );
@@ -146,8 +178,8 @@ namespace geode
     {
         auto& set = get_set( object_id.set_id );
         OpenGeodeStochasticStochasticException::check_exception(
-            !object_id.fixed, nullptr, OpenGeodeException::TYPE::data,
-            "[ObjectSet]- Cannot remove fixed object." );
+            !object_id.fixed, nullptr, OpenGeodeException::TYPE::internal,
+            "[ObjectSets] Cannot remove fixed object." );
         const auto& obj_to_remove = get_object( object_id );
         neighborhood_.remove( object_bounding_box( obj_to_remove ), object_id );
 
@@ -165,26 +197,16 @@ namespace geode
     }
 
     template < typename Type >
-    std::vector< ObjectId > ObjectSets< Type >::neighbors(
-        const ObjectId& object_id,
-        const std::vector< uuid >& targeted_set_ids,
-        double searching_distance ) const
-    {
-        auto box = object_bounding_box( get_object( object_id ) );
-        box.extends( searching_distance * 2. );
-        return neighborhood_.get_all_neighbor_ids(
-            box, targeted_set_ids, object_id );
-    }
-
-    template < typename Type >
     std::vector< ObjectId > ObjectSets< Type >::neighbors( const Type& object,
         const std::vector< uuid >& targeted_set_ids,
-        double searching_distance ) const
+        double searching_distance,
+        std::optional< ObjectId > excluded_id ) const
     {
         auto box = object_bounding_box( object );
-        box.extends( searching_distance * 2. );
+        constexpr double STRETCHING_COEFFICIENT = 2.0;
+        box.extends( searching_distance * STRETCHING_COEFFICIENT );
         return neighborhood_.get_all_neighbor_ids(
-            box, targeted_set_ids, std::nullopt );
+            box, targeted_set_ids, excluded_id );
     }
 
     template < typename Type >
@@ -195,11 +217,55 @@ namespace geode
     }
 
     template < typename Type >
+    uuid ObjectSets< Type >::get_set_uuid( const std::string_view name ) const
+    {
+        if( auto set_uuid = name_to_uuid_.find( name );
+            set_uuid != name_to_uuid_.end() )
+        {
+            return set_uuid->second;
+        }
+        throw OpenGeodeStochasticStochasticException{ nullptr,
+            OpenGeodeException::TYPE::data,
+            "[ObjectSets] ObjectSet uuid accessor of group named ", name,
+            " does not exist." };
+    }
+
+    template < typename Type >
+    std::vector< uuid > ObjectSets< Type >::get_set_uuids(
+        const std::vector< std::string >& set_names ) const
+    {
+        std::vector< geode::uuid > uuids;
+        uuids.reserve( set_names.size() );
+
+        for( const auto& name : set_names )
+        {
+            uuids.emplace_back( get_set_uuid( name ) );
+        }
+        return uuids;
+    }
+
+    template < typename Type >
+    std::vector< std::pair< uuid, uuid > >
+        ObjectSets< Type >::get_set_uuid_pairs(
+            const std::vector< std::pair< std::string, std::string > >&
+                set_name_pairs ) const
+    {
+        std::vector< std::pair< uuid, uuid > > result;
+        result.reserve( set_name_pairs.size() );
+
+        for( const auto& [name1, name2] : set_name_pairs )
+        {
+            result.emplace_back( get_set_uuid( name1 ), get_set_uuid( name2 ) );
+        }
+        return result;
+    }
+
+    template < typename Type >
     std::string ObjectSets< Type >::string() const
     {
         auto message = absl::StrCat( "ObjectSets with ", nb_objects(),
             " objects in, ", nb_sets(), " sets" );
-        for( const auto& [set_id, objs] : sets_ )
+        for( const auto& objs : sets_ )
         {
             absl::StrAppend( &message, "\n\t --> ", objs.string() );
         }

@@ -24,23 +24,23 @@
 #pragma once
 
 #include <geode/stochastic/common.hpp>
-#include <geode/stochastic/sampling/mcmc/energy_terms/gibbs_energy.hpp>
+#include <geode/stochastic/models/model.hpp>
 #include <geode/stochastic/sampling/mcmc/proposal/proposal_kernel.hpp>
 
 namespace geode
 {
-    enum struct MHDecision
+    enum struct MH_DECISION : local_index_t
     {
-        Accepted,
-        Rejected,
-        Undecided
+        accepted,
+        rejected,
+        undecided
     };
 
     template < typename ObjectType >
     struct StepResult
     {
-        MHDecision decision{ MHDecision::Undecided };
-        MoveType move_type{ MoveType::Invalid };
+        MH_DECISION decision{ MH_DECISION::undecided };
+        MOVE_TYPE move_type{ MOVE_TYPE::invalid };
         double log_accept{ -std::numeric_limits< double >::infinity() };
         double delta_log_energy{ 0.0 };
     };
@@ -49,15 +49,14 @@ namespace geode
     class MetropolisHastings
     {
     public:
-        MetropolisHastings(
-            const EnergyTermCollection< ObjectType >& energy_term_collection,
+        MetropolisHastings( const Model< ObjectType >& model,
             std::unique_ptr< ProposalKernel< ObjectType > > proposal_kernel )
-            : gibbs_energy_{ energy_term_collection },
-              proposal_kernel_( std::move( proposal_kernel ) )
+            : model_{ model }, proposal_kernel_( std::move( proposal_kernel ) )
         {
             OpenGeodeStochasticStochasticException::check_exception(
                 proposal_kernel_ != nullptr, nullptr,
-                OpenGeodeException::TYPE::data, "[MH] null proposal kernel" );
+                OpenGeodeException::TYPE::data,
+                "[MetropolisHastings] Proposal kernel is not defined." );
         }
 
         StepResult< ObjectType > step(
@@ -66,15 +65,15 @@ namespace geode
             Proposal< ObjectType > proposal =
                 proposal_kernel_->propose( state, engine );
             const auto& move_type = proposal.proposed_move.type;
-            if( move_type == MoveType::Birth )
+            if( move_type == MOVE_TYPE::birth )
             {
                 return birth_step( proposal, state, engine );
             }
-            if( move_type == MoveType::Death )
+            if( move_type == MOVE_TYPE::death )
             {
                 return death_step( proposal, state, engine );
             }
-            if( move_type == MoveType::Change )
+            if( move_type == MOVE_TYPE::change )
             {
                 return change_step( proposal, state, engine );
             }
@@ -92,7 +91,8 @@ namespace geode
             }
         }
 
-        ObjectSets< ObjectType > walk_copy( ObjectSets< ObjectType > initial,
+        [[nodiscard]] ObjectSets< ObjectType > walk_copy(
+            ObjectSets< ObjectType > initial,
             RandomEngine& engine,
             index_t nb_steps ) const
         {
@@ -100,62 +100,68 @@ namespace geode
             return initial;
         }
 
-        double beta() const
+        [[nodiscard]] double beta() const
         {
             return beta_;
         }
 
-        void set_beta( double b )
+        void set_beta( double beta )
         {
-            OpenGeodeStochasticStochasticException::check_exception( b >= 0.0,
-                nullptr, OpenGeodeException::TYPE::data,
-                "[MH] beta must be >= 0" );
-            if( b == 0 )
+            OpenGeodeStochasticStochasticException::check_exception(
+                beta >= 0.0, nullptr, OpenGeodeException::TYPE::data,
+                "[MetropolisHastings] The teperature (beta) must be >= 0" );
+            if( beta == 0 )
             {
-                Logger::info(
-                    "[Metropolis Hastings] - beta == 0 all move will be "
-                    "accepted - Uniform sampling." );
+                Logger::info( "[MetropolisHastings] beta == 0 all move will be "
+                              "accepted - Uniform sampling." );
             }
-            if( b < 1 )
+            if( beta < 1 )
             {
                 Logger::info(
-                    "[Metropolis Hastings] - beta < 1 moves that increase "
+                    "[MetropolisHastings] beta < 1 moves that increase "
                     "energy are more likely to be accepted - Hot system "
                     "introduce randomness for exploration." );
             }
-            if( b == 1 )
+            if( beta == 1 )
             {
-                Logger::info( "[Metropolis Hastings] - beta == 1 default "
+                Logger::info( "[MetropolisHastings] beta == 1 default "
                               "choice no temperature - only consider energy." );
             }
-            if( b > 1 )
+            if( beta > 1 )
             {
-                Logger::info( "[Metropolis Hastings] - beta > 1 moves that "
+                Logger::info( "[MetropolisHastings] beta > 1 moves that "
                               "increase energy are less likely to be accepted "
                               "- Cold system to ensure convergence but may "
                               "find local minimum randomness." );
             }
-            beta_ = b;
+            beta_ = beta;
         }
 
-        static double acceptance_prob_helper( double log_accept )
+        [[nodiscard]] static double acceptance_prob_helper( double log_accept )
         {
             if( std::isnan( log_accept ) )
+            {
                 return 0.0;
+            }
             if( log_accept >= 0.0 )
+            {
                 return 1.0;
+            }
             // prevent exponential overflow
             constexpr double LOG_MIN = -745.0;
             if( log_accept < LOG_MIN )
+            {
                 return 0.0;
+            }
             return std::exp( log_accept );
         }
 
     private:
-        const double compute_log_accept( const double deltaU,
-            const ProposalProbabilities& proposal_probas ) const
+        [[nodiscard]] double compute_log_accept(
+            double deltaU, const ProposalProbabilities& proposal_probas ) const
         {
-            return -beta_ * deltaU + proposal_probas.transition_probability();
+            return ( -beta_ * deltaU )
+                   + proposal_probas.transition_probability();
         }
 
         template < typename ApplyMove >
@@ -164,7 +170,7 @@ namespace geode
             ObjectSets< ObjectType >& state,
             RandomEngine& engine,
             const double delta_log_energy,
-            ApplyMove&& apply_move ) const
+            const ApplyMove& apply_move ) const
         {
             const auto& proposed_move = proposal.proposed_move;
             StepResult< ObjectType > step_result;
@@ -175,11 +181,12 @@ namespace geode
 
             double log_u = engine.sample_log();
             step_result.decision = ( log_u < step_result.log_accept )
-                                       ? MHDecision::Accepted
-                                       : MHDecision::Rejected;
-            if( step_result.decision == MHDecision::Accepted )
+                                       ? MH_DECISION::accepted
+                                       : MH_DECISION::rejected;
+            if( step_result.decision == MH_DECISION::accepted )
+            {
                 apply_move( state, proposal );
-
+            }
             return step_result;
         }
 
@@ -189,12 +196,13 @@ namespace geode
         {
             const auto new_object = proposal.new_object();
             const auto delta_log_energy =
-                gibbs_energy_.delta_log_add( state, new_object );
+                model_.energy().delta_log_add( state, new_object );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
-                []( auto& state, auto& proposal ) {
-                    state.add_object(
-                        std::move( proposal.proposed_move.new_object.value() ),
-                        proposal.set_id, false );
+                []( auto& cur_state, auto& accepted_proposal ) {
+                    cur_state.add_object(
+                        std::move( accepted_proposal.proposed_move.new_object
+                                .value() ),
+                        accepted_proposal.set_id, false );
                 } );
         };
 
@@ -204,10 +212,11 @@ namespace geode
         {
             const auto old_object_id = proposal.old_object_id();
             const auto delta_log_energy =
-                gibbs_energy_.delta_log_remove( state, old_object_id );
+                model_.energy().delta_log_remove( state, old_object_id );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
-                []( auto& state, auto& proposal ) {
-                    state.remove_free_object( proposal.old_object_id() );
+                []( auto& cur_state, auto& accepted_proposal ) {
+                    cur_state.remove_free_object(
+                        accepted_proposal.old_object_id() );
                 } );
         };
 
@@ -217,18 +226,19 @@ namespace geode
         {
             const auto new_object = proposal.new_object();
             const auto old_object_id = proposal.old_object_id();
-            const auto delta_log_energy = gibbs_energy_.delta_log_change(
+            const auto delta_log_energy = model_.energy().delta_log_change(
                 state, old_object_id, new_object );
             return accept_or_reject( proposal, state, engine, delta_log_energy,
-                []( auto& state, auto& proposal ) {
-                    state.update_free_object( proposal.old_object_id(),
-                        std::move(
-                            proposal.proposed_move.new_object.value() ) );
+                []( auto& cur_state, auto& accepted_proposal ) {
+                    cur_state.update_free_object(
+                        accepted_proposal.old_object_id(),
+                        std::move( accepted_proposal.proposed_move.new_object
+                                .value() ) );
                 } );
         };
 
     private:
-        GibbsEnergy< ObjectType > gibbs_energy_;
+        const Model< ObjectType >& model_;
         std::unique_ptr< ProposalKernel< ObjectType > > proposal_kernel_;
         double beta_{ 1.0 };
     };

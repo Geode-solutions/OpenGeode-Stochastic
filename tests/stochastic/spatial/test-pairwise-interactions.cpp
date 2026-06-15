@@ -24,12 +24,12 @@
 #include <geode/geometry/distance.hpp>
 #include <geode/geometry/point.hpp>
 
-#include <geode/stochastic/spatial/pairwise_interactions.hpp>
+#include <geode/stochastic/spatial/pairwise_interactions/distance_cutoff.hpp>
 namespace
 {
     void test_interaction()
     {
-        geode::EuclideanCutoffInteraction< geode::Point2D > interaction( 2.0 );
+        geode::MinimalDistanceCutoff< geode::Point2D > interaction( 2.0 );
 
         geode::Point2D p1{ { 0., 0. } };
         geode::Point2D p2{ { 1., 1. } }; // distance = 1.44 < 2.0
@@ -39,11 +39,11 @@ namespace
             interaction.evaluate( geode::ObjectRef< geode::Point2D >{ p1, id },
                 geode::ObjectRef< geode::Point2D >{ p2, id } );
         geode::OpenGeodeStochasticStochasticException::test( result == 1.0,
-            "[EuclideanCutoffInteraction] Failed for inside cutoff case." );
+            "[MinimalDistanceCutoff] Failed for inside cutoff case." );
     }
     void test_no_interaction()
     {
-        geode::EuclideanCutoffInteraction< geode::Point2D > interaction( 2.0 );
+        geode::MinimalDistanceCutoff< geode::Point2D > interaction( 2.0 );
 
         geode::Point2D p1{ { 0., 0. } };
         geode::Point2D p2{ { 3., 0. } }; // distance = 3.0 > 2.0
@@ -53,11 +53,11 @@ namespace
             interaction.evaluate( geode::ObjectRef< geode::Point2D >{ p1, id },
                 geode::ObjectRef< geode::Point2D >{ p2, id } );
         geode::OpenGeodeStochasticStochasticException::test( result == 0.0,
-            "[EuclideanCutoffInteraction] Failed for outside cutoff case." );
+            "[MinimalDistanceCutoff] Failed for outside cutoff case." );
     }
     void test_limit_interaction()
     {
-        geode::EuclideanCutoffInteraction< geode::Point2D > interaction( 2.0 );
+        geode::MinimalDistanceCutoff< geode::Point2D > interaction( 2.0 );
 
         geode::Point2D p1{ { 0., 0. } };
         geode::Point2D p2{ { 2., 0. } }; // distance = 2.0 == cutoff
@@ -67,7 +67,7 @@ namespace
             interaction.evaluate( geode::ObjectRef< geode::Point2D >{ p1, id },
                 geode::ObjectRef< geode::Point2D >{ p2, id } );
         geode::OpenGeodeStochasticStochasticException::test( result == 1.0,
-            "[EuclideanCutoffInteraction] Failed for exact cutoff case." );
+            "[MinimalDistanceCutoff] Failed for exact cutoff case." );
     }
 } // namespace
 

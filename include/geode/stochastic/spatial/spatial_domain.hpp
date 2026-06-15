@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <geode/stochastic/common.hpp>
+
 #include <geode/geometry/basic_objects/segment.hpp>
 #include <geode/geometry/bounding_box.hpp>
 #include <geode/geometry/point.hpp>
@@ -32,9 +34,12 @@ namespace geode
     template < index_t dimension >
     class SpatialDomain
     {
+        OPENGEODE_DISABLE_COPY_AND_MOVE( SpatialDomain );
+
     public:
-        SpatialDomain(
-            const BoundingBox< dimension >& domain, double buffer_size )
+        ~SpatialDomain() = default;
+
+        SpatialDomain( BoundingBox< dimension > domain, double buffer_size )
             : domain_{ domain },
               buffer_size_{ buffer_size },
               extended_domain_{ domain }
@@ -42,12 +47,12 @@ namespace geode
             auto volume = domain_.n_volume();
             OpenGeodeStochasticStochasticException::check_exception(
                 volume > 0., nullptr, OpenGeodeException::TYPE::data,
-                "[SpatialDomain] - Undefined Spatial Domain (volume == ",
-                volume, ")." );
+                "[SpatialDomain] Undefined Spatial Domain (volume == ", volume,
+                ")." );
             OpenGeodeStochasticStochasticException::check_exception(
                 buffer_size_ >= 0.0, nullptr, OpenGeodeException::TYPE::data,
-                "[SpatialDomain] buffer size must be non-negative ( buffer "
-                "== ",
+                "[SpatialDomain] Buffer size must not be < 0 ( buffer "
+                "= ",
                 buffer_size_, ")" );
             if( buffer_size_ != 0. )
             {
@@ -55,39 +60,47 @@ namespace geode
             }
         }
 
-        const BoundingBox< dimension > box() const
+        [[nodiscard]] const BoundingBox< dimension >& box() const
         {
             return domain_;
         }
 
-        bool contains( const Point< dimension >& point ) const
+        [[nodiscard]] bool contains( const Point< dimension >& point ) const
         {
             return domain_.contains( point );
         }
 
-        double n_volume() const
+        [[nodiscard]] double n_volume() const
         {
             return domain_.n_volume();
         }
 
-        double smallest_length() const
+        [[nodiscard]] double smallest_length() const
         {
             return std::get< 1 >( domain_.smallest_length() );
         }
 
-        bool extended_contains( const Point< dimension >& point ) const
+        [[nodiscard]] bool extended_contains(
+            const Point< dimension >& point ) const
         {
             return extended_domain_.contains( point );
         }
 
-        double extended_n_volume() const
+        [[nodiscard]] double extended_n_volume() const
         {
             return extended_domain_.n_volume();
         }
 
-        const BoundingBox< dimension > extended_box() const
+        [[nodiscard]] const BoundingBox< dimension >& extended_box() const
         {
             return extended_domain_;
+        }
+
+        [[nodiscard]] std::string string() const
+        {
+            return absl::StrCat( "Spatial Domain --> center ", domain_.string(),
+                " extended: ", extended_domain_.string(),
+                " buffer: ", buffer_size_ );
         }
 
     private:
@@ -132,4 +145,33 @@ namespace geode
             return domain.box().intersects( seg );
         }
     };
+
+    template < index_t dimension >
+    struct SpatialDomainConfig
+    {
+        Point< dimension > min_point;
+        Point< dimension > max_point;
+        double buffer_size{ 0.0 };
+
+        [[nodiscard]] std::string string() const
+        {
+            std::string message = "Domain: ";
+            absl::StrAppend(
+                &message, "\n\t --> Min point: ", min_point.string() );
+            absl::StrAppend(
+                &message, "\n\t --> Max point: ", max_point.string() );
+            absl::StrAppend( &message, "\n\t --> Buffer size: ", buffer_size );
+            return message;
+        }
+    };
+
+    template < index_t dimension >
+    std::unique_ptr< SpatialDomain< dimension > > build_spatial_domain(
+        const SpatialDomainConfig< dimension >& config )
+    {
+        BoundingBox< dimension > box{ config.min_point, config.max_point };
+
+        return std::make_unique< SpatialDomain< dimension > >(
+            std::move( box ), config.buffer_size );
+    }
 } // namespace geode

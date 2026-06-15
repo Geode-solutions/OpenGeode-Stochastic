@@ -32,7 +32,7 @@ namespace geode
 {
     template < typename ObjectType >
     void add_birth_death_change_moves(
-        std::unique_ptr< geode::ObjectSetSampler< ObjectType > >& sampler,
+        const geode::ObjectSetSampler< ObjectType >& sampler,
         geode::ProposalKernel< ObjectType >& kernel,
         const uuid& set_id,
         double birth_ratio,
@@ -42,18 +42,19 @@ namespace geode
         const auto total_ratio = birth_ratio + death_ratio;
         OpenGeodeStochasticStochasticException::check_exception(
             total_ratio > 0., nullptr, OpenGeodeException::TYPE::data,
-            "BIRTH+DEATH ratio must be positive" );
+            "[add_birth_death_change_moves] Birth + Death ratio must be "
+            "positive." );
 
         const auto p_birth = birth_ratio / total_ratio;
         kernel.add_move(
             set_id, std::make_unique< geode::BirthDeathMove< ObjectType > >(
-                        *sampler, total_ratio, p_birth ) );
+                        sampler, total_ratio, p_birth ) );
 
         if( change_ratio > 0. )
         {
             kernel.add_move(
                 set_id, std::make_unique< geode::ChangeMove< ObjectType > >(
-                            *sampler, change_ratio ) );
+                            sampler, change_ratio ) );
         }
     }
 
@@ -80,7 +81,9 @@ namespace geode
         auto birth_death_prob = birth_prob + death_prob;
         OpenGeodeStochasticStochasticException::check_exception(
             birth_death_prob < 1., nullptr, OpenGeodeException::TYPE::data,
-            "[Proposal Kernel] - changes should be allowed." );
+            "[create_birth_death_change_kernel] The probability of birth + "
+            "death = ",
+            birth_death_prob, " but should be < 1 to enable change moves." );
         auto kernel = std::make_unique< ProposalKernel< ObjectType > >();
         kernel->add_move(
             set_id, std::make_unique< BirthDeathMove< ObjectType > >( sampler,

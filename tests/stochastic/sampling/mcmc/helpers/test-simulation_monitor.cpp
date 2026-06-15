@@ -23,7 +23,7 @@
 
 #include <geode/basic/assert.hpp>
 #include <geode/basic/logger.hpp>
-#include <geode/stochastic/sampling/mcmc/helpers/simulation_monitor.hpp>
+#include <geode/stochastic/inference/statistics_tracker.hpp>
 
 #include <cmath>
 #include <vector>
@@ -32,10 +32,10 @@ namespace
 {
     void test_statistics_monitor_basic()
     {
-        geode::Logger::info( "TEST - StatisticsMonitor basic functionality" );
+        geode::Logger::info( "TEST - StatisticsTracker basic functionality" );
 
         // --- Create monitor with 3 energy terms
-        geode::StatisticsMonitor monitor( 3 );
+        geode::StatisticsTracker monitor;
 
         // --- Add 2 realizations
         monitor.add_realization( { 1.0, 2.0, 3.0 } );

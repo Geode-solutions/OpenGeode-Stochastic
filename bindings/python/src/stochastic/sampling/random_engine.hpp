@@ -20,6 +20,8 @@
  * SOFTWARE.
  *
  */
+#pragma once
+#include "../../common.hpp"
 
 #include <geode/stochastic/sampling/random_engine.hpp>
 

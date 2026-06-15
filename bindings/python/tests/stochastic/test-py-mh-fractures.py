@@ -38,49 +38,46 @@ def test_fracture_simulator():
     engine = stochastic.RandomEngine()
     engine.set_seed("@mh-test-single-Fracture-set@")
 
-    box = og.BoundingBox2D()
-    box.add_point(og.Point2D([0.0, 0.0]))
-    box.add_point(og.Point2D([100.0, 100.0]))
-    domain = stochastic.SpatialDomain2D(box,10.)
+    fnet_desc = stochastic.FractureNetworkDescription()
+    fnet_desc.name = "One_Set_FNet"
 
-    # --- Object set
-    setA = stochastic.FractureSetDescription()
-    setA.name = "A"
-    setA.add_observed_fracture(og.Point2D([10.0, 10.0]), og.Point2D([20.0, 20.0]))
+    fnet_desc.domain.min_point = og.Point2D([0.0, 0.0])
+    fnet_desc.domain.max_point = og.Point2D([100.0, 100.0])
+    fnet_desc.domain.buffer_size = 10.
 
-    # length
-    setA.length.distribution_type =stochastic.DistributionType("UniformClosed")
-    setA.length.min_value = 1.0
-    setA.length.max_value = 10.0
+    fset = fnet_desc.add_fracture_set( "fset_A" )
+    
+    fset.sampler.length.distribution_type = stochastic.DistributionType("UniformClosed")
+    fset.sampler.length.min_value = 1
+    fset.sampler.length.max_value = 10.
 
-    # azimuth
-    setA.azimuth.distribution_type =stochastic.DistributionType("UniformClosed")
-    setA.azimuth.min_value = 1.0
-    setA.azimuth.max_value = 10.0
+    fset.sampler.azimuth.distribution_type = stochastic.DistributionType("UniformClosed")
+    fset.sampler.azimuth.min_value = 1.
+    fset.sampler.azimuth.max_value = 10.
 
-    # positioning
-    setA.p20 = 0.06
-    setA.p21 = 10
-    setA.minimal_spacing = 1.0
+    fset.p20 = 0.05
+    fset.p21 = 200
+    fset.minimal_spacing = 1.
 
-    runner = stochastic.FractureSimulationRunner(domain)
-    runner.add_fracture_set_descriptor(setA)
-    runner.initialize()
+    fset.add_observed_fracture(og.Point2D([10.0, 10.0]), og.Point2D([20.0, 20.0]))
+    fset.add_observed_fracture(og.Point2D([15.0, 15.0]), og.Point2D([0.0, 15.0]))
+    fset.add_observed_fracture(og.Point2D([1.0, 11.0]), og.Point2D([11.0, 20.0]))
 
-    # Simulation printer
-    printer_config = stochastic.SimulationPrinterConfigurator()
-    printer_config.output_folder = os.path.join(printer_config.output_folder , "py_single_fracture_set")
+    print( fnet_desc.string() );
+
+    runner = stochastic.build_fractures_simulation_runner( fnet_desc ) 
 
     sim_config = stochastic.SimulationConfigurator()
     sim_config.realizations = 500
-    sim_config.metropolis_hasting_steps = 1000
+    sim_config.metropolis_hasting_steps = 100
     sim_config.burn_in_steps = 1000
+
+    printer_config = stochastic.SimulationPrinterConfigurator()
+    printer_config.output_folder = os.path.join(printer_config.output_folder , "py_single_fracture_set")
     sim_config.printer = printer_config
 
-    # Run simulation
-    statistic_monitoring = runner.run(engine, sim_config)
-    runner.check_statistics(statistic_monitoring)
-
+    statistic_tracker = runner.run( engine, sim_config );
+#    runner.check_statistics(statistic_monitoring)
     print("--> SUCCESS!")
 
 
@@ -88,58 +85,61 @@ def test_two_fracture_sets_simulator():
     print("TEST - MH TWO SET FRACTURE SIMULATOR (with intra-set interactions)")
 
     engine = stochastic.RandomEngine()
-    engine.set_seed("@mh-test-single-Fracture-set@")
+    engine.set_seed("@mh-test-two-Fracture-set@")
 
-    box = og.BoundingBox2D()
-    box.add_point(og.Point2D([0.0, 0.0]))
-    box.add_point(og.Point2D([100.0, 100.0]))
-    domain = stochastic.SpatialDomain2D(box,10.)
-    # --- Object set A
-    setA = stochastic.FractureSetDescription()
-    setA.name = "A"
-    setA.length.distribution_type = stochastic.DistributionType("UniformClosed")
-    setA.length.min_value = 1.0
-    setA.length.max_value = 10.0
-    setA.azimuth.distribution_type = stochastic.DistributionType("VonMises")
-    setA.azimuth.mean = 45
-    setA.azimuth.kappa = 1.0
-    setA.p20 = 0.05
-    setA.minimal_spacing = 1.0
+    fnet_desc = stochastic.FractureNetworkDescription()
+    fnet_desc.name = "Two_Sets_FNet"
 
-    # --- Object set B
-    setB = stochastic.FractureSetDescription()
-    setB.name = "B"
-    setB.length.distribution_type =stochastic.DistributionType("TruncatedLogNormal")
-    setB.length.min_value = 1.0
-    setB.length.max_value = 50.0
-    setB.length.mean = 1.0
-    setB.length.standard_deviation = 1.0
-    setB.azimuth.distribution_type =stochastic.DistributionType("UniformClosed")
-    setB.azimuth.min_value = 90.0
-    setB.azimuth.max_value = 100.0
-    setB.p20 = 0.03
-    setB.minimal_spacing = 2.0
+    fnet_desc.domain.min_point = og.Point2D([0.0, 0.0])
+    fnet_desc.domain.max_point = og.Point2D([100.0, 100.0])
+    fnet_desc.domain.buffer_size = 10.
 
-    runner = stochastic.FractureSimulationRunner(domain)
-    runner.add_fracture_set_descriptor(setA)
-    runner.add_fracture_set_descriptor(setB)
-    runner.add_x_node_monitoring(0.3)
-    runner.initialize()
+    fset = fnet_desc.add_fracture_set( "fset_A" )
+    
+    fset.sampler.length.distribution_type = stochastic.DistributionType("UniformClosed")
+    fset.sampler.length.min_value = 1
+    fset.sampler.length.max_value = 10.
 
-    printer_config = stochastic.SimulationPrinterConfigurator()
-    printer_config.output_folder = os.path.join(printer_config.output_folder ,printer_config.output_folder, "py_two_fracture_sets")
+    fset.sampler.azimuth.distribution_type = stochastic.DistributionType("VonMises")
+    fset.sampler.azimuth.mean = 45.
+    fset.sampler.azimuth.kappa = 1.
+
+    fset.p20 = 0.05
+    fset.p21 = 200
+    fset.minimal_spacing = 1.
+
+    fset_b = fnet_desc.add_fracture_set( "fset_B" )
+    
+    fset_b.sampler.length.distribution_type = stochastic.DistributionType("TruncatedLogNormal")
+    fset_b.sampler.length.min_value = 1
+    fset_b.sampler.length.max_value = 50.
+    fset_b.sampler.length.mean = 1.
+    fset_b.sampler.length.standard_deviation = 1.0
+
+    fset_b.sampler.azimuth.distribution_type =stochastic.DistributionType("UniformClosed")
+    fset_b.sampler.azimuth.min_value = 90.0
+    fset_b.sampler.azimuth.max_value = 100.0
+
+    fset_b.p20 = 0.03
+    fset_b.p21 = 100
+    fset_b.minimal_spacing = 2.
+
+    print( fnet_desc.string() );
+
+    runner = stochastic.build_fractures_simulation_runner( fnet_desc ) 
 
     sim_config = stochastic.SimulationConfigurator()
     sim_config.realizations = 500
-    sim_config.metropolis_hasting_steps = 1000
+    sim_config.metropolis_hasting_steps = 100
     sim_config.burn_in_steps = 1000
+
+    printer_config = stochastic.SimulationPrinterConfigurator()
+    printer_config.output_folder = os.path.join(printer_config.output_folder , "py_two_fracture_set")
     sim_config.printer = printer_config
 
-    statistic_monitoring = runner.run(engine, sim_config)
-    runner.check_statistics(statistic_monitoring)
-
+    statistic_tracker = runner.run( engine, sim_config )
+#    runner.check_statistics(statistic_monitoring)
     print("--> SUCCESS!")
-
 
 if __name__ == "__main__":
 

@@ -20,6 +20,7 @@
  * SOFTWARE.
  *
  */
+#include <absl/container/flat_hash_map.h>
 
 #include <geode/stochastic/sampling/direct/double_sampler.hpp>
 
@@ -32,130 +33,139 @@ namespace geode
 {
     struct DistributionTypeHasher
     {
-        std::size_t operator()( const DistributionType& d ) const noexcept
+        std::size_t operator()( const DistributionType& distrib ) const noexcept
         {
             // Use the underlying string from NamedType
-            return absl::Hash< std::string >{}( d.get() );
+            return absl::Hash< std::string >{}( distrib.get() );
         }
     };
 
     using DistributionFactory = std::function< DoubleSampler::Distribution(
         const DoubleSampler::DistributionDescription& ) >;
 
-    static absl::flat_hash_map< DistributionType, // key type
-        DistributionFactory, // value type
-        DistributionTypeHasher // custom hasher
-        >
-        distribution_registry = {
-            { UniformClosed< double >::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check_exception(
-                        desc.min_value && desc.max_value, nullptr,
-                        OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
-                        "Uniform distribution need at least min "
-                        "and max values" );
-                    UniformClosed< double > dist;
-                    dist.min_value = desc.min_value.value();
-                    dist.max_value = desc.max_value.value();
-                    return dist;
-                } },
-            { UniformClosedOpen< double >::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check_exception(
-                        desc.min_value && desc.max_value, nullptr,
-                        OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
-                        "Uniform distribution need at least min "
-                        "and max values" );
-                    UniformClosedOpen< double > dist;
-                    dist.min_value = desc.min_value.value();
-                    dist.max_value = desc.max_value.value();
-                    return dist;
-                } },
-            { Gaussian::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check_exception(
-                        desc.mean && desc.standard_deviation, nullptr,
-                        OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
-                        "Gaussian distribution need at least mean "
-                        "and standard deviation values" );
-                    Gaussian dist;
-                    dist.mean = desc.mean.value();
-                    dist.standard_deviation = desc.standard_deviation.value();
-                    return dist;
-                } },
-            { TruncatedGaussian::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check_exception(
-                        desc.mean && desc.standard_deviation, nullptr,
-                        OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
-                        "Truncated Gaussian distribution need at least mean "
-                        "and standard deviation values" );
-                    TruncatedGaussian dist;
-                    dist.mean = desc.mean.value();
-                    dist.standard_deviation = desc.standard_deviation.value();
-                    dist.min_value = desc.min_value;
-                    dist.max_value = desc.max_value;
+    static const auto& distribution_registry()
+    {
+        static const absl::flat_hash_map< DistributionType, // key type
+            DistributionFactory, // value type
+            DistributionTypeHasher // custom hasher
+            >
+            registry = {
+                { UniformClosed< double >::distribution_type_static(),
+                    []( const DoubleSampler::DistributionDescription& desc ) {
+                        OpenGeodeStochasticStochasticException::check_exception(
+                            desc.min_value && desc.max_value, nullptr,
+                            OpenGeodeException::TYPE::data,
+                            "[DoubleSampler] Incomplete description for "
+                            "Uniform distribution need at least min "
+                            "and max values" );
+                        UniformClosed< double > dist;
+                        dist.min_value = desc.min_value.value();
+                        dist.max_value = desc.max_value.value();
+                        return dist;
+                    } },
+                { UniformClosedOpen< double >::distribution_type_static(),
+                    []( const DoubleSampler::DistributionDescription& desc ) {
+                        OpenGeodeStochasticStochasticException::check_exception(
+                            desc.min_value && desc.max_value, nullptr,
+                            OpenGeodeException::TYPE::data,
+                            "[DoubleSampler] Incomplete description for "
+                            "Uniform distribution need at least min "
+                            "and max values" );
+                        UniformClosedOpen< double > dist;
+                        dist.min_value = desc.min_value.value();
+                        dist.max_value = desc.max_value.value();
+                        return dist;
+                    } },
+                { Gaussian::distribution_type_static(),
+                    []( const DoubleSampler::DistributionDescription& desc ) {
+                        OpenGeodeStochasticStochasticException::check_exception(
+                            desc.mean && desc.standard_deviation, nullptr,
+                            OpenGeodeException::TYPE::data,
+                            "[DoubleSampler] Incomplete description for "
+                            "Gaussian distribution need at least mean "
+                            "and standard deviation values" );
+                        Gaussian dist;
+                        dist.mean = desc.mean.value();
+                        dist.standard_deviation =
+                            desc.standard_deviation.value();
+                        return dist;
+                    } },
+                { TruncatedGaussian::distribution_type_static(),
+                    []( const DoubleSampler::DistributionDescription& desc ) {
+                        OpenGeodeStochasticStochasticException::check_exception(
+                            desc.mean && desc.standard_deviation, nullptr,
+                            OpenGeodeException::TYPE::data,
+                            "[DoubleSampler] Incomplete description for "
+                            "Truncated Gaussian distribution need at least "
+                            "mean "
+                            "and standard deviation values" );
+                        TruncatedGaussian dist;
+                        dist.mean = desc.mean.value();
+                        dist.standard_deviation =
+                            desc.standard_deviation.value();
+                        dist.min_value = desc.min_value;
+                        dist.max_value = desc.max_value;
 
-                    return dist;
-                } },
-            { VonMises::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check_exception(
-                        desc.mean && desc.kappa, nullptr,
-                        OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
-                        "Von Mises distribution need at least mean "
-                        "and concentration (kappa) values" );
-                    VonMises dist;
-                    dist.mean = desc.mean.value();
-                    dist.concentration = desc.kappa.value();
-                    return dist;
-                } },
-            { TruncatedLogNormal::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check_exception(
-                        desc.mean && desc.standard_deviation, nullptr,
-                        OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
-                        "TruncatedLogNormal distribution need mean "
-                        "and standard deviation values of the underlying "
-                        "normal distribution." );
-                    TruncatedLogNormal dist;
-                    dist.mean = desc.mean.value();
-                    dist.standard_deviation = desc.standard_deviation.value();
-                    dist.min_value = desc.min_value;
-                    dist.max_value = desc.max_value;
-                    return dist;
-                } },
-            { TruncatedPowerLaw::distribution_type_static(),
-                []( const DoubleSampler::DistributionDescription& desc ) {
-                    OpenGeodeStochasticStochasticException::check_exception(
-                        desc.alpha.has_value(), nullptr,
-                        OpenGeodeException::TYPE::data,
-                        "[DoubleSampler] - Incomplete description for "
-                        "TruncatedPowerLaw distribution need power law "
-                        "exponent (alpha)." );
-                    TruncatedPowerLaw dist;
-                    dist.alpha = desc.alpha.value();
-                    dist.min_value = desc.min_value;
-                    dist.max_value = desc.max_value;
-                    return dist;
-                } },
-        };
+                        return dist;
+                    } },
+                { VonMises::distribution_type_static(),
+                    []( const DoubleSampler::DistributionDescription& desc ) {
+                        OpenGeodeStochasticStochasticException::check_exception(
+                            desc.mean && desc.kappa, nullptr,
+                            OpenGeodeException::TYPE::data,
+                            "[DoubleSampler] Incomplete description for "
+                            "Von Mises distribution need at least mean "
+                            "and concentration (kappa) values" );
+                        VonMises dist;
+                        dist.mean = desc.mean.value();
+                        dist.concentration = desc.kappa.value();
+                        return dist;
+                    } },
+                { TruncatedLogNormal::distribution_type_static(),
+                    []( const DoubleSampler::DistributionDescription& desc ) {
+                        OpenGeodeStochasticStochasticException::check_exception(
+                            desc.mean && desc.standard_deviation, nullptr,
+                            OpenGeodeException::TYPE::data,
+                            "[DoubleSampler] Incomplete description for "
+                            "TruncatedLogNormal distribution need mean "
+                            "and standard deviation values of the underlying "
+                            "normal distribution." );
+                        TruncatedLogNormal dist;
+                        dist.mean = desc.mean.value();
+                        dist.standard_deviation =
+                            desc.standard_deviation.value();
+                        dist.min_value = desc.min_value;
+                        dist.max_value = desc.max_value;
+                        return dist;
+                    } },
+                { TruncatedPowerLaw::distribution_type_static(),
+                    []( const DoubleSampler::DistributionDescription& desc ) {
+                        OpenGeodeStochasticStochasticException::check_exception(
+                            desc.alpha.has_value(), nullptr,
+                            OpenGeodeException::TYPE::data,
+                            "[DoubleSampler] Incomplete description for "
+                            "TruncatedPowerLaw distribution need power law "
+                            "exponent (alpha)." );
+                        TruncatedPowerLaw dist;
+                        dist.alpha = desc.alpha.value();
+                        dist.min_value = desc.min_value;
+                        dist.max_value = desc.max_value;
+                        return dist;
+                    } },
+            };
+        return registry;
+    }
 
     DoubleSampler::Distribution DoubleSampler::create_distribution(
         const DistributionDescription& desc )
     {
-        auto it = distribution_registry.find( desc.distribution_type );
-        if( it == distribution_registry.end() )
+        auto it = distribution_registry().find( desc.distribution_type );
+        if( it == distribution_registry().end() )
         {
             throw OpenGeodeStochasticStochasticException{ nullptr,
                 OpenGeodeException::TYPE::data,
-                "Unknown distribution type: ", desc.distribution_type.get() };
+                "[DoubleSampler] Unknown distribution type: ",
+                desc.distribution_type.get() };
         }
         return it->second( desc );
     }
@@ -199,35 +209,35 @@ namespace geode
         RandomEngine& engine, const Distribution& dist )
     {
         return std::visit(
-            [&engine]( auto&& d ) {
-                using D = std::decay_t< decltype( d ) >;
+            [&engine]( auto&& cur_dist ) {
+                using D = std::decay_t< decltype( cur_dist ) >;
                 if constexpr( std::is_same_v< D, UniformClosed< double > > )
                 {
-                    return engine.sample_uniform< double >( d );
+                    return engine.sample_uniform< double >( cur_dist );
                 }
                 if constexpr( std::is_same_v< D, UniformClosedOpen< double > > )
                 {
-                    return engine.sample_uniform< double >( d );
+                    return engine.sample_uniform< double >( cur_dist );
                 }
                 if constexpr( std::is_same_v< D, Gaussian > )
                 {
-                    return engine.sample_gaussian( d );
+                    return engine.sample_gaussian( cur_dist );
                 }
                 if constexpr( std::is_same_v< D, TruncatedGaussian > )
                 {
-                    return engine.sample_truncated_gaussian( d );
+                    return engine.sample_truncated_gaussian( cur_dist );
                 }
                 if constexpr( std::is_same_v< D, VonMises > )
                 {
-                    return engine.sample_von_mises( d );
+                    return engine.sample_von_mises( cur_dist );
                 }
                 if constexpr( std::is_same_v< D, TruncatedLogNormal > )
                 {
-                    return engine.sample_truncated_lognormal( d );
+                    return engine.sample_truncated_lognormal( cur_dist );
                 }
                 if constexpr( std::is_same_v< D, TruncatedPowerLaw > )
                 {
-                    return engine.sample_truncated_powerlaw( d );
+                    return engine.sample_truncated_powerlaw( cur_dist );
                 }
                 throw OpenGeodeStochasticStochasticException{ nullptr,
                     OpenGeodeException::TYPE::data,

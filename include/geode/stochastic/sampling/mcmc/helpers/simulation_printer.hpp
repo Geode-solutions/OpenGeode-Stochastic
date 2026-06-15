@@ -25,7 +25,7 @@
 
 #include <geode/stochastic/common.hpp>
 
-#include <geode/stochastic/sampling/mcmc/helpers/simulation_monitor.hpp>
+#include <geode/stochastic/inference/statistics_tracker.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 
 #include <absl/strings/str_join.h>
@@ -44,11 +44,12 @@ namespace geode
 
         bool print_realisations{ true };
         std::string realisations_prefix{ "pattern_" };
+        // NOLINTNEXTLINE(*-magic-numbers)
         index_t realisations_print_frequency{ 100 };
 
         std::string output_folder{ std::filesystem::current_path().string() };
 
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             auto message = absl::StrCat(
                 "SimulationPrinterConfigurator - print to folder: ",
@@ -75,42 +76,84 @@ namespace geode
         }
     };
 
+    template < typename ObjectType >
     class SimulationPrinter
     {
     public:
-        SimulationPrinter( const SimulationPrinterConfigurator& config )
-            : config_( config )
+        SimulationPrinter( const Model< ObjectType >& model,
+            SimulationPrinterConfigurator config )
+            : model_( model ), config_( std::move( config ) )
         {
         }
 
         // Print statistics to the configured statistics file
-        void print_statistics(
-            const std::vector< double >& stats, absl::string_view header ) const
+        void print_statistics( const std::vector< double >& stats ) const
         {
             if( !config_.print_statistics )
+            {
                 return;
-            const auto stats_file_path =
-                stats_file_path_.value_or( create_statistics_file( header ) );
+            }
+            if( !stats_file_path_ )
+            {
+                stats_file_path_ =
+                    ( std::filesystem::path( config_.output_folder )
+                        / config_.statistics_filename )
+                        .string();
+                create_file_and_write_header( *stats_file_path_,
+                    absl::StrCat( "# Simulation Statistics\n",
+                        energy_terms_name_header() ) );
+            }
             std::ofstream file =
-                open_file_with_dirs( stats_file_path, std::ios::app );
+                open_file_with_dirs( *stats_file_path_, std::ios::app );
             file << absl::StrJoin( stats, " ; " ) << "\n";
         }
 
-        template < typename ObjectType >
+        void print_statistics_summary(
+            const StatisticsTracker< ObjectType >& tracker ) const
+        {
+            if( !config_.print_statistics_summary )
+            {
+                return;
+            }
+
+            const auto summary_path =
+                ( std::filesystem::path( config_.output_folder )
+                    / config_.statistics_summary_filename )
+                    .string();
+            create_file_and_write_header(
+                summary_path, absl::StrCat( "# Summary statistics\n",
+                                  energy_terms_name_header() ) );
+            std::ofstream file =
+                open_file_with_dirs( summary_path, std::ios::app );
+            file << absl::StrCat(
+                "# Count:\n", tracker.statiscal_count(), "\n" );
+            file << absl::StrCat(
+                "# Means:\n", absl::StrJoin( tracker.means(), " ; " ), "\n" );
+            file << absl::StrCat( "# Variances:\n",
+                absl::StrJoin( tracker.variances(), " ; " ), "\n" );
+        }
+
         void print_object_sets( const ObjectSets< ObjectType >& object_sets,
             index_t realization_id ) const
         {
             if( !config_.print_realisations
                 || realization_id % config_.realisations_print_frequency != 0 )
+            {
                 return;
+            }
 
-            const auto filename =
-                ( std::filesystem::path( config_.output_folder )
-                    / absl::StrCat(
-                        config_.realisations_prefix, realization_id, ".txt" ) )
-                    .string();
+            // const auto filename =
+            //     ( std::filesystem::path( config_.output_folder )
+            //         / absl::StrCat(
+            //             config_.realisations_prefix, realization_id, ".txt" )
+            //             )
+            //         .string();
+            const auto filename = std::filesystem::path( config_.output_folder )
+                                  / absl::StrCat( config_.realisations_prefix,
+                                      realization_id, ".txt" );
 
-            std::ofstream file = open_file_with_dirs( filename );
+            std::ofstream file =
+                open_file_with_dirs( filename, std::ofstream::out );
 
             const auto all_objects = object_sets.get_all_object();
             file << "#nb_objects\t" << all_objects.size() << "\n";
@@ -122,82 +165,51 @@ namespace geode
                      << "\n";
             }
         }
-        void print_statistics_summary( const StatisticsMonitor& monitor,
-            absl::string_view energy_term_names ) const
-        {
-            if( !config_.print_statistics_summary )
-                return;
-
-            const auto summary_path =
-                ( std::filesystem::path( config_.output_folder )
-                    / config_.statistics_summary_filename )
-                    .string();
-
-            std::ofstream file = open_file_with_dirs( summary_path );
-            file << "# Summary statistics\n";
-            file << energy_term_names.data() << "\n";
-            file << absl::StrCat(
-                "# Count:\n", monitor.statiscal_count(), "\n" );
-            file << absl::StrCat(
-                "# Means:\n", absl::StrJoin( monitor.means(), " ; " ), "\n" );
-            file << absl::StrCat( "# Variances:\n",
-                absl::StrJoin( monitor.variances(), " ; " ), "\n" );
-        }
 
     private:
-        void write_header_if_new(
-            absl::string_view filename, absl::string_view header ) const
+        void create_file_and_write_header(
+            const std::filesystem::path& filename,
+            absl::string_view header ) const
         {
-            namespace fs = std::filesystem;
-            fs::path file_path{ std::string( filename ) };
-            if( !fs::exists( file_path ) )
-            {
-                std::ofstream file = open_file_with_dirs( filename );
-                file << header;
-            }
+            std::ofstream file =
+                open_file_with_dirs( filename, std::ofstream::out );
+
+            file << header;
         }
 
-        std::ofstream open_file_with_dirs( absl::string_view path_filename,
-            std::ios::openmode mode = std::ofstream::out ) const
+        std::ofstream open_file_with_dirs(
+            const std::filesystem::path& file_path,
+            std::ios::openmode mode ) const
         {
-            namespace fs = std::filesystem;
-            fs::path file_path{ std::string( path_filename ) };
-
-            if( !file_path.has_parent_path() )
+            auto absolute_path = file_path;
+            if( !absolute_path.has_parent_path() )
             {
-                file_path = fs::current_path() / file_path;
+                absolute_path = std::filesystem::current_path() / absolute_path;
             }
-            if( file_path.has_parent_path() )
+            if( absolute_path.has_parent_path() )
             {
-                fs::create_directories( file_path.parent_path() );
+                std::filesystem::create_directories(
+                    absolute_path.parent_path() );
             }
-            std::ofstream file( file_path, mode );
+            std::ofstream file( absolute_path, mode );
             if( !file.is_open() )
             {
                 throw geode::OpenGeodeStochasticStochasticException{ nullptr,
                     OpenGeodeException::TYPE::data,
-                    "Cannot open file: " + file_path.string() };
+                    "Cannot open file: " + absolute_path.string() };
             }
             return file;
         }
-        const std::string& create_statistics_file(
-            absl::string_view header ) const
-        {
-            stats_file_path_ = ( std::filesystem::path( config_.output_folder )
-                                 / config_.statistics_filename )
-                                   .string();
 
-            if( config_.print_statistics )
-            {
-                write_header_if_new( *stats_file_path_,
-                    absl::StrCat(
-                        "# Simulation Statistics\n", header.data(), "\n" ) );
-            }
-            return *stats_file_path_;
+        std::string energy_terms_name_header() const
+        {
+            return absl::StrCat(
+                absl::StrJoin( model_.term_names(), " ; " ), "\n" );
         }
 
     private:
-        SimulationPrinterConfigurator config_;
+        const Model< ObjectType >& model_;
+        const SimulationPrinterConfigurator config_;
         mutable std::optional< std::string > stats_file_path_;
     };
 
