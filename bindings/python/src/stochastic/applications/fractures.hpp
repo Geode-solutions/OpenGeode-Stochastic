@@ -77,9 +77,9 @@ namespace geode
 
             .def(
                 "add_observed_fracture",
-                []( FractureSetDescription& self, const geode::Point2D& a,
-                    const geode::Point2D& b ) {
-                    self.observed_fractures.push_back( { a, b } );
+                []( FractureSetDescription& self, const geode::Point2D& start,
+                    const geode::Point2D& end ) {
+                    self.observed_fractures.push_back( { start, end } );
                 },
                 "Add a fixed observed fracture defined by two endpoints." )
 

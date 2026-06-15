@@ -57,9 +57,9 @@ namespace geode
             .def( "string", &DoubleSampler::DistributionDescription::string,
                 "Return a detailed description of the Distribution law" )
             .def( "__repr__",
-                []( const DoubleSampler::DistributionDescription &d ) {
-                    return "<DoubleDistributionDescription name=" + d.name
-                           + ">";
+                []( const DoubleSampler::DistributionDescription &dist_desc ) {
+                    return "<DoubleDistributionDescription name="
+                           + dist_desc.name + ">";
                 } );
 
         // Bind Distribution variant

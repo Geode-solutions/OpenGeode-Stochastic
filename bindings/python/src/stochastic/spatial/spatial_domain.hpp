@@ -26,7 +26,7 @@
 
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
-namespace
+namespace geode
 {
     template < geode::index_t dimension >
     void declare_spatial_domain( pybind11::module &module )
@@ -35,7 +35,7 @@ namespace
         using BBox = geode::BoundingBox< dimension >;
 
         const auto pyclass_name =
-            "SpatialDomain" + std::to_string( dimension ) + "D";
+            absl::StrCat( "SpatialDomain", std::to_string( dimension ), "D" );
 
         pybind11::class_< Domain >( module, pyclass_name.c_str() )
             .def( pybind11::init< const BBox &, double >(),
@@ -68,9 +68,7 @@ namespace
                 return config.string();
             } );
     }
-} // namespace
-namespace geode
-{
+
     void define_spatial_domain( pybind11::module &module )
     {
         declare_spatial_domain< 2 >( module );

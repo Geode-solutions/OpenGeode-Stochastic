@@ -29,7 +29,7 @@
 
 #include <geode/geometry/basic_objects/segment.hpp>
 
-namespace
+namespace geode
 {
     void define_simulation_configurator( pybind11::module& module )
     {
@@ -62,7 +62,7 @@ namespace
         pybind11::module_& module, const std::string& typestr )
     {
         using Runner = geode::SimulationRunner< object_type >;
-        const auto pyclass_name = typestr + "SimulationRunner";
+        const auto pyclass_name = absl::StrCat( typestr, "SimulationRunner" );
 
         pybind11::class_< Runner >( module, pyclass_name.c_str() )
             .def( "run",
@@ -79,9 +79,7 @@ namespace
             .def( "state_realization", &Runner::state_realization,
                 pybind11::return_value_policy::reference_internal );
     }
-} // namespace
-namespace geode
-{
+
     void define_simulation_configurator_and_runner( pybind11::module_& module )
     {
         define_simulation_configurator( module );

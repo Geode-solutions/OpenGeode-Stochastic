@@ -36,7 +36,7 @@ namespace geode
         pybind11::module_& module, const std::string& typestr )
     {
         using Tracker = geode::StatisticsTracker< ObjectType >;
-        const auto pyclass_name = typestr + "StatisticsTracker";
+        const auto pyclass_name = absl::StrCat( typestr, "StatisticsTracker" );
 
         pybind11::class_< Tracker >( module, pyclass_name.c_str() )
             .def( "statiscal_count", &Tracker::statiscal_count )
