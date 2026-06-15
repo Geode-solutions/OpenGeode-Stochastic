@@ -43,7 +43,7 @@ namespace geode
     using DistributionFactory = std::function< DoubleSampler::Distribution(
         const DoubleSampler::DistributionDescription& ) >;
 
-    const auto& distribution_registry()
+    static const auto& distribution_registry()
     {
         static const absl::flat_hash_map< DistributionType, // key type
             DistributionFactory, // value type

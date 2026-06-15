@@ -31,6 +31,7 @@
 namespace geode
 {
     FORWARD_DECLARATION_DIMENSION_CLASS( BoundingBox );
+    struct uuid;
 } // namespace geode
 
 namespace geode
