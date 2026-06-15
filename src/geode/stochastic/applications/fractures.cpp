@@ -144,4 +144,11 @@ namespace geode
         return targets;
     }
 
+    FractureSimulationRunner build_fractures_simulation_runner(
+        const FractureNetworkDescription& description )
+    {
+        return FractureSimulationRunner{ build_fractures_simulation_context(
+            description ) };
+    }
+
 } // namespace geode

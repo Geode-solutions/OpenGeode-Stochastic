@@ -38,9 +38,10 @@ namespace
         // NOLINTBEGIN(*-magic-numbers)
         geode::FractureNetworkDescription fnet_desc;
         fnet_desc.fnet_name = "One_Set_FNet";
-        constexpr double DOMAIN_BUFFER{ 10 };
-        fnet_desc.domain = { geode::Point2D{ { 0, 0 } },
-            geode::Point2D{ { 100.0, 100.0 } }, DOMAIN_BUFFER };
+
+        fnet_desc.domain.min_point = geode::Point2D{ { 0, 0 } };
+        fnet_desc.domain.max_point = geode::Point2D{ { 100.0, 100.0 } };
+        fnet_desc.domain.buffer_size = 10.;
 
         // --- Object set
         auto& fset = fnet_desc.add_fracture_set( "fset_A" );

@@ -22,7 +22,8 @@ add_geode_python_binding(
     NAME "py_stochastic"
     SOURCES
        # "sampling/mcmc/helpers/fracture_simulation_runner.hpp"
-        "sampling/mcmc/helpers/simulation_monitor.hpp"
+        "applications/fractures.hpp"
+        "inference/statistics_tracker.hpp"
         "sampling/mcmc/helpers/simulation_printer.hpp"
         "sampling/mcmc/simulation_runner.hpp"
         "sampling/direct/double_sampler.hpp"

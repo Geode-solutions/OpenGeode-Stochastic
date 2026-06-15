@@ -49,6 +49,22 @@ namespace
                     buffer_size (float): buffer thickness
             )doc" );
     }
+
+    template < geode::index_t dimension >
+    void define_spatial_domain_config( pybind11::module_ &module )
+    {
+        using DomainConfig = geode::SpatialDomainConfig< dimension >;
+
+        pybind11::class_< DomainConfig >( module,
+            absl::StrCat( "SpatialDomainConfig", dimension, "D" ).c_str() )
+            .def( pybind11::init<>() )
+            .def_readwrite( "min_point", &DomainConfig::min_point )
+            .def_readwrite( "max_point", &DomainConfig::max_point )
+            .def_readwrite( "buffer_size", &DomainConfig::buffer_size )
+            .def( "__repr__", []( const DomainConfig &config ) {
+                return config.string();
+            } );
+    }
 } // namespace
 namespace geode
 {
@@ -56,5 +72,7 @@ namespace geode
     {
         declare_spatial_domain< 2 >( module );
         declare_spatial_domain< 3 >( module );
+        define_spatial_domain_config< 2 >( module );
+        define_spatial_domain_config< 3 >( module );
     }
 } // namespace geode

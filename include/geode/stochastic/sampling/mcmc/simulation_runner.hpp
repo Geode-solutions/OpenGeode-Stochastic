@@ -68,10 +68,14 @@ namespace geode
     template < typename ObjectType >
     class SimulationRunner
     {
-        OPENGEODE_DISABLE_COPY_AND_MOVE( SimulationRunner );
+        OPENGEODE_DISABLE_COPY( SimulationRunner );
 
     public:
         SimulationRunner() = delete;
+
+        SimulationRunner( SimulationRunner&& ) noexcept = default;
+        SimulationRunner& operator=( SimulationRunner&& ) noexcept = default;
+
         explicit SimulationRunner( SimulationContext< ObjectType >&& context )
             : context_( std::move( context ) )
         {

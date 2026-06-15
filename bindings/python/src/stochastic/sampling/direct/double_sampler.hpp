@@ -20,6 +20,7 @@
  * SOFTWARE.
  *
  */
+#pragma once
 
 #include <geode/stochastic/sampling/direct/double_sampler.hpp>
 
