@@ -74,10 +74,10 @@ namespace geode
             .def( "run",
                 pybind11::overload_cast< geode::RandomEngine&,
                     const geode::SimulationConfigurator& >( &Runner::run ),
-                pybind11::arg( "engine" ), pybind11::arg( "config" ) )
+                pybind11::arg( "engine" ), pybind11::arg( "config" ) );
 
-            .def( "state_realization", &Runner::state_realization,
-                pybind11::return_value_policy::reference_internal );
+        //            .def( "state_realization", &Runner::state_realization,
+        //                pybind11::return_value_policy::reference_internal );
     }
 
     void define_simulation_configurator_and_runner( pybind11::module_& module )

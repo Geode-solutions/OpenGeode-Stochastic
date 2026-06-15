@@ -133,14 +133,15 @@ namespace geode
                        + "'>";
             } );
 
-        module.def( "build_fractures_simulation_context",
-            &build_fractures_simulation_context, pybind11::arg( "description" ),
-            "Build a simulation context from a fracture network description." );
-
-        module.def( "build_fractures_targeted_stat",
-            &build_fractures_targeted_stat, pybind11::arg( "description" ),
-            "Create the target statistics associated with a fracture network "
-            "description." );
+        //        module.def( "build_fractures_simulation_context",
+        //            &build_fractures_simulation_context, pybind11::arg(
+        //            "description" ), "Build a simulation context from a
+        //            fracture network description." );
+        //
+        //        module.def( "build_fractures_targeted_stat",
+        //            &build_fractures_targeted_stat, pybind11::arg(
+        //            "description" ), "Create the target statistics associated
+        //            with a fracture network " "description." );
 
         module.def( "build_fractures_simulation_runner",
             &build_fractures_simulation_runner, pybind11::arg( "description" ),
