@@ -57,7 +57,7 @@ namespace geode
                 set_id };
         };
 
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             return absl::StrCat( "Move proposal on subset: ", set_id, " -- ",
                 proposed_move.string() );
@@ -67,7 +67,10 @@ namespace geode
     template < typename ObjectType >
     class ProposalKernel
     {
+        OPENGEODE_DISABLE_COPY_AND_MOVE( ProposalKernel );
+
     public:
+        ProposalKernel() = default;
         virtual ~ProposalKernel() = default;
 
         Proposal< ObjectType > propose( const ObjectSets< ObjectType >& current,
@@ -100,7 +103,7 @@ namespace geode
             initialize_probabilities();
         }
 
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             auto message = absl::StrCat( "Proposal Kernel:",
                 "\n\t - number of moves: ", set_moves_.size() );
@@ -119,7 +122,7 @@ namespace geode
         }
 
     private:
-        std::vector< double > compute_probabilities() const
+        [[nodiscard]] std::vector< double > compute_probabilities() const
         {
             std::vector< double > probabilities( set_moves_.size(), 0. );
 
@@ -141,8 +144,8 @@ namespace geode
 
             // Normalize
             std::transform( probabilities.begin(), probabilities.end(),
-                probabilities.begin(), [total]( double p ) {
-                    return p / total;
+                probabilities.begin(), [total]( double cur_proba ) {
+                    return cur_proba / total;
                 } );
             return probabilities;
         }
@@ -158,7 +161,9 @@ namespace geode
                 cumulative_probs_.begin() );
 
             if( !cumulative_probs_.empty() )
-                cumulative_probs_.back() = 1.0; // ensure exact 1.0
+            {
+                cumulative_probs_.back() = 1.0;
+            }
         }
         void initialize_move_probabilities(
             const std::vector< double >& probabilities )

@@ -45,13 +45,13 @@ namespace geode
     {
     public:
         explicit CenterEuclideanDistanceCutoff( double cutoff_distance );
-        CenterEuclideanDistanceCutoff( double cutoff_distance,
-            typename PairwiseInteraction< Type >::SCOPE scope );
+        // CenterEuclideanDistanceCutoff( double cutoff_distance,
+        //     typename PairwiseInteraction< Type >::SCOPE scope );
 
-        double neighborhood_searching_distance() const override;
+        [[nodiscard]] double neighborhood_searching_distance() const override;
 
     protected:
-        double compute( const ObjectRef< Type >& object_a,
+        [[nodiscard]] double compute( const ObjectRef< Type >& object_a,
             const ObjectRef< Type >& object_b ) const override;
 
     private:
@@ -68,13 +68,13 @@ namespace geode
     {
     public:
         explicit MinimalDistanceCutoff( double cutoff_distance );
-        MinimalDistanceCutoff( double cutoff_distance,
-            typename PairwiseInteraction< Type >::SCOPE scope );
+        // MinimalDistanceCutoff( double cutoff_distance,
+        //    typename PairwiseInteraction< Type >::SCOPE scope );
 
-        double neighborhood_searching_distance() const override;
+        [[nodiscard]] double neighborhood_searching_distance() const override;
 
     protected:
-        double compute( const ObjectRef< Type >& object_a,
+        [[nodiscard]] double compute( const ObjectRef< Type >& object_a,
             const ObjectRef< Type >& object_b ) const override;
 
     private:

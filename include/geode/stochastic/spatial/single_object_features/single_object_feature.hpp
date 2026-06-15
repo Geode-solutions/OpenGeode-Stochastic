@@ -30,10 +30,13 @@ namespace geode
     template < typename ObjectType >
     class SingleObjectFeature
     {
+        OPENGEODE_DISABLE_COPY_AND_MOVE( SingleObjectFeature );
+
     public:
+        SingleObjectFeature() = default;
         virtual ~SingleObjectFeature() = default;
 
-        virtual double evaluate( const ObjectType& obj,
+        [[nodiscard]] virtual double evaluate( const ObjectType& obj,
             const SpatialDomain< ObjectType::dim >& domain ) const = 0;
     };
 
@@ -41,7 +44,7 @@ namespace geode
     class ObjectInDomainFeature : public SingleObjectFeature< ObjectType >
     {
     public:
-        double evaluate( const ObjectType& obj,
+        [[nodiscard]] double evaluate( const ObjectType& obj,
             const SpatialDomain< ObjectType::dim >& domain ) const override
         {
             return SpatialDomainChecker< ObjectType >::is_anchored_in_domain(

@@ -100,18 +100,15 @@ namespace
                        + c6 )
                    / ( ( ( ( d1 * q + d2 ) * q + d3 ) * q + d4 ) * q + 1 );
         }
-        else
-        {
-            // central region
-            q = p - 0.5;
-            r = q * q;
-            return ( ( ( ( ( a1 * r + a2 ) * r + a3 ) * r + a4 ) * r + a5 ) * r
-                       + a6 )
-                   * q
-                   / ( ( ( ( ( b1 * r + b2 ) * r + b3 ) * r + b4 ) * r + b5 )
-                           * r
-                       + 1 );
-        }
+
+        // central region
+        q = p - 0.5;
+        r = q * q;
+        return ( ( ( ( ( a1 * r + a2 ) * r + a3 ) * r + a4 ) * r + a5 ) * r
+                   + a6 )
+               * q
+               / ( ( ( ( ( b1 * r + b2 ) * r + b3 ) * r + b4 ) * r + b5 ) * r
+                   + 1 );
     }
 
     std::seed_seq create_seed_seq( uint64_t seed )
@@ -385,13 +382,11 @@ namespace geode
                 return std::pow( u * ( xmax_pow - xmin_pow ) + xmin_pow,
                     1.0 / ( 1.0 - law.alpha ) );
             }
-            else
-            {
-                // alpha == 1
-                const auto xmax_eff =
-                    std::isfinite( xmax ) ? xmax : xmin * geode::GLOBAL_EPSILON;
-                return xmin * std::pow( xmax_eff / xmin, u );
-            }
+
+            // alpha == 1
+            const auto xmax_eff =
+                std::isfinite( xmax ) ? xmax : xmin * geode::GLOBAL_EPSILON;
+            return xmin * std::pow( xmax_eff / xmin, u );
         }
 
         double sample_log()

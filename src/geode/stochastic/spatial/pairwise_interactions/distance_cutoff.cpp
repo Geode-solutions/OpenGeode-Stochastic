@@ -31,10 +31,10 @@ namespace
 {
     template < geode::index_t dimension >
     double compute_center_euclidean_distance(
-        const geode::Point< dimension >& point1,
-        const geode::Point< dimension >& point2 )
+        const geode::Point< dimension >& point0,
+        const geode::Point< dimension >& point1 )
     {
-        return geode::point_point_distance( point1, point2 );
+        return geode::point_point_distance( point0, point1 );
     }
     template < geode::index_t dimension >
     double compute_center_euclidean_distance(
@@ -45,10 +45,10 @@ namespace
             seg1.barycenter(), seg2.barycenter() );
     }
     template < geode::index_t dimension >
-    double compute_min_distance( const geode::Point< dimension >& point1,
-        const geode::Point< dimension >& point2 )
+    double compute_min_distance( const geode::Point< dimension >& point0,
+        const geode::Point< dimension >& point1 )
     {
-        return geode::point_point_distance( point1, point2 );
+        return geode::point_point_distance( point0, point1 );
     }
     template < geode::index_t dimension >
     double compute_min_distance( const geode::Segment< dimension >& seg1,
@@ -63,15 +63,6 @@ namespace geode
     CenterEuclideanDistanceCutoff< Type >::CenterEuclideanDistanceCutoff(
         double cutoff_distance )
         : PairwiseInteraction< Type >(), cutoff_distance_( cutoff_distance )
-    {
-    }
-
-    template < typename Type >
-    CenterEuclideanDistanceCutoff< Type >::CenterEuclideanDistanceCutoff(
-        double cutoff_distance,
-        typename PairwiseInteraction< Type >::SCOPE scope )
-        : PairwiseInteraction< Type >( scope ),
-          cutoff_distance_( cutoff_distance )
     {
     }
 
@@ -105,15 +96,6 @@ namespace geode
     MinimalDistanceCutoff< Type >::MinimalDistanceCutoff(
         double cutoff_distance )
         : PairwiseInteraction< Type >(), cutoff_distance_( cutoff_distance )
-    {
-    }
-
-    template < typename Type >
-    MinimalDistanceCutoff< Type >::MinimalDistanceCutoff(
-        double cutoff_distance,
-        typename PairwiseInteraction< Type >::SCOPE scope )
-        : PairwiseInteraction< Type >( scope ),
-          cutoff_distance_( cutoff_distance )
     {
     }
 

@@ -33,11 +33,12 @@ namespace geode
     const ObjectSet< Type >& ObjectSets< Type >::get_set(
         const uuid& set_id ) const
     {
-        auto it = uuid_to_index_.find( set_id );
+        auto set_it = uuid_to_index_.find( set_id );
         OpenGeodeStochasticStochasticException::check_exception(
-            it != uuid_to_index_.end(), nullptr, OpenGeodeException::TYPE::data,
-            "[ObjectSets] Group (", set_id.string(), ") is not defined." );
-        return sets_[it->second];
+            set_it != uuid_to_index_.end(), nullptr,
+            OpenGeodeException::TYPE::data, "[ObjectSets] Group (",
+            set_id.string(), ") is not defined." );
+        return sets_[set_it->second];
     }
 
     template < typename Type >
@@ -202,7 +203,8 @@ namespace geode
         std::optional< ObjectId > excluded_id ) const
     {
         auto box = object_bounding_box( object );
-        box.extends( searching_distance * 2. );
+        constexpr double STRECHING_COEFICIENT = 2.0;
+        box.extends( searching_distance * STRETCHING_COEFFICIENT );
         return neighborhood_.get_all_neighbor_ids(
             box, targeted_set_ids, excluded_id );
     }

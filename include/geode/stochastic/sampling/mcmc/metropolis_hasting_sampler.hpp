@@ -40,7 +40,7 @@ namespace geode
     struct StepResult
     {
         MH_DECISION decision{ MH_DECISION::undecided };
-        MoveType move_type{ MoveType::Invalid };
+        MOVE_TYPE move_type{ MOVE_TYPE::invalid };
         double log_accept{ -std::numeric_limits< double >::infinity() };
         double delta_log_energy{ 0.0 };
     };
@@ -65,15 +65,15 @@ namespace geode
             Proposal< ObjectType > proposal =
                 proposal_kernel_->propose( state, engine );
             const auto& move_type = proposal.proposed_move.type;
-            if( move_type == MoveType::Birth )
+            if( move_type == MOVE_TYPE::birth )
             {
                 return birth_step( proposal, state, engine );
             }
-            if( move_type == MoveType::Death )
+            if( move_type == MOVE_TYPE::death )
             {
                 return death_step( proposal, state, engine );
             }
-            if( move_type == MoveType::Change )
+            if( move_type == MOVE_TYPE::change )
             {
                 return change_step( proposal, state, engine );
             }
@@ -201,7 +201,7 @@ namespace geode
                 []( auto& cur_state, auto& accepted_proposal ) {
                     cur_state.add_object(
                         std::move( accepted_proposal.proposed_move.new_object
-                                .value() ),
+                                       .value() ),
                         accepted_proposal.set_id, false );
                 } );
         };
@@ -233,7 +233,7 @@ namespace geode
                     cur_state.update_free_object(
                         accepted_proposal.old_object_id(),
                         std::move( accepted_proposal.proposed_move.new_object
-                                .value() ) );
+                                       .value() ) );
                 } );
         };
 

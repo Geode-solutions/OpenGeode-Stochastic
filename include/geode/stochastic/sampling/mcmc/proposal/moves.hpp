@@ -28,19 +28,19 @@
 
 namespace geode
 {
-    enum class MoveType
+    enum class MOVE_TYPE : local_index_t
     {
-        Invalid,
-        Birth,
-        Death,
-        Change
+        invalid,
+        birth,
+        death,
+        change
     };
 
     struct ProposalProbabilities
     {
         double log_forward_prob{ 0. };
         double log_backward_prob{ 0. };
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             return absl::StrCat(
                 "\t Proposal Probabilities: (log) forward probability: ",
@@ -48,7 +48,7 @@ namespace geode
                 " (log) backward probability: ", log_backward_prob );
         }
 
-        double transition_probability() const
+        [[nodiscard]] double transition_probability() const
         {
             OpenGeodeStochasticStochasticException::check_exception(
                 std::isfinite( log_forward_prob )
@@ -63,23 +63,23 @@ namespace geode
     template < typename ObjectType >
     struct MoveResult
     {
-        MoveType type{ MoveType::Invalid };
+        MOVE_TYPE type{ MOVE_TYPE::invalid };
         std::optional< ObjectType > new_object;
         std::optional< index_t > old_object_id;
 
         ProposalProbabilities proposal_probabilities;
 
-        std::string type_string() const
+        [[nodiscard]] std::string type_string() const
         {
             switch( type )
             {
-                case MoveType::Invalid:
+                case MOVE_TYPE::invalid:
                     return "Invalid";
-                case MoveType::Birth:
+                case MOVE_TYPE::birth:
                     return "Birth";
-                case MoveType::Death:
+                case MOVE_TYPE::death:
                     return "Death";
-                case MoveType::Change:
+                case MOVE_TYPE::change:
                     return "Change";
                 default:
                     throw OpenGeodeStochasticStochasticException{ nullptr,
@@ -89,7 +89,7 @@ namespace geode
                     return "Unknown";
             }
         }
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             auto message = absl::StrCat( "Move result type: ", type_string() );
             if( new_object )
@@ -111,7 +111,11 @@ namespace geode
     template < typename ObjectType >
     class Move
     {
+        OPENGEODE_DISABLE_COPY_AND_MOVE( Move );
+
     public:
+        Move() noexcept = default;
+
         Move( const ObjectSetSampler< ObjectType >& sampler,
             double proportion_weight )
             : sampler_( sampler ), proportion_weight_{ proportion_weight }
@@ -129,7 +133,7 @@ namespace geode
             const ObjectSet< ObjectType >& set,
             RandomEngine& engine ) const = 0;
 
-        double proportion_weight() const
+        [[nodiscard]] double proportion_weight() const
         {
             return proportion_weight_;
         }
@@ -139,7 +143,7 @@ namespace geode
             geode_unused( probability );
         }
 
-        virtual std::string string() const = 0;
+        [[nodiscard]] virtual std::string string() const = 0;
 
     protected:
         std::optional< geode::index_t > draw_a_free_sample_id(
@@ -157,6 +161,12 @@ namespace geode
         }
 
     protected:
+        const ObjectSetSampler< ObjectType >& sampler() const
+        {
+            return sampler_;
+        }
+
+    private:
         const ObjectSetSampler< ObjectType >& sampler_;
         double proportion_weight_{ 1.0 };
     };
@@ -195,10 +205,11 @@ namespace geode
             log_p_birth_ = std::log( probability * birth_ratio_ );
             log_p_death_ = std::log( probability * ( 1.0 - birth_ratio_ ) );
         }
-        std::string string() const override
+
+        [[nodiscard]] std::string string() const override
         {
             return absl::StrCat( "Birth and Death Move (proportion weight: ",
-                this->proportion_weight_, " -- birth ratio:", birth_ratio_,
+                this->proportion_weight(), " -- birth ratio:", birth_ratio_,
                 " log_p_birth: ", log_p_birth_, " log_p_death_: ", log_p_death_,
                 ")" );
         }
@@ -208,15 +219,15 @@ namespace geode
             const ObjectSet< ObjectType >& set, RandomEngine& engine ) const
         {
             MoveResult< ObjectType > birth;
-            birth.type = MoveType::Birth;
-            birth.new_object = this->sampler_.sample( engine );
+            birth.type = MOVE_TYPE::birth;
+            birth.new_object = this->sampler().sample( engine );
             if( !birth.new_object.has_value() )
             {
                 return birth;
             }
             auto& new_obj = birth.new_object.value();
             birth.proposal_probabilities.log_forward_prob =
-                log_p_birth_ + this->sampler_.log_pdf( new_obj );
+                log_p_birth_ + this->sampler().log_pdf( new_obj );
             birth.proposal_probabilities.log_backward_prob =
                 log_p_death_ - std::log( set.nb_objects() + 1.0 );
             return birth;
@@ -232,20 +243,22 @@ namespace geode
                 return death;
             }
             const auto cur_object_id = death.old_object_id.value();
-            death.type = MoveType::Death;
+            death.type = MOVE_TYPE::death;
             death.proposal_probabilities.log_forward_prob =
                 log_p_death_ - std::log( set.nb_free_objects() );
             death.proposal_probabilities.log_backward_prob =
                 log_p_birth_
-                + this->sampler_.log_pdf(
+                + this->sampler().log_pdf(
                     set.get_free_object( cur_object_id ) );
             return death;
         }
 
     private:
+        // NOLINTNEXTBEGIN(*-magic-numbers)
         double birth_ratio_{ 0.5 };
         double log_p_birth_{ 0. };
         double log_p_death_{ 0. };
+        // NOLINTNEXTEND(*-magic-numbers)
     };
 
     template < typename ObjectType >
@@ -268,21 +281,22 @@ namespace geode
             {
                 return change;
             }
-            change.type = MoveType::Change;
+            change.type = MOVE_TYPE::change;
             const auto& object_to_change =
                 set.get_free_object( change.old_object_id.value() );
             change.new_object =
-                this->sampler_.change( object_to_change, engine );
+                this->sampler().change( object_to_change, engine );
             change.proposal_probabilities.log_forward_prob =
-                this->sampler_.log_pdf( change.new_object.value() );
+                this->sampler().log_pdf( change.new_object.value() );
             change.proposal_probabilities.log_backward_prob =
-                this->sampler_.log_pdf( object_to_change );
+                this->sampler().log_pdf( object_to_change );
             return change;
         }
-        std::string string() const override
+
+        [[nodiscard]] std::string string() const override
         {
             return absl::StrCat( "Change Move (proportion weight: ",
-                this->proportion_weight_, ")" );
+                this->proportion_weight(), ")" );
         }
     };
 } // namespace geode

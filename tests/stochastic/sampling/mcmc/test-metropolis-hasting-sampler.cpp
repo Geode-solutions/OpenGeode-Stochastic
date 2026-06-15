@@ -119,13 +119,13 @@ namespace
                 nb_accepted++;
                 switch( result.move_type )
                 {
-                    case geode::MoveType::Birth:
+                    case geode::MOVE_TYPE::Birth:
                         accepted_birth++;
                         break;
-                    case geode::MoveType::Death:
+                    case geode::MOVE_TYPE::death:
                         accepted_death++;
                         break;
-                    case geode::MoveType::Change:
+                    case geode::MOVE_TYPE::change:
                         accepted_change++;
                         break;
                     default:

@@ -37,42 +37,24 @@ namespace geode
     template < typename Type >
     class PairwiseInteraction
     {
-    public:
-        enum struct SCOPE
-        {
-            all_set,
-            same_set, // only within the same subset
-            different_set // only across subsets
-        };
+        OPENGEODE_DISABLE_COPY_AND_MOVE( PairwiseInteraction );
 
+    public:
         explicit PairwiseInteraction() = default;
-        explicit PairwiseInteraction( SCOPE scope ) : scope_( scope ) {}
         virtual ~PairwiseInteraction() = default;
 
-        double evaluate( const ObjectRef< Type >& object_a,
+        [[nodiscard]] double evaluate( const ObjectRef< Type >& object_a,
             const ObjectRef< Type >& object_b ) const
         {
-            if( scope_ == SCOPE::same_set
-                && object_a.set_id != object_b.set_id )
-            {
-                return 0.0;
-            }
-            if( scope_ == SCOPE::different_set
-                && object_a.set_id == object_b.set_id )
-            {
-                return 0.0;
-            }
             return compute( object_a, object_b );
         }
 
-        virtual double neighborhood_searching_distance() const = 0;
+        [[nodiscard]] virtual double
+            neighborhood_searching_distance() const = 0;
 
     protected:
-        virtual double compute( const ObjectRef< Type >& object_a,
+        [[nodiscard]] virtual double compute( const ObjectRef< Type >& object_a,
             const ObjectRef< Type >& object_b ) const = 0;
-
-    private:
-        SCOPE scope_{ SCOPE::all_set };
     };
 
 } // namespace geode

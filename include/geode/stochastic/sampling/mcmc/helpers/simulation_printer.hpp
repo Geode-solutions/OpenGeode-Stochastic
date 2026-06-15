@@ -44,11 +44,12 @@ namespace geode
 
         bool print_realisations{ true };
         std::string realisations_prefix{ "pattern_" };
+        // NOLINTNEXTLINE(*-magic-numbers)
         index_t realisations_print_frequency{ 100 };
 
         std::string output_folder{ std::filesystem::current_path().string() };
 
-        std::string string() const
+        [[nodiscard]] std::string string() const
         {
             auto message = absl::StrCat(
                 "SimulationPrinterConfigurator - print to folder: ",
@@ -80,8 +81,8 @@ namespace geode
     {
     public:
         SimulationPrinter( const Model< ObjectType >& model,
-            const SimulationPrinterConfigurator& config )
-            : model_( model ), config_( config )
+            SimulationPrinterConfigurator config )
+            : model_( model ), config_( std::move( config ) )
         {
         }
 

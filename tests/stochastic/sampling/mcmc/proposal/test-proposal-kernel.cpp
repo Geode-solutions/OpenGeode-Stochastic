@@ -76,7 +76,7 @@ namespace
 
             switch( proposed_move.type )
             {
-                case geode::MoveType::Birth:
+                case geode::MOVE_TYPE::birth:
                     saw_birth = true;
                     geode::OpenGeodeStochasticStochasticException::test(
                         proposed_move.new_object.has_value(),
@@ -102,7 +102,7 @@ namespace
                         "[test proposal] Birth backward log-prob mismatch." );
                     break;
 
-                case geode::MoveType::Death:
+                case geode::MOVE_TYPE::death:
                     saw_death = true;
                     geode::OpenGeodeStochasticStochasticException::test(
                         !proposed_move.new_object.has_value(),
@@ -123,7 +123,7 @@ namespace
                         "0." );
                     break;
 
-                case geode::MoveType::Change:
+                case geode::MOVE_TYPE::change:
                     saw_change = true;
                     geode::OpenGeodeStochasticStochasticException::test(
                         proposed_move.new_object.has_value(),
@@ -137,7 +137,7 @@ namespace
                         "[test proposal] Change index out of bounds." );
                     break;
 
-                case geode::MoveType::Invalid:
+                case geode::MOVE_TYPE::invalid:
                 default:
                     throw geode::OpenGeodeStochasticStochasticException(
                         nullptr, geode::OpenGeodeException::TYPE::data,
@@ -171,8 +171,8 @@ namespace
         const auto& proposed_move = proposal.proposed_move;
 
         geode::OpenGeodeStochasticStochasticException::test(
-            proposed_move.type == geode::MoveType::Birth
-                || proposed_move.type == geode::MoveType::Invalid,
+            proposed_move.type == geode::MOVE_TYPE::birth
+                || proposed_move.type == geode::MOVE_TYPE::invalid,
             "[test proposal] On empty config, only Birth should be possible." );
         // NOLINTEND(*-magic-numbers)
     }

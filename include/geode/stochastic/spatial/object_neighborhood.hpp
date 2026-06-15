@@ -22,21 +22,24 @@
  */
 
 #pragma once
+
+#include <geode/stochastic/common.hpp>
+
 #include <geode/stochastic/spatial/details/RTree.hpp>
 #include <optional>
 
 namespace geode
 {
     FORWARD_DECLARATION_DIMENSION_CLASS( BoundingBox );
-}
+} // namespace geode
 
 namespace geode
 {
     struct ObjectId
     {
-        index_t index;
-        bool fixed;
-        uuid set_id;
+        index_t index{ NO_ID };
+        bool fixed{ false };
+        uuid set_id{};
         bool operator==( const ObjectId& other ) const noexcept
         {
             return index == other.index && fixed == other.fixed
@@ -57,20 +60,23 @@ namespace geode
     template < index_t dimension >
     class ObjectNeighborhood
     {
+        OPENGEODE_DISABLE_COPY_AND_MOVE( ObjectNeighborhood );
+
     public:
         ObjectNeighborhood();
         ~ObjectNeighborhood() = default;
 
-        void add( const BoundingBox< dimension >& box, const ObjectId& id );
+        void add( const BoundingBox< dimension >& box, const ObjectId& obj_id );
         void update( const BoundingBox< dimension >& old_box,
             const BoundingBox< dimension >& new_box,
-            const ObjectId& id );
+            const ObjectId& obj_id );
         void update( const BoundingBox< dimension >& box,
             const ObjectId& old_id,
             const ObjectId& new_id );
-        void remove( const BoundingBox< dimension >& box, const ObjectId& id );
+        void remove(
+            const BoundingBox< dimension >& box, const ObjectId& obj_id );
 
-        std::vector< ObjectId > get_all_neighbor_ids(
+        [[nodiscard]] std::vector< ObjectId > get_all_neighbor_ids(
             const BoundingBox< dimension >& box,
             const std::vector< uuid >& targeted_set_ids,
             std::optional< ObjectId > exclude_self_id ) const;
