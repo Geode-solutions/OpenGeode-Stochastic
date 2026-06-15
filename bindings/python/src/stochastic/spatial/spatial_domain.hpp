@@ -20,10 +20,13 @@
  * SOFTWARE.
  *
  */
+#pragma once
+
+#include "../../common.hpp"
 
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
-namespace
+namespace geode
 {
     template < geode::index_t dimension >
     void declare_spatial_domain( pybind11::module &module )
@@ -32,7 +35,7 @@ namespace
         using BBox = geode::BoundingBox< dimension >;
 
         const auto pyclass_name =
-            "SpatialDomain" + std::to_string( dimension ) + "D";
+            absl::StrCat( "SpatialDomain", std::to_string( dimension ), "D" );
 
         pybind11::class_< Domain >( module, pyclass_name.c_str() )
             .def( pybind11::init< const BBox &, double >(),
@@ -49,12 +52,28 @@ namespace
                     buffer_size (float): buffer thickness
             )doc" );
     }
-} // namespace
-namespace geode
-{
+
+    template < geode::index_t dimension >
+    void define_spatial_domain_config( pybind11::module_ &module )
+    {
+        using DomainConfig = geode::SpatialDomainConfig< dimension >;
+
+        pybind11::class_< DomainConfig >( module,
+            absl::StrCat( "SpatialDomainConfig", dimension, "D" ).c_str() )
+            .def( pybind11::init<>() )
+            .def_readwrite( "min_point", &DomainConfig::min_point )
+            .def_readwrite( "max_point", &DomainConfig::max_point )
+            .def_readwrite( "buffer_size", &DomainConfig::buffer_size )
+            .def( "__repr__", []( const DomainConfig &config ) {
+                return config.string();
+            } );
+    }
+
     void define_spatial_domain( pybind11::module &module )
     {
         declare_spatial_domain< 2 >( module );
         declare_spatial_domain< 3 >( module );
+        define_spatial_domain_config< 2 >( module );
+        define_spatial_domain_config< 3 >( module );
     }
 } // namespace geode

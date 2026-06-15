@@ -20,32 +20,42 @@
  * SOFTWARE.
  *
  */
+#pragma once
+
+#include "../../common.hpp"
 
 #include <geode/stochastic/inference/statistics_tracker.hpp>
 
+#include <geode/geometry/basic_objects/segment.hpp>
+
 namespace geode
 {
-    void define_simulation_monitor( pybind11::module &module )
+
+    template < typename ObjectType >
+    void define_statistics_tracker_impl(
+        pybind11::module_& module, const std::string& typestr )
     {
-        pybind11::class_< geode::StatisticsTracker >(
-            module, "StatisticsTracker" )
-            .def( pybind11::init< geode::index_t >(),
-                pybind11::arg( "nb_energy_terms" ),
-                "Create a StatisticsTracker for a given number of energy "
-                "terms" )
-            .def( "add_realization", &geode::StatisticsTracker::add_realization,
-                pybind11::arg( "values" ),
-                "Add a realization (vector of doubles) to update statistics" )
-            .def( "statiscal_count", &geode::StatisticsTracker::statiscal_count,
-                "Return the number of realizations added" )
-            .def_property_readonly( "means", &geode::StatisticsTracker::means,
-                "Return the computed mean values for each energy term" )
-            .def_property_readonly( "variances",
-                &geode::StatisticsTracker::variances,
-                "Return the computed variances for each energy term" )
-            .def( "__repr__", []( const geode::StatisticsTracker &self ) {
-                return "<StatisticsTracker count="
-                       + std::to_string( self.statiscal_count() ) + ">";
+        using Tracker = geode::StatisticsTracker< ObjectType >;
+        const auto pyclass_name = absl::StrCat( typestr, "StatisticsTracker" );
+
+        pybind11::class_< Tracker >( module, pyclass_name.c_str() )
+            .def( "statiscal_count", &Tracker::statiscal_count )
+
+            .def(
+                "means", &Tracker::means, pybind11::return_value_policy::copy )
+
+            .def( "variances", &Tracker::variances )
+
+            .def( "__repr__", []( const Tracker& tracker ) {
+                return absl::StrCat( "StatisticsTracker(count=",
+                    tracker.statiscal_count(), ")" );
             } );
     }
+
+    void define_statistics_tracker( pybind11::module_& module )
+    {
+        define_statistics_tracker_impl< OwnerSegment2D >(
+            module, "OwnerSegment2D" );
+    }
+
 } // namespace geode

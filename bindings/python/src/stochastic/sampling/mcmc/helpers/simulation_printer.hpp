@@ -21,6 +21,9 @@
  *
  */
 
+#pragma once
+#include "../../../../common.hpp"
+
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_printer.hpp>
 
 namespace geode
@@ -50,21 +53,5 @@ namespace geode
                 return "<SimulationPrinterConfigurator output_folder='"
                        + self.output_folder + "'>";
             } );
-
-        //        pybind11::class_< SimulationPrinter >( module,
-        //        "SimulationPrinter" )
-        //            .def( pybind11::init< const SimulationPrinterConfigurator&
-        //            >(),
-        //                pybind11::arg( "config" ) )
-        //            .def( "print_statistics",
-        //            &SimulationPrinter::print_statistics,
-        //                pybind11::arg( "stats" ), pybind11::arg( "header" ) =
-        //                "", "Print statistics vector to file." )
-        //            .def( "print_statistics_summary",
-        //                &SimulationPrinter::print_statistics_summary,
-        //                pybind11::arg( "monitor" ),
-        //                pybind11::arg( "energy_term_names" ) = "",
-        //                "Print statistics summary from a StatisticsTracker."
-        //                );
     }
 } // namespace geode
