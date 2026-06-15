@@ -21,7 +21,6 @@
 add_geode_python_binding(
     NAME "py_stochastic"
     SOURCES
-       # "sampling/mcmc/helpers/fracture_simulation_runner.hpp"
         "applications/fractures.hpp"
         "inference/statistics_tracker.hpp"
         "sampling/mcmc/helpers/simulation_printer.hpp"
@@ -30,6 +29,7 @@ add_geode_python_binding(
         "sampling/random_engine.hpp"
         "sampling/distributions.hpp"
         "spatial/spatial_domain.hpp"
+        "spatial/object_sets.hpp"
         "stochastic.cpp"
     DEPENDENCIES
         ${PROJECT_NAME}::stochastic
