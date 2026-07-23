@@ -24,50 +24,32 @@
 #pragma once
 
 #include <geode/stochastic/inference/target_statistics.hpp>
+
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_context.hpp>
 
 namespace geode
 {
     template < typename ObjectType >
-    struct PoissonSetDescription
+    class PoissonProcessBuilder
     {
-        std::string set_name;
+    public:
+        void set_domain(
+            const SpatialDomainConfig< ObjectType::dim >& domain_cfg );
 
-        ObjectSamplerConfig< ObjectType > sampler;
+        [[nodiscard]] ObjectSetDefinition< ObjectType >& add_set(
+            std::string_view name,
+            double lambda,
+            std::optional< double > expected_count = std::nullopt );
 
-        std::string density_name;
-        double lambda{ 0. };
-        std::optional< double > expected_nb_objects;
+        [[nodiscard]] SimulationContext< ObjectType >
+            build_simulation_context() const;
 
-        double birth_ratio{ 1.0 };
-        double death_ratio{ 1.0 };
-        double change_ratio{ 1.0 };
+        [[nodiscard]] const std::vector< TargetStatisticConfig >&
+            expected_statistics() const;
+
+    private:
+        SimulationContextConfig< ObjectType > context_cfg_;
+        std::vector< geode::TargetStatisticConfig > expected_stats_;
     };
-
-    template < typename ObjectType >
-    struct PoissonProcessDescription
-    {
-        std::string process_name{ "Poisson" };
-        SpatialDomainConfig< ObjectType::dim > domain;
-
-        std::vector< PoissonSetDescription< ObjectType > > sets;
-
-        PoissonSetDescription< ObjectType >& add_set(
-            absl::string_view set_name )
-        {
-            auto& set = sets.emplace_back();
-            set.set_name = set_name;
-            set.density_name = absl::StrCat( set_name, "_density" );
-            return set;
-        }
-    };
-
-    template < typename ObjectType >
-    SimulationContext< ObjectType > build_poisson_process(
-        const PoissonProcessDescription< ObjectType >& description );
-
-    template < typename ObjectType >
-    std::vector< geode::TargetStatisticConfig > build_poisson_targeted_stat(
-        const PoissonProcessDescription< ObjectType >& description );
 
 } // namespace geode

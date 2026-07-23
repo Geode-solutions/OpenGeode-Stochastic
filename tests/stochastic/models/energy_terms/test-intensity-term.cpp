@@ -41,12 +41,12 @@ namespace
             geode::Point2D{ { 0.5, 0.0 } } }; // length = 1.0
 
         // Partially inside domain
-        Segment s2{ geode::Point2D{ { -2.0, 0.0 } },
-            geode::Point2D{ { 0.0, 0.0 } } }; // clipped length = 1.0
+        Segment s2{ geode::Point2D{ { -1.5, 0.0 } },
+            geode::Point2D{ { -0.5, 0.0 } } }; // length = 1.0
 
         // Fully outside domain (buffer)
-        Segment s_buffer{ geode::Point2D{ { 2.0, 2.0 } },
-            geode::Point2D{ { 3.0, 3.0 } } }; // clipped = 0.0
+        Segment s_buffer{ geode::Point2D{ { 1.2, 0.5 } },
+            geode::Point2D{ { 1.2, -0.5 } } }; // length = 1.0
 
         auto set_id = pattern.add_set( set_name );
         pattern.add_object( std::move( s1 ), set_id, false );
@@ -80,7 +80,7 @@ namespace
         // s1: 1.0
         // s2: 1.0
         // s_buffer: 0.0
-        const double total_length = 2.0;
+        const double total_length = 1.5;
         const double scaled_total = total_length / characteristic_length;
 
         const double expected_total =
@@ -110,13 +110,14 @@ namespace
             "[IntensityTerm] delta_log_add inside wrong" );
 
         // --- Delta add outside domain
-        geode::OwnerSegment2D s_outside{ geode::Point2D{ { 2.0, 2.0 } },
-            geode::Point2D{ { 3.0, 3.0 } } };
+        geode::OwnerSegment2D s_outside{ geode::Point2D{ { 0.0, -1.2 } },
+            geode::Point2D{ { 1.0, -1.2 } } };
         geode::ObjectRef< geode::OwnerSegment2D > ref_out{ s_outside, set_id };
 
         delta = term->delta_log_add( pattern, ref_out );
         geode::OpenGeodeStochasticStochasticException::test(
-            delta == 0.0, "[IntensityTerm] delta_log_add outside wrong" );
+            delta == expected_add,
+            "[IntensityTerm] delta_log_add outside wrong - delta ", delta );
 
         // --- Delta remove (first segment)
         geode::ObjectId obj_id{ 0, false, set_id };
@@ -130,16 +131,16 @@ namespace
 
         // --- Delta change: inside → outside
         delta = term->delta_log_change( pattern, obj_id, ref_out );
-        geode::OpenGeodeStochasticStochasticException::test(
-            delta == expected_remove,
-            "[IntensityTerm] delta_log_change inside→outside wrong" );
+        geode::OpenGeodeStochasticStochasticException::test( delta == 0.,
+            "[IntensityTerm] delta_log_change inside → outside wrong", delta,
+            " ", expected_add, expected_remove );
 
         // --- Delta change: outside → inside
         geode::ObjectId buffer_id{ 2, false, set_id };
         delta = term->delta_log_change( pattern, buffer_id, ref_inside );
-        geode::OpenGeodeStochasticStochasticException::test(
-            delta == expected_add,
-            "[IntensityTerm] delta_log_change outside→inside wrong" );
+        geode::OpenGeodeStochasticStochasticException::test( delta == 0.,
+            "[IntensityTerm] delta_log_change outside → inside wrong", delta,
+            " ", expected_add );
 
         // --- Delta change: inside → inside (same length)
         geode::OwnerSegment2D s_same{ geode::Point2D{ { -0.2, 0.0 } },

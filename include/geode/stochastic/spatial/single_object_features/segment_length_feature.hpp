@@ -33,6 +33,8 @@ namespace geode
     public:
         explicit SegmentLengthInsideBoxFeature( double characteristic_length );
 
+        [[nodiscard]] double evaluate(
+            const OwnerSegment2D& segment ) const override;
         [[nodiscard]] double evaluate( const OwnerSegment2D& segment,
             const SpatialDomain< 2 >& domain ) const override;
 

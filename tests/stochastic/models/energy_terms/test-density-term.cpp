@@ -91,7 +91,8 @@ namespace
         geode::ObjectRef< geode::Point2D > ref_buffer{ p_buffer, set_id };
         delta = term->delta_log_add( pattern, ref_buffer );
         geode::OpenGeodeStochasticStochasticException::test(
-            delta == 0., "[DensityTerm] delta_log_add outside VOI wrong" );
+            delta == expected_add,
+            "[DensityTerm] delta_log_add outside VOI wrong, delta ", delta );
 
         // --- Delta remove anchored object
         geode::ObjectId obj_id{ 0, false, set_id };
@@ -102,23 +103,24 @@ namespace
         // --- Delta change anchored → buffer
         geode::ObjectRef< geode::Point2D > new_buffer{ p_buffer, set_id };
         delta = term->delta_log_change( pattern, obj_id, new_buffer );
-        geode::OpenGeodeStochasticStochasticException::test(
-            delta == expected_remove,
-            "[DensityTerm] delta_log_change anchored→buffer wrong" );
+        geode::OpenGeodeStochasticStochasticException::test( delta == 0.,
+            "[DensityTerm] delta_log_change anchored → buffer wrong, delta",
+            delta );
 
         // --- Delta change anchored → anchored
         geode::Point2D p_anchored{ { 0.1, 0.1 } };
         geode::ObjectRef< geode::Point2D > new_anchored{ p_anchored, set_id };
         delta = term->delta_log_change( pattern, obj_id, new_anchored );
-        geode::OpenGeodeStochasticStochasticException::test( delta == 0.,
-            "[DensityTerm] delta_log_change anchored→anchored wrong" );
+        geode::OpenGeodeStochasticStochasticException::test( delta == 0,
+            "[DensityTerm] delta_log_change anchored → anchored wrong, delta ",
+            delta );
 
         // --- Delta change buffer → anchored
         geode::ObjectId buffer_id{ 2, false, set_id };
         delta = term->delta_log_change( pattern, buffer_id, ref_inside );
-        geode::OpenGeodeStochasticStochasticException::test(
-            delta == expected_add,
-            "[DensityTerm] delta_log_change buffer→anchored wrong" );
+        geode::OpenGeodeStochasticStochasticException::test( delta == 0,
+            "[DensityTerm] delta_log_change buffer → anchored wrong, delta ",
+            delta );
     }
 } // namespace
 

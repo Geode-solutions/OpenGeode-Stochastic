@@ -36,6 +36,9 @@ namespace geode
         SingleObjectFeature() = default;
         virtual ~SingleObjectFeature() = default;
 
+        [[nodiscard]] virtual double evaluate(
+            const ObjectType& obj ) const = 0;
+
         [[nodiscard]] virtual double evaluate( const ObjectType& obj,
             const SpatialDomain< ObjectType::dim >& domain ) const = 0;
     };
@@ -44,6 +47,12 @@ namespace geode
     class ObjectInDomainFeature : public SingleObjectFeature< ObjectType >
     {
     public:
+        [[nodiscard]] double evaluate( const ObjectType& obj ) const override
+        {
+            geode_unused( obj );
+            return 1.;
+        }
+
         [[nodiscard]] double evaluate( const ObjectType& obj,
             const SpatialDomain< ObjectType::dim >& domain ) const override
         {

@@ -30,9 +30,6 @@
 
 namespace
 {
-    using PoissonDensityDescription = geode::SingleObjectTermConfig;
-    using PairwiseInteractionDescription = geode::PairwiseTermConfig;
-
     void test_single_type_strauss()
     {
         geode::Logger::info(
@@ -43,30 +40,27 @@ namespace
 
         // NOLINTBEGIN(*-magic-numbers)
         std::array< double, 5 > gamma_values{ 0, 0.3, 0.5, 0.7, 1.0 };
-        std::array< double, 5 > nb_points{ 19.5, 24.4, 31.3, 36.1, 50. };
-        std::array< double, 5 > nb_interactions{ 0, 4.7, 9.8, 18.7, 50.3 };
+        std::array< double, 5 > nb_points{ 20.8, 25.8, 29.9, 35.5, 50. };
+        std::array< double, 5 > nb_interactions{ 0, 4.7, 9.2, 16.5, 42.8 };
         for( const auto config : geode::Range{ gamma_values.size() } )
         {
-            geode::StraussProcessDescription< geode::Point2D > strauss;
+            geode::SpatialDomainConfig< 2 > domain;
+            domain.min_point = geode::Point2D{ { 0, 0 } };
+            domain.max_point = geode::Point2D{ { 10, 10 } };
+            domain.buffer_size = 2.;
 
-            strauss.domain = { geode::Point2D{ { 0.0, 0.0 } },
-                geode::Point2D{ { 10.0, 10.0 } }, 1. };
+            geode::StraussProcessBuilder< geode::Point2D > strauss;
 
-            auto& set_config = strauss.add_set( "set_A" );
-            set_config.lambda = 0.5;
-            set_config.expected_nb_objects = nb_points[config];
+            strauss.set_domain( domain );
 
-            auto& interaction_config =
-                strauss.add_interaction( "interaction_A" );
-            interaction_config.set_names = { "set_A" };
-            interaction_config.gamma = gamma_values[config];
-            interaction_config.distance = 1.0;
-            interaction_config.expected_nb_interactions =
-                nb_interactions[config];
+            auto& set_config =
+                strauss.add_set( "set_A", 0.5, nb_points[config] );
+            strauss.add_interaction( { "set_A" }, gamma_values[config], 1.0,
+                nb_interactions[config], true );
 
-            auto simulation_context = geode::build_strauss_process( strauss );
-            geode::SimulationRunner< geode::Point2D > runner{ std::move(
-                simulation_context ) };
+            geode::SimulationRunner< geode::Point2D > runner{
+                strauss.build_simulation_context()
+            };
 
             // run simulation
             geode::SimulationConfigurator sim_config;
@@ -81,13 +75,8 @@ namespace
             sim_config.printer = printer_config;
 
             auto statistic_tracker = runner.run( engine, sim_config );
-
-            const auto targeted_statistics_descriptors =
-                geode::build_strauss_targeted_stat( strauss );
-
             geode::TargetStatistics target_stats{ runner.model(),
-                targeted_statistics_descriptors };
-
+                strauss.expected_statistics() };
             geode::statistics::validate( statistic_tracker, target_stats );
         }
         // NOLINTEND(*-magic-numbers)
@@ -103,62 +92,45 @@ namespace
         engine.set_seed( "@mh-test-multi-STRAUSS@" );
 
         // NOLINTBEGIN(*-magic-numbers)
+        geode::SpatialDomainConfig< 2 > domain;
+        domain.min_point = geode::Point2D{ { 0, 0 } };
+        domain.max_point = geode::Point2D{ { 10, 10 } };
+        domain.buffer_size = 2.;
+
         std::array< double, 3 > gamma_values{ 0, 0.5, 1.0 };
-        std::array< double, 3 > nb_points01{ 6.7, 8, 10.0 };
-        std::array< double, 3 > nb_points02{ 17.5, 24.6, 40.0 };
-        std::array< double, 3 > nb_points03{ 14.6, 19.4, 30. };
-        std::array< double, 3 > nb_interactions01{ 0, 15, 59.8 };
-        std::array< double, 3 > nb_interactions02{ 37.2, 70, 174 };
+        std::array< double, 3 > nb_points01{ 7.5, 8.6, 10.0 };
+        std::array< double, 3 > nb_points02{ 18.5, 25.4, 40.0 };
+        std::array< double, 3 > nb_points03{ 16.0, 21.0, 30. };
+        std::array< double, 3 > nb_interactions01{ 0, 11.5, 43.2 };
+        std::array< double, 3 > nb_interactions02{ 26.3, 49.5, 116.7 };
         for( const auto config : geode::Range{ gamma_values.size() } )
         {
-            geode::StraussProcessDescription< geode::Point2D > strauss;
-            strauss.domain = { geode::Point2D{ { 0, 0 } },
-                geode::Point2D{ { 10, 10 } }, 2. };
+            geode::StraussProcessBuilder< geode::Point2D > strauss;
+            strauss.set_domain( domain );
+            auto& set_config =
+                strauss.add_set( "set01", 0.1, nb_points01[config] );
+            geode_unused( set_config );
 
-            auto& set_config_01 = strauss.add_set( "set01" );
-            set_config_01.lambda = 0.1;
-            set_config_01.expected_nb_objects = 10;
-            set_config_01.birth_ratio = 1.0;
-            set_config_01.death_ratio = 3.0;
-            set_config_01.change_ratio = 1.0;
+            auto& set_config_02 =
+                strauss.add_set( "set02", 0.4, nb_points02[config] );
+            geode_unused( set_config_02 );
 
-            auto& set_config_02 = strauss.add_set( "set02" );
-            set_config_02.lambda = 0.4;
-            set_config_01.expected_nb_objects = 40;
-            set_config_02.birth_ratio = 3.0;
-            set_config_02.death_ratio = 0.5;
-            set_config_02.change_ratio = 1.0;
+            auto& set_config_03 =
+                strauss.add_set( "set03", 0.3, nb_points03[config] );
+            geode_unused( set_config_03 );
 
-            auto& set_config_03 = strauss.add_set( "set03" );
-            set_config_03.lambda = 0.3;
-            set_config_01.expected_nb_objects = 30;
-            set_config_03.birth_ratio = 4.0;
-            set_config_03.death_ratio = 1.0;
-            set_config_03.change_ratio = 1.0;
-
-            auto& interaction_config_01 =
-                strauss.add_interaction( "interaction_01" );
-            interaction_config_01.set_names = { "set01", "set02", "set03" };
-            interaction_config_01.gamma = gamma_values[config];
-            interaction_config_01.distance = 1.0;
-            interaction_config_01.expected_nb_interactions =
-                nb_interactions01[config];
-
-            auto& interaction_config_02 =
-                strauss.add_interaction( "interaction_02" );
-            interaction_config_02.set_names = { "set02" };
-            interaction_config_02.gamma = 1.;
-            interaction_config_02.distance = 2.0;
-            interaction_config_02.expected_nb_interactions =
-                nb_interactions02[config];
+            strauss.add_interaction( { "set01", "set02", "set03" },
+                gamma_values[config], 1.0, nb_interactions01[config], true );
+            strauss.add_interaction(
+                { "set02" }, 1.0, 2.0, nb_interactions02[config], true );
 
             // --- Pairwise interactions
             // 1. Intra-type (repulsion within same set)
 
             // run simulation
-            auto context = build_strauss_process( strauss );
-            geode::SimulationRunner< geode::Point2D > runner{ std::move(
-                context ) };
+            geode::SimulationRunner< geode::Point2D > runner{
+                strauss.build_simulation_context()
+            };
 
             geode::SimulationConfigurator sim_config;
             sim_config.realizations = 2000;
@@ -172,12 +144,8 @@ namespace
             sim_config.printer = printer_config;
 
             auto statistic_tracker = runner.run( engine, sim_config );
-
-            const auto targeted_statistics_descriptors =
-                geode::build_strauss_targeted_stat( strauss );
             geode::TargetStatistics target_stats{ runner.model(),
-                targeted_statistics_descriptors };
-
+                strauss.expected_statistics() };
             geode::statistics::validate( statistic_tracker, target_stats );
         }
         // NOLINTEND(*-magic-numbers)
@@ -193,7 +161,7 @@ int main()
         geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
         test_single_type_strauss();
-        // test_multitype_strauss();
+        test_multitype_strauss();
         return 0;
     }
     catch( ... )

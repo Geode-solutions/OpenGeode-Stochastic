@@ -60,7 +60,7 @@ namespace geode
                 return 0.0;
             }
             return this->contribution(
-                feature_->evaluate( new_object.object, this->domain() ) );
+                feature_->evaluate( new_object.object ) );
         }
 
         [[nodiscard]] double delta_log_remove(
@@ -71,8 +71,8 @@ namespace geode
             {
                 return 0.0;
             }
-            return this->contribution( -feature_->evaluate(
-                state.get_object( object_id ), this->domain() ) );
+            return this->contribution(
+                -feature_->evaluate( state.get_object( object_id ) ) );
         }
 
         [[nodiscard]] double delta_log_change(
@@ -85,9 +85,8 @@ namespace geode
                 return 0.0;
             }
             double delta =
-                feature_->evaluate( new_object.object, this->domain() )
-                - feature_->evaluate(
-                    state.get_object( old_object_id ), this->domain() );
+                feature_->evaluate( new_object.object )
+                - feature_->evaluate( state.get_object( old_object_id ) );
             return this->contribution( delta );
         }
 

@@ -44,22 +44,24 @@ namespace
 
         for( const auto config : geode::Range{ birth_ratio.size() } )
         {
-            geode::PoissonProcessDescription< geode::Point2D > poisson;
-            poisson.domain = { geode::Point2D{ { 0, 0 } },
-                geode::Point2D{ { 10, 10 } }, 0. };
-            auto& set_config = poisson.add_set( "set_A" );
-            set_config.lambda = 0.3;
-            set_config.expected_nb_objects = 30;
-            set_config.birth_ratio = birth_ratio[config];
-            set_config.death_ratio = 1.0;
-            set_config.change_ratio = change_ratio[config];
+            geode::SpatialDomainConfig< 2 > domain;
+            domain.min_point = geode::Point2D{ { 0, 0 } };
+            domain.max_point = geode::Point2D{ { 10, 10 } };
+            domain.buffer_size = 0.;
 
-            auto simulation_context = build_poisson_process( poisson );
-            geode::SimulationRunner< geode::Point2D > runner{ std::move(
-                simulation_context ) };
+            geode::PoissonProcessBuilder< geode::Point2D > poisson;
+            poisson.set_domain( domain );
+
+            auto& set_config = poisson.add_set( "set_A", 0.3, 30 );
+            set_config.dynamics.birth_ratio = birth_ratio[config];
+            set_config.dynamics.death_ratio = 1.0;
+            set_config.dynamics.change_ratio = change_ratio[config];
+
+            geode::SimulationRunner< geode::Point2D > runner{
+                poisson.build_simulation_context()
+            };
 
             // run simulation
-
             geode::SimulationConfigurator sim_config;
             sim_config.realizations = 2000;
             sim_config.metropolis_hasting_steps = 100;
@@ -72,12 +74,8 @@ namespace
             sim_config.printer = printer_config;
 
             auto statistic_tracker = runner.run( engine, sim_config );
-
-            const auto targeted_statistics_descriptors =
-                build_poisson_targeted_stat( poisson );
             geode::TargetStatistics target_stats{ runner.model(),
-                targeted_statistics_descriptors };
-
+                poisson.expected_statistics() };
             geode::statistics::validate( statistic_tracker, target_stats );
         }
         // NOLINTEND(*-magic-numbers)
@@ -93,39 +91,33 @@ namespace
         engine.set_seed( "@mh-test-POISSON-multi@" );
 
         // NOLINTBEGIN(*-magic-numbers)
-        geode::PoissonProcessDescription< geode::Point2D > poisson;
-        poisson.domain = { geode::Point2D{ { 0, 0 } },
-            geode::Point2D{ { 10, 10 } }, 0. };
-        auto& set_config_01 = poisson.add_set( "set01" );
-        set_config_01.lambda = 0.1;
-        set_config_01.expected_nb_objects = 10;
-        set_config_01.birth_ratio = 2.0;
-        set_config_01.death_ratio = 3.0;
-        set_config_01.change_ratio = 1.0;
+        geode::SpatialDomainConfig< 2 > domain;
+        domain.min_point = geode::Point2D{ { 0, 0 } };
+        domain.max_point = geode::Point2D{ { 10, 10 } };
+        domain.buffer_size = 0.;
 
-        auto& set_config_02 = poisson.add_set( "set02" );
-        set_config_02.lambda = 0.4;
-        set_config_01.expected_nb_objects = 40;
-        set_config_02.birth_ratio = 3.0;
-        set_config_02.death_ratio = 0.5;
-        set_config_02.change_ratio = 1.0;
+        geode::PoissonProcessBuilder< geode::Point2D > poisson;
+        poisson.set_domain( domain );
 
-        auto& set_config_03 = poisson.add_set( "set03" );
-        set_config_03.lambda = 0.3;
-        set_config_01.expected_nb_objects = 30;
-        set_config_03.birth_ratio = 4.0;
-        set_config_03.death_ratio = 1.0;
-        set_config_03.change_ratio = 1.0;
+        auto& set_config = poisson.add_set( "set01", 0.1, 10 );
+        geode_unused( set_config );
 
-        auto context = build_poisson_process( poisson );
-        geode::SimulationRunner< geode::Point2D > runner{ std::move(
-            context ) };
+        auto& set_config_02 = poisson.add_set( "set02", 0.4, 40 );
+        geode_unused( set_config_02 );
+
+        auto& set_config_03 = poisson.add_set( "set03", 0.3, 30 );
+        geode_unused( set_config_03 );
+
+        geode::SimulationRunner< geode::Point2D > runner{
+            poisson.build_simulation_context()
+        };
 
         // run simulation
         geode::SimulationConfigurator sim_config;
         sim_config.realizations = 2000;
         sim_config.metropolis_hasting_steps = 100;
         sim_config.burn_in_steps = 1000;
+        // NOLINTEND(*-magic-numbers)
 
         geode::SimulationPrinterConfigurator printer_config;
         printer_config.output_folder = absl::StrCat(
@@ -133,13 +125,8 @@ namespace
         sim_config.printer = printer_config;
 
         auto statistic_tracker = runner.run( engine, sim_config );
-
-        // NOLINTEND(*-magic-numbers)
-
-        const auto targeted_statistics_descriptors =
-            build_poisson_targeted_stat( poisson );
         geode::TargetStatistics target_stats{ runner.model(),
-            targeted_statistics_descriptors };
+            poisson.expected_statistics() };
         geode::statistics::validate( statistic_tracker, target_stats );
 
         geode::Logger::info( "--> SUCCESS!" );

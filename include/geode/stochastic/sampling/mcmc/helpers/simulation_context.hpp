@@ -34,6 +34,7 @@
 
 #include <geode/stochastic/sampling/direct/object_set_sampler/object_set_sampler.hpp>
 #include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
+#include <geode/stochastic/sampling/direct/object_set_sampler/segment_set_sampler.hpp>
 
 #include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
 

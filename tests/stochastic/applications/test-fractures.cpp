@@ -56,8 +56,8 @@ namespace
         fset.sampler.azimuth.max_value = 10.;
 
         fset.p20 = 0.05;
-        fset.p21 = 200;
-        fset.minimal_spacing = 1.;
+        fset.p21 = 10;
+        // fset.minimal_spacing = 1.;
 
         // observed fractures
         fset.observed_fractures.push_back( { geode::Point2D{ { 0.0, 15. } },
@@ -148,7 +148,7 @@ namespace
         fset_02.sampler.azimuth.kappa = 1.;
 
         fset_02.p20 = 0.05;
-        fset_02.p21 = 200;
+        // fset_02.p21 = 200;
         fset_02.minimal_spacing = 2.;
 
         fnet_desc.add_x_node_monitoring( 0.3 );
@@ -164,7 +164,7 @@ namespace
 
         geode::SimulationPrinterConfigurator printer_config;
         printer_config.output_folder = absl::StrCat(
-            printer_config.output_folder, "/sim_one_fracture_set_test" );
+            printer_config.output_folder, "/sim_two_fracture_set_test" );
         sim_config.printer = printer_config;
 
         auto statistic_tracker = runner.run( engine, sim_config );

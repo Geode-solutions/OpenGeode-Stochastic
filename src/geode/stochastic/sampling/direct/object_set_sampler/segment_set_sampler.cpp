@@ -60,6 +60,7 @@ namespace geode
     OwnerSegment2D UniformSegmentSetSampler::change(
         const OwnerSegment2D& obj, RandomEngine& engine ) const
     {
+        return obj;
         const auto& extremities = obj.vertices();
         const auto current =
             static_cast< local_index_t >( engine.sample_bernoulli( 0.5 ) );

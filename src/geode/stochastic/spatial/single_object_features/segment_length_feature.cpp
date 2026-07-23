@@ -105,6 +105,13 @@ namespace geode
     }
 
     double SegmentLengthInsideBoxFeature::evaluate(
+        const OwnerSegment2D& segment ) const
+    {
+        const auto length = segment.length();
+        return inv_length_ * length;
+    }
+
+    double SegmentLengthInsideBoxFeature::evaluate(
         const OwnerSegment2D& segment, const SpatialDomain< 2 >& domain ) const
     {
         auto seg_extremities = segment.vertices();

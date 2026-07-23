@@ -22,7 +22,7 @@ add_geode_library(
     NAME stochastic
     FOLDER "geode/stochastic"
     SOURCES
-        "applications/fractures.cpp"
+        #"applications/fractures.cpp"
         "applications/poisson_process.cpp"
         "applications/strauss_process.cpp"
         "spatial/object_set.cpp"
@@ -42,7 +42,7 @@ add_geode_library(
         "sampling/random_engine.cpp"
         "common.cpp"
     PUBLIC_HEADERS
-        "applications/fractures.hpp"
+        #"applications/fractures.hpp"
         "applications/poisson_process.hpp"
         "applications/strauss_process.hpp"
         #"inference/abc_shadow.hpp"

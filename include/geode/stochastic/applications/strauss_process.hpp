@@ -29,56 +29,34 @@
 
 namespace geode
 {
+
     template < typename ObjectType >
-    struct StraussInteractionDescription
+    class StraussProcessBuilder
     {
-        std::string interaction_name;
+    public:
+        void set_domain(
+            const SpatialDomainConfig< ObjectType::dim >& domain_cfg );
 
-        std::vector< std::string > set_names;
+        [[nodiscard]] ObjectSetDefinition< ObjectType >& add_set(
+            std::string_view name,
+            double lambda,
+            std::optional< double > expected_count = std::nullopt );
 
-        double gamma{ 1. };
-        double distance{ 0. };
+        void add_interaction(
+            const std::vector< std::string >& interacting_set_names,
+            double gamma,
+            double distance_threshold,
+            std::optional< double > expected_count,
+            bool intra_set_interaction = true );
 
-        bool include_intra_set{ true };
-        bool include_inter_set{ false };
+        [[nodiscard]] SimulationContext< ObjectType >
+            build_simulation_context() const;
 
-        std::optional< double > expected_nb_interactions;
+        [[nodiscard]] const std::vector< TargetStatisticConfig >&
+            expected_statistics() const;
+
+    private:
+        SimulationContextConfig< ObjectType > context_cfg_;
+        std::vector< geode::TargetStatisticConfig > expected_stats_;
     };
-
-    template < typename ObjectType >
-    struct StraussProcessDescription
-    {
-        SpatialDomainConfig< ObjectType::dim > domain;
-
-        std::vector< PoissonSetDescription< ObjectType > > sets;
-
-        std::vector< StraussInteractionDescription< ObjectType > > interactions;
-
-        PoissonSetDescription< ObjectType >& add_set(
-            absl::string_view set_name )
-        {
-            auto& set = sets.emplace_back();
-            set.set_name = set_name;
-            set.density_name = absl::StrCat( set_name, "_density" );
-
-            return set;
-        }
-
-        StraussInteractionDescription< ObjectType >& add_interaction(
-            absl::string_view interaction_name )
-        {
-            auto& interaction = interactions.emplace_back();
-            interaction.interaction_name = interaction_name;
-            return interaction;
-        }
-    };
-
-    template < typename ObjectType >
-    SimulationContext< ObjectType > build_strauss_process(
-        const StraussProcessDescription< ObjectType >& description );
-
-    template < typename ObjectType >
-    std::vector< geode::TargetStatisticConfig > build_strauss_targeted_stat(
-        const StraussProcessDescription< ObjectType >& description );
-
 } // namespace geode

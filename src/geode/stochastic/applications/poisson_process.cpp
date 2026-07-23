@@ -25,71 +25,57 @@
 
 namespace geode
 {
-    using PoissonDensityDescription = geode::SingleObjectTermConfig;
+    template < typename ObjectType >
+    void PoissonProcessBuilder< ObjectType >::set_domain(
+        const SpatialDomainConfig< ObjectType::dim >& domain_cfg )
+    {
+        context_cfg_.domain = domain_cfg;
+    };
 
     template < typename ObjectType >
-    SimulationContext< ObjectType > build_poisson_process(
-        const PoissonProcessDescription< ObjectType >& desc )
+    ObjectSetDefinition< ObjectType >&
+        PoissonProcessBuilder< ObjectType >::add_set( std::string_view name,
+            double lambda,
+            std::optional< double > expected_count )
     {
-        SimulationContextConfig< ObjectType > config;
+        auto& object_set_cfg = context_cfg_.add_set( name );
 
-        config.domain = desc.domain;
+        SingleObjectTermConfig density;
 
-        for( const auto& set_desc : desc.sets )
+        density.term_name = absl::StrCat( name, "_density" );
+        density.object_set_names = { std::string( name ) };
+        density.lambda = lambda;
+        density.object_feature = ObjectInDomainFeatureConfig{};
+        if( expected_count )
         {
-            auto& set = config.add_set( set_desc.set_name );
-
-            set.sampler = set_desc.sampler;
-
-            set.dynamics.birth_ratio = set_desc.birth_ratio;
-            set.dynamics.death_ratio = set_desc.death_ratio;
-            set.dynamics.change_ratio = set_desc.change_ratio;
-
-            PoissonDensityDescription density;
-
-            density.term_name = set_desc.density_name;
-            density.object_set_names = { set_desc.set_name };
-            density.lambda = set_desc.lambda;
-            density.object_feature = ObjectInDomainFeatureConfig{};
-
-            config.model.terms.emplace_back( std::move( density ) );
+            expected_stats_.push_back( geode::TargetStatisticConfig{
+                density.term_name, *expected_count } );
         }
+        context_cfg_.model.terms.emplace_back( std::move( density ) );
 
-        return build_simulation_context( config );
-    }
-
-    template opengeode_stochastic_stochastic_api SimulationContext< Point2D >
-        build_poisson_process< Point2D >(
-            const PoissonProcessDescription< Point2D >& );
-    template opengeode_stochastic_stochastic_api SimulationContext< Point3D >
-        build_poisson_process< Point3D >(
-            const PoissonProcessDescription< Point3D >& );
+        return object_set_cfg;
+    };
 
     template < typename ObjectType >
-    std::vector< geode::TargetStatisticConfig > build_poisson_targeted_stat(
-        const PoissonProcessDescription< ObjectType >& description )
+    SimulationContext< ObjectType >
+        PoissonProcessBuilder< ObjectType >::build_simulation_context() const
     {
-        std::vector< geode::TargetStatisticConfig > targets;
+        auto context =
+            geode::build_simulation_context< ObjectType >( context_cfg_ );
+        return context;
+    };
 
-        for( const auto& set_desc : description.sets )
-        {
-            if( !set_desc.expected_nb_objects )
-            {
-                continue;
-            }
-            targets.push_back( geode::TargetStatisticConfig{
-                set_desc.density_name, *set_desc.expected_nb_objects } );
-        }
+    template < typename ObjectType >
+    const std::vector< TargetStatisticConfig >&
+        PoissonProcessBuilder< ObjectType >::expected_statistics() const
+    {
+        return expected_stats_;
+    };
+    template class opengeode_stochastic_stochastic_api
+        PoissonProcessBuilder< Point2D >;
+    template class opengeode_stochastic_stochastic_api
+        PoissonProcessBuilder< Point3D >;
+    template class opengeode_stochastic_stochastic_api
+        PoissonProcessBuilder< geode::OwnerSegment2D >;
 
-        return targets;
-    }
-
-    template opengeode_stochastic_stochastic_api
-        std::vector< geode::TargetStatisticConfig >
-        build_poisson_targeted_stat< Point2D >(
-            const PoissonProcessDescription< Point2D >& );
-    template opengeode_stochastic_stochastic_api
-        std::vector< geode::TargetStatisticConfig >
-        build_poisson_targeted_stat< Point3D >(
-            const PoissonProcessDescription< Point3D >& );
 } // namespace geode

@@ -95,8 +95,7 @@ namespace geode
             intensity.term_name = fset_desc.intensity_name();
             intensity.object_set_names = { fset_desc.fset_name };
             intensity.lambda = fset_desc.p21;
-            constexpr double CARACTERISTIC_LENGTH = 1.0; // mean fracture
-                                                         // length?
+            constexpr double CARACTERISTIC_LENGTH = 1.0;
             intensity.object_feature =
                 SegmentLengthInsideBoxFeatureConfig{ CARACTERISTIC_LENGTH };
             simulation_config.model.terms.emplace_back(
