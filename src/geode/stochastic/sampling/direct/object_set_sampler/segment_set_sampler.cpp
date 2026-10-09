@@ -46,9 +46,9 @@ namespace
                    != geode::Gaussian::distribution_type_static();
         if( !bounded )
         {
-            geode::Logger::warn( "[UniformSegmentSetSampler] Unbounded "
-                                 "length distribution: segments longer than "
-                                 "the buffer size (",
+            geode::Logger::warning( "[UniformSegmentSetSampler] Unbounded "
+                                    "length distribution: segments longer than "
+                                    "the buffer size (",
                 domain.buffer_size(),
                 ") bias the statistics near the domain boundary." );
             return;
@@ -171,8 +171,7 @@ namespace geode
         // proposal density cancels with the reference measure density.
         const auto& anchor = obj.vertices()[0];
         const auto length = DoubleSampler::sample( engine, length_ );
-        return OwnerSegment2D{ anchor,
-            anchor + obj.normalized_direction() * length };
+        return OwnerSegment2D{ anchor, anchor + obj.direction() * length };
     }
 
     bool UniformSegmentSetSampler::is_valid_object(
