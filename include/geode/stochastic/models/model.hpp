@@ -130,12 +130,20 @@ namespace geode
         GibbsEnergy< ObjectType > energy_;
     };
 
+    /// Throws if the model is not well defined (not integrable): an attractive
+    /// pairwise term (gamma > 1) requires each of its object sets to have an
+    /// intra-set hard-core (gamma = 0) at a strictly positive distance.
+    opengeode_stochastic_stochastic_api void check_model_integrability(
+        const ModelConfig& config );
+
     template < typename ObjectType >
     std::unique_ptr< Model< ObjectType > > build_model(
         const ModelConfig& config,
         const ObjectSets< ObjectType >& object_sets,
         const SpatialDomain< ObjectType::dim >& domain )
     {
+        check_model_integrability( config );
+
         EnergyTermCollection< ObjectType > collection;
 
         for( const auto& term_cfg : config.terms )

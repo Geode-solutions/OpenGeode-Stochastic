@@ -27,6 +27,8 @@
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_printer.hpp>
 #include <geode/stochastic/sampling/mcmc/simulation_runner.hpp>
 
+#include <geode/stochastic/inference/statistics_tools.hpp>
+
 #include <geode/geometry/basic_objects/segment.hpp>
 
 namespace geode
@@ -77,7 +79,22 @@ namespace geode
                 pybind11::arg( "engine" ), pybind11::arg( "config" ) )
 
             .def( "state_realization", &Runner::state_realization,
-                pybind11::return_value_policy::reference_internal );
+                pybind11::return_value_policy::reference_internal )
+
+            .def(
+                "validate_statistics",
+                []( const Runner& self,
+                    const geode::StatisticsTracker< object_type >& tracker,
+                    const std::vector< geode::TargetStatisticConfig >&
+                        targets ) {
+                    const geode::TargetStatistics< object_type > target_stats{
+                        self.model(), targets
+                    };
+                    geode::statistics::validate( tracker, target_stats );
+                },
+                pybind11::arg( "tracker" ), pybind11::arg( "targets" ),
+                "Raise if a tracked statistic mean is out of its target "
+                "tolerance." );
     }
 
     void define_simulation_configurator_and_runner( pybind11::module_& module )

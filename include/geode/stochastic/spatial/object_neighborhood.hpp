@@ -53,8 +53,18 @@ namespace geode
         }
         bool operator<( const ObjectId& other ) const noexcept
         {
-            return index < other.index
-                   && ( set_id < other.set_id || set_id == other.set_id );
+            // strict total order (lexicographic on set, fixed, index): each
+            // pair of objects is ordered, which the pairwise terms rely on to
+            // count each interaction once
+            if( !( set_id == other.set_id ) )
+            {
+                return set_id < other.set_id;
+            }
+            if( fixed != other.fixed )
+            {
+                return !fixed;
+            }
+            return index < other.index;
         }
     };
 

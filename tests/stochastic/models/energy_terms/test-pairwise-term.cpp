@@ -68,7 +68,7 @@ void test_pairwise_term( const geode::PairwiseTermConfig& term_config,
 
     // --- total_log
     double total = term->total_log( pattern );
-    // Only VOI-anchored interactions counted in statistic: p1-p2
+    // all the pairs of the extended domain: p2-p3 (p1-p2 too far)
     geode::OpenGeodeStochasticStochasticException::test(
         total == term->contribution( 1 ), "[PairwiseTerm] total_log wrong" );
 
@@ -85,10 +85,10 @@ void test_pairwise_term( const geode::PairwiseTermConfig& term_config,
     geode::Point2D p_buffer{ { 1.2, 1.2 } };
     geode::ObjectRef< geode::Point2D > buffer_ref{ p_buffer, set_id };
     delta = term->delta_log_add( pattern, buffer_ref );
-    // energy counts interactions: buffer interacts with p2,p3 (p3 is in
-    // buffer) → 2 pairs
+    // energy counts all the interactions, including buffer-buffer pairs:
+    // interacts with p2 and p3 (p3 is in the buffer) → 2 pairs
     geode::OpenGeodeStochasticStochasticException::test(
-        delta == term->contribution( 1 ),
+        delta == term->contribution( 2 ),
         "[PairwiseTerm] delta_log_add buffer wrong" );
 
     // --- delta_change VOI → VOI
@@ -112,9 +112,9 @@ void test_pairwise_term( const geode::PairwiseTermConfig& term_config,
 
     // --- delta_change VOI → buffer
     delta = term->delta_log_change( pattern, obj_id, buffer_ref );
-    // p1 → buffer: p1 old interaction = 0
-    // p4  → p_buffer interaction with p2 +1
-    expected_delta = term->contribution( 1 );
+    // p1 → buffer: p1 old interactions = 0
+    // p_buffer interactions with p2 and p3 (buffer-buffer pair) = +2
+    expected_delta = term->contribution( 2 );
     geode::OpenGeodeStochasticStochasticException::test(
         delta == expected_delta,
         "[PairwiseTerm] delta_log_change VOI->buffer wrong" );
@@ -126,11 +126,11 @@ void test_pairwise_term( const geode::PairwiseTermConfig& term_config,
         delta == term->contribution( 0 ),
         "[PairwiseTerm] delta_log_remove VOI wrong" );
 
-    // --- statistic (only anchored objects in VOI)
+    // --- statistic (interactions located in the VOI)
     double stat = term->statistic( pattern );
-    // p1,p2 anchored → 1 pair
+    // p2-p3 interaction located at (1.1, 1.1), outside the VOI → 0
     geode::OpenGeodeStochasticStochasticException::test(
-        stat == 1., "[PairwiseTerm] statistic wrong" );
+        stat == 0., "[PairwiseTerm] statistic wrong" );
 }
 
 void test_pairwise_term_zero_gamma(
@@ -190,11 +190,55 @@ void test_pairwise_term_zero_gamma(
         "[PairwiseTerm] delta_log_remove VOI with "
         "gamma<epsilon should be infinite" );
 
-    // --- statistic (only anchored objects in VOI)
+    // --- statistic (interactions located in the VOI)
     double stat = term->statistic( pattern );
-    // p1,p2 anchored → 1 pair
+    // p2-p3 interaction located at (1.1, 1.1), outside the VOI → 0
     geode::OpenGeodeStochasticStochasticException::test(
-        stat == 1., "[PairwiseTerm] statistic wrong" );
+        stat == 0., "[PairwiseTerm] statistic wrong" );
+}
+
+double x_node_statistic( const std::vector< geode::OwnerSegment2D >& segments )
+{
+    geode::ObjectSets< geode::OwnerSegment2D > pattern;
+    auto set_id = pattern.add_set( object_set_name );
+    for( auto segment : segments )
+    {
+        pattern.add_object( std::move( segment ), set_id, false );
+    }
+    geode::PairwiseTermConfig config;
+    config.term_name = "x_node";
+    config.gamma = 0.5;
+    config.object_set_names_interactions = { { object_set_name,
+        object_set_name } };
+    config.interaction_config = geode::MinimalDistanceCutoffConfig{ 0. };
+    const auto domain = init_domain();
+    auto term = geode::build_energy_term< geode::OwnerSegment2D >(
+        config, pattern, domain );
+    return term->statistic( pattern );
+}
+
+void test_segment_intersection_statistic()
+{
+    // VOI = [0, 1]^2: an intersection is observed if the intersection point
+    // is in the VOI, wherever the segments are anchored (first vertex)
+
+    // both segments anchored in the buffer, crossing at (0.5, 0.5) in the VOI
+    const auto crossing_inside = x_node_statistic(
+        { geode::OwnerSegment2D{
+              geode::Point2D{ { -0.2, 0.5 } }, geode::Point2D{ { 1.2, 0.5 } } },
+            geode::OwnerSegment2D{ geode::Point2D{ { 0.5, -0.2 } },
+                geode::Point2D{ { 0.5, 1.2 } } } } );
+    geode::OpenGeodeStochasticStochasticException::test( crossing_inside == 1.,
+        "[PairwiseTerm] intersection inside the VOI should be counted" );
+
+    // one segment anchored in the VOI, crossing at (1.2, 1.2) outside the VOI
+    const auto crossing_outside = x_node_statistic(
+        { geode::OwnerSegment2D{
+              geode::Point2D{ { 0.9, 0.9 } }, geode::Point2D{ { 1.4, 1.4 } } },
+            geode::OwnerSegment2D{ geode::Point2D{ { 1.4, 1.0 } },
+                geode::Point2D{ { 1.0, 1.4 } } } } );
+    geode::OpenGeodeStochasticStochasticException::test( crossing_outside == 0.,
+        "[PairwiseTerm] intersection outside the VOI should not be counted" );
 }
 
 int main()
@@ -226,6 +270,8 @@ int main()
 
         pw_interaction_cfg.gamma = 0.9999 * geode::GLOBAL_EPSILON;
         test_pairwise_term_zero_gamma( pw_interaction_cfg, pattern, domain );
+
+        test_segment_intersection_statistic();
 
         geode::Logger::info( "TEST SUCCESS" );
         return 0;

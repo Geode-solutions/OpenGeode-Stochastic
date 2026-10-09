@@ -76,12 +76,12 @@ namespace
                     ? -std::log( term_config.lambda )
                     : std::numeric_limits< double >::infinity() );
 
-        // Total clipped length inside domain:
-        // s1: 1.0
-        // s2: 1.0
-        // s_buffer: 0.0
-        const double total_length = 1.5;
+        // Energy: full length of all the segments of the extended domain
+        const double total_length = 3.0;
         const double scaled_total = total_length / characteristic_length;
+        // Statistic: length clipped inside the VOI
+        // s1: 1.0, s2: 0.5, s_buffer: 0.0
+        const double clipped_length = 1.5;
 
         const double expected_total =
             ( term_config.lambda > 0.
@@ -92,6 +92,13 @@ namespace
         double total = term->total_log( pattern );
         geode::OpenGeodeStochasticStochasticException::test(
             total == expected_total, "[IntensityTerm] total_log wrong" );
+
+        // --- Statistic
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::fabs( term->statistic( pattern )
+                       - clipped_length / characteristic_length )
+                < geode::GLOBAL_EPSILON,
+            "[IntensityTerm] statistic wrong" );
 
         // --- Delta add (segment fully inside)
         geode::OwnerSegment2D s_inside{ geode::Point2D{ { 0.0, -0.5 } },

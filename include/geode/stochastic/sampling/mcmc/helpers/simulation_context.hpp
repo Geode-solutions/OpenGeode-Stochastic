@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <deque>
+
 #include <geode/stochastic/common.hpp>
 
 #include <geode/stochastic/spatial/object_sets.hpp>
@@ -92,7 +94,8 @@ namespace geode
 
         SpatialDomainConfig< ObjectType::dim > domain;
 
-        std::vector< ObjectSetDefinition< ObjectType > > sets;
+        // deque: references returned by add_set stay valid when adding sets
+        std::deque< ObjectSetDefinition< ObjectType > > sets;
 
         geode::ModelConfig model;
     };

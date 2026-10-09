@@ -30,6 +30,16 @@
 
 namespace
 {
+    constexpr double DOMAIN_SIZE{ 10. };
+
+    // Poisson process (gamma = 1) of intensity lambda: expected number of
+    // pairs closer than r whose middle is in the domain V (the buffer is
+    // larger than r / 2): lambda^2 |V| pi r^2 / 2
+    double expected_poisson_pairs( double lambda, double r )
+    {
+        return lambda * lambda * DOMAIN_SIZE * DOMAIN_SIZE * M_PI * r * r / 2.;
+    }
+
     void test_single_type_strauss()
     {
         geode::Logger::info(
@@ -40,13 +50,16 @@ namespace
 
         // NOLINTBEGIN(*-magic-numbers)
         std::array< double, 5 > gamma_values{ 0, 0.3, 0.5, 0.7, 1.0 };
-        std::array< double, 5 > nb_points{ 20.8, 25.8, 29.9, 35.5, 50. };
-        std::array< double, 5 > nb_interactions{ 0, 4.7, 9.2, 16.5, 42.8 };
+        // gamma < 1: reference values from long simulations
+        // gamma = 1: Poisson process, exact values
+        std::array< double, 5 > nb_points{ 21.5, 26.3, 30.2, 35.6, 50. };
+        std::array< double, 5 > nb_interactions{ 0, 4.1, 8.1, 14.4,
+            expected_poisson_pairs( 0.5, 1. ) };
         for( const auto config : geode::Range{ gamma_values.size() } )
         {
             geode::SpatialDomainConfig< 2 > domain;
             domain.min_point = geode::Point2D{ { 0, 0 } };
-            domain.max_point = geode::Point2D{ { 10, 10 } };
+            domain.max_point = geode::Point2D{ { DOMAIN_SIZE, DOMAIN_SIZE } };
             domain.buffer_size = 2.;
 
             geode::StraussProcessBuilder< geode::Point2D > strauss;
@@ -94,15 +107,22 @@ namespace
         // NOLINTBEGIN(*-magic-numbers)
         geode::SpatialDomainConfig< 2 > domain;
         domain.min_point = geode::Point2D{ { 0, 0 } };
-        domain.max_point = geode::Point2D{ { 10, 10 } };
+        domain.max_point = geode::Point2D{ { DOMAIN_SIZE, DOMAIN_SIZE } };
         domain.buffer_size = 2.;
 
         std::array< double, 3 > gamma_values{ 0, 0.5, 1.0 };
-        std::array< double, 3 > nb_points01{ 7.5, 8.6, 10.0 };
-        std::array< double, 3 > nb_points02{ 18.5, 25.4, 40.0 };
-        std::array< double, 3 > nb_points03{ 16.0, 21.0, 30. };
-        std::array< double, 3 > nb_interactions01{ 0, 11.5, 43.2 };
-        std::array< double, 3 > nb_interactions02{ 26.3, 49.5, 116.7 };
+        // gamma < 1: reference values from long simulations
+        // gamma = 1: Poisson processes, exact values
+        std::array< double, 3 > nb_points01{ 7.7, 8.7, 10.0 };
+        std::array< double, 3 > nb_points02{ 19.2, 26.0, 40.0 };
+        std::array< double, 3 > nb_points03{ 16.5, 21.1, 30. };
+        std::array< double, 3 > nb_interactions01{ 0, 10.4,
+            expected_poisson_pairs( 0.1, 1. )
+                + expected_poisson_pairs( 0.4, 1. )
+                + expected_poisson_pairs( 0.3, 1. ) };
+        // set02 pairs (gamma = 1) are only modified by the first interaction
+        std::array< double, 3 > nb_interactions02{ 18.8, 38.4,
+            expected_poisson_pairs( 0.4, 2. ) };
         for( const auto config : geode::Range{ gamma_values.size() } )
         {
             geode::StraussProcessBuilder< geode::Point2D > strauss;
@@ -152,6 +172,31 @@ namespace
 
         geode::Logger::info( "--> SUCCESS!" );
     }
+
+    void test_attractive_strauss_is_rejected()
+    {
+        geode::Logger::info( "TEST - STRAUSS PROCESS WITH GAMMA > 1" );
+
+        // NOLINTBEGIN(*-magic-numbers)
+        geode::StraussProcessBuilder< geode::Point2D > strauss;
+        auto& set_config = strauss.add_set( "set_A", 0.5 );
+        geode_unused( set_config );
+        bool rejected{ false };
+        try
+        {
+            strauss.add_interaction( { "set_A" }, 2., 1.0, std::nullopt );
+        }
+        catch( const geode::OpenGeodeException& )
+        {
+            rejected = true;
+        }
+        // NOLINTEND(*-magic-numbers)
+        geode::OpenGeodeStochasticStochasticException::test( rejected,
+            "[Strauss] attractive interaction (gamma > 1) should be "
+            "rejected" );
+
+        geode::Logger::info( "--> SUCCESS!" );
+    }
 } // namespace
 
 int main()
@@ -162,6 +207,7 @@ int main()
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
         test_single_type_strauss();
         test_multitype_strauss();
+        test_attractive_strauss_is_rejected();
         return 0;
     }
     catch( ... )

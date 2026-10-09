@@ -45,10 +45,17 @@ namespace geode
         {
         }
 
+        /// Energy of the whole configuration: all the objects of the extended
+        /// domain contribute (consistent with the delta_log_* functions).
         [[nodiscard]] double total_log(
             const ObjectSets< ObjectType >& state ) const override
         {
-            return this->contribution( statistic( state ) );
+            double sum = 0.0;
+            this->for_each_object_in_sets( state, this->impacted_set_ids(),
+                [&state, &sum, this]( const ObjectId& obj_id ) {
+                    sum += feature_->evaluate( state.get_object( obj_id ) );
+                } );
+            return this->contribution( sum );
         }
 
         [[nodiscard]] double delta_log_add(

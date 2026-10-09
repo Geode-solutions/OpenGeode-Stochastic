@@ -50,6 +50,11 @@ namespace geode
 
         [[nodiscard]] double neighborhood_searching_distance() const override;
 
+        /// Middle of the object centers
+        [[nodiscard]] Point< Type::dim > location(
+            const ObjectRef< Type >& object_a,
+            const ObjectRef< Type >& object_b ) const override;
+
     protected:
         [[nodiscard]] double compute( const ObjectRef< Type >& object_a,
             const ObjectRef< Type >& object_b ) const override;
@@ -72,6 +77,12 @@ namespace geode
         //    typename PairwiseInteraction< Type >::SCOPE scope );
 
         [[nodiscard]] double neighborhood_searching_distance() const override;
+
+        /// Middle of the closest points (intersection point for crossing
+        /// segments)
+        [[nodiscard]] Point< Type::dim > location(
+            const ObjectRef< Type >& object_a,
+            const ObjectRef< Type >& object_b ) const override;
 
     protected:
         [[nodiscard]] double compute( const ObjectRef< Type >& object_a,

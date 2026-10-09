@@ -61,11 +61,12 @@ namespace
     void test_invariance( const std::vector< double >& means )
     {
         constexpr double tolerance = 0.001;
-        for( const auto id : geode::Range{ means.size() - 1 } )
+        for( const auto mean : means )
         {
             geode::OpenGeodeStochasticStochasticException::test(
-                std::abs( means[id] - lambda ) < tolerance,
-                "[Buffer] - Spatial buffer introduces a bias." );
+                std::abs( mean - lambda ) < tolerance,
+                "[Buffer] - Spatial buffer introduces a bias, density = ",
+                mean );
         }
     }
 
@@ -94,6 +95,7 @@ namespace
 
             auto& set_config =
                 poisson.add_set( "points", lambda, std::nullopt );
+            geode_unused( set_config );
 
             auto stats = run_poisson( engine, poisson );
             means.push_back( stats / area );
@@ -119,7 +121,8 @@ namespace
 
         // NOLINTBEGIN(*-magic-numbers)
 
-        for( const double buffer : { 0.0, 10., 20.0, 50.0 } )
+        // buffer >= maximal segment length (5)
+        for( const double buffer : { 5.0, 10., 20.0, 50.0 } )
         {
             geode::SpatialDomainConfig< 2 > domain;
             domain.min_point = geode::Point2D{ { 0., 0. } };

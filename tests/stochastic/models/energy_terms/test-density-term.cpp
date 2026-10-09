@@ -70,13 +70,18 @@ namespace
                           : std::numeric_limits< double >::infinity() );
         double expected_remove = ( lambda > 0. ? -neg_log_lambda : 0. );
 
-        // --- Total log
+        // --- Total log: all the objects of the extended domain (2 in the
+        // VOI + 1 in the buffer)
         double expected_total =
-            ( lambda > 0. ? neg_log_lambda * 2.
+            ( lambda > 0. ? neg_log_lambda * 3.
                           : std::numeric_limits< double >::infinity() );
         double total = term->total_log( pattern );
         geode::OpenGeodeStochasticStochasticException::test(
             total == expected_total, "[DensityTerm] total_log wrong" );
+
+        // --- Statistic: only the objects anchored in the VOI
+        geode::OpenGeodeStochasticStochasticException::test(
+            term->statistic( pattern ) == 2., "[DensityTerm] statistic wrong" );
 
         // --- Delta add inside VOI
         geode::Point2D p_inside{ { 0.5, 0.5 } };
