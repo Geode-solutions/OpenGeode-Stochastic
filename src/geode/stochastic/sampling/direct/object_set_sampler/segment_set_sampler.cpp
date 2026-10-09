@@ -60,7 +60,8 @@ namespace
             ") must be larger than the maximal segment length (",
             length.max_value.value(),
             "): otherwise segments anchored outside the extended domain and "
-            "crossing the domain are missing." );
+            "crossing the domain are missing. Increase the domain buffer size "
+            "or decrease the maximal segment length." );
     }
 
     geode::Vector2D direction_from_azimuth( double azimuth_rad )
