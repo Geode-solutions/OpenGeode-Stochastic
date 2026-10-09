@@ -49,7 +49,7 @@ namespace geode
             }
             if( min_value == max_value )
             {
-                geode::Logger::warn(
+                geode::Logger::warning(
                     "[Uniform Closed] - check range boundaries definintion [",
                     min_value, ",", max_value, "]." );
                 return true;
