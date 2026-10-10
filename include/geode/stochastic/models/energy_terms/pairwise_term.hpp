@@ -60,7 +60,7 @@ namespace geode
                 [&interaction_weight, &state, this]( const ObjectId& obj_id ) {
                     interaction_weight +=
                         accumulate_interactions_with_neighbors(
-                            obj_id, state, false );
+                            obj_id, state, InteractionScope::extended_domain );
                 } );
             return this->contribution( interaction_weight );
         }
@@ -119,12 +119,21 @@ namespace geode
             this->for_each_object_in_sets( state, this->impacted_set_ids(),
                 [&sum, &state, this]( const ObjectId& cur_obj_id ) {
                     sum += this->accumulate_interactions_with_neighbors(
-                        cur_obj_id, state, true );
+                        cur_obj_id, state, InteractionScope::domain );
                 } );
             return sum;
         }
 
     private:
+        /// Which pairs are counted when summing the interactions
+        enum class InteractionScope
+        {
+            /// all the pairs of the extended domain (buffer included)
+            extended_domain,
+            /// only the pairs whose interaction location is inside the domain
+            domain
+        };
+
         double compute_local_interactions_with_neighbors(
             const ObjectRef< ObjectType >& object_ref,
             std::optional< ObjectId > exclude_id,
@@ -153,12 +162,12 @@ namespace geode
         }
 
         /// Sum of the interactions of an object with its neighbors, each pair
-        /// being counted once. If restricted to the domain, only the
-        /// interactions located inside the domain are counted.
+        /// being counted once. With the domain scope, only the interactions
+        /// located inside the domain are counted.
         double accumulate_interactions_with_neighbors(
             const ObjectId& object_id,
             const ObjectSets< ObjectType >& state,
-            bool restrict_to_domain ) const
+            InteractionScope scope ) const
         {
             const auto impacted_set_it =
                 objectset_adjacency_map_.find( object_id.set_id );
@@ -185,7 +194,7 @@ namespace geode
                 const auto weight =
                     interaction_->evaluate( object_ref, neigh_object );
                 if( weight == 0.
-                    || ( restrict_to_domain
+                    || ( scope == InteractionScope::domain
                          && !this->domain().contains( interaction_->location(
                              object_ref, neigh_object ) ) ) )
                 {

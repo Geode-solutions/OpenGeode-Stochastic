@@ -104,7 +104,8 @@ namespace geode
             this->for_each_object_in_sets( state, this->impacted_set_ids(),
                 [&state, &sum, this]( const ObjectId& obj_id ) {
                     const auto& obj = state.get_object( obj_id );
-                    sum += this->feature_->evaluate( obj, this->domain() );
+                    sum += this->feature_->evaluate_inside_domain(
+                        obj, this->domain() );
                 } );
             return sum;
         }

@@ -35,7 +35,8 @@ namespace geode
 
         [[nodiscard]] double evaluate(
             const OwnerSegment2D& segment ) const override;
-        [[nodiscard]] double evaluate( const OwnerSegment2D& segment,
+        [[nodiscard]] double evaluate_inside_domain(
+            const OwnerSegment2D& segment,
             const SpatialDomain< 2 >& domain ) const override;
 
     private:
