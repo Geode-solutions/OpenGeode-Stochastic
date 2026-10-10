@@ -50,10 +50,18 @@ namespace geode
         {
         }
 
+        /// Energy of the whole configuration: all the pairs of the extended
+        /// domain interact (consistent with the delta_log_* functions).
         [[nodiscard]] double total_log(
             const ObjectSets< ObjectType >& state ) const final
         {
-            const auto interaction_weight = statistic( state );
+            double interaction_weight = 0.0;
+            this->for_each_object_in_sets( state, this->impacted_set_ids(),
+                [&interaction_weight, &state, this]( const ObjectId& obj_id ) {
+                    interaction_weight +=
+                        accumulate_interactions_with_neighbors(
+                            obj_id, state, InteractionScope::extended_domain );
+                } );
             return this->contribution( interaction_weight );
         }
 
@@ -101,6 +109,9 @@ namespace geode
             return this->contribution( delta );
         }
 
+        /// Interactions observed in the domain: pairs of the extended domain
+        /// whose interaction location (e.g. the intersection point of two
+        /// segments) is inside the domain, wherever the objects are anchored.
         [[nodiscard]] double statistic(
             const ObjectSets< ObjectType >& state ) const override
         {
@@ -108,12 +119,21 @@ namespace geode
             this->for_each_object_in_sets( state, this->impacted_set_ids(),
                 [&sum, &state, this]( const ObjectId& cur_obj_id ) {
                     sum += this->accumulate_interactions_with_neighbors(
-                        cur_obj_id, state );
+                        cur_obj_id, state, InteractionScope::domain );
                 } );
             return sum;
         }
 
     private:
+        /// Which pairs are counted when summing the interactions
+        enum class InteractionScope
+        {
+            /// all the pairs of the extended domain (buffer included)
+            extended_domain,
+            /// only the pairs whose interaction location is inside the domain
+            domain
+        };
+
         double compute_local_interactions_with_neighbors(
             const ObjectRef< ObjectType >& object_ref,
             std::optional< ObjectId > exclude_id,
@@ -128,37 +148,34 @@ namespace geode
             const auto neighbors = state.neighbors( object_ref.object,
                 impacted_set_it->second,
                 interaction_->neighborhood_searching_distance(), exclude_id );
+            // All the pairs interact, including the ones fully in the buffer:
+            // the process is defined on the extended domain.
             double sum = 0.0;
             for( const auto& neigh_id : neighbors )
             {
                 ObjectRef< ObjectType > neigh_object{
                     state.get_object( neigh_id ), neigh_id.set_id
                 };
-                if( !is_any_in_domain(
-                        object_ref.object, neigh_object.object ) )
-                {
-                    continue;
-                }
                 sum += interaction_->evaluate( object_ref, neigh_object );
             }
             return sum;
         }
 
+        /// Sum of the interactions of an object with its neighbors, each pair
+        /// being counted once. With the domain scope, only the interactions
+        /// located inside the domain are counted.
         double accumulate_interactions_with_neighbors(
             const ObjectId& object_id,
-            const ObjectSets< ObjectType >& state ) const
+            const ObjectSets< ObjectType >& state,
+            InteractionScope scope ) const
         {
-            const auto& cur_obj = state.get_object( object_id );
-            if( !is_in_domain( cur_obj ) )
-            {
-                return 0.;
-            }
             const auto impacted_set_it =
                 objectset_adjacency_map_.find( object_id.set_id );
             if( impacted_set_it == objectset_adjacency_map_.end() )
             {
                 return 0.;
             }
+            const auto& cur_obj = state.get_object( object_id );
             const auto neighbors = state.neighbors( cur_obj,
                 impacted_set_it->second,
                 interaction_->neighborhood_searching_distance(), object_id );
@@ -166,28 +183,26 @@ namespace geode
             double sum = 0.0;
             for( const auto& neigh_id : neighbors )
             {
-                const auto& neigh_obj = state.get_object( neigh_id );
-                if( neigh_id < object_id && is_in_domain( neigh_obj ) )
+                // pair counted from the smallest object id
+                if( neigh_id < object_id )
                 {
                     continue;
                 }
-                ObjectRef< ObjectType > neigh_object{ neigh_obj,
-                    neigh_id.set_id };
-                sum += interaction_->evaluate( object_ref, neigh_object );
+                ObjectRef< ObjectType > neigh_object{
+                    state.get_object( neigh_id ), neigh_id.set_id
+                };
+                const auto weight =
+                    interaction_->evaluate( object_ref, neigh_object );
+                if( weight == 0.
+                    || ( scope == InteractionScope::domain
+                         && !this->domain().contains( interaction_->location(
+                             object_ref, neigh_object ) ) ) )
+                {
+                    continue;
+                }
+                sum += weight;
             }
             return sum;
-        }
-
-        bool is_any_in_domain(
-            const ObjectType& object1, const ObjectType& object2 ) const
-        {
-            return is_in_domain( object1 ) || is_in_domain( object2 );
-        }
-
-        bool is_in_domain( const ObjectType& object ) const
-        {
-            return SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
-                this->domain(), object );
         }
 
     private:

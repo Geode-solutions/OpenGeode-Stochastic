@@ -31,8 +31,16 @@ namespace geode
     template <>
     struct ObjectSamplerConfig< OwnerSegment2D >
     {
+        // translation step: move_ratio * segment length
         // NOLINTNEXTLINE(*-magic-numbers)
         double move_ratio{ 0.1 };
+
+        // relative weights of the change moves
+        double translation_ratio{ 1. };
+        // new azimuth drawn from its distribution, anchor and length kept
+        double rotation_ratio{ 1. };
+        // new length drawn from its distribution, anchor and azimuth kept
+        double stretch_ratio{ 1. };
 
         DoubleSampler::DistributionDescription length{ "length" };
 
@@ -55,11 +63,22 @@ namespace geode
         [[nodiscard]] bool is_valid_object(
             const OwnerSegment2D& obj ) const override;
 
+        [[nodiscard]] OwnerSegment2D translate(
+            const OwnerSegment2D& obj, RandomEngine& engine ) const;
+
+        [[nodiscard]] OwnerSegment2D rotate(
+            const OwnerSegment2D& obj, RandomEngine& engine ) const;
+
+        [[nodiscard]] OwnerSegment2D stretch(
+            const OwnerSegment2D& obj, RandomEngine& engine ) const;
+
     private:
         const SpatialDomain< 2 >& domain_;
         DoubleSampler::Distribution length_;
         DoubleSampler::Distribution azimuth_;
         double move_ratio_;
+        double translation_probability_;
+        double rotation_probability_;
     };
 
 } // namespace geode

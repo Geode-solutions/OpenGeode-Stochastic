@@ -45,10 +45,17 @@ namespace geode
         {
         }
 
+        /// Energy of the whole configuration: all the objects of the extended
+        /// domain contribute (consistent with the delta_log_* functions).
         [[nodiscard]] double total_log(
             const ObjectSets< ObjectType >& state ) const override
         {
-            return this->contribution( statistic( state ) );
+            double sum = 0.0;
+            this->for_each_object_in_sets( state, this->impacted_set_ids(),
+                [&state, &sum, this]( const ObjectId& obj_id ) {
+                    sum += feature_->evaluate( state.get_object( obj_id ) );
+                } );
+            return this->contribution( sum );
         }
 
         [[nodiscard]] double delta_log_add(
@@ -60,7 +67,7 @@ namespace geode
                 return 0.0;
             }
             return this->contribution(
-                feature_->evaluate( new_object.object, this->domain() ) );
+                feature_->evaluate( new_object.object ) );
         }
 
         [[nodiscard]] double delta_log_remove(
@@ -71,8 +78,8 @@ namespace geode
             {
                 return 0.0;
             }
-            return this->contribution( -feature_->evaluate(
-                state.get_object( object_id ), this->domain() ) );
+            return this->contribution(
+                -feature_->evaluate( state.get_object( object_id ) ) );
         }
 
         [[nodiscard]] double delta_log_change(
@@ -85,9 +92,8 @@ namespace geode
                 return 0.0;
             }
             double delta =
-                feature_->evaluate( new_object.object, this->domain() )
-                - feature_->evaluate(
-                    state.get_object( old_object_id ), this->domain() );
+                feature_->evaluate( new_object.object )
+                - feature_->evaluate( state.get_object( old_object_id ) );
             return this->contribution( delta );
         }
 
@@ -98,7 +104,8 @@ namespace geode
             this->for_each_object_in_sets( state, this->impacted_set_ids(),
                 [&state, &sum, this]( const ObjectId& obj_id ) {
                     const auto& obj = state.get_object( obj_id );
-                    sum += this->feature_->evaluate( obj, this->domain() );
+                    sum += this->feature_->evaluate_inside_domain(
+                        obj, this->domain() );
                 } );
             return sum;
         }

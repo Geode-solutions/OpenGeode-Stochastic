@@ -20,36 +20,28 @@
  * SOFTWARE.
  *
  */
-
 #pragma once
 
-#include <geode/stochastic/inference/target_statistics.hpp>
+#include "../../../../common.hpp"
 
-#include <geode/stochastic/sampling/mcmc/helpers/simulation_context.hpp>
+#include <geode/stochastic/sampling/mcmc/proposal/object_set_dynamic_config.hpp>
 
 namespace geode
 {
-    template < typename ObjectType >
-    class PoissonProcessBuilder
+    void define_object_set_dynamics( pybind11::module& module )
     {
-    public:
-        void set_domain(
-            const SpatialDomainConfig< ObjectType::dim >& domain_cfg );
-
-        [[nodiscard]] ObjectSetDefinition< ObjectType >& add_set(
-            std::string_view name,
-            double lambda,
-            std::optional< double > expected_count = std::nullopt );
-
-        [[nodiscard]] SimulationContext< ObjectType >
-            build_simulation_context() const;
-
-        [[nodiscard]] const std::vector< TargetStatisticConfig >&
-            expected_statistics() const;
-
-    private:
-        SimulationContextConfig< ObjectType > context_cfg_;
-        std::vector< geode::TargetStatisticConfig > expected_stats_;
-    };
-
+        pybind11::class_< ObjectSetDynamicsConfig >( module,
+            "ObjectSetDynamicsConfig",
+            "Relative probabilities of the MCMC moves of an object set." )
+            .def( pybind11::init<>() )
+            .def_readwrite( "birth_ratio",
+                &ObjectSetDynamicsConfig::birth_ratio,
+                "Relative probability of birth moves." )
+            .def_readwrite( "death_ratio",
+                &ObjectSetDynamicsConfig::death_ratio,
+                "Relative probability of death moves." )
+            .def_readwrite( "change_ratio",
+                &ObjectSetDynamicsConfig::change_ratio,
+                "Relative probability of change moves." );
+    }
 } // namespace geode

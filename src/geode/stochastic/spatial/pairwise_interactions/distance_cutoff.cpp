@@ -56,6 +56,33 @@ namespace
     {
         return std::get< 0 >( geode::segment_segment_distance( seg1, seg2 ) );
     }
+    template < geode::index_t dimension >
+    geode::Point< dimension > center( const geode::Point< dimension >& point )
+    {
+        return point;
+    }
+    template < geode::index_t dimension >
+    geode::Point< dimension > center( const geode::Segment< dimension >& seg )
+    {
+        return seg.barycenter();
+    }
+    template < geode::index_t dimension >
+    geode::Point< dimension > closest_points_middle(
+        const geode::Point< dimension >& point0,
+        const geode::Point< dimension >& point1 )
+    {
+        return ( point0 + point1 ) / 2.;
+    }
+    template < geode::index_t dimension >
+    geode::Point< dimension > closest_points_middle(
+        const geode::Segment< dimension >& seg1,
+        const geode::Segment< dimension >& seg2 )
+    {
+        const auto [distance, point0, point1] =
+            geode::segment_segment_distance( seg1, seg2 );
+        geode_unused( distance );
+        return ( point0 + point1 ) / 2.;
+    }
 } // namespace
 namespace geode
 {
@@ -72,6 +99,16 @@ namespace geode
             const
     {
         return cutoff_distance_;
+    }
+
+    template < typename Type >
+    Point< Type::dim > CenterEuclideanDistanceCutoff< Type >::location(
+        const ObjectRef< Type >& object_a,
+        const ObjectRef< Type >& object_b ) const
+    {
+        return ( center< Type::dim >( object_a.object )
+                   + center< Type::dim >( object_b.object ) )
+               / 2.;
     }
 
     template < typename Type >
@@ -103,7 +140,16 @@ namespace geode
     double
         MinimalDistanceCutoff< Type >::neighborhood_searching_distance() const
     {
-        return cutoff_distance_;
+        return cutoff_distance_ + GLOBAL_EPSILON;
+    }
+
+    template < typename Type >
+    Point< Type::dim > MinimalDistanceCutoff< Type >::location(
+        const ObjectRef< Type >& object_a,
+        const ObjectRef< Type >& object_b ) const
+    {
+        return closest_points_middle< Type::dim >(
+            object_a.object, object_b.object );
     }
 
     template < typename Type >
@@ -113,7 +159,9 @@ namespace geode
     {
         auto dist = compute_min_distance< Type::dim >(
             object_a.object, object_b.object );
-        return dist <= cutoff_distance_ ? 1.0 : 0.0;
+        // Tolerance: the computed distance between intersecting objects is
+        // not exactly 0 (rounding errors), a zero cutoff would miss them.
+        return dist <= cutoff_distance_ + GLOBAL_EPSILON ? 1.0 : 0.0;
     }
 
     template class opengeode_stochastic_stochastic_api

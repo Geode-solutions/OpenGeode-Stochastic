@@ -25,10 +25,14 @@
 #include <pybind11/stl.h>
 
 #include "sampling/direct/double_sampler.hpp"
+#include "sampling/direct/object_set_sampler/segment_set_sampler.hpp"
 
 #include "inference/statistics_tracker.hpp"
+#include "inference/target_statistics.hpp"
 
+#include "sampling/mcmc/helpers/simulation_context.hpp"
 #include "sampling/mcmc/helpers/simulation_printer.hpp"
+#include "sampling/mcmc/proposal/object_set_dynamic_config.hpp"
 #include "sampling/mcmc/simulation_runner.hpp"
 
 #include "sampling/distributions.hpp"
@@ -53,10 +57,14 @@ PYBIND11_MODULE( opengeode_stochastic_py_stochastic, module )
     geode::define_distributions( module );
     geode::define_random_engine( module );
     geode::define_double_sampler( module );
+    geode::define_segment_set_sampler( module );
 
     geode::define_statistics_tracker( module );
+    geode::define_target_statistics( module );
     geode::define_simulation_printer( module );
+    geode::define_object_set_dynamics( module );
+    geode::define_simulation_context( module );
     geode::define_simulation_configurator_and_runner( module );
 
-    geode::define_fracture_network_description( module );
+    geode::define_fracture_process_builder( module );
 }

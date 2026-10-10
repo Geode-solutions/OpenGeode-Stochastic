@@ -35,124 +35,45 @@ namespace geode
     using FractureSimulationContext = SimulationContext< Fracture >;
     using FractureSimulationRunner = SimulationRunner< Fracture >;
 
-    struct FractureSetDescription
+    class opengeode_stochastic_stochastic_api FractureProcessBuilder
     {
-        std::string fset_name;
+    public:
+        void set_domain( const SpatialDomainConfig< 2 >& domain_cfg );
 
-        FractureSamplerConfig sampler;
-        double birth_ratio{ 1.0 };
-        double death_ratio{ 1.0 };
-        double change_ratio{ 1.0 };
+        /// Fracture set with a density term (number of fractures per unit
+        /// area). Observed fractures can be added to the returned definition
+        /// fixed_objects.
+        [[nodiscard]] ObjectSetDefinition< Fracture >& add_fracture_set(
+            std::string_view name,
+            double p20,
+            std::optional< double > expected_count = std::nullopt );
 
-        [[nodiscard]] std::string density_name() const
-        {
-            return absl::StrCat( fset_name, "_p20" );
-        }
-        double p20{ 0. };
-        std::optional< double > expected_number;
+        /// Intensity term (fracture length per unit area) on a fracture set.
+        void add_intensity( std::string_view set_name,
+            double p21,
+            std::optional< double > expected_total_length = std::nullopt );
 
-        [[nodiscard]] std::string intensity_name() const
-        {
-            return absl::StrCat( fset_name, "_p21" );
-        }
-        double p21{ 0. };
-        std::optional< double > expected_total_length;
+        /// Hard-core constraint: fractures of the set cannot be closer than
+        /// the given distance (0 forbids intersections).
+        void add_minimal_spacing( std::string_view set_name,
+            double minimal_spacing,
+            std::optional< double > expected_count = std::nullopt );
 
-        std::vector< std::array< geode::Point2D, 2 > > observed_fractures;
+        /// Interaction between intersecting fractures of different sets
+        /// (beta in [0, 1]: 0 forbids X-nodes, 1 has no effect).
+        void add_x_node_interaction(
+            const std::vector< std::string >& interacting_set_names,
+            double beta,
+            std::optional< double > expected_count = std::nullopt );
 
-        [[nodiscard]] std::string spacing_name() const
-        {
-            return absl::StrCat( fset_name, "_spacing" );
-        }
-        double minimal_spacing{ 0. };
+        [[nodiscard]] FractureSimulationContext
+            build_simulation_context() const;
 
-        [[nodiscard]] std::string string() const
-        {
-            auto message =
-                absl::StrCat( "FractureSetDescription: ", fset_name );
-            for( const auto& fixed_object : observed_fractures )
-            {
-                absl::StrAppend( &message,
-                    "\n\t --> observation (x,y,z)start: ",
-                    fixed_object[0].string(),
-                    " (x,y,z)end: ", fixed_object[1].string() );
-            }
-            absl::StrAppend( &message,
-                "\n\t --> length distribution: ", sampler.length.string() );
-            absl::StrAppend( &message,
-                "\n\t --> azimuth distribution: ", sampler.azimuth.string() );
-            absl::StrAppend( &message, "\n\t --> ", density_name(), ": ", p20 );
-            absl::StrAppend(
-                &message, "\n\t --> ", intensity_name(), ": ", p21 );
-            absl::StrAppend(
-                &message, "\n\t --> ", spacing_name(), ": ", minimal_spacing );
+        [[nodiscard]] const std::vector< TargetStatisticConfig >&
+            expected_statistics() const;
 
-            absl::StrAppend( &message,
-                "\n\t --> dynamic move ratio - birth/death/change (",
-                birth_ratio, " / ", death_ratio, " / ", change_ratio, ")" );
-            return message;
-        }
+    private:
+        SimulationContextConfig< Fracture > context_cfg_;
+        std::vector< TargetStatisticConfig > expected_stats_;
     };
-
-    struct opengeode_stochastic_stochastic_api FractureNetworkDescription
-    {
-        std::string fnet_name;
-
-        SpatialDomainConfig< 2 > domain;
-
-        std::vector< FractureSetDescription > fracture_sets;
-
-        [[nodiscard]] FractureSetDescription& add_fracture_set(
-            absl::string_view fset_name )
-        {
-            auto& fracture_set = fracture_sets.emplace_back();
-            fracture_set.fset_name = fset_name;
-            return fracture_set;
-        }
-
-        void add_x_node_monitoring( double beta )
-        {
-            OpenGeodeStochasticStochasticException::check_exception(
-                beta <= 1.0 && beta >= 0., nullptr,
-                OpenGeodeException::TYPE::data,
-                "[FractureSimulationRunner] x node should be inhibitated, "
-                "please provise a value in [0., 1.]." );
-            beta_x_node = beta;
-        }
-
-        [[nodiscard]] std::string x_node_interaction_name() const
-        {
-            return absl::StrCat( fnet_name, "_x_node" );
-        }
-        double beta_x_node{ 1. };
-        std::optional< double > expected_x_node;
-
-        [[nodiscard]] std::string string() const
-        {
-            auto message =
-                absl::StrCat( "FractureNetworkDescription: ", fnet_name );
-            absl::StrAppend( &message, "\n\t --> ", domain.string() );
-            for( const auto& fset_desc : fracture_sets )
-            {
-                absl::StrAppend( &message, "\n\t --> ", fset_desc.string() );
-            }
-            absl::StrAppend( &message, "\n\t --> ", x_node_interaction_name(),
-                ": ", beta_x_node );
-            return message;
-        }
-    };
-
-    opengeode_stochastic_stochastic_api FractureSimulationContext
-        build_fractures_simulation_context(
-            const FractureNetworkDescription& description );
-
-    opengeode_stochastic_stochastic_api
-        std::vector< geode::TargetStatisticConfig >
-        build_fractures_targeted_stat(
-            const FractureNetworkDescription& description );
-
-    opengeode_stochastic_stochastic_api FractureSimulationRunner
-        build_fractures_simulation_runner(
-            const FractureNetworkDescription& description );
-
 } // namespace geode

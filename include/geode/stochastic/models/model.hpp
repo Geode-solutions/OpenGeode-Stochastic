@@ -22,6 +22,7 @@
  */
 #pragma once
 
+#include <absl/algorithm/container.h>
 #include <absl/container/btree_map.h>
 #include <absl/strings/str_join.h>
 
@@ -44,6 +45,39 @@ namespace geode
 
     struct ModelConfig
     {
+        /// Returns base_name if no term uses it yet, otherwise base_name
+        /// suffixed by the first free index (base_name_2, base_name_3...).
+        [[nodiscard]] std::string unique_term_name(
+            std::string_view base_name ) const
+        {
+            std::string name{ base_name };
+            for( index_t suffix = 2; has_term( name ); suffix++ )
+            {
+                name = absl::StrCat( base_name, "_", suffix );
+            }
+            return name;
+        }
+
+        [[nodiscard]] bool has_term( std::string_view name ) const
+        {
+            return absl::c_any_of( terms, [&name]( const auto& term ) {
+                return std::visit(
+                    [&name]( const auto& cfg ) {
+                        if constexpr( std::is_same_v<
+                                          std::decay_t< decltype( cfg ) >,
+                                          std::monostate > )
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            return cfg.term_name == name;
+                        }
+                    },
+                    term );
+            } );
+        }
+
         std::vector< EnergyTermConfig > terms;
     };
 
@@ -130,12 +164,20 @@ namespace geode
         GibbsEnergy< ObjectType > energy_;
     };
 
+    /// Throws if the model is not well defined (not integrable): an attractive
+    /// pairwise term (gamma > 1) requires each of its object sets to have an
+    /// intra-set hard-core (gamma = 0) at a strictly positive distance.
+    opengeode_stochastic_stochastic_api void check_model_integrability(
+        const ModelConfig& config );
+
     template < typename ObjectType >
     std::unique_ptr< Model< ObjectType > > build_model(
         const ModelConfig& config,
         const ObjectSets< ObjectType >& object_sets,
         const SpatialDomain< ObjectType::dim >& domain )
     {
+        check_model_integrability( config );
+
         EnergyTermCollection< ObjectType > collection;
 
         for( const auto& term_cfg : config.terms )

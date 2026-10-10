@@ -18,6 +18,23 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+
+add_geode_test(
+     SOURCE "test-buffer-correction.cpp"
+     DEPENDENCIES
+         OpenGeode::basic
+         OpenGeode::geometry
+         ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
+     SOURCE "test-edge-effect.cpp"
+     DEPENDENCIES
+         OpenGeode::basic
+         OpenGeode::geometry
+         ${PROJECT_NAME}::stochastic
+)
+
 add_geode_test(
      SOURCE "test-fractures.cpp"
      DEPENDENCIES

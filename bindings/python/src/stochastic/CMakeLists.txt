@@ -23,9 +23,13 @@ add_geode_python_binding(
     SOURCES
         "applications/fractures.hpp"
         "inference/statistics_tracker.hpp"
+        "inference/target_statistics.hpp"
+        "sampling/mcmc/helpers/simulation_context.hpp"
         "sampling/mcmc/helpers/simulation_printer.hpp"
+        "sampling/mcmc/proposal/object_set_dynamic_config.hpp"
         "sampling/mcmc/simulation_runner.hpp"
         "sampling/direct/double_sampler.hpp"
+        "sampling/direct/object_set_sampler/segment_set_sampler.hpp"
         "sampling/random_engine.hpp"
         "sampling/distributions.hpp"
         "spatial/spatial_domain.hpp"

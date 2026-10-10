@@ -27,126 +27,50 @@
 
 namespace geode
 {
-    void define_fracture_network_description( pybind11::module& module )
+    void define_fracture_process_builder( pybind11::module& module )
     {
-        pybind11::class_< FractureSamplerConfig >( module,
-            "FractureSamplerConfig",
-            "Configuration of the stochastic fracture sampler." )
+        pybind11::class_< FractureProcessBuilder >( module,
+            "FractureProcessBuilder",
+            "Builder of a fracture network simulation (density, intensity, "
+            "spacing and X-node terms)." )
             .def( pybind11::init<>() )
-            .def_readwrite( "move_ratio", &FractureSamplerConfig::move_ratio,
-                "Relative probability of proposing a change move." )
-            .def_readwrite( "length", &FractureSamplerConfig::length,
-                "Distribution used to sample fracture lengths." )
-            .def_readwrite( "azimuth", &FractureSamplerConfig::azimuth,
-                "Distribution used to sample fracture orientations." );
-
-        pybind11::class_< FractureSetDescription >( module,
-            "FractureSetDescription", "Description of a fracture family." )
-            .def( pybind11::init<>() )
-
-            .def_readwrite( "name", &FractureSetDescription::fset_name,
-                "Name of the fracture set." )
-
-            .def_readwrite( "sampler", &FractureSetDescription::sampler,
-                "Sampling configuration used to generate fractures." )
-
-            .def_readwrite( "birth_ratio", &FractureSetDescription::birth_ratio,
-                "Relative probability of birth moves." )
-
-            .def_readwrite( "death_ratio", &FractureSetDescription::death_ratio,
-                "Relative probability of death moves." )
-
-            .def_readwrite( "change_ratio",
-                &FractureSetDescription::change_ratio,
-                "Relative probability of change moves." )
-
-            .def_readwrite( "p20", &FractureSetDescription::p20,
-                "Target fracture density (number of fractures per unit area)." )
-
-            .def_readwrite( "expected_number",
-                &FractureSetDescription::expected_number,
-                "Expected number of fractures, if monitored." )
-
-            .def_readwrite( "p21", &FractureSetDescription::p21,
-                "Target fracture intensity (total fracture length per unit "
-                "area)." )
-
-            .def_readwrite( "expected_total_length",
-                &FractureSetDescription::expected_total_length,
-                "Expected cumulative fracture length, if monitored." )
-
-            .def(
-                "add_observed_fracture",
-                []( FractureSetDescription& self, const geode::Point2D& start,
-                    const geode::Point2D& end ) {
-                    self.observed_fractures.push_back( { start, end } );
-                },
-                "Add a fixed observed fracture defined by two endpoints." )
-
-            .def_readwrite( "minimal_spacing",
-                &FractureSetDescription::minimal_spacing,
-                "Minimum allowed spacing between fractures." )
-
-            .def( "string", &FractureSetDescription::string,
-                "Return a detailed textual description of the fracture set." )
-
-            .def( "__repr__", []( const FractureSetDescription& self ) {
-                return "<FractureSetDescription name='" + self.fset_name + "'>";
-            } );
-
-        pybind11::class_< FractureNetworkDescription >( module,
-            "FractureNetworkDescription",
-            "Description of a complete fracture network simulation." )
-
-            .def( pybind11::init<>() )
-
-            .def_readwrite( "name", &FractureNetworkDescription::fnet_name,
-                "Name of the fracture network." )
-
-            .def_readwrite( "domain", &FractureNetworkDescription::domain,
-                "Spatial simulation domain." )
-
-            .def_readwrite( "fracture_sets",
-                &FractureNetworkDescription::fracture_sets,
-                "List of fracture sets composing the network." )
-
-            .def( "add_fracture_set",
-                &FractureNetworkDescription::add_fracture_set,
+            .def( "set_domain", &FractureProcessBuilder::set_domain,
+                pybind11::arg( "domain" ),
+                "Set the spatial simulation domain." )
+            .def( "add_fracture_set", &FractureProcessBuilder::add_fracture_set,
+                pybind11::arg( "name" ), pybind11::arg( "p20" ),
+                pybind11::arg( "expected_count" ) = std::nullopt,
                 pybind11::return_value_policy::reference_internal,
-                "Create and return a new fracture set." )
-
-            .def( "add_x_node_monitoring",
-                &FractureNetworkDescription::add_x_node_monitoring,
-                pybind11::arg( "beta" ),
-                "Enable monitoring of X-node interactions with the given "
-                "weight." )
-
-            .def_readwrite( "expected_x_node",
-                &FractureNetworkDescription::expected_x_node,
-                "Expected number of X-nodes, if monitored." )
-
-            .def( "string", &FractureNetworkDescription::string,
-                "Return a detailed textual description of the network." )
-
-            .def( "__repr__", []( const FractureNetworkDescription& self ) {
-                return "<FractureNetworkDescription name='" + self.fnet_name
-                       + "'>";
-            } );
-
-        //        module.def( "build_fractures_simulation_context",
-        //            &build_fractures_simulation_context, pybind11::arg(
-        //            "description" ), "Build a simulation context from a
-        //            fracture network description." );
-        //
-        //        module.def( "build_fractures_targeted_stat",
-        //            &build_fractures_targeted_stat, pybind11::arg(
-        //            "description" ), "Create the target statistics associated
-        //            with a fracture network " "description." );
-
-        module.def( "build_fractures_simulation_runner",
-            &build_fractures_simulation_runner, pybind11::arg( "description" ),
-            "Create a ready-to-use simulation runner from a fracture network "
-            "description." );
+                "Add a fracture set with a density term (number of fractures "
+                "per unit area) and return its definition." )
+            .def( "add_intensity", &FractureProcessBuilder::add_intensity,
+                pybind11::arg( "set_name" ), pybind11::arg( "p21" ),
+                pybind11::arg( "expected_total_length" ) = std::nullopt,
+                "Add an intensity term (fracture length per unit area) on a "
+                "fracture set." )
+            .def( "add_minimal_spacing",
+                &FractureProcessBuilder::add_minimal_spacing,
+                pybind11::arg( "set_name" ), pybind11::arg( "minimal_spacing" ),
+                pybind11::arg( "expected_count" ) = std::nullopt,
+                "Forbid fractures of a set closer than the given distance (0 "
+                "forbids intersections)." )
+            .def( "add_x_node_interaction",
+                &FractureProcessBuilder::add_x_node_interaction,
+                pybind11::arg( "set_names" ), pybind11::arg( "beta" ),
+                pybind11::arg( "expected_count" ) = std::nullopt,
+                "Penalize intersections between fractures of different sets "
+                "(beta in [0, 1])." )
+            .def( "expected_statistics",
+                &FractureProcessBuilder::expected_statistics,
+                pybind11::return_value_policy::copy,
+                "Expected statistics registered with the model terms." )
+            .def(
+                "build_simulation_runner",
+                []( const FractureProcessBuilder& self ) {
+                    return FractureSimulationRunner{
+                        self.build_simulation_context()
+                    };
+                },
+                "Create a ready-to-use simulation runner." );
     }
-
 } // namespace geode

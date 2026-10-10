@@ -21,23 +21,12 @@
  *
  */
 
+#include <absl/strings/str_join.h>
+
 #include <geode/stochastic/applications/fractures.hpp>
 #include <geode/stochastic/sampling/direct/object_set_sampler/segment_set_sampler.hpp>
 namespace
 {
-    std::vector< geode::Fracture > build_observed_fractures(
-        const std::vector< std::array< geode::Point2D, 2 > >&
-            fracture_extremities )
-    {
-        std::vector< geode::Fracture > fractures;
-        fractures.reserve( fracture_extremities.size() );
-        for( const auto& extremities : fracture_extremities )
-        {
-            fractures.emplace_back( extremities[0], extremities[1] );
-        }
-        return fractures;
-    }
-
     std::vector< std::pair< std::string, std::string > > inter_set_interactions(
         const std::vector< std::string >& set_names )
     {
@@ -61,94 +50,116 @@ namespace geode
 
     using XNodeInteractionDescription = geode::PairwiseTermConfig;
 
-    using FractureSimulationConfig = SimulationContextConfig< Fracture >;
-
-    FractureSimulationContext build_fractures_simulation_context(
-        const FractureNetworkDescription& fnet_desc )
+    void FractureProcessBuilder::set_domain(
+        const SpatialDomainConfig< 2 >& domain_cfg )
     {
-        FractureSimulationConfig simulation_config;
-        simulation_config.domain = fnet_desc.domain;
-
-        std::vector< std::string > set_names;
-        set_names.reserve( fnet_desc.fracture_sets.size() );
-        for( const auto& fset_desc : fnet_desc.fracture_sets )
-        {
-            auto& fset = simulation_config.add_set( fset_desc.fset_name );
-
-            set_names.emplace_back( fset_desc.fset_name );
-
-            fset.sampler = fset_desc.sampler;
-            fset.dynamics.birth_ratio = fset_desc.birth_ratio;
-            fset.dynamics.death_ratio = fset_desc.death_ratio;
-            fset.dynamics.change_ratio = fset_desc.change_ratio;
-            fset.fixed_objects =
-                build_observed_fractures( fset_desc.observed_fractures );
-
-            FractureDensityDescription density;
-            density.term_name = fset_desc.density_name();
-            density.object_set_names = { fset_desc.fset_name };
-            density.lambda = fset_desc.p20;
-            density.object_feature = ObjectInDomainFeatureConfig{};
-            simulation_config.model.terms.emplace_back( std::move( density ) );
-
-            FractureIntensityDescription intensity;
-            intensity.term_name = fset_desc.intensity_name();
-            intensity.object_set_names = { fset_desc.fset_name };
-            intensity.lambda = fset_desc.p21;
-            constexpr double CARACTERISTIC_LENGTH = 1.0; // mean fracture
-                                                         // length?
-            intensity.object_feature =
-                SegmentLengthInsideBoxFeatureConfig{ CARACTERISTIC_LENGTH };
-            simulation_config.model.terms.emplace_back(
-                std::move( intensity ) );
-
-            FractureSpacingDescription spacing;
-            spacing.term_name = fset_desc.spacing_name();
-            spacing.object_set_names_interactions = { { fset_desc.fset_name,
-                fset_desc.fset_name } };
-            spacing.gamma = 0.;
-            spacing.interaction_config =
-                geode::MinimalDistanceCutoffConfig{ fset_desc.minimal_spacing };
-            simulation_config.model.terms.emplace_back( std::move( spacing ) );
-        }
-        if( set_names.size() > 1 )
-        {
-            XNodeInteractionDescription interaction;
-            interaction.term_name = fnet_desc.x_node_interaction_name();
-            interaction.object_set_names_interactions =
-                inter_set_interactions( set_names );
-            interaction.gamma = fnet_desc.beta_x_node;
-            interaction.interaction_config =
-                geode::MinimalDistanceCutoffConfig{ 0. };
-            simulation_config.model.terms.emplace_back(
-                std::move( interaction ) );
-        }
-
-        return build_simulation_context( simulation_config );
+        context_cfg_.domain = domain_cfg;
     }
 
-    std::vector< geode::TargetStatisticConfig > build_fractures_targeted_stat(
-        const FractureNetworkDescription& description )
+    ObjectSetDefinition< Fracture >& FractureProcessBuilder::add_fracture_set(
+        std::string_view name,
+        double p20,
+        std::optional< double > expected_count )
     {
-        std::vector< geode::TargetStatisticConfig > targets;
+        auto& fset_cfg = context_cfg_.add_set( name );
 
-        for( const auto& set_desc : description.fracture_sets )
+        FractureDensityDescription density;
+        density.term_name =
+            context_cfg_.model.unique_term_name( absl::StrCat( name, "_p20" ) );
+        density.object_set_names = { std::string( name ) };
+        density.lambda = p20;
+        density.object_feature = ObjectInDomainFeatureConfig{};
+        if( expected_count )
         {
-            if( set_desc.expected_number )
-            {
-                targets.push_back( geode::TargetStatisticConfig{
-                    set_desc.density_name(), *set_desc.expected_number } );
-            }
+            expected_stats_.push_back(
+                TargetStatisticConfig{ density.term_name, *expected_count } );
         }
+        context_cfg_.model.terms.emplace_back( std::move( density ) );
 
-        return targets;
+        return fset_cfg;
     }
 
-    FractureSimulationRunner build_fractures_simulation_runner(
-        const FractureNetworkDescription& description )
+    void FractureProcessBuilder::add_intensity( std::string_view set_name,
+        double p21,
+        std::optional< double > expected_total_length )
     {
-        return FractureSimulationRunner{ build_fractures_simulation_context(
-            description ) };
+        FractureIntensityDescription intensity;
+        intensity.term_name = context_cfg_.model.unique_term_name(
+            absl::StrCat( set_name, "_p21" ) );
+        intensity.object_set_names = { std::string( set_name ) };
+        intensity.lambda = p21;
+        constexpr double CARACTERISTIC_LENGTH = 1.0;
+        intensity.object_feature =
+            SegmentLengthInsideBoxFeatureConfig{ CARACTERISTIC_LENGTH };
+        if( expected_total_length )
+        {
+            expected_stats_.push_back( TargetStatisticConfig{
+                intensity.term_name, *expected_total_length } );
+        }
+        context_cfg_.model.terms.emplace_back( std::move( intensity ) );
+    }
+
+    void FractureProcessBuilder::add_minimal_spacing( std::string_view set_name,
+        double minimal_spacing,
+        std::optional< double > expected_count )
+    {
+        FractureSpacingDescription spacing;
+        spacing.term_name = context_cfg_.model.unique_term_name(
+            absl::StrCat( set_name, "_spacing" ) );
+        spacing.object_set_names_interactions = { { std::string( set_name ),
+            std::string( set_name ) } };
+        spacing.gamma = 0.;
+        spacing.interaction_config =
+            MinimalDistanceCutoffConfig{ minimal_spacing };
+        if( expected_count )
+        {
+            expected_stats_.push_back(
+                TargetStatisticConfig{ spacing.term_name, *expected_count } );
+        }
+        context_cfg_.model.terms.emplace_back( std::move( spacing ) );
+    }
+
+    void FractureProcessBuilder::add_x_node_interaction(
+        const std::vector< std::string >& interacting_set_names,
+        double beta,
+        std::optional< double > expected_count )
+    {
+        OpenGeodeStochasticStochasticException::check_exception(
+            beta <= 1.0 && beta >= 0., nullptr, OpenGeodeException::TYPE::data,
+            "[FractureProcessBuilder] x node should be inhibited, please "
+            "provide a value in [0., 1.]." );
+        OpenGeodeStochasticStochasticException::check_exception(
+            interacting_set_names.size() > 1, nullptr,
+            OpenGeodeException::TYPE::data,
+            "[FractureProcessBuilder] x node interaction requires at least two "
+            "fracture sets." );
+
+        XNodeInteractionDescription interaction;
+        interaction.term_name =
+            context_cfg_.model.unique_term_name( absl::StrCat(
+                "x_node_", absl::StrJoin( interacting_set_names, "_" ) ) );
+        interaction.object_set_names_interactions =
+            inter_set_interactions( interacting_set_names );
+        interaction.gamma = beta;
+        interaction.interaction_config = MinimalDistanceCutoffConfig{ 0. };
+        if( expected_count )
+        {
+            expected_stats_.push_back( TargetStatisticConfig{
+                interaction.term_name, *expected_count } );
+        }
+        context_cfg_.model.terms.emplace_back( std::move( interaction ) );
+    }
+
+    FractureSimulationContext
+        FractureProcessBuilder::build_simulation_context() const
+    {
+        return geode::build_simulation_context< Fracture >( context_cfg_ );
+    }
+
+    const std::vector< TargetStatisticConfig >&
+        FractureProcessBuilder::expected_statistics() const
+    {
+        return expected_stats_;
     }
 
 } // namespace geode

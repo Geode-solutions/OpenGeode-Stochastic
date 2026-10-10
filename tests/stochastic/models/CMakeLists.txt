@@ -35,6 +35,22 @@ add_geode_test(
 )
 
 add_geode_test(
+    SOURCE "test-energy-consistency.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
+    SOURCE "test-model-integrability.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
     SOURCE "energy_terms/test-pairwise-term.cpp"
     DEPENDENCIES
         OpenGeode::basic

@@ -52,6 +52,12 @@ namespace geode
         [[nodiscard]] virtual double
             neighborhood_searching_distance() const = 0;
 
+        /// Location of the interaction between two objects: the interaction
+        /// is observed in a domain if its location is inside (statistics).
+        [[nodiscard]] virtual Point< Type::dim > location(
+            const ObjectRef< Type >& object_a,
+            const ObjectRef< Type >& object_b ) const = 0;
+
     protected:
         [[nodiscard]] virtual double compute( const ObjectRef< Type >& object_a,
             const ObjectRef< Type >& object_b ) const = 0;

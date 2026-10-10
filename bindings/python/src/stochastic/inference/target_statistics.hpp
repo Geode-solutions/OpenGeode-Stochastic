@@ -20,43 +20,27 @@
  * SOFTWARE.
  *
  */
-
 #pragma once
 
-#include <geode/stochastic/applications/poisson_process.hpp>
+#include "../../common.hpp"
+
 #include <geode/stochastic/inference/target_statistics.hpp>
-#include <geode/stochastic/sampling/mcmc/helpers/simulation_context.hpp>
 
 namespace geode
 {
-
-    template < typename ObjectType >
-    class StraussProcessBuilder
+    void define_target_statistics( pybind11::module& module )
     {
-    public:
-        void set_domain(
-            const SpatialDomainConfig< ObjectType::dim >& domain_cfg );
-
-        [[nodiscard]] ObjectSetDefinition< ObjectType >& add_set(
-            std::string_view name,
-            double lambda,
-            std::optional< double > expected_count = std::nullopt );
-
-        void add_interaction(
-            const std::vector< std::string >& interacting_set_names,
-            double gamma,
-            double distance_threshold,
-            std::optional< double > expected_count,
-            bool intra_set_interaction = true );
-
-        [[nodiscard]] SimulationContext< ObjectType >
-            build_simulation_context() const;
-
-        [[nodiscard]] const std::vector< TargetStatisticConfig >&
-            expected_statistics() const;
-
-    private:
-        SimulationContextConfig< ObjectType > context_cfg_;
-        std::vector< geode::TargetStatisticConfig > expected_stats_;
-    };
+        pybind11::class_< TargetStatisticConfig >( module,
+            "TargetStatisticConfig",
+            "Expected mean value of a model term statistic." )
+            .def( pybind11::init<>() )
+            .def_readwrite( "term_name", &TargetStatisticConfig::term_name )
+            .def_readwrite( "value", &TargetStatisticConfig::value )
+            .def_readwrite( "tolerance", &TargetStatisticConfig::tolerance,
+                "Relative tolerance used for validation." )
+            .def( "__repr__", []( const TargetStatisticConfig& self ) {
+                return absl::StrCat( "<TargetStatisticConfig term='",
+                    self.term_name, "' value=", self.value, ">" );
+            } );
+    }
 } // namespace geode

@@ -91,6 +91,11 @@ namespace geode
             return extended_domain_.n_volume();
         }
 
+        [[nodiscard]] double buffer_size() const
+        {
+            return buffer_size_;
+        }
+
         [[nodiscard]] const BoundingBox< dimension >& extended_box() const
         {
             return extended_domain_;
