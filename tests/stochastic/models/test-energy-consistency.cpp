@@ -173,12 +173,11 @@ namespace
             {
                 // anchored in the domain and in the buffer, crossing each
                 // other and the free fractures
-                fset.fixed_objects = {
-                    geode::Fracture{ geode::Point2D{ { -1., 2.5 } },
-                        geode::Point2D{ { 1., 2.5 } } },
+                fset.fixed_objects = { geode::Fracture{
+                                           geode::Point2D{ { -1., 2.5 } },
+                                           geode::Point2D{ { 1., 2.5 } } },
                     geode::Fracture{ geode::Point2D{ { 2.5, 1. } },
-                        geode::Point2D{ { 2.5, 3. } } }
-                };
+                        geode::Point2D{ { 2.5, 3. } } } };
             }
             fset.sampler.length.distribution_type =
                 geode::UniformClosed< double >::distribution_type_static();

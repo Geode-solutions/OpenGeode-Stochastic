@@ -262,8 +262,8 @@ void test_free_fixed_pairs()
         object_set_name } };
     config.interaction_config = geode::MinimalDistanceCutoffConfig{ 1. };
     const auto domain = init_domain();
-    auto term = geode::build_energy_term< geode::Point2D >(
-        config, pattern, domain );
+    auto term =
+        geode::build_energy_term< geode::Point2D >( config, pattern, domain );
 
     geode::OpenGeodeStochasticStochasticException::test(
         term->total_log( pattern ) == term->contribution( 1 ),
@@ -278,8 +278,8 @@ void test_free_fixed_pairs()
     // a new object interacts with both the fixed and the free objects
     geode::Point2D new_point{ { 0.4, 0.6 } };
     geode::OpenGeodeStochasticStochasticException::test(
-        term->delta_log_add( pattern,
-            geode::ObjectRef< geode::Point2D >{ new_point, set_id } )
+        term->delta_log_add(
+            pattern, geode::ObjectRef< geode::Point2D >{ new_point, set_id } )
             == term->contribution( 2 ),
         "[PairwiseTerm] new object should interact with free and fixed ones" );
 
