@@ -197,6 +197,41 @@ namespace
 
         geode::Logger::info( "--> SUCCESS!" );
     }
+
+    void test_same_sets_interactions_have_unique_names()
+    {
+        geode::Logger::info(
+            "TEST - STRAUSS INTERACTIONS ON SAME SETS HAVE UNIQUE NAMES" );
+
+        // NOLINTBEGIN(*-magic-numbers)
+        geode::SpatialDomainConfig< 2 > domain;
+        domain.min_point = geode::Point2D{ { 0, 0 } };
+        domain.max_point = geode::Point2D{ { DOMAIN_SIZE, DOMAIN_SIZE } };
+        domain.buffer_size = 2.;
+
+        geode::StraussProcessBuilder< geode::Point2D > strauss;
+        strauss.set_domain( domain );
+        auto& set_config = strauss.add_set( "set_A", 0.5 );
+        geode_unused( set_config );
+        strauss.add_interaction( { "set_A" }, 0.5, 1.0, 3. );
+        strauss.add_interaction( { "set_A" }, 0.5, 2.0, 10. );
+        // NOLINTEND(*-magic-numbers)
+
+        const auto& stats = strauss.expected_statistics();
+        geode::OpenGeodeStochasticStochasticException::test(
+            stats.size() == 2 && stats[0].term_name == "pwint_set_A"
+                && stats[1].term_name == "pwint_set_A_2",
+            "[Strauss] interactions on the same sets should get distinct "
+            "names" );
+
+        const auto context = strauss.build_simulation_context();
+        geode::TargetStatistics target_stats{ *context.model, stats };
+        geode::OpenGeodeStochasticStochasticException::test(
+            target_stats.active_terms().size() == 2,
+            "[Strauss] both interaction targets should be active" );
+
+        geode::Logger::info( "--> SUCCESS!" );
+    }
 } // namespace
 
 int main()
@@ -208,6 +243,7 @@ int main()
         test_single_type_strauss();
         test_multitype_strauss();
         test_attractive_strauss_is_rejected();
+        test_same_sets_interactions_have_unique_names();
         return 0;
     }
     catch( ... )

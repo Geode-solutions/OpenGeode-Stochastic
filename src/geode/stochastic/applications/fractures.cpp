@@ -64,7 +64,8 @@ namespace geode
         auto& fset_cfg = context_cfg_.add_set( name );
 
         FractureDensityDescription density;
-        density.term_name = absl::StrCat( name, "_p20" );
+        density.term_name =
+            context_cfg_.model.unique_term_name( absl::StrCat( name, "_p20" ) );
         density.object_set_names = { std::string( name ) };
         density.lambda = p20;
         density.object_feature = ObjectInDomainFeatureConfig{};
@@ -83,7 +84,8 @@ namespace geode
         std::optional< double > expected_total_length )
     {
         FractureIntensityDescription intensity;
-        intensity.term_name = absl::StrCat( set_name, "_p21" );
+        intensity.term_name = context_cfg_.model.unique_term_name(
+            absl::StrCat( set_name, "_p21" ) );
         intensity.object_set_names = { std::string( set_name ) };
         intensity.lambda = p21;
         constexpr double CARACTERISTIC_LENGTH = 1.0;
@@ -102,7 +104,8 @@ namespace geode
         std::optional< double > expected_count )
     {
         FractureSpacingDescription spacing;
-        spacing.term_name = absl::StrCat( set_name, "_spacing" );
+        spacing.term_name = context_cfg_.model.unique_term_name(
+            absl::StrCat( set_name, "_spacing" ) );
         spacing.object_set_names_interactions = { { std::string( set_name ),
             std::string( set_name ) } };
         spacing.gamma = 0.;
@@ -132,8 +135,9 @@ namespace geode
             "fracture sets." );
 
         XNodeInteractionDescription interaction;
-        interaction.term_name = absl::StrCat(
-            "x_node_", absl::StrJoin( interacting_set_names, "_" ) );
+        interaction.term_name =
+            context_cfg_.model.unique_term_name( absl::StrCat(
+                "x_node_", absl::StrJoin( interacting_set_names, "_" ) ) );
         interaction.object_set_names_interactions =
             inter_set_interactions( interacting_set_names );
         interaction.gamma = beta;

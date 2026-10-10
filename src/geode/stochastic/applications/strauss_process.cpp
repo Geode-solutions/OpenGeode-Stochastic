@@ -21,6 +21,8 @@
  *
  */
 
+#include <absl/strings/str_join.h>
+
 #include <geode/stochastic/applications/strauss_process.hpp>
 
 namespace
@@ -55,17 +57,6 @@ namespace
         return interaction_names;
     }
 
-    std::string interaction_name(
-        const std::vector< std::string >& set_names, double gamma )
-    {
-        std::string name{ "pwint_" };
-        for( const auto& set_name : set_names )
-        {
-            absl::StrAppend( &name, set_name, "_" );
-        }
-        absl::StrAppend( &name, gamma );
-        return name;
-    }
 } // namespace
 
 namespace geode
@@ -87,7 +78,8 @@ namespace geode
 
         SingleObjectTermConfig density;
 
-        density.term_name = absl::StrCat( name, "_density" );
+        density.term_name = context_cfg_.model.unique_term_name(
+            absl::StrCat( name, "_density" ) );
         density.object_set_names = { std::string( name ) };
         density.lambda = lambda;
         density.object_feature = ObjectInDomainFeatureConfig{};
@@ -118,7 +110,8 @@ namespace geode
 
         PairwiseTermConfig interaction;
         interaction.term_name =
-            interaction_name( interacting_set_names, gamma );
+            context_cfg_.model.unique_term_name( absl::StrCat(
+                "pwint_", absl::StrJoin( interacting_set_names, "_" ) ) );
         if( intra_set_interaction )
         {
             interaction.object_set_names_interactions =

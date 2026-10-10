@@ -42,7 +42,8 @@ namespace geode
 
         SingleObjectTermConfig density;
 
-        density.term_name = absl::StrCat( name, "_density" );
+        density.term_name = context_cfg_.model.unique_term_name(
+            absl::StrCat( name, "_density" ) );
         density.object_set_names = { std::string( name ) };
         density.lambda = lambda;
         density.object_feature = ObjectInDomainFeatureConfig{};
