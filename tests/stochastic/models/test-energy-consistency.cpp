@@ -27,7 +27,9 @@
 // Energy consistency test: along a random sequence of births, deaths and
 // changes, the variation of the total energy must equal the energy deltas
 // used by the Metropolis-Hastings sampler, for objects anywhere in the
-// extended domain (domain + buffer).
+// extended domain (domain + buffer). Fixed objects are never moved but
+// interact with the free ones: their indices overlap the free object ones, so
+// each free-fixed pair must still be counted once.
 namespace
 {
     constexpr geode::index_t NB_OPERATIONS{ 1000 };
@@ -66,7 +68,15 @@ namespace
             const auto set_id = state.get_set_uuid( set_names[set_index] );
             const auto& sampler = *context.set_samplers[set_index];
             const auto before = energy.total_log_energy( state );
-            const auto objects = state.get_objects_in_set( set_id );
+            // only the free objects can be removed or changed
+            std::vector< geode::ObjectId > objects;
+            for( const auto& object_id : state.get_objects_in_set( set_id ) )
+            {
+                if( !object_id.fixed )
+                {
+                    objects.push_back( object_id );
+                }
+            }
 
             // NOLINTNEXTLINE(*-magic-numbers)
             if( objects.empty() || engine.sample_bernoulli( 0.5 ) )
@@ -110,9 +120,10 @@ namespace
         return domain;
     }
 
-    void test_point_process()
+    void test_point_process( bool with_fixed_objects )
     {
-        geode::Logger::info( "TEST - ENERGY CONSISTENCY POINT PROCESS" );
+        geode::Logger::info( "TEST - ENERGY CONSISTENCY POINT PROCESS",
+            with_fixed_objects ? " WITH FIXED OBJECTS" : "" );
         geode::RandomEngine engine;
         engine.set_seed( "@energy-consistency-points@" );
 
@@ -120,11 +131,24 @@ namespace
         geode::StraussProcessBuilder< geode::Point2D > strauss;
         strauss.set_domain( domain_config() );
         auto& set_a = strauss.add_set( "A", 2. );
-        geode_unused( set_a );
         auto& set_b = strauss.add_set( "B", 1. );
-        geode_unused( set_b );
+        if( with_fixed_objects )
+        {
+            // in the domain and in the buffer, close enough to interact
+            set_a.fixed_objects = { geode::Point2D{ { 1., 1. } },
+                geode::Point2D{ { 1.5, 1. } }, geode::Point2D{ { -1., 2. } } };
+            set_b.fixed_objects = { geode::Point2D{ { 1.2, 1.4 } },
+                geode::Point2D{ { 4., 6. } } };
+        }
         strauss.add_interaction( { "A", "B" }, 0.5, 1., std::nullopt, true );
         strauss.add_interaction( { "A", "B" }, 0.8, 0.5, std::nullopt, false );
+        if( with_fixed_objects )
+        {
+            // longer than the extended domain diagonal: all the pairs interact,
+            // including the free and fixed objects sharing the same index
+            strauss.add_interaction(
+                { "A", "B" }, 0.99, 20., std::nullopt, true );
+        }
         // NOLINTEND(*-magic-numbers)
 
         auto context = strauss.build_simulation_context();
@@ -132,9 +156,10 @@ namespace
         geode::Logger::info( "--> SUCCESS!" );
     }
 
-    void test_segment_process()
+    void test_segment_process( bool with_fixed_objects )
     {
-        geode::Logger::info( "TEST - ENERGY CONSISTENCY SEGMENT PROCESS" );
+        geode::Logger::info( "TEST - ENERGY CONSISTENCY SEGMENT PROCESS",
+            with_fixed_objects ? " WITH FIXED OBJECTS" : "" );
         geode::RandomEngine engine;
         engine.set_seed( "@energy-consistency-segments@" );
 
@@ -144,6 +169,17 @@ namespace
         for( const auto& name : { "A", "B" } )
         {
             auto& fset = fractures.add_fracture_set( name, 1. );
+            if( with_fixed_objects )
+            {
+                // anchored in the domain and in the buffer, crossing each
+                // other and the free fractures
+                fset.fixed_objects = {
+                    geode::Fracture{ geode::Point2D{ { -1., 2.5 } },
+                        geode::Point2D{ { 1., 2.5 } } },
+                    geode::Fracture{ geode::Point2D{ { 2.5, 1. } },
+                        geode::Point2D{ { 2.5, 3. } } }
+                };
+            }
             fset.sampler.length.distribution_type =
                 geode::UniformClosed< double >::distribution_type_static();
             fset.sampler.length.min_value = 0.5;
@@ -168,8 +204,11 @@ int main()
     try
     {
         geode::OpenGeodeStochasticStochasticLibrary::initialize();
-        test_point_process();
-        test_segment_process();
+        for( const auto with_fixed_objects : { false, true } )
+        {
+            test_point_process( with_fixed_objects );
+            test_segment_process( with_fixed_objects );
+        }
         return 0;
     }
     catch( ... )

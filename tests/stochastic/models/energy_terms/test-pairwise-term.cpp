@@ -241,6 +241,57 @@ void test_segment_intersection_statistic()
         "[PairwiseTerm] intersection outside the VOI should not be counted" );
 }
 
+void test_free_fixed_pairs()
+{
+    // fixed and free objects have their own index spaces: a free and a fixed
+    // object can share the same index, but their pair is counted once
+    geode::ObjectSets< geode::Point2D > pattern;
+    auto set_id = pattern.add_set( object_set_name );
+    const auto fixed_id = pattern.add_object(
+        geode::Point2D{ { 0.3, 0.3 } }, set_id, true ); // VOI
+    const auto free_id = pattern.add_object(
+        geode::Point2D{ { 0.5, 0.5 } }, set_id, false ); // VOI
+    geode::OpenGeodeStochasticStochasticException::test(
+        fixed_id.index == free_id.index && fixed_id != free_id,
+        "[PairwiseTerm] free and fixed objects should share the same index" );
+
+    geode::PairwiseTermConfig config;
+    config.term_name = "strauss";
+    config.gamma = 0.5;
+    config.object_set_names_interactions = { { object_set_name,
+        object_set_name } };
+    config.interaction_config = geode::MinimalDistanceCutoffConfig{ 1. };
+    const auto domain = init_domain();
+    auto term = geode::build_energy_term< geode::Point2D >(
+        config, pattern, domain );
+
+    geode::OpenGeodeStochasticStochasticException::test(
+        term->total_log( pattern ) == term->contribution( 1 ),
+        "[PairwiseTerm] free-fixed pair should be counted once in total_log" );
+    geode::OpenGeodeStochasticStochasticException::test(
+        term->statistic( pattern ) == 1.,
+        "[PairwiseTerm] free-fixed pair should be counted once in statistic" );
+    geode::OpenGeodeStochasticStochasticException::test(
+        term->delta_log_remove( pattern, free_id ) == term->contribution( -1 ),
+        "[PairwiseTerm] removing the free object should remove the pair" );
+
+    // a new object interacts with both the fixed and the free objects
+    geode::Point2D new_point{ { 0.4, 0.6 } };
+    geode::OpenGeodeStochasticStochasticException::test(
+        term->delta_log_add( pattern,
+            geode::ObjectRef< geode::Point2D >{ new_point, set_id } )
+            == term->contribution( 2 ),
+        "[PairwiseTerm] new object should interact with free and fixed ones" );
+
+    // the free object moved out of reach of the fixed one
+    geode::Point2D far_point{ { 1.4, 1.4 } };
+    geode::OpenGeodeStochasticStochasticException::test(
+        term->delta_log_change( pattern, free_id,
+            geode::ObjectRef< geode::Point2D >{ far_point, set_id } )
+            == term->contribution( -1 ),
+        "[PairwiseTerm] moving the free object away should remove the pair" );
+}
+
 int main()
 {
     try
@@ -272,6 +323,7 @@ int main()
         test_pairwise_term_zero_gamma( pw_interaction_cfg, pattern, domain );
 
         test_segment_intersection_statistic();
+        test_free_fixed_pairs();
 
         geode::Logger::info( "TEST SUCCESS" );
         return 0;
