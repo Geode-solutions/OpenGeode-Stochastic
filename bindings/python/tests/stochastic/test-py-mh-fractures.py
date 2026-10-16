@@ -161,6 +161,74 @@ def test_two_fracture_sets():
     print("--> SUCCESS!")
 
 
+def test_keyword_constructors():
+    print("TEST - KEYWORD CONSTRUCTORS")
+
+    domain = stochastic.SpatialDomainConfig2D(
+        min_point=og.Point2D([0.0, 0.0]),
+        max_point=og.Point2D([DOMAIN_SIZE, DOMAIN_SIZE]),
+        buffer_size=2.0 * MAX_LENGTH,
+    )
+    if domain.buffer_size != 2.0 * MAX_LENGTH or domain.max_point.value(0) != DOMAIN_SIZE:
+        raise ValueError("[Test] Wrong domain configuration")
+
+    length = stochastic.DoubleDistributionDescription(
+        "UniformClosed", min_value=MIN_LENGTH, max_value=MAX_LENGTH
+    )
+    if length.min_value != MIN_LENGTH or length.mean is not None:
+        raise ValueError("[Test] Wrong distribution description")
+    if not length.distribution_type.matches(stochastic.DistributionType("UniformClosed")):
+        raise ValueError("[Test] Wrong distribution type")
+
+    fractures = stochastic.FractureProcessBuilder()
+    fractures.set_domain(domain)
+    fset = fractures.add_fracture_set("fset_A", 0.05)
+    fset.sampler.length = length
+    fset.sampler.azimuth = stochastic.DoubleDistributionDescription("VonMises", mean=30.0, kappa=10.0)
+    # the sampler distributions keep their name when replaced
+    if fset.sampler.length.name != "length" or fset.sampler.azimuth.name != "azimuth":
+        raise ValueError("[Test] Sampler distribution names lost")
+    if fset.sampler.azimuth.kappa != 10.0:
+        raise ValueError("[Test] Sampler distribution not modified in place")
+    # distribution types can be given as strings
+    fset.sampler.azimuth.distribution_type = "UniformClosed"
+    fset.sampler.azimuth.min_value = 0.0
+    fset.sampler.azimuth.max_value = 180.0
+    fset.dynamics = stochastic.ObjectSetDynamicsConfig(change_ratio=2.0)
+    if fset.dynamics.change_ratio != 2.0 or fset.dynamics.birth_ratio != 1.0:
+        raise ValueError("[Test] Wrong dynamics configuration")
+
+    sampler = stochastic.Segment2DSamplerConfig(length=length, move_ratio=0.2)
+    if sampler.length.name != "length" or sampler.move_ratio != 0.2 or sampler.rotation_ratio != 1.0:
+        raise ValueError("[Test] Wrong sampler configuration")
+
+    target = stochastic.TargetStatisticConfig("fset_A_p20", 20.0, tolerance=0.2)
+    if (target.term_name, target.value, target.tolerance) != ("fset_A_p20", 20.0, 0.2):
+        raise ValueError("[Test] Wrong target statistic")
+
+    printer = stochastic.SimulationPrinterConfigurator(
+        output_folder=os.path.join(os.getcwd(), "py_keyword_constructors"),
+        realisations_print_frequency=50,
+    )
+    if printer.statistics_filename != "statistics.txt":
+        raise ValueError("[Test] Printer defaults lost")
+    sim_config = stochastic.SimulationConfigurator(
+        realizations=100, metropolis_hasting_steps=100, burn_in_steps=1000, printer=printer
+    )
+    if sim_config.printer.realisations_print_frequency != 50:
+        raise ValueError("[Test] Printer not set")
+    if stochastic.SimulationConfigurator().printer is not None:
+        raise ValueError("[Test] Default configurator should not print")
+
+    engine = stochastic.RandomEngine()
+    engine.set_seed("@py-keyword-constructors@")
+    runner = fractures.build_simulation_runner()
+    tracker = runner.run(engine, sim_config)
+    runner.validate_statistics(tracker, [target])
+    print("--> SUCCESS!")
+
+
 if __name__ == "__main__":
     test_fracture_set()
     test_two_fracture_sets()
+    test_keyword_constructors()

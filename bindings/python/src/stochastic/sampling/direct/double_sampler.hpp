@@ -31,9 +31,41 @@ namespace geode
     void define_double_sampler( pybind11::module &module )
     {
         // Bind DistributionDescription
-        pybind11::class_< DoubleSampler::DistributionDescription >(
+        using Description = DoubleSampler::DistributionDescription;
+        pybind11::class_< Description >(
             module, "DoubleDistributionDescription" )
-            .def( pybind11::init<>() )
+            .def( pybind11::init(
+                      []( std::optional< DistributionType > distribution_type,
+                          std::optional< double > min_value,
+                          std::optional< double > max_value,
+                          std::optional< double > mean,
+                          std::optional< double > standard_deviation,
+                          std::optional< double > kappa,
+                          std::optional< double > alpha,
+                          std::optional< std::string > name ) {
+                          Description description;
+                          detail::set_if_given( description.distribution_type,
+                              distribution_type );
+                          description.min_value = min_value;
+                          description.max_value = max_value;
+                          description.mean = mean;
+                          description.standard_deviation = standard_deviation;
+                          description.kappa = kappa;
+                          description.alpha = alpha;
+                          detail::set_if_given( description.name, name );
+                          return description;
+                      } ),
+                pybind11::arg( "distribution_type" ) = std::nullopt,
+                pybind11::kw_only(),
+                pybind11::arg( "min_value" ) = std::nullopt,
+                pybind11::arg( "max_value" ) = std::nullopt,
+                pybind11::arg( "mean" ) = std::nullopt,
+                pybind11::arg( "standard_deviation" ) = std::nullopt,
+                pybind11::arg( "kappa" ) = std::nullopt,
+                pybind11::arg( "alpha" ) = std::nullopt,
+                pybind11::arg( "name" ) = std::nullopt,
+                "Distribution law, e.g. DoubleDistributionDescription("
+                "\"VonMises\", mean=30.0, kappa=10.0)." )
             .def_readwrite(
                 "name", &DoubleSampler::DistributionDescription::name )
             .def_readwrite( "distribution_type",
@@ -58,8 +90,9 @@ namespace geode
                 "Return a detailed description of the Distribution law" )
             .def( "__repr__",
                 []( const DoubleSampler::DistributionDescription &dist_desc ) {
-                    return "<DoubleDistributionDescription name="
-                           + dist_desc.name + ">";
+                    return absl::StrCat(
+                        "<DoubleDistributionDescription name=", dist_desc.name,
+                        " type=", dist_desc.distribution_type.get(), ">" );
                 } );
 
         // Bind Distribution variant

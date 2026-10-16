@@ -38,7 +38,27 @@ namespace geode
         using SimulationConfigurator = geode::SimulationConfigurator;
         pybind11::class_< SimulationConfigurator >(
             module, "SimulationConfigurator" )
-            .def( pybind11::init<>() )
+            .def( pybind11::init(
+                      []( std::optional< index_t > realizations,
+                          std::optional< index_t > metropolis_hasting_steps,
+                          std::optional< index_t > burn_in_steps,
+                          std::optional< SimulationPrinterConfigurator >
+                              printer ) {
+                          SimulationConfigurator config;
+                          detail::set_if_given(
+                              config.realizations, realizations );
+                          detail::set_if_given( config.metropolis_hasting_steps,
+                              metropolis_hasting_steps );
+                          detail::set_if_given(
+                              config.burn_in_steps, burn_in_steps );
+                          config.printer = std::move( printer );
+                          return config;
+                      } ),
+                pybind11::kw_only(),
+                pybind11::arg( "realizations" ) = std::nullopt,
+                pybind11::arg( "metropolis_hasting_steps" ) = std::nullopt,
+                pybind11::arg( "burn_in_steps" ) = std::nullopt,
+                pybind11::arg( "printer" ) = std::nullopt )
             .def_readwrite( "realizations",
                 &SimulationConfigurator::realizations,
                 "Number of realizations to generate" )

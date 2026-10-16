@@ -35,7 +35,12 @@ namespace geode
             .def( pybind11::init<>() )
             .def( pybind11::init< std::string >() )
             .def( "get", &DistributionType::get )
-            .def( "matches", &DistributionType::operator== );
+            .def( "matches", &DistributionType::operator== )
+            .def( "__repr__", []( const DistributionType &self ) {
+                return absl::StrCat( "<DistributionType ", self.get(), ">" );
+            } );
+        // a distribution type can be given as a string
+        pybind11::implicitly_convertible< std::string, DistributionType >();
 
         // UniformClosed<double>
         pybind11::class_< UniformClosed< double > >( module, "UniformClosed" )

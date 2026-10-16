@@ -33,7 +33,19 @@ namespace geode
         pybind11::class_< ObjectSetDynamicsConfig >( module,
             "ObjectSetDynamicsConfig",
             "Relative probabilities of the MCMC moves of an object set." )
-            .def( pybind11::init<>() )
+            .def( pybind11::init( []( std::optional< double > birth_ratio,
+                                      std::optional< double > death_ratio,
+                                      std::optional< double > change_ratio ) {
+                ObjectSetDynamicsConfig config;
+                detail::set_if_given( config.birth_ratio, birth_ratio );
+                detail::set_if_given( config.death_ratio, death_ratio );
+                detail::set_if_given( config.change_ratio, change_ratio );
+                return config;
+            } ),
+                pybind11::kw_only(),
+                pybind11::arg( "birth_ratio" ) = std::nullopt,
+                pybind11::arg( "death_ratio" ) = std::nullopt,
+                pybind11::arg( "change_ratio" ) = std::nullopt )
             .def_readwrite( "birth_ratio",
                 &ObjectSetDynamicsConfig::birth_ratio,
                 "Relative probability of birth moves." )

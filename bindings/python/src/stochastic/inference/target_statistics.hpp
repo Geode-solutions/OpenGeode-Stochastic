@@ -33,7 +33,18 @@ namespace geode
         pybind11::class_< TargetStatisticConfig >( module,
             "TargetStatisticConfig",
             "Expected mean value of a model term statistic." )
-            .def( pybind11::init<>() )
+            .def( pybind11::init( []( std::optional< std::string > term_name,
+                                      std::optional< double > value,
+                                      std::optional< double > tolerance ) {
+                TargetStatisticConfig config{};
+                detail::set_if_given( config.term_name, term_name );
+                detail::set_if_given( config.value, value );
+                detail::set_if_given( config.tolerance, tolerance );
+                return config;
+            } ),
+                pybind11::arg( "term_name" ) = std::nullopt,
+                pybind11::arg( "value" ) = std::nullopt, pybind11::kw_only(),
+                pybind11::arg( "tolerance" ) = std::nullopt )
             .def_readwrite( "term_name", &TargetStatisticConfig::term_name )
             .def_readwrite( "value", &TargetStatisticConfig::value )
             .def_readwrite( "tolerance", &TargetStatisticConfig::tolerance,

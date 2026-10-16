@@ -60,7 +60,21 @@ namespace geode
 
         pybind11::class_< DomainConfig >( module,
             absl::StrCat( "SpatialDomainConfig", dimension, "D" ).c_str() )
-            .def( pybind11::init<>() )
+            .def( pybind11::init(
+                      []( std::optional< Point< dimension > > min_point,
+                          std::optional< Point< dimension > > max_point,
+                          std::optional< double > buffer_size ) {
+                          DomainConfig config;
+                          detail::set_if_given( config.min_point, min_point );
+                          detail::set_if_given( config.max_point, max_point );
+                          detail::set_if_given(
+                              config.buffer_size, buffer_size );
+                          return config;
+                      } ),
+                pybind11::kw_only(),
+                pybind11::arg( "min_point" ) = std::nullopt,
+                pybind11::arg( "max_point" ) = std::nullopt,
+                pybind11::arg( "buffer_size" ) = std::nullopt )
             .def_readwrite( "min_point", &DomainConfig::min_point )
             .def_readwrite( "max_point", &DomainConfig::max_point )
             .def_readwrite( "buffer_size", &DomainConfig::buffer_size )

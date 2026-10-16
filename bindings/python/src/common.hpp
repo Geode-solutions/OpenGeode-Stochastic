@@ -78,3 +78,17 @@ namespace pybind11::detail
     {
     };
 } // namespace pybind11::detail
+
+namespace geode::detail
+{
+    /// Used by the keyword constructors: fields keep their C++ default value
+    /// when the argument is not given.
+    template < typename Field, typename Value >
+    void set_if_given( Field& field, const std::optional< Value >& value )
+    {
+        if( value )
+        {
+            field = *value;
+        }
+    }
+} // namespace geode::detail
