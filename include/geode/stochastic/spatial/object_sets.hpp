@@ -66,6 +66,8 @@ namespace geode
             const uuid& set_id ) const;
 
         [[nodiscard]] index_t nb_sets() const;
+        /// Set names, in the order of their creation.
+        [[nodiscard]] std::vector< std::string > set_names() const;
         [[nodiscard]] index_t nb_objects_in_set( const uuid& set_id ) const;
         [[nodiscard]] index_t nb_objects() const;
 

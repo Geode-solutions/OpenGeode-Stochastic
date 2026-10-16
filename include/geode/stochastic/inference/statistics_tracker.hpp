@@ -63,6 +63,13 @@ namespace geode
             }
         }
 
+        /// Names of the tracked statistics, in the order of means() and
+        /// variances().
+        [[nodiscard]] std::vector< std::string > term_names() const
+        {
+            return model_.term_names();
+        }
+
         [[nodiscard]] double mean( const uuid& term_uuid ) const
         {
             return means_[model_.term_index( term_uuid )];

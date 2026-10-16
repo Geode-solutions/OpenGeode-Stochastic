@@ -161,8 +161,10 @@ namespace geode
             for( const auto& object_id : all_objects )
             {
                 const auto& object = object_sets.get_object( object_id );
+                const auto& set_name =
+                    object_sets.get_set( object_id.set_id ).name();
                 file << object.string() << "\t" << object_id.set_id.string()
-                     << "\n";
+                     << "\t" << set_name.value_or( "" ) << "\n";
             }
         }
 

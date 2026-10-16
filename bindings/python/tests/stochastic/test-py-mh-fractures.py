@@ -68,6 +68,33 @@ def run_and_validate(engine, fractures, output_name):
 
     statistic_tracker = runner.run(engine, sim_config)
     runner.validate_statistics(statistic_tracker, fractures.expected_statistics())
+    return runner, statistic_tracker
+
+
+def check_named_results(runner, tracker, set_names, term_names):
+    if runner.term_names() != term_names or tracker.term_names() != term_names:
+        raise ValueError("[Test] Wrong statistic names: " + str(tracker.term_names()))
+    means = tracker.means_by_term()
+    if means != dict(zip(term_names, tracker.means())):
+        raise ValueError("[Test] Wrong means by term")
+    if sorted(tracker.variances_by_term()) != sorted(term_names):
+        raise ValueError("[Test] Wrong variances by term")
+
+    state = runner.state_realization()
+    if state.set_names() != set_names:
+        raise ValueError("[Test] Wrong set names: " + str(state.set_names()))
+    nb_segments = 0
+    for set_name in set_names:
+        segments = state.segments(set_name)
+        if len(segments) != state.nb_objects_in_set(set_name) or any(len(s) != 4 for s in segments):
+            raise ValueError("[Test] Wrong segments list size")
+        lengths = [((x1 - x0) ** 2 + (y1 - y0) ** 2) ** 0.5 for x0, y0, x1, y1 in segments]
+        nb_fixed = state.nb_fixed_objects_in_set(set_name)
+        if any(length < MIN_LENGTH - 1e-6 or length > MAX_LENGTH + 1e-6 for length in lengths[nb_fixed:]):
+            raise ValueError("[Test] Sampled segment length out of bounds")
+        nb_segments += len(segments)
+    if nb_segments != state.nb_objects():
+        raise ValueError("[Test] Missing segments")
 
 
 def test_fracture_set():
@@ -87,7 +114,8 @@ def test_fracture_set():
     # p21 = 1: no effect on the model, used to monitor the total length
     fractures.add_intensity("fset_A", 1.0, expected_length)
 
-    run_and_validate(engine, fractures, "py_fracture_set")
+    runner, tracker = run_and_validate(engine, fractures, "py_fracture_set")
+    check_named_results(runner, tracker, ["fset_A"], ["fset_A_p20", "fset_A_p21"])
     print("--> SUCCESS!")
 
 
@@ -121,7 +149,15 @@ def test_two_fracture_sets():
     # inhibited X-nodes: sets never intersect each other
     fractures.add_x_node_interaction(["fset_A", "fset_B"], 0.0, 0.0)
 
-    run_and_validate(engine, fractures, "py_two_fracture_sets")
+    runner, tracker = run_and_validate(engine, fractures, "py_two_fracture_sets")
+    check_named_results(
+        runner,
+        tracker,
+        ["fset_A", "fset_B"],
+        ["fset_A_p20", "fset_B_p20", "fset_A_spacing", "x_node_fset_A_fset_B"],
+    )
+    if runner.state_realization().nb_fixed_objects_in_set("fset_A") != 1:
+        raise ValueError("[Test] Observed fracture missing in the realization")
     print("--> SUCCESS!")
 
 

@@ -46,6 +46,38 @@ namespace geode
 
             .def( "variances", &Tracker::variances )
 
+            .def( "term_names", &Tracker::term_names,
+                "Names of the statistics, in the order of means() and "
+                "variances()." )
+
+            .def(
+                "means_by_term",
+                []( const Tracker& tracker ) {
+                    std::map< std::string, double > result;
+                    const auto names = tracker.term_names();
+                    for( const auto term_id : Indices{ names } )
+                    {
+                        result.emplace(
+                            names[term_id], tracker.means()[term_id] );
+                    }
+                    return result;
+                },
+                "Mean of each statistic, by term name." )
+
+            .def(
+                "variances_by_term",
+                []( const Tracker& tracker ) {
+                    std::map< std::string, double > result;
+                    const auto names = tracker.term_names();
+                    const auto variances = tracker.variances();
+                    for( const auto term_id : Indices{ names } )
+                    {
+                        result.emplace( names[term_id], variances[term_id] );
+                    }
+                    return result;
+                },
+                "Variance of each statistic, by term name." )
+
             .def( "__repr__", []( const Tracker& tracker ) {
                 return absl::StrCat( "StatisticsTracker(count=",
                     tracker.statiscal_count(), ")" );

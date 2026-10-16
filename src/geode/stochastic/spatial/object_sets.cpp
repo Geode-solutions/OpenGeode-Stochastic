@@ -97,6 +97,18 @@ namespace geode
     }
 
     template < typename Type >
+    std::vector< std::string > ObjectSets< Type >::set_names() const
+    {
+        std::vector< std::string > names;
+        names.reserve( sets_.size() );
+        for( const auto& set : sets_ )
+        {
+            names.emplace_back( set.name().value_or( "" ) );
+        }
+        return names;
+    }
+
+    template < typename Type >
     index_t ObjectSets< Type >::nb_objects_in_set( const uuid& set_id ) const
     {
         return get_set( set_id ).nb_objects();

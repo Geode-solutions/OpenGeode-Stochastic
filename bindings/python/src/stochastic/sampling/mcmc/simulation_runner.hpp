@@ -76,10 +76,21 @@ namespace geode
             .def( "run",
                 pybind11::overload_cast< geode::RandomEngine&,
                     const geode::SimulationConfigurator& >( &Runner::run ),
-                pybind11::arg( "engine" ), pybind11::arg( "config" ) )
+                pybind11::arg( "engine" ), pybind11::arg( "config" ),
+                // the returned tracker refers to the runner model
+                pybind11::keep_alive< 0, 1 >() )
 
             .def( "state_realization", &Runner::state_realization,
-                pybind11::return_value_policy::reference_internal )
+                pybind11::return_value_policy::reference_internal,
+                "Current state of the object sets (last realization after a "
+                "run)." )
+
+            .def(
+                "term_names",
+                []( const Runner& self ) {
+                    return self.model().term_names();
+                },
+                "Names of the model terms, i.e. of the tracked statistics." )
 
             .def(
                 "validate_statistics",
