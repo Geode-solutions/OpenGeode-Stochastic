@@ -52,3 +52,4 @@ https://gitlab.univ-lorraine.fr/labos/iecl/drlib
 [MIT](https://opensource.org/licenses/MIT)
 
 Copyright (c) 2019 - 2026, Geode-solutions
+
