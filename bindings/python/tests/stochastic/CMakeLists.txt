@@ -23,3 +23,20 @@ add_geode_python_test(
     DEPENDENCIES
         ${PROJECT_NAME}::py_stochastic
 )
+add_geode_python_test(
+    SOURCE "test-py-conventions.py"
+    DEPENDENCIES
+        ${PROJECT_NAME}::py_stochastic
+)
+
+add_geode_python_test(
+    SOURCE "test-py-distributions.py"
+    DEPENDENCIES
+        ${PROJECT_NAME}::py_stochastic
+)
+
+add_geode_python_test(
+    SOURCE "test-py-simulation-errors.py"
+    DEPENDENCIES
+        ${PROJECT_NAME}::py_stochastic
+)

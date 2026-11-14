@@ -23,6 +23,11 @@
 
 #pragma once
 
+#include <cmath>
+#include <optional>
+#include <string>
+#include <string_view>
+
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -78,6 +83,97 @@ namespace pybind11::detail
     {
     };
 } // namespace pybind11::detail
+
+namespace geode
+{
+    /*!
+     * Return the Python expression of a double: its repr, except for the
+     * values that have no literal, which are given by float(...)
+     */
+    inline std::string python_repr( double value )
+    {
+        if( std::isnan( value ) )
+        {
+            return "float('nan')";
+        }
+        if( std::isinf( value ) )
+        {
+            return value > 0 ? "float('inf')" : "float('-inf')";
+        }
+        return pybind11::repr( pybind11::float_( value ) )
+            .template cast< std::string >();
+    }
+
+    /*!
+     * Same as above for an optional double: None when it has no value.
+     */
+    inline std::string python_repr( const std::optional< double >& value )
+    {
+        return value ? python_repr( *value ) : "None";
+    }
+
+    /*!
+     * Return the Python repr of the value, e.g. 1.0 for a double, 'text' for
+     * a string or Point2D([1.0, 2.0]) for a Point2D.
+     */
+    template < typename Type >
+    std::string python_repr( const Type& value )
+    {
+        return pybind11::repr( pybind11::cast( value ) )
+            .template cast< std::string >();
+    }
+
+    /*!
+     * Return name(arguments...), where each argument is already a Python
+     * expression (a positional value or keyword=value).
+     */
+    inline std::string python_call_repr(
+        std::string_view name, std::initializer_list< std::string > arguments )
+    {
+        std::string result{ name };
+        result += '(';
+        auto first = true;
+        for( const auto& argument : arguments )
+        {
+            if( !first )
+            {
+                result += ", ";
+            }
+            first = false;
+            result += argument;
+        }
+        result += ')';
+        return result;
+    }
+
+    /*!
+     * Same as pybind11::class_::def_readwrite, but the setter argument is
+     * called "value" instead of "arg0" in the Python signatures.
+     */
+    template < typename Class,
+        typename Member,
+        typename Owner,
+        typename... Options >
+    void def_readwrite_named(
+        pybind11::class_< Class, Options... >& python_class,
+        const char* name,
+        Member Owner::* member,
+        const char* doc )
+    {
+        const pybind11::cpp_function getter(
+            [member]( const Class& object ) -> const Member& {
+                return object.*member;
+            },
+            pybind11::is_method( python_class ) );
+        const pybind11::cpp_function setter(
+            [member]( Class& object, const Member& value ) {
+                object.*member = value;
+            },
+            pybind11::is_method( python_class ), pybind11::arg( "value" ) );
+        python_class.def_property( name, getter, setter,
+            pybind11::return_value_policy::reference_internal, doc );
+    }
+} // namespace geode
 
 namespace geode::detail
 {

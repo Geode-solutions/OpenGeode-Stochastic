@@ -19,3 +19,26 @@
 # SOFTWARE.
 
 add_subdirectory(stochastic)
+
+
+# The stubs of the binding module and of the pure-Python module must pass the
+# quality gates (named parameters, no unresolved or raw C++ types, stubtest).
+# The stubs of the OpenGeode modules whose types appear in the signatures are
+# generated with it, for mypy to resolve them
+add_geode_python_stub_test(
+    MODULES
+        opengeode_py_basic
+        opengeode_py_geometry
+        opengeode_stochastic_py_stochastic
+    DEPENDENCIES
+        ${PROJECT_NAME}::py_stochastic
+)
+
+add_geode_python_stub_test(
+    NAME test-py-wrapper-stubs
+    NO_STUBTEST
+    MODULES
+        stochastic
+    DEPENDENCIES
+        ${PROJECT_NAME}::py_stochastic
+)

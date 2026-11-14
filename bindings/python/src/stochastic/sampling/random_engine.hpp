@@ -20,7 +20,9 @@
  * SOFTWARE.
  *
  */
+
 #pragma once
+
 #include "../../common.hpp"
 
 #include <geode/stochastic/sampling/random_engine.hpp>
@@ -29,26 +31,33 @@ namespace geode
 {
     void define_random_engine( pybind11::module &module )
     {
-        pybind11::class_< RandomEngine >( module, "RandomEngine" )
-            .def( pybind11::init<>() )
-            // Seed setting
+        pybind11::class_< RandomEngine >( module, "RandomEngine",
+            "Random number generator of the simulations. Every sampling "
+            "function raises an OpenGeodeDataError when the parameters of the "
+            "law are invalid." )
+            .def( pybind11::init<>(),
+                "Create a generator with a default (non reproducible) seed; "
+                "call set_seed to get a reproducible sequence." )
             .def( "set_seed",
                 pybind11::overload_cast< uint64_t >( &RandomEngine::set_seed ),
-                pybind11::arg( "number" ), "Set RNG seed using integer" )
+                pybind11::arg( "number" ),
+                "Reseed the generator with an integer: the same number gives "
+                "the same sequence of samples." )
             .def( "set_seed",
                 pybind11::overload_cast< std::string_view >(
                     &RandomEngine::set_seed ),
-                pybind11::arg( "word" ), "Set RNG seed using string" )
-
-            // Uniform sampling (double)
+                pybind11::arg( "word" ),
+                "Reseed the generator from a string. The seed is a hash of "
+                "the word that can differ between processes: use an integer "
+                "to reproduce a sequence." )
             .def(
                 "sample_uniform_closed",
                 []( RandomEngine &self, const UniformClosed< double > &law ) {
                     return self.sample_uniform( law );
                 },
                 pybind11::arg( "law" ),
-                "Sample a double from a uniform closed distribution" )
-
+                "Sample a value of the uniform law on [min_value, max_value]; "
+                "requires min_value <= max_value." )
             .def(
                 "sample_uniform_closed_open",
                 []( RandomEngine &self,
@@ -56,37 +65,41 @@ namespace geode
                     return self.sample_uniform( law );
                 },
                 pybind11::arg( "law" ),
-                "Sample a double from a uniform closed-open distribution" )
-
-            // Gaussian
+                "Sample a value of the uniform law on [min_value, max_value); "
+                "requires min_value < max_value." )
             .def( "sample_gaussian", &RandomEngine::sample_gaussian,
                 pybind11::arg( "law" ),
-                "Sample a value from a Gaussian distribution" )
+                "Sample a value of the Gaussian law; requires a finite mean "
+                "and a finite standard deviation > 0." )
             .def( "sample_truncated_gaussian",
                 &RandomEngine::sample_truncated_gaussian,
                 pybind11::arg( "law" ),
-                "Sample a value from a truncated Gaussian" )
-
-            // Other distributions
+                "Sample a value of the Gaussian law truncated to [min_value, "
+                "max_value] (inverse CDF method); requires min_value < "
+                "max_value." )
             .def( "sample_von_mises", &RandomEngine::sample_von_mises,
                 pybind11::arg( "law" ),
-                "Sample a value from a Von Mises-Fisher" )
+                "Sample an angle in radians, in [0, 2*pi), of the Von Mises "
+                "law." )
             .def( "sample_truncated_lognormal",
                 &RandomEngine::sample_truncated_lognormal,
                 pybind11::arg( "law" ),
-                "Sample a value from a Truncated Log Normal" )
+                "Sample a value of the log-normal law truncated to "
+                "[min_value, max_value]; requires min_value < max_value." )
             .def( "sample_truncated_powerlaw",
                 &RandomEngine::sample_truncated_powerlaw,
                 pybind11::arg( "law" ),
-                "Sample a value from a Truncated Power Law" )
+                "Sample a value of the power law truncated to [min_value, "
+                "max_value]; requires alpha > 0 and min_value < max_value." )
             .def( "sample_log", &RandomEngine::sample_log,
-                "Return a logarithmically uniform random value" )
+                "Return the natural logarithm of a value drawn uniformly in "
+                "(0, 1]: a value <= 0." )
             .def( "sample_bernoulli", &RandomEngine::sample_bernoulli,
                 pybind11::arg( "probability_of_success" ),
-                "Sample a boolean with given success probability" )
-
+                "Return True with the given probability, which must be in "
+                "[0, 1]." )
             .def( "__repr__", []( const RandomEngine & ) {
-                return "<RandomEngine>";
+                return "RandomEngine()";
             } );
     }
 } // namespace geode

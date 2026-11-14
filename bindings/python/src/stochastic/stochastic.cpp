@@ -45,11 +45,21 @@
 
 PYBIND11_MODULE( opengeode_stochastic_py_stochastic, module )
 {
-    module.doc() = "OpenGeode-Stochastic Python binding";
-    pybind11::class_< geode::OpenGeodeStochasticStochasticLibrary >(
-        module, "OpenGeodeStochasticStochasticLibrary" )
-        .def( "initialize",
-            &geode::OpenGeodeStochasticStochasticLibrary::initialize );
+    // The types of the arguments (Point2D, BoundingBox2D...) are defined by
+    // the OpenGeode package, in the build tree and in the wheel
+    pybind11::module_::import( "opengeode" );
+    module.doc() =
+        "Stochastic simulation of OpenGeode: spatial domains, random "
+        "sampling of distributions, Metropolis-Hastings simulation of object "
+        "sets (segments) and fracture network processes.";
+    pybind11::class_< geode::OpenGeodeStochasticStochasticLibrary >( module,
+        "OpenGeodeStochasticStochasticLibrary",
+        "Library of the stochastic module (initialized when the Python module "
+        "is imported)." )
+        .def_static( "initialize",
+            &geode::OpenGeodeStochasticStochasticLibrary::initialize,
+            "Initialize the library: register its components. Called when the "
+            "module is imported." );
 
     geode::define_spatial_domain( module );
     geode::define_object_sets( module );
