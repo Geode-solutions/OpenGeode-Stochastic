@@ -40,3 +40,9 @@ add_geode_python_test(
     DEPENDENCIES
         ${PROJECT_NAME}::py_stochastic
 )
+
+add_geode_python_test(
+    SOURCE "test-py-simulation-threads.py"
+    DEPENDENCIES
+        ${PROJECT_NAME}::py_stochastic
+)

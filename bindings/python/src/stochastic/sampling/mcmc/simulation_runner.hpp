@@ -99,12 +99,16 @@ namespace geode
 
         pybind11::class_< Runner >( module, pyclass_name.c_str(),
             "Metropolis-Hastings simulation of object sets, created by a "
-            "builder (see FractureProcessBuilder.build_simulation_runner)." )
+            "builder (see FractureProcessBuilder.build_simulation_runner). "
+            "The calls running the simulation release the GIL: do not use "
+            "the runner and its results, nor the RandomEngine given to the "
+            "call, from another thread meanwhile." )
             .def( "run",
                 pybind11::overload_cast< geode::RandomEngine&, geode::index_t >(
                     &Runner::run ),
                 pybind11::arg( "engine" ), pybind11::arg( "steps" ),
                 pybind11::return_value_policy::reference_internal,
+                pybind11::call_guard< pybind11::gil_scoped_release >(),
                 "Run the given number of Metropolis-Hastings steps from the "
                 "current state and return the object sets, which the runner "
                 "keeps (they change at the next run)." )
@@ -115,6 +119,7 @@ namespace geode
                 pybind11::arg( "engine" ), pybind11::arg( "config" ),
                 // the returned tracker refers to the runner model
                 pybind11::keep_alive< 0, 1 >(),
+                pybind11::call_guard< pybind11::gil_scoped_release >(),
                 "Run the simulation (burn-in, then the realizations) from "
                 "the current state, writing the files of config.printer if "
                 "any, and return the StatisticsTracker of the realizations." )

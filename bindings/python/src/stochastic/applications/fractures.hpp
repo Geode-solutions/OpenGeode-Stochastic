@@ -100,6 +100,7 @@ namespace geode
                         self.build_simulation_context()
                     };
                 },
+                pybind11::call_guard< pybind11::gil_scoped_release >(),
                 "Create a simulation runner from the current definition (the "
                 "builder can still be modified, which does not change the "
                 "runner). Raise an OpenGeodeDataError if the domain, a set or "
