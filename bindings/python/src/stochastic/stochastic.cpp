@@ -46,8 +46,10 @@
 PYBIND11_MODULE( opengeode_stochastic_py_stochastic, module )
 {
     // The types of the arguments (Point2D, BoundingBox2D...) are defined by
-    // the OpenGeode package, in the build tree and in the wheel
-    pybind11::module_::import( "opengeode" );
+    // the OpenGeode modules
+    geode::import_binding_dependency( module, "opengeode.opengeode_py_basic" );
+    geode::import_binding_dependency(
+        module, "opengeode.opengeode_py_geometry" );
     module.doc() =
         "Stochastic simulation of OpenGeode: spatial domains, random "
         "sampling of distributions, Metropolis-Hastings simulation of object "
@@ -77,4 +79,6 @@ PYBIND11_MODULE( opengeode_stochastic_py_stochastic, module )
     geode::define_simulation_configurator_and_runner( module );
 
     geode::define_fracture_process_builder( module );
+
+    geode::document_missing_constructors( module );
 }

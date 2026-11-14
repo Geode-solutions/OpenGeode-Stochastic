@@ -280,6 +280,25 @@ def test_keyword_constructor_defaults():
     print("test_keyword_constructor_defaults: OK")
 
 
+def test_classes_without_constructor():
+    # a class that cannot be created from Python says how to get an instance
+    for python_class in (
+        stochastic.Segment2DSimulationRunner,
+        stochastic.Segment2DStatisticsTracker,
+        stochastic.Segment2DSetDefinition,
+        stochastic.DoubleSampler,
+    ):
+        try:
+            python_class()
+        except TypeError:
+            pass
+        else:
+            raise ValueError("[Test] %s can be created" % python_class.__name__)
+        documentation = python_class.__init__.__doc__ or ""
+        check("Initialize self" not in documentation and documentation.strip(), "Generic __init__ doc of " + python_class.__name__)
+    print("test_classes_without_constructor: OK")
+
+
 if __name__ == "__main__":
     test_documentation_and_argument_names()
     test_every_function_is_documented()
@@ -289,3 +308,4 @@ if __name__ == "__main__":
     test_repr_is_evaluable()
     test_repr_of_non_value_classes()
     test_keyword_constructor_defaults()
+    test_classes_without_constructor()
