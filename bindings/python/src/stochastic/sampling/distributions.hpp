@@ -202,8 +202,11 @@ namespace geode
         def_readwrite_named( truncated_gaussian, "max_value",
             &TruncatedGaussian::max_value, "Upper bound, None for +infinity." );
         detail::define_distribution_common( truncated_gaussian,
-            "Return True if the parameters pass the checks of the C++ "
-            "TruncatedGaussian::is_valid (an error is logged otherwise)." );
+            "Return True if the mean is finite, the standard deviation is "
+            "finite and > 0, min_value < max_value and the range is not "
+            "entirely more than 6 standard deviations away from the mean "
+            "(an error is logged otherwise). The 6 sigma rule is a validity "
+            "policy, stricter than what sampling strictly requires." );
         truncated_gaussian.def( "__repr__", []( const TruncatedGaussian &law ) {
             return python_call_repr( "TruncatedGaussian",
                 { "mean=" + python_repr( law.mean ),
@@ -278,8 +281,10 @@ namespace geode
             &TruncatedLogNormal::max_value,
             "Upper bound, None for +infinity." );
         detail::define_distribution_common( truncated_lognormal,
-            "Return True if the parameters pass the checks of the C++ "
-            "TruncatedLogNormal::is_valid (an error is logged otherwise)." );
+            "Return True if the mean is finite, the standard deviation is "
+            "finite and > 0, the lower bound (0 if None) is not negative and "
+            "below the upper bound (+infinity if None); an error is logged "
+            "otherwise." );
         truncated_lognormal.def(
             "__repr__", []( const TruncatedLogNormal &law ) {
                 return python_call_repr( "TruncatedLogNormal",
