@@ -42,3 +42,12 @@ add_geode_python_stub_test(
     DEPENDENCIES
         ${PROJECT_NAME}::py_stochastic
 )
+
+add_geode_python_test(
+    SOURCE "test-py-package-docs.py"
+    ARGUMENTS
+        "${PROJECT_SOURCE_DIR}/bindings/python/opengeode_stochastic_doc.txt"
+        "${PROJECT_BINARY_DIR}/wheel/opengeode_stochastic"
+    DEPENDENCIES
+        ${PROJECT_NAME}::py_stochastic
+)
