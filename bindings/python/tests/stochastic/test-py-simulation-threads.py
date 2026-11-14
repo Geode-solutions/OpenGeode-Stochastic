@@ -21,7 +21,6 @@
 
 import gc
 import threading
-import time
 
 import geode_test_env
 
@@ -53,55 +52,40 @@ def make_builder():
     return builder
 
 
-def count_while_running(task):
-    """Run task in a thread and count the loops of the main thread meanwhile"""
-    errors = []
-
-    def target():
-        try:
-            task()
-        except BaseException as error:  # noqa: B036
-            errors.append(error)
-
-    thread = threading.Thread(target=target)
-    ticks = 0
-    thread.start()
-    started = time.perf_counter()
-    while thread.is_alive():
-        ticks += 1
-        time.sleep(0.001)
-    elapsed = time.perf_counter() - started
-    thread.join()
-    if errors:
-        raise errors[0]
-    return ticks, elapsed
-
-
 def test_run_releases_the_gil():
     engine = stochastic.RandomEngine()
     engine.set_seed(5)
     runner = make_builder().build_simulation_runner()
-    steps = 200000
 
-    ticks, elapsed = count_while_running(lambda: runner.run(engine, steps))
-    # with the GIL held by the run, the main thread could not tick: it needs
-    # about one tick per millisecond of the run
-    check(elapsed > 0.05, "The run is too short to be measured: %f s" % elapsed)
-    check(ticks > elapsed * 100, "The GIL is not released by run(engine, steps): %d ticks in %f s" % (ticks, elapsed))
+    geode_test_env.assert_gil_released(
+        lambda: runner.run(engine, 1000), name="run(engine, steps)"
+    )
 
     config = stochastic.SimulationConfigurator(
-        realizations=20, metropolis_hasting_steps=steps // 20, burn_in_steps=steps
+        realizations=5, metropolis_hasting_steps=10, burn_in_steps=10
     )
-    ticks, elapsed = count_while_running(lambda: runner.run(engine, config))
-    check(elapsed > 0.05, "The simulation is too short to be measured: %f s" % elapsed)
-    check(ticks > elapsed * 100, "The GIL is not released by run(engine, config): %d ticks in %f s" % (ticks, elapsed))
+    tracker = geode_test_env.assert_gil_released(
+        lambda: runner.run(engine, config), name="run(engine, config)"
+    )
+    check(tracker.statiscal_count() == 5, "Wrong number of realizations")
+    # the class docstring warns about everything a run uses without the GIL
+    doc = type(runner).__doc__
+    check("release the GIL" in doc and "RandomEngine" in doc, "The GIL warning is incomplete: " + doc)
     print("test_run_releases_the_gil: OK")
 
 
 def test_build_releases_the_gil():
     builder = make_builder()
-    # the runners are built one after the other by two threads, the result must
-    # be the same as in one thread
+    runner = geode_test_env.assert_gil_released(
+        builder.build_simulation_runner, name="build_simulation_runner"
+    )
+    check(runner.term_names() == ["fset_p20"], "Wrong terms")
+    print("test_build_releases_the_gil: OK")
+
+
+def test_build_from_several_threads():
+    builder = make_builder()
+    # the runners built by several threads are the same as in one thread
     runners = []
     threads = [threading.Thread(target=lambda: runners.append(builder.build_simulation_runner())) for _ in range(4)]
     for thread in threads:
@@ -110,7 +94,7 @@ def test_build_releases_the_gil():
         thread.join()
     check(len(runners) == 4, "Runners are missing")
     check(all(runner.term_names() == ["fset_p20"] for runner in runners), "Wrong terms")
-    print("test_build_releases_the_gil: OK")
+    print("test_build_from_several_threads: OK")
 
 
 def test_results_keep_the_runner_alive():
@@ -162,5 +146,6 @@ def test_runner_is_independent_of_the_builder():
 if __name__ == "__main__":
     test_run_releases_the_gil()
     test_build_releases_the_gil()
+    test_build_from_several_threads()
     test_results_keep_the_runner_alive()
     test_runner_is_independent_of_the_builder()
