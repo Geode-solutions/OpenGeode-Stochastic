@@ -19,3 +19,31 @@
 # SOFTWARE.
 
 add_subdirectory(stochastic)
+
+
+# The stubs of the binding module and of the pure-Python module must pass the
+# quality gates (named parameters, no unresolved or raw C++ types, stubtest)
+add_geode_python_stub_test(
+    MODULES
+        opengeode_stochastic_py_stochastic
+    DEPENDENCIES
+        ${PROJECT_NAME}::py_stochastic
+)
+
+add_geode_python_stub_test(
+    NAME test-py-wrapper-stubs
+    NO_STUBTEST
+    MODULES
+        stochastic
+    DEPENDENCIES
+        ${PROJECT_NAME}::py_stochastic
+)
+
+add_geode_python_test(
+    SOURCE "test-py-package-docs.py"
+    ARGUMENTS
+        "${PROJECT_SOURCE_DIR}/bindings/python/opengeode_stochastic_doc.txt"
+        "${PROJECT_BINARY_DIR}/wheel/opengeode_stochastic"
+    DEPENDENCIES
+        ${PROJECT_NAME}::py_stochastic
+)

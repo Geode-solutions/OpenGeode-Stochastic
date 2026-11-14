@@ -95,3 +95,10 @@ add_geode_test(
         OpenGeode::basic
         ${PROJECT_NAME}::stochastic
 )
+
+add_geode_test(
+    SOURCE "test-distributions.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        ${PROJECT_NAME}::stochastic
+)

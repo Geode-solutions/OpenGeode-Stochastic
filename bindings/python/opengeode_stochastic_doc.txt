@@ -1,0 +1,71 @@
+OpenGeode-Stochastic: stochastic simulation of object sets for OpenGeode.
+
+The package samples probability laws of real values (RandomEngine, Gaussian,
+VonMises, TruncatedPowerLaw...) and simulates sets of objects with the
+Metropolis-Hastings algorithm. The ready-to-use process is the fracture network
+of FractureProcessBuilder: sets of 2D segments in a box domain with a density
+(p20), an intensity (p21), a minimal spacing and X-node interactions. Each term
+of the model has a statistic, tracked over the realizations.
+
+Sampling
+========
+
+    >>> import opengeode
+    >>> import opengeode_stochastic as stochastic
+    >>> engine = stochastic.RandomEngine()
+    >>> engine.set_seed(1)
+    >>> law = stochastic.Gaussian(mean=1.0, standard_deviation=0.1)
+    >>> law
+    Gaussian(mean=1.0, standard_deviation=0.1)
+    >>> 0.5 < engine.sample_gaussian(law) < 1.5
+    True
+    >>> description = stochastic.DoubleDistributionDescription(
+    ...     "UniformClosed", min_value=2.0, max_value=3.0)
+    >>> uniform = stochastic.DoubleSampler.create_distribution(description)
+    >>> uniform
+    UniformClosed(min_value=2.0, max_value=3.0)
+    >>> 2.0 <= stochastic.DoubleSampler.sample(engine, uniform) <= 3.0
+    True
+
+Angles are in radians (VonMises, azimuth of the segments);
+DoubleSampler.create_rad_angle_distribution_from_degree converts a description
+given in degrees. An invalid law raises opengeode.OpenGeodeDataError when it is
+sampled (an OpenGeodeError, which is a RuntimeError).
+
+Fracture network
+================
+
+    >>> domain = stochastic.SpatialDomainConfig2D(
+    ...     min_point=opengeode.Point2D([0.0, 0.0]),
+    ...     max_point=opengeode.Point2D([10.0, 10.0]),
+    ...     buffer_size=2.0)
+    >>> builder = stochastic.FractureProcessBuilder()
+    >>> builder.set_domain(domain)
+    >>> fractures = builder.add_fracture_set("fractures", 0.05)
+    >>> fractures.sampler.length = stochastic.DoubleDistributionDescription(
+    ...     "UniformClosed", min_value=0.5, max_value=1.0)
+    >>> fractures.sampler.azimuth = stochastic.DoubleDistributionDescription(
+    ...     "UniformClosed", min_value=0.0, max_value=3.14)
+    >>> runner = builder.build_simulation_runner()
+    >>> runner.term_names()
+    ['fractures_p20']
+
+The buffer must be larger than the longest segment. The runner releases the
+GIL while it simulates:
+
+    >>> configuration = stochastic.SimulationConfigurator(
+    ...     realizations=10, metropolis_hasting_steps=20, burn_in_steps=100)
+    >>> tracker = runner.run(engine, configuration)
+    >>> tracker.statiscal_count()
+    10
+    >>> list(tracker.means_by_term())
+    ['fractures_p20']
+    >>> state = runner.state_realization()
+    >>> len(state.segments("fractures")) == state.nb_objects_in_set("fractures")
+    True
+
+Give an expected mean to the terms (the optional expected_ arguments of the
+builder) and check the simulation with runner.validate_statistics(tracker,
+builder.expected_statistics()): an OpenGeodeResultError is raised when a mean
+is too far from its expectation. SimulationPrinterConfigurator writes the
+statistics and the realizations to files.

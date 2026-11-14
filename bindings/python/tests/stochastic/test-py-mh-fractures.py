@@ -20,6 +20,7 @@
 # SOFTWARE.
 
 import os
+import tempfile
 
 import geode_test_env
 
@@ -58,11 +59,15 @@ def run_and_validate(engine, fractures, output_name):
     sim_config.metropolis_hasting_steps = 100
     sim_config.burn_in_steps = 1000
 
-    printer_config = stochastic.SimulationPrinterConfigurator()
-    printer_config.output_folder = os.path.join(printer_config.output_folder, output_name)
-    sim_config.printer = printer_config
+    # the files are written in a temporary folder, not in the current one
+    with tempfile.TemporaryDirectory() as folder:
+        printer_config = stochastic.SimulationPrinterConfigurator()
+        printer_config.output_folder = os.path.join(folder, output_name)
+        sim_config.printer = printer_config
 
-    statistic_tracker = runner.run(engine, sim_config)
+        statistic_tracker = runner.run(engine, sim_config)
+        if not os.path.exists(os.path.join(folder, output_name, "statistics.txt")):
+            raise ValueError("[Test] The statistics were not written in the output folder")
     runner.validate_statistics(statistic_tracker, fractures.expected_statistics())
     return runner, statistic_tracker
 
@@ -202,8 +207,9 @@ def test_keyword_constructors():
     if (target.term_name, target.value, target.tolerance) != ("fset_A_p20", 20.0, 0.2):
         raise ValueError("[Test] Wrong target statistic")
 
+    folder = tempfile.TemporaryDirectory()
     printer = stochastic.SimulationPrinterConfigurator(
-        output_folder=os.path.join(os.getcwd(), "py_keyword_constructors"),
+        output_folder=os.path.join(folder.name, "py_keyword_constructors"),
         realisations_print_frequency=50,
     )
     if printer.statistics_filename != "statistics.txt":
@@ -219,7 +225,10 @@ def test_keyword_constructors():
     engine = stochastic.RandomEngine()
     engine.set_seed("@py-keyword-constructors@")
     runner = fractures.build_simulation_runner()
-    tracker = runner.run(engine, sim_config)
+    with folder:
+        tracker = runner.run(engine, sim_config)
+        if not os.path.exists(os.path.join(folder.name, "py_keyword_constructors", "statistics.txt")):
+            raise ValueError("[Test] The statistics were not written in the output folder")
     runner.validate_statistics(tracker, [target])
     print("--> SUCCESS!")
 

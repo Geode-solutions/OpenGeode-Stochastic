@@ -96,8 +96,8 @@ namespace geode
 
     bool TruncatedGaussian::is_valid() const
     {
-        if( standard_deviation <= 0 || std::isfinite( standard_deviation )
-            || std::isfinite( mean ) )
+        if( standard_deviation <= 0 || !std::isfinite( standard_deviation )
+            || !std::isfinite( mean ) )
         {
             geode::Logger::error(
                 "[Truncated Gaussian] - check mean and standard deviation N(",
@@ -117,8 +117,8 @@ namespace geode
             return false;
         }
 
-        if( min < mean + 6.0 * standard_deviation
-            && max > mean - 6.0 * standard_deviation )
+        if( min > mean + 6.0 * standard_deviation
+            || max < mean - 6.0 * standard_deviation )
         {
             geode::Logger::error( "[Truncated Gaussian] - Truncation "
                                   "range is too far from mean. N(",
