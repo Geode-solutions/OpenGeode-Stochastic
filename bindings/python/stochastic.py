@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""OpenGeode-Stochastic: random sampling of laws, Metropolis-Hastings simulation of object sets and fracture network processes (see help(opengeode_stochastic))."""
+
 import opengeode
 
 from opengeode_stochastic_py_stochastic import *

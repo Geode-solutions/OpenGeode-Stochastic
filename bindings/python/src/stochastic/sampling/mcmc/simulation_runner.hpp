@@ -20,6 +20,7 @@
  * SOFTWARE.
  *
  */
+
 #pragma once
 
 #include "../../../common.hpp"
@@ -36,46 +37,56 @@ namespace geode
     void define_simulation_configurator( pybind11::module& module )
     {
         using SimulationConfigurator = geode::SimulationConfigurator;
-        pybind11::class_< SimulationConfigurator >(
-            module, "SimulationConfigurator" )
-            .def( pybind11::init(
-                      []( std::optional< index_t > realizations,
-                          std::optional< index_t > metropolis_hasting_steps,
-                          std::optional< index_t > burn_in_steps,
-                          std::optional< SimulationPrinterConfigurator >
-                              printer ) {
-                          SimulationConfigurator config;
-                          detail::set_if_given(
-                              config.realizations, realizations );
-                          detail::set_if_given( config.metropolis_hasting_steps,
-                              metropolis_hasting_steps );
-                          detail::set_if_given(
-                              config.burn_in_steps, burn_in_steps );
-                          config.printer = std::move( printer );
-                          return config;
-                      } ),
-                pybind11::kw_only(),
-                pybind11::arg( "realizations" ) = std::nullopt,
-                pybind11::arg( "metropolis_hasting_steps" ) = std::nullopt,
-                pybind11::arg( "burn_in_steps" ) = std::nullopt,
-                pybind11::arg( "printer" ) = std::nullopt )
-            .def_readwrite( "realizations",
-                &SimulationConfigurator::realizations,
-                "Number of realizations to generate" )
-            .def_readwrite( "metropolis_hasting_steps",
-                &SimulationConfigurator::metropolis_hasting_steps,
-                "Number of Metropolis-Hastings steps per realization" )
-            .def_readwrite( "burn_in_steps",
-                &SimulationConfigurator::burn_in_steps,
-                "Number of burn-in steps before recording realizations" )
-            .def_readwrite( "printer", &SimulationConfigurator::printer,
-                "Optional SimulationPrinter for output" )
+        pybind11::class_< SimulationConfigurator > config( module,
+            "SimulationConfigurator",
+            "Parameters of a simulation: after the burn-in steps, each of "
+            "the realizations is the state reached after the given number of "
+            "Metropolis-Hastings steps from the previous one." );
+        config.def(
+            pybind11::init(
+                []( std::optional< index_t > realizations,
+                    std::optional< index_t > metropolis_hasting_steps,
+                    std::optional< index_t > burn_in_steps,
+                    std::optional< SimulationPrinterConfigurator > printer ) {
+                    SimulationConfigurator config;
+                    detail::set_if_given( config.realizations, realizations );
+                    detail::set_if_given( config.metropolis_hasting_steps,
+                        metropolis_hasting_steps );
+                    detail::set_if_given( config.burn_in_steps, burn_in_steps );
+                    config.printer = std::move( printer );
+                    return config;
+                } ),
+            pybind11::kw_only(), pybind11::arg( "realizations" ) = std::nullopt,
+            pybind11::arg( "metropolis_hasting_steps" ) = std::nullopt,
+            pybind11::arg( "burn_in_steps" ) = std::nullopt,
+            pybind11::arg( "printer" ) = std::nullopt,
+            "Create a configuration (defaults: 1000 realizations, 1000 "
+            "steps between realizations, 1000 burn-in steps, no "
+            "printer)." );
+        def_readwrite_named( config, "realizations",
+            &SimulationConfigurator::realizations,
+            "Number of realizations to generate." );
+        def_readwrite_named( config, "metropolis_hasting_steps",
+            &SimulationConfigurator::metropolis_hasting_steps,
+            "Number of Metropolis-Hastings steps before each realization." );
+        def_readwrite_named( config, "burn_in_steps",
+            &SimulationConfigurator::burn_in_steps,
+            "Number of burn-in steps before the first realization." );
+        def_readwrite_named( config, "printer",
+            &SimulationConfigurator::printer,
+            "SimulationPrinterConfigurator of the output files, None (the "
+            "default) to write nothing. To stop printing, create a "
+            "SimulationConfigurator without printer." );
+        config
             .def( "string", &SimulationConfigurator::string,
-                "Return a detailed description of the object set simulation "
-                "configurator" )
+                "Return a readable description of the configuration." )
             .def( "__repr__", []( const SimulationConfigurator& self ) {
-                return "<SimulationConfigurator realizations="
-                       + std::to_string( self.realizations ) + ">";
+                return python_call_repr( "SimulationConfigurator",
+                    { "realizations=" + python_repr( self.realizations ),
+                        "metropolis_hasting_steps="
+                            + python_repr( self.metropolis_hasting_steps ),
+                        "burn_in_steps=" + python_repr( self.burn_in_steps ),
+                        "printer=" + python_repr( self.printer ) } );
             } );
     }
 
@@ -86,31 +97,45 @@ namespace geode
         using Runner = geode::SimulationRunner< object_type >;
         const auto pyclass_name = absl::StrCat( typestr, "SimulationRunner" );
 
-        pybind11::class_< Runner >( module, pyclass_name.c_str() )
+        pybind11::class_< Runner >( module, pyclass_name.c_str(),
+            "Metropolis-Hastings simulation of object sets, created by a "
+            "builder (see FractureProcessBuilder.build_simulation_runner). "
+            "The calls running the simulation release the GIL: do not use "
+            "the runner and its results, nor the RandomEngine given to the "
+            "call, from another thread meanwhile." )
             .def( "run",
                 pybind11::overload_cast< geode::RandomEngine&, geode::index_t >(
                     &Runner::run ),
                 pybind11::arg( "engine" ), pybind11::arg( "steps" ),
-                pybind11::return_value_policy::reference_internal )
+                pybind11::return_value_policy::reference_internal,
+                pybind11::call_guard< pybind11::gil_scoped_release >(),
+                "Run the given number of Metropolis-Hastings steps from the "
+                "current state and return the object sets, which the runner "
+                "keeps (they change at the next run)." )
 
             .def( "run",
                 pybind11::overload_cast< geode::RandomEngine&,
                     const geode::SimulationConfigurator& >( &Runner::run ),
                 pybind11::arg( "engine" ), pybind11::arg( "config" ),
                 // the returned tracker refers to the runner model
-                pybind11::keep_alive< 0, 1 >() )
+                pybind11::keep_alive< 0, 1 >(),
+                pybind11::call_guard< pybind11::gil_scoped_release >(),
+                "Run the simulation (burn-in, then the realizations) from "
+                "the current state, writing the files of config.printer if "
+                "any, and return the StatisticsTracker of the realizations." )
 
             .def( "state_realization", &Runner::state_realization,
                 pybind11::return_value_policy::reference_internal,
-                "Current state of the object sets (last realization after a "
-                "run)." )
+                "Return the current state of the object sets (the last "
+                "realization after a run); it changes at the next run." )
 
             .def(
                 "term_names",
                 []( const Runner& self ) {
                     return self.model().term_names();
                 },
-                "Names of the model terms, i.e. of the tracked statistics." )
+                "Return the names of the model terms, i.e. of the tracked "
+                "statistics." )
 
             .def(
                 "validate_statistics",
@@ -124,8 +149,12 @@ namespace geode
                     geode::statistics::validate( tracker, target_stats );
                 },
                 pybind11::arg( "tracker" ), pybind11::arg( "targets" ),
-                "Raise if a tracked statistic mean is out of its target "
-                "tolerance." );
+                "Check the statistics tracked by a run against the targets "
+                "(TargetStatisticConfig, by term name). Raise an "
+                "OpenGeodeResultError if the mean of a target statistic has "
+                "a relative error above its tolerance, an OpenGeodeDataError "
+                "if a term is unknown (or the tracker comes from another "
+                "runner)." );
     }
 
     void define_simulation_configurator_and_runner( pybind11::module_& module )

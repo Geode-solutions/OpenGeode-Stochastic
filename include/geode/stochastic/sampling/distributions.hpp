@@ -229,8 +229,8 @@ namespace geode
 
         bool is_valid() const
         {
-            if( standard_deviation <= 0 || std::isfinite( standard_deviation )
-                || std::isfinite( mean ) )
+            if( standard_deviation <= 0 || !std::isfinite( standard_deviation )
+                || !std::isfinite( mean ) )
             {
                 geode::Logger::error(
                     "[Truncated TruncatedLogNormal] - check mean and "
@@ -242,7 +242,14 @@ namespace geode
                 max_value.value_or( std::numeric_limits< double >::infinity() );
             const auto min = min_value.value_or( 0. );
 
-            if( min_value >= max_value )
+            if( min < 0. )
+            {
+                geode::Logger::error( "[Truncated TruncatedLogNormal] - the "
+                                      "lower bound cannot be negative: ",
+                    min, "." );
+                return false;
+            }
+            if( min >= max )
             {
                 geode::Logger::error( "[Truncated TruncatedLogNormal] - check "
                                       "range boundaries definintion [",

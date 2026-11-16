@@ -30,6 +30,7 @@ add_geode_python_wheel(
         "A module of the OpenGeode framework for stochastic modeling, simulation and bayesian inference"
     MODULES
         "stochastic.py"
+    DOCUMENTATION "${CMAKE_CURRENT_SOURCE_DIR}/opengeode_stochastic_doc.txt"
     LICENSE "MIT"
 )
 

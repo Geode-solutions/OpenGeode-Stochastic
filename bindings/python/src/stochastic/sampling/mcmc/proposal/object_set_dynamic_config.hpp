@@ -20,6 +20,7 @@
  * SOFTWARE.
  *
  */
+
 #pragma once
 
 #include "../../../../common.hpp"
@@ -30,30 +31,38 @@ namespace geode
 {
     void define_object_set_dynamics( pybind11::module& module )
     {
-        pybind11::class_< ObjectSetDynamicsConfig >( module,
+        pybind11::class_< ObjectSetDynamicsConfig > config( module,
             "ObjectSetDynamicsConfig",
-            "Relative probabilities of the MCMC moves of an object set." )
-            .def( pybind11::init( []( std::optional< double > birth_ratio,
-                                      std::optional< double > death_ratio,
-                                      std::optional< double > change_ratio ) {
-                ObjectSetDynamicsConfig config;
-                detail::set_if_given( config.birth_ratio, birth_ratio );
-                detail::set_if_given( config.death_ratio, death_ratio );
-                detail::set_if_given( config.change_ratio, change_ratio );
-                return config;
-            } ),
-                pybind11::kw_only(),
-                pybind11::arg( "birth_ratio" ) = std::nullopt,
-                pybind11::arg( "death_ratio" ) = std::nullopt,
-                pybind11::arg( "change_ratio" ) = std::nullopt )
-            .def_readwrite( "birth_ratio",
-                &ObjectSetDynamicsConfig::birth_ratio,
-                "Relative probability of birth moves." )
-            .def_readwrite( "death_ratio",
-                &ObjectSetDynamicsConfig::death_ratio,
-                "Relative probability of death moves." )
-            .def_readwrite( "change_ratio",
-                &ObjectSetDynamicsConfig::change_ratio,
-                "Relative probability of change moves." );
+            "Relative probabilities of the birth, death and change moves of "
+            "the Metropolis-Hastings simulation of an object set. Only the "
+            "ratios matter, and at least one must be positive." );
+        config.def( pybind11::init( []( std::optional< double > birth_ratio,
+                                        std::optional< double > death_ratio,
+                                        std::optional< double > change_ratio ) {
+            ObjectSetDynamicsConfig config;
+            detail::set_if_given( config.birth_ratio, birth_ratio );
+            detail::set_if_given( config.death_ratio, death_ratio );
+            detail::set_if_given( config.change_ratio, change_ratio );
+            return config;
+        } ),
+            pybind11::kw_only(), pybind11::arg( "birth_ratio" ) = std::nullopt,
+            pybind11::arg( "death_ratio" ) = std::nullopt,
+            pybind11::arg( "change_ratio" ) = std::nullopt,
+            "Create a configuration (all the ratios default to 1)." );
+        def_readwrite_named( config, "birth_ratio",
+            &ObjectSetDynamicsConfig::birth_ratio,
+            "Relative probability of birth moves." );
+        def_readwrite_named( config, "death_ratio",
+            &ObjectSetDynamicsConfig::death_ratio,
+            "Relative probability of death moves." );
+        def_readwrite_named( config, "change_ratio",
+            &ObjectSetDynamicsConfig::change_ratio,
+            "Relative probability of change moves." );
+        config.def( "__repr__", []( const ObjectSetDynamicsConfig& self ) {
+            return python_call_repr( "ObjectSetDynamicsConfig",
+                { "birth_ratio=" + python_repr( self.birth_ratio ),
+                    "death_ratio=" + python_repr( self.death_ratio ),
+                    "change_ratio=" + python_repr( self.change_ratio ) } );
+        } );
     }
 } // namespace geode

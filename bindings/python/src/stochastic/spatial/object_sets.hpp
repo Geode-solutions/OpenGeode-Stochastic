@@ -20,6 +20,7 @@
  * SOFTWARE.
  *
  */
+
 #pragma once
 
 #include "../../common.hpp"
@@ -37,19 +38,26 @@ namespace geode
         using ObjectSets = geode::ObjectSets< object_type >;
         const auto pyclass_name = absl::StrCat( typestr, "ObjectSets" );
 
-        pybind11::class_< ObjectSets > pyclass( module, pyclass_name.c_str() );
-        pyclass.def( pybind11::init<>() )
-            .def( "nb_sets", &ObjectSets::nb_sets )
-            .def( "nb_objects", &ObjectSets::nb_objects )
+        pybind11::class_< ObjectSets > pyclass( module, pyclass_name.c_str(),
+            "Named sets of objects of a simulation. The functions taking a "
+            "set name raise an OpenGeodeDataError if there is no such set." );
+        pyclass.def( pybind11::init<>(), "Create an empty collection." )
+            .def(
+                "nb_sets", &ObjectSets::nb_sets, "Return the number of sets." )
+            .def( "nb_objects", &ObjectSets::nb_objects,
+                "Return the number of objects of all the sets, fixed "
+                "objects included." )
             .def( "set_names", &ObjectSets::set_names,
-                "Set names, in the order of their creation." )
+                "Return the set names, in the order of their creation." )
             .def(
                 "nb_objects_in_set",
                 []( const ObjectSets& self, std::string_view set_name ) {
                     return self.nb_objects_in_set(
                         self.get_set_uuid( set_name ) );
                 },
-                pybind11::arg( "set_name" ) )
+                pybind11::arg( "set_name" ),
+                "Return the number of objects of the set, fixed objects "
+                "included." )
             .def(
                 "nb_fixed_objects_in_set",
                 []( const ObjectSets& self, std::string_view set_name ) {
@@ -57,7 +65,12 @@ namespace geode
                         .nb_fixed_objects();
                 },
                 pybind11::arg( "set_name" ),
-                "Number of fixed (observed) objects of the set." );
+                "Return the number of fixed (observed) objects of the set." )
+            .def( "__repr__", [pyclass_name]( const ObjectSets& self ) {
+                return python_call_repr( pyclass_name,
+                    { "nb_sets=" + std::to_string( self.nb_sets() ),
+                        "nb_objects=" + std::to_string( self.nb_objects() ) } );
+            } );
         return pyclass;
     }
 
@@ -84,7 +97,8 @@ namespace geode
                     return coordinates;
                 },
                 pybind11::arg( "set_name" ),
-                "Segments of the set as a list of [x0, y0, x1, y1]. The fixed "
-                "(observed) segments come first." );
+                "Return a snapshot of the segments of the set as a list of "
+                "[x0, y0, x1, y1]. The fixed (observed) segments come "
+                "first." );
     }
 } // namespace geode

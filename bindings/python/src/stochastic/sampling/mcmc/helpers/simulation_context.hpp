@@ -20,6 +20,7 @@
  * SOFTWARE.
  *
  */
+
 #pragma once
 
 #include "../../../../common.hpp"
@@ -37,21 +38,27 @@ namespace geode
         const auto pyclass_name = absl::StrCat( typestr, "SetDefinition" );
 
         pybind11::class_< Definition > pyclass( module, pyclass_name.c_str(),
-            "Sampling definition of an object set." );
-        pyclass.def_readonly( "name", &Definition::name, "Object set name." )
-            .def_readwrite( "sampler", &Definition::sampler,
-                "Sampling configuration used to generate objects." )
-            .def_readwrite( "dynamics", &Definition::dynamics,
-                "Relative probabilities of the birth / death / change moves." )
+            "Definition of an object set of a simulation: its name, the "
+            "sampling of its objects, the relative probabilities of its "
+            "moves and its fixed objects. Returned by the builder of the "
+            "simulation, which it keeps alive." );
+        pyclass.def_readonly( "name", &Definition::name, "Object set name." );
+        def_readwrite_named( pyclass, "sampler", &Definition::sampler,
+            "Sampling configuration used to generate objects." );
+        def_readwrite_named( pyclass, "dynamics", &Definition::dynamics,
+            "Relative probabilities of the birth / death / change moves." );
+        pyclass
             .def(
                 "nb_fixed_objects",
                 []( const Definition& self ) {
                     return self.fixed_objects.size();
                 },
-                "Number of fixed (observed) objects." )
+                "Return the number of fixed (observed) objects." )
             .def( "__repr__", [pyclass_name]( const Definition& self ) {
-                return absl::StrCat(
-                    "<", pyclass_name, " name='", self.name, "'>" );
+                return python_call_repr( pyclass_name,
+                    { "name=" + python_repr( self.name ),
+                        "nb_fixed_objects="
+                            + std::to_string( self.fixed_objects.size() ) } );
             } );
         return pyclass;
     }
@@ -66,6 +73,8 @@ namespace geode
                     self.fixed_objects.emplace_back( start, end );
                 },
                 pybind11::arg( "start" ), pybind11::arg( "end" ),
-                "Add a fixed (observed) segment defined by two endpoints." );
+                "Add a fixed (observed) segment from start to end: the "
+                "simulation never moves nor removes it, and it comes first "
+                "in the segments of the set." );
     }
 } // namespace geode

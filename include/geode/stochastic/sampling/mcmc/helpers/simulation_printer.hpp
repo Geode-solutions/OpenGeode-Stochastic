@@ -84,6 +84,12 @@ namespace geode
             SimulationPrinterConfigurator config )
             : model_( model ), config_( std::move( config ) )
         {
+            OpenGeodeStochasticStochasticException::check_exception(
+                !config_.print_realisations
+                    || config_.realisations_print_frequency > 0,
+                nullptr, OpenGeodeException::TYPE::data,
+                "[SimulationPrinter] The realisations print frequency must be "
+                "positive when the realisations are printed." );
         }
 
         // Print statistics to the configured statistics file

@@ -20,6 +20,7 @@
  * SOFTWARE.
  *
  */
+
 #pragma once
 
 #include "../../common.hpp"
@@ -37,49 +38,80 @@ namespace geode
         const auto pyclass_name =
             absl::StrCat( "SpatialDomain", std::to_string( dimension ), "D" );
 
-        pybind11::class_< Domain >( module, pyclass_name.c_str() )
+        pybind11::class_< Domain >( module, pyclass_name.c_str(),
+            "Simulation domain: a core domain (the volume of interest), a "
+            "buffer zone around it and the extended domain (core domain "
+            "extended by the buffer size in every direction)." )
             .def( pybind11::init< const BBox &, double >(),
                 pybind11::arg( "domain" ), pybind11::arg( "buffer_size" ),
-                R"doc(
-                Create a spatial domain composed of:
-
-                - a core domain (the VOI)
-                - a buffer zone
-                - the extended domain (domain + buffer)
-
-                Arguments:
-                    domain (BoundingBox): main domain / VOI
-                    buffer_size (float): buffer thickness
-            )doc" );
+                "Create a domain from the bounding box of the core domain "
+                "and the buffer thickness. Raise an OpenGeodeDataError if "
+                "the box has no volume or the buffer size is negative." )
+            .def( "box", &Domain::box,
+                pybind11::return_value_policy::reference_internal,
+                "Return the bounding box of the core domain." )
+            .def( "extended_box", &Domain::extended_box,
+                pybind11::return_value_policy::reference_internal,
+                "Return the bounding box of the extended domain." )
+            .def( "buffer_size", &Domain::buffer_size,
+                "Return the buffer thickness." )
+            .def( "contains", &Domain::contains, pybind11::arg( "point" ),
+                "Return True if the point is in the core domain." )
+            .def( "extended_contains", &Domain::extended_contains,
+                pybind11::arg( "point" ),
+                "Return True if the point is in the extended domain." )
+            .def( "n_volume", &Domain::n_volume,
+                "Return the volume (area in 2D) of the core domain." )
+            .def( "extended_n_volume", &Domain::extended_n_volume,
+                "Return the volume (area in 2D) of the extended domain." )
+            .def( "string", &Domain::string,
+                "Return a readable description of the domain." )
+            .def( "__repr__", [pyclass_name]( const Domain &self ) {
+                return python_call_repr( pyclass_name,
+                    { "domain=" + python_repr( self.box() ),
+                        "buffer_size=" + python_repr( self.buffer_size() ) } );
+            } );
     }
 
     template < geode::index_t dimension >
     void define_spatial_domain_config( pybind11::module_ &module )
     {
         using DomainConfig = geode::SpatialDomainConfig< dimension >;
+        const auto pyclass_name =
+            absl::StrCat( "SpatialDomainConfig", dimension, "D" );
 
-        pybind11::class_< DomainConfig >( module,
-            absl::StrCat( "SpatialDomainConfig", dimension, "D" ).c_str() )
-            .def( pybind11::init(
-                      []( std::optional< Point< dimension > > min_point,
-                          std::optional< Point< dimension > > max_point,
-                          std::optional< double > buffer_size ) {
-                          DomainConfig config;
-                          detail::set_if_given( config.min_point, min_point );
-                          detail::set_if_given( config.max_point, max_point );
-                          detail::set_if_given(
-                              config.buffer_size, buffer_size );
-                          return config;
-                      } ),
-                pybind11::kw_only(),
-                pybind11::arg( "min_point" ) = std::nullopt,
-                pybind11::arg( "max_point" ) = std::nullopt,
-                pybind11::arg( "buffer_size" ) = std::nullopt )
-            .def_readwrite( "min_point", &DomainConfig::min_point )
-            .def_readwrite( "max_point", &DomainConfig::max_point )
-            .def_readwrite( "buffer_size", &DomainConfig::buffer_size )
-            .def( "__repr__", []( const DomainConfig &config ) {
-                return config.string();
+        pybind11::class_< DomainConfig > config( module, pyclass_name.c_str(),
+            "Description of a box domain with a buffer, to give to the "
+            "builder of a simulation." );
+        config.def(
+            pybind11::init( []( std::optional< Point< dimension > > min_point,
+                                std::optional< Point< dimension > > max_point,
+                                std::optional< double > buffer_size ) {
+                DomainConfig config;
+                detail::set_if_given( config.min_point, min_point );
+                detail::set_if_given( config.max_point, max_point );
+                detail::set_if_given( config.buffer_size, buffer_size );
+                return config;
+            } ),
+            pybind11::kw_only(), pybind11::arg( "min_point" ) = std::nullopt,
+            pybind11::arg( "max_point" ) = std::nullopt,
+            pybind11::arg( "buffer_size" ) = std::nullopt,
+            "Create a configuration (defaults: both corners at the origin, "
+            "which is not a valid domain, and buffer_size 0)." );
+        def_readwrite_named( config, "min_point", &DomainConfig::min_point,
+            "Corner of the box with the smallest coordinates." );
+        def_readwrite_named( config, "max_point", &DomainConfig::max_point,
+            "Corner of the box with the largest coordinates." );
+        def_readwrite_named( config, "buffer_size", &DomainConfig::buffer_size,
+            "Thickness of the buffer around the box (>= 0)." );
+        config
+            .def( "string", &DomainConfig::string,
+                "Return a readable description of the configuration." )
+            .def( "__repr__", [pyclass_name]( const DomainConfig &self ) {
+                return python_call_repr( pyclass_name,
+                    { "min_point=" + python_repr( self.min_point ),
+                        "max_point=" + python_repr( self.max_point ),
+                        "buffer_size=" + python_repr( self.buffer_size ) } );
             } );
     }
 
