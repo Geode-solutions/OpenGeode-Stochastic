@@ -74,6 +74,14 @@ add_geode_test(
 #)
 
 add_geode_test(
+    SOURCE "mcmc/proposal/test-change-move-symmetry.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
     SOURCE "mcmc/proposal/test-proposal-kernel.cpp"
     DEPENDENCIES
         OpenGeode::basic
