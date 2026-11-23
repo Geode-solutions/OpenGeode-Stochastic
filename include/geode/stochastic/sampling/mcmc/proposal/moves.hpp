@@ -229,7 +229,7 @@ namespace geode
             birth.proposal_probabilities.log_forward_prob =
                 log_p_birth_ + this->sampler().log_pdf( new_obj );
             birth.proposal_probabilities.log_backward_prob =
-                log_p_death_ - std::log( set.nb_objects() + 1.0 );
+                log_p_death_ - std::log( set.nb_free_objects() + 1.0 );
             return birth;
         }
 

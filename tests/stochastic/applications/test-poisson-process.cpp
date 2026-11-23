@@ -83,6 +83,66 @@ namespace
         geode::Logger::info( "--> SUCCESS!" );
     }
 
+    void test_poisson_with_fixed_objects()
+    {
+        geode::Logger::info( "TEST - MH POISSON WITH FIXED OBJECTS" );
+
+        geode::RandomEngine engine;
+        engine.set_seed( "@mh-test-POISSON-fixed@" );
+
+        // NOLINTBEGIN(*-magic-numbers)
+        geode::SpatialDomainConfig< 2 > domain;
+        domain.min_point = geode::Point2D{ { 0, 0 } };
+        domain.max_point = geode::Point2D{ { 10, 10 } };
+        domain.buffer_size = 0.;
+
+        // The fixed objects do not change the law of the free ones: the
+        // statistic (free and fixed objects in the domain) has a mean of
+        // lambda * |D| + nb_fixed.
+        constexpr double lambda{ 0.3 };
+        constexpr geode::index_t nb_fixed{ 20 };
+        geode::PoissonProcessBuilder< geode::Point2D > poisson;
+        poisson.set_domain( domain );
+        auto& set_config =
+            poisson.add_set( "set_A", lambda, lambda * 100. + nb_fixed );
+        for( const auto i : geode::Range{ 5 } )
+        {
+            for( const auto j : geode::Range{ 4 } )
+            {
+                set_config.fixed_objects.emplace_back(
+                    geode::Point2D{ { 1. + 2. * i, 1. + 2.5 * j } } );
+            }
+        }
+
+        geode::SimulationRunner< geode::Point2D > runner{
+            poisson.build_simulation_context()
+        };
+
+        geode::SimulationConfigurator sim_config;
+        sim_config.realizations = 2000;
+        sim_config.metropolis_hasting_steps = 100;
+        sim_config.burn_in_steps = 1000;
+        // NOLINTEND(*-magic-numbers)
+
+        geode::SimulationPrinterConfigurator printer_config;
+        printer_config.output_folder = absl::StrCat(
+            printer_config.output_folder, "/sim_point_poisson_fixed_test" );
+        sim_config.printer = printer_config;
+
+        auto statistic_tracker = runner.run( engine, sim_config );
+        geode::TargetStatistics target_stats{ runner.model(),
+            poisson.expected_statistics() };
+        for( const auto& term_uuid : target_stats.active_terms() )
+        {
+            geode::Logger::info(
+                "Mean statistic: ", statistic_tracker.mean( term_uuid ),
+                " (target: ", target_stats.target( term_uuid ), ")" );
+        }
+        geode::statistics::validate( statistic_tracker, target_stats );
+
+        geode::Logger::info( "--> SUCCESS!" );
+    }
+
     void test_multitype_poisson()
     {
         geode::Logger::info( "TEST - MH MULTITYPE POISSON" );
@@ -140,6 +200,7 @@ int main()
         geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
         test_single_type_poisson();
+        test_poisson_with_fixed_objects();
         test_multitype_poisson();
         return 0;
     }
