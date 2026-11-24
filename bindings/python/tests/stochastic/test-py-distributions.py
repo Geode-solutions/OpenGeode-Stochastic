@@ -194,15 +194,37 @@ def test_double_sampler_degrees():
         stochastic.DoubleDistributionDescription("UniformClosed", min_value=0.0, max_value=180.0)
     )
     check(abs(angle.max_value - math.pi) < 1e-9, "Bounds not converted: %r" % angle.max_value)
+    # bounds and standard deviation are converted without normalization
+    full = stochastic.DoubleSampler.create_rad_angle_distribution_from_degree(
+        stochastic.DoubleDistributionDescription("UniformClosed", min_value=0.0, max_value=360.0)
+    )
+    check(abs(full.max_value - 2 * math.pi) < 1e-9, "Full circle became %r" % full.max_value)
+    across = stochastic.DoubleSampler.create_rad_angle_distribution_from_degree(
+        stochastic.DoubleDistributionDescription("UniformClosed", min_value=-90.0, max_value=90.0)
+    )
+    check(abs(across.min_value + math.pi / 2) < 1e-9, "Range across 0 became %r" % across.min_value)
+    wide = stochastic.DoubleSampler.create_rad_angle_distribution_from_degree(
+        stochastic.DoubleDistributionDescription("Gaussian", mean=0.0, standard_deviation=400.0)
+    )
+    check(abs(wide.standard_deviation - math.radians(400.0)) < 1e-9, "Wide deviation became %r" % wide.standard_deviation)
     wrapped = stochastic.DoubleSampler.create_rad_angle_distribution_from_degree(
         stochastic.DoubleDistributionDescription("VonMises", mean=450.0, kappa=1.0)
     )
     check(abs(wrapped.mean - math.pi / 2) < 1e-9, "Angle not normalized: %r" % wrapped.mean)
+    # log-normal parameters describe ln(x): the mean is shifted, the deviation kept
+    log_normal = stochastic.DoubleSampler.create_rad_angle_distribution_from_degree(
+        stochastic.DoubleDistributionDescription(
+            "TruncatedLogNormal", mean=math.log(30.0), standard_deviation=0.5, min_value=10.0, max_value=80.0
+        )
+    )
+    check(abs(log_normal.mean - math.log(math.radians(30.0))) < 1e-9, "Log-normal mean became %r" % log_normal.mean)
+    check(abs(log_normal.standard_deviation - 0.5) < 1e-9, "Log-normal deviation became %r" % log_normal.standard_deviation)
     plain = stochastic.DoubleSampler.create_distribution(
         stochastic.DoubleDistributionDescription("VonMises", mean=90.0, kappa=10.0)
     )
     check(plain.mean == 90.0, "create_distribution must not convert")
     print("test_double_sampler_degrees: OK")
+
 
 
 def test_double_sampler_errors():
