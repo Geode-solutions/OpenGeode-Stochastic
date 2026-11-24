@@ -81,13 +81,13 @@ add_geode_test(
         ${PROJECT_NAME}::stochastic
 )
 
-#add_geode_test(
-#    SOURCE "mcmc/test-metropolis-hasting-sampler.cpp"
-#    DEPENDENCIES
-#        OpenGeode::basic
-#        OpenGeode::geometry
-#        ${PROJECT_NAME}::stochastic
-#)
+add_geode_test(
+    SOURCE "mcmc/test-metropolis-hasting-sampler.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
 
 add_geode_test(
     SOURCE "test-random-engine.cpp"

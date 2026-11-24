@@ -53,21 +53,4 @@ namespace geode::statistics
                 "\n  tol     = ", targets.tolerance( term_uuid ) );
         }
     }
-
-    template < typename ObjectType >
-    double quadratic_loss( const StatisticsTracker< ObjectType >& tracker,
-        const TargetStatistics< ObjectType >& targets )
-    {
-        double loss = 0.0;
-
-        for( const auto& term_uuid : targets.active_terms() )
-        {
-            const auto diff =
-                tracker.mean( term_uuid ) - targets.value( term_uuid );
-
-            loss += diff * diff;
-        }
-
-        return loss;
-    }
 } // namespace geode::statistics
