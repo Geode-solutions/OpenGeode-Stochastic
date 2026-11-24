@@ -20,8 +20,11 @@
  * SOFTWARE.
  *
  */
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <numeric>
+#include <optional>
 
 #include <geode/basic/assert.hpp>
 #include <geode/basic/logger.hpp>
@@ -306,6 +309,198 @@ namespace
             abs( empirical_probability - probability_of_success ) < 0.05,
             "[Bernoulli] - Empirical probability out of tolerance." );
     }
+
+    void test_gaussian_tail( double lower, geode::RandomEngine& engine )
+    {
+        // N(0,1) truncated to [lower, inf): mean = phi(lower) / Q(lower)
+        geode::TruncatedGaussian law;
+        law.min_value = lower;
+        double sum{ 0. };
+        for( const auto count : geode::Range{ NUMBER_OF_SAMPLES } )
+        {
+            geode_unused( count );
+            sum += engine.sample_truncated_gaussian( law );
+        }
+        const auto density =
+            std::exp( -0.5 * lower * lower ) / std::sqrt( 2. * M_PI );
+        const auto tail = 0.5 * std::erfc( lower / std::sqrt( 2. ) );
+        const auto expected = density / tail;
+        const auto mean = sum / NUMBER_OF_SAMPLES;
+        geode::Logger::info( "Test Gaussian tail above ", lower,
+            ": empirical / expected mean = ", mean, " / ", expected );
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::abs( mean - expected ) < 0.01,
+            "[Gaussian] - Tail mean out of tolerance." );
+    }
+
+    template < typename Sample >
+    bool throws_data_error( const Sample& sample )
+    {
+        try
+        {
+            sample();
+        }
+        catch( const geode::OpenGeodeException& exception )
+        {
+            return exception.type() == geode::OpenGeodeException::TYPE::data;
+        }
+        return false;
+    }
+
+    template < typename Sample >
+    bool throws_within_draws( const Sample& sample )
+    {
+        for( const auto draw : geode::Range{ 100 } )
+        {
+            geode_unused( draw );
+            if( throws_data_error( sample ) )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void test_unrepresentable_samples_are_rejected(
+        geode::RandomEngine& engine )
+    {
+        // Valid laws whose values can exceed the double range: an error is
+        // raised instead of returning inf or NaN.
+        geode::TruncatedPowerLaw power_law;
+        power_law.alpha = 1. + 1e-7;
+        power_law.min_value = 1.;
+        geode::OpenGeodeStochasticStochasticException::test(
+            throws_within_draws( [&] {
+                return engine.sample_truncated_powerlaw( power_law );
+            } ),
+            "[PowerLaw] - Infinite sample returned." );
+        geode::Gaussian gaussian;
+        gaussian.mean = 1e308;
+        gaussian.standard_deviation = 1e308;
+        geode::OpenGeodeStochasticStochasticException::test(
+            throws_within_draws( [&] {
+                return engine.sample_gaussian( gaussian );
+            } ),
+            "[Gaussian] - Infinite sample returned." );
+        geode::TruncatedGaussian truncated;
+        truncated.mean = 1e308;
+        truncated.standard_deviation = 1e308;
+        geode::OpenGeodeStochasticStochasticException::test(
+            throws_within_draws( [&] {
+                return engine.sample_truncated_gaussian( truncated );
+            } ),
+            "[TruncatedGaussian] - Infinite sample returned." );
+        geode::TruncatedLogNormal lognormal;
+        lognormal.mean = 700.;
+        lognormal.standard_deviation = 10.;
+        geode::OpenGeodeStochasticStochasticException::test(
+            throws_within_draws( [&] {
+                return engine.sample_truncated_lognormal( lognormal );
+            } ),
+            "[LogNormal] - Infinite sample returned." );
+    }
+
+    void test_lognormal_tail( geode::RandomEngine& engine )
+    {
+        // log( x ) truncated 20 standard deviations above its mean: the
+        // samples are correct; far beyond, an explicit error is raised.
+        geode::TruncatedLogNormal law;
+        law.min_value = std::exp( 20. );
+        for( const auto count : geode::Range{ 1000 } )
+        {
+            geode_unused( count );
+            const auto value = engine.sample_truncated_lognormal( law );
+            geode::OpenGeodeStochasticStochasticException::test(
+                value >= std::exp( 20. ) && value < std::exp( 21. ),
+                "[LogNormal] - Tail sample out of range: ", value );
+        }
+        law.min_value = 1e20;
+        geode::OpenGeodeStochasticStochasticException::test(
+            throws_data_error( [&] {
+                return engine.sample_truncated_lognormal( law );
+            } ),
+            "[LogNormal] - No error for a range 46 sigma above the mean." );
+    }
+
+    void test_invalid_laws_are_rejected( geode::RandomEngine& engine )
+    {
+        // The engine applies the rules of is_valid(): an invalid law is
+        // rejected instead of giving out of range samples.
+        geode::TruncatedPowerLaw power_law;
+        power_law.min_value = -1.;
+        power_law.max_value = 2.;
+        geode::OpenGeodeStochasticStochasticException::test(
+            throws_data_error( [&] {
+                return engine.sample_truncated_powerlaw( power_law );
+            } ),
+            "[PowerLaw] - Negative lower bound accepted." );
+        power_law.min_value = 1.;
+        power_law.alpha = std::numeric_limits< double >::infinity();
+        geode::OpenGeodeStochasticStochasticException::test(
+            throws_data_error( [&] {
+                return engine.sample_truncated_powerlaw( power_law );
+            } ),
+            "[PowerLaw] - Infinite exponent accepted." );
+        // x^-alpha with alpha <= 1 cannot be normalized up to infinity
+        for( const auto alpha : { 1., 0.5 } )
+        {
+            power_law.alpha = alpha;
+            power_law.max_value = std::nullopt;
+            geode::OpenGeodeStochasticStochasticException::test(
+                throws_data_error( [&] {
+                    return engine.sample_truncated_powerlaw( power_law );
+                } ),
+                "[PowerLaw] - Exponent ", alpha,
+                " accepted without upper bound." );
+            geode::OpenGeodeStochasticStochasticException::test(
+                !power_law.is_valid(), "[PowerLaw] - Exponent ", alpha,
+                " is valid without upper bound." );
+        }
+    }
+
+    void test_truncated_powerlaw( double alpha,
+        double min_value,
+        std::optional< double > max_value,
+        geode::RandomEngine& engine )
+    {
+        geode::TruncatedPowerLaw law;
+        law.alpha = alpha;
+        law.min_value = min_value;
+        law.max_value = max_value;
+        const auto max =
+            max_value.value_or( std::numeric_limits< double >::infinity() );
+        std::vector< double > samples;
+        samples.reserve( NUMBER_OF_SAMPLES );
+        for( const auto count : geode::Range{ NUMBER_OF_SAMPLES } )
+        {
+            geode_unused( count );
+            const auto value = engine.sample_truncated_powerlaw( law );
+            geode::OpenGeodeStochasticStochasticException::test(
+                value >= min_value && value <= max, "[PowerLaw] - value ",
+                value, " out of [", min_value, ",", max, "]." );
+            samples.push_back( value );
+        }
+        // median of the density proportional to x^-alpha on [min, max]
+        const auto median = [&] {
+            if( alpha == 1. )
+            {
+                return std::sqrt( min_value * max );
+            }
+            // with the ratio max / min: min^(1-alpha) may overflow
+            const auto ratio = std::pow( max / min_value, 1. - alpha );
+            return min_value
+                   * std::pow( 0.5 * ( 1. + ratio ), 1. / ( 1. - alpha ) );
+        }();
+        std::nth_element( samples.begin(),
+            samples.begin() + NUMBER_OF_SAMPLES / 2, samples.end() );
+        const auto empirical_median = samples[NUMBER_OF_SAMPLES / 2];
+        geode::Logger::info( "Test PowerLaw alpha=", alpha,
+            ": empirical / expected median = ", empirical_median, " / ",
+            median );
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::abs( empirical_median - median ) < 0.02 * median,
+            "[PowerLaw] - Empirical median out of tolerance." );
+    }
 } // namespace
 int main()
 {
@@ -338,7 +533,26 @@ int main()
         test_truncated_gaussian( 0., 1., std::nullopt, 1., random_engine );
         test_truncated_gaussian( 0., 1., -1., std::nullopt, random_engine );
         test_truncated_gaussian( 10., 1., 5., 15., random_engine );
+        // tails up to 6 standard deviations are valid laws (is_valid)
+        test_truncated_gaussian( 0., 1., 5.5, std::nullopt, random_engine );
+        test_truncated_gaussian( 0., 1., std::nullopt, -5.5, random_engine );
+        test_truncated_gaussian( 0., 1., 6., 8., random_engine );
+        test_gaussian_tail( 5.5, random_engine );
         geode::Logger::info( "TEST TRUNCATED GAUSSIAN SAMPLING - SUCCESS" );
+
+        geode::Logger::info( "TEST POWER LAW SAMPLING" );
+        test_truncated_powerlaw( 2., 1., 10., random_engine );
+        test_truncated_powerlaw( 2., 1., std::nullopt, random_engine );
+        test_truncated_powerlaw( 3.5, 0.5, std::nullopt, random_engine );
+        test_truncated_powerlaw( 1., 1., 10., random_engine );
+        test_truncated_powerlaw( 0.5, 1., 10., random_engine );
+        // a large exponent with a small lower bound: xmin^(1-alpha) overflows
+        test_truncated_powerlaw( 500., 1e-6, std::nullopt, random_engine );
+        test_truncated_powerlaw( 500., 1e-6, 1., random_engine );
+        test_invalid_laws_are_rejected( random_engine );
+        test_unrepresentable_samples_are_rejected( random_engine );
+        test_lognormal_tail( random_engine );
+        geode::Logger::info( "TEST POWER LAW SAMPLING - SUCCESS" );
 
         geode::Logger::info( "TEST BERNOUILLI SAMPLING" );
         test_bernoulli( 0.5, random_engine );

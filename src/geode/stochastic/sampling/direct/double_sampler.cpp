@@ -61,6 +61,13 @@ namespace geode
                         UniformClosed< double > dist;
                         dist.min_value = desc.min_value.value();
                         dist.max_value = desc.max_value.value();
+                        if( dist.min_value == dist.max_value )
+                        {
+                            Logger::warning( "[DoubleSampler] Uniform "
+                                             "distribution with equal bounds: "
+                                             "every sample is ",
+                                dist.min_value, "." );
+                        }
                         return dist;
                     } },
                 { UniformClosedOpen< double >::distribution_type_static(),
@@ -167,7 +174,15 @@ namespace geode
                 "[DoubleSampler] Unknown distribution type: ",
                 desc.distribution_type.get() };
         }
-        return it->second( desc );
+        auto distribution = it->second( desc );
+        std::visit(
+            [&desc]( const auto& law ) {
+                OpenGeodeStochasticStochasticException::check_exception(
+                    law.is_valid(), nullptr, OpenGeodeException::TYPE::data,
+                    "[DoubleSampler] Invalid distribution: ", desc.string() );
+            },
+            distribution );
+        return distribution;
     }
 
     DoubleSampler::Distribution
