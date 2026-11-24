@@ -128,9 +128,15 @@ namespace geode
                 &DoubleSampler::create_rad_angle_distribution_from_degree,
                 pybind11::arg( "desc" ),
                 "Same as create_distribution for a law of an angle given in "
-                "degrees: mean, standard_deviation, min_value and max_value "
-                "are converted to radians and normalized to [0, 2*pi) "
-                "(kappa and alpha are unchanged)." )
+                "degrees, created in radians. Bounds, mean and "
+                "standard_deviation are converted without normalization "
+                "([-90, 90] gives [-pi/2, pi/2]); only the mean direction of "
+                "a VonMises law is normalized to [0, 2*pi). For a "
+                "TruncatedLogNormal, mean and standard_deviation describe "
+                "ln(x): the mean is shifted by ln(pi/180), the deviation is "
+                "kept. kappa and alpha are unchanged. Samples are not "
+                "normalized; UniformClosedOpen on [0, 360] covers the circle "
+                "once." )
             .def_static( "sample", &DoubleSampler::sample,
                 pybind11::arg( "engine" ), pybind11::arg( "dist" ),
                 "Sample a value of a law created by create_distribution, "
