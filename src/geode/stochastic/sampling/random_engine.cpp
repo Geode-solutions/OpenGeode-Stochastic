@@ -152,7 +152,8 @@ namespace
         return hash;
     }
 
-    constexpr auto INFINITE = std::numeric_limits< double >::infinity();
+    // Not named INFINITE: <windows.h> defines it as a macro
+    constexpr auto DOUBLE_INFINITY = std::numeric_limits< double >::infinity();
 
     [[noreturn]] void throw_invalid_law( const std::string& law )
     {
@@ -245,8 +246,8 @@ namespace geode
         double sample_truncated_gaussian( const TruncatedGaussian& law )
         {
             check_law( law );
-            const auto min = law.min_value.value_or( -INFINITE );
-            const auto max = law.max_value.value_or( INFINITE );
+            const auto min = law.min_value.value_or( -DOUBLE_INFINITY );
+            const auto max = law.max_value.value_or( DOUBLE_INFINITY );
             const auto value =
                 law.mean
                 + law.standard_deviation
@@ -315,7 +316,7 @@ namespace geode
         {
             check_law( law );
             const auto min = law.min_value.value_or( 0. );
-            const auto max = law.max_value.value_or( INFINITE );
+            const auto max = law.max_value.value_or( DOUBLE_INFINITY );
             // log( 0 ) = -inf and log( inf ) = inf are valid bounds
             const auto value =
                 std::exp( law.mean
@@ -332,7 +333,7 @@ namespace geode
         {
             check_law( law );
             const auto xmin = law.lower_bound();
-            const auto xmax = law.max_value.value_or( INFINITE );
+            const auto xmax = law.max_value.value_or( DOUBLE_INFINITY );
             std::uniform_real_distribution< double > uniform( 0.0, 1.0 );
             const auto u = uniform( rand_gen_ );
 
@@ -386,11 +387,12 @@ namespace geode
             }
             // normal_quantile cannot handle 0 or 1
             const auto cdf_min =
-                lower == -INFINITE ? std::numeric_limits< double >::min()
-                                   : std::max( normal_cdf( lower ),
-                                         std::numeric_limits< double >::min() );
+                lower == -DOUBLE_INFINITY
+                    ? std::numeric_limits< double >::min()
+                    : std::max( normal_cdf( lower ),
+                          std::numeric_limits< double >::min() );
             const auto cdf_max =
-                upper == INFINITE
+                upper == DOUBLE_INFINITY
                     ? 1. - std::numeric_limits< double >::epsilon()
                     : std::min( normal_cdf( upper ),
                           1. - std::numeric_limits< double >::epsilon() );
