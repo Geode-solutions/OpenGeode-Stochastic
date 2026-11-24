@@ -277,7 +277,7 @@ namespace geode
             {
                 // Variance of approximate normal around mean
                 const auto stddev = 1.0 / std::sqrt( law.concentration );
-                std::normal_distribution< double > normal_dist(
+                absl::gaussian_distribution< double > normal_dist(
                     law.mean, stddev );
                 return wrap_to_two_pi( normal_dist( rand_gen_ ) );
             }
@@ -335,7 +335,7 @@ namespace geode
             check_law( law );
             const auto xmin = law.lower_bound();
             const auto xmax = law.max_value.value_or( DOUBLE_INFINITY );
-            std::uniform_real_distribution< double > uniform( 0.0, 1.0 );
+            absl::uniform_real_distribution< double > uniform( 0.0, 1.0 );
             const auto u = uniform( rand_gen_ );
 
             // Inverse CDF of the density proportional to x^-alpha on
@@ -402,7 +402,7 @@ namespace geode
                 "[RandomEngine] Truncation range [", lower, ", ", upper,
                 "] (in standard deviations) is too far in the tail of the "
                 "normal law." );
-            std::uniform_real_distribution< double > uniform(
+            absl::uniform_real_distribution< double > uniform(
                 cdf_min, cdf_max );
             return normal_quantile( uniform( rand_gen_ ) );
         }
@@ -410,7 +410,9 @@ namespace geode
         // std::mt19937_64 seeded by std::seed_seq: both are specified by the
         // C++ standard, so a seed gives the same sequence on every run and
         // platform (absl::BitGen salts its seed per process). Without seed,
-        // the engine is randomly initialized.
+        // the engine is randomly initialized. Values are drawn with the
+        // absl:: distributions: the algorithms of the std:: ones are not
+        // specified and differ between standard libraries.
         std::mt19937_64 rand_gen_{ random_seed() };
         // Uniform law on [0,1], built once: the same draws as sample_uniform
         // without validating the law nor computing nextafter( 1 ) each time.

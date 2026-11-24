@@ -25,6 +25,12 @@
 #include <cmath>
 #include <numeric>
 #include <optional>
+#include <random>
+#include <string_view>
+#include <vector>
+
+#include <absl/random/gaussian_distribution.h>
+#include <absl/random/uniform_real_distribution.h>
 
 #include <geode/basic/assert.hpp>
 #include <geode/basic/logger.hpp>
@@ -530,6 +536,82 @@ namespace
             "[VonMises] - mean ", mean, ", kappa ", kappa,
             ": samples are centered ", gap, " away from the mean direction." );
     }
+    // The algorithms of the std:: distributions are not specified by the
+    // standard (libstdc++ and MSVC differ): the engine must draw through the
+    // absl:: ones, whose code is the same on every platform. The expected
+    // values are drawn here from the same generator with the absl:: laws.
+    void test_portable_distributions()
+    {
+        constexpr uint64_t SEED{ 42 };
+        const auto reference_generator = [] {
+            std::vector< uint32_t > seed_data{ static_cast< uint32_t >(
+                                                   SEED >> 32 ),
+                static_cast< uint32_t >( SEED & 0xFFFFFFFF ) };
+            std::seed_seq seed_seq( seed_data.begin(), seed_data.end() );
+            return std::mt19937_64{ seed_seq };
+        };
+        const auto check = []( double sample, double expected,
+                               std::string_view law, double tolerance ) {
+            geode::OpenGeodeStochasticStochasticException::test(
+                std::fabs( sample - expected ) <= tolerance,
+                "[PortableDistributions] - ", law, ": expected ", expected,
+                ", got ", sample );
+        };
+
+        // von Mises with a large concentration: normal approximation
+        {
+            geode::RandomEngine engine;
+            engine.set_seed( SEED );
+            auto generator = reference_generator();
+            geode::VonMises law;
+            law.mean = 1.;
+            law.concentration = 5000.;
+            absl::gaussian_distribution< double > normal(
+                law.mean, 1. / std::sqrt( law.concentration ) );
+            for( const auto unused : geode::Range{ 10 } )
+            {
+                geode_unused( unused );
+                check( engine.sample_von_mises( law ), normal( generator ),
+                    "VonMises", 1e-12 );
+            }
+        }
+        // power law with alpha = 1 on [1, e]: x = exp( u ), u uniform
+        {
+            geode::RandomEngine engine;
+            engine.set_seed( SEED );
+            auto generator = reference_generator();
+            geode::TruncatedPowerLaw law;
+            law.alpha = 1.;
+            law.min_value = 1.;
+            law.max_value = std::exp( 1. );
+            absl::uniform_real_distribution< double > uniform( 0., 1. );
+            for( const auto unused : geode::Range{ 10 } )
+            {
+                geode_unused( unused );
+                check( std::log( engine.sample_truncated_powerlaw( law ) ),
+                    uniform( generator ), "TruncatedPowerLaw", 1e-12 );
+            }
+        }
+        // normal law truncated to ]-inf, 0]: its CDF is uniform on the CDF
+        // range
+        {
+            geode::RandomEngine engine;
+            engine.set_seed( SEED );
+            auto generator = reference_generator();
+            geode::TruncatedGaussian law;
+            law.max_value = 0.;
+            absl::uniform_real_distribution< double > uniform(
+                std::numeric_limits< double >::min(), 0.5 );
+            for( const auto unused : geode::Range{ 10 } )
+            {
+                geode_unused( unused );
+                const auto sample = engine.sample_truncated_gaussian( law );
+                check( 0.5 * std::erfc( -sample / std::sqrt( 2. ) ),
+                    uniform( generator ), "TruncatedGaussian", 1e-9 );
+            }
+        }
+        geode::Logger::info( "Test portable distributions: SUCCESS " );
+    }
 } // namespace
 int main()
 {
@@ -540,6 +622,7 @@ int main()
         test_reproducibility();
         test_textual_seed_hash();
         test_cross_run_reproducibility();
+        test_portable_distributions();
 
         random_engine.set_seed( "@-test-radom-engine@" );
 

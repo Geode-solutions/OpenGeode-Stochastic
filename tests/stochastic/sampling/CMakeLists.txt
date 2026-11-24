@@ -100,6 +100,7 @@ add_geode_test(
 add_geode_test(
     SOURCE "test-random-engine.cpp"
     DEPENDENCIES
+        absl::random_distributions
         OpenGeode::basic
         ${PROJECT_NAME}::stochastic
 )
