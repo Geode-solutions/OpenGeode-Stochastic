@@ -188,7 +188,7 @@ namespace geode
     }
 
     DoubleSampler::Distribution
-        DoubleSampler::create_rad_angle_distribution_from_degree(
+        DoubleSampler::create_angle_distribution_from_degrees(
             const DistributionDescription& desc_deg )
     {
         // Degrees are converted to radians without normalization: 0-360

@@ -122,8 +122,16 @@ namespace geode
          * without drawing both 0 and 2pi. Samples are not normalized: use
          * Angle::normalized_between_0_and_2pi() on them if needed.
          */
-        static Distribution create_rad_angle_distribution_from_degree(
+        static Distribution create_angle_distribution_from_degrees(
             const DistributionDescription& angle_desc_deg );
+
+        [[deprecated(
+            "Use create_angle_distribution_from_degrees" )]] static Distribution
+            create_rad_angle_distribution_from_degree(
+                const DistributionDescription& angle_desc_deg )
+        {
+            return create_angle_distribution_from_degrees( angle_desc_deg );
+        }
 
         static double sample( RandomEngine& engine, const Distribution& dist );
     };

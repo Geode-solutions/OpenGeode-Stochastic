@@ -125,8 +125,7 @@ geode::DoubleSampler::Distribution angle_distribution(
     desc.mean = mean;
     desc.standard_deviation = standard_deviation;
     desc.kappa = 1.;
-    return geode::DoubleSampler::create_rad_angle_distribution_from_degree(
-        desc );
+    return geode::DoubleSampler::create_angle_distribution_from_degrees( desc );
 }
 
 bool is_close( double value, double expected )
