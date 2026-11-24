@@ -63,25 +63,16 @@ namespace geode
     Point< dimension > UniformPointSetSampler< dimension >::change(
         const Point< dimension >& obj, RandomEngine& engine ) const
     {
-        geode::Sphere< dimension > ball{ obj, step_move_ };
-
+        const geode::Sphere< dimension > ball{ obj, step_move_ };
         auto new_point =
             PointUniformSampler::sample< dimension >( engine, ball );
-        constexpr index_t MAX_TRY{ 100 };
-        for( const auto try_id : geode::Range{ MAX_TRY } )
+        if( !domain_.extended_contains( new_point ) )
         {
-            geode_unused( try_id );
-            if( domain_.extended_contains( new_point ) )
-            {
-                return new_point;
-            }
-            new_point =
-                PointUniformSampler::sample< dimension >( engine, ball );
+            // Out of the sampling domain: equivalent to a rejected move.
+            // Re-sampling instead would break the move symmetry.
+            return obj;
         }
-        throw OpenGeodeStochasticStochasticException{ nullptr,
-            OpenGeodeException::TYPE::internal,
-            "[UniformPointSetSampler] Cannot find a point in the "
-            "extended domain" };
+        return new_point;
     }
 
     template < index_t dimension >
