@@ -39,6 +39,23 @@
 
 namespace
 {
+    // Wraps an angle in [0, 2pi[, whatever its sign or its number of turns.
+    double wrap_to_two_pi( double angle )
+    {
+        constexpr auto TWO_PI = 2.0 * M_PI;
+        auto wrapped = std::fmod( angle, TWO_PI );
+        if( wrapped < 0.0 )
+        {
+            wrapped += TWO_PI;
+            // a tiny negative remainder rounds to 2pi
+            if( wrapped >= TWO_PI )
+            {
+                return 0.0;
+            }
+        }
+        return wrapped;
+    }
+
     double normal_cdf( double x )
     {
         return 0.5 * std::erfc( -x / std::sqrt( 2.0 ) );
@@ -260,9 +277,7 @@ namespace geode
                 const auto stddev = 1.0 / std::sqrt( law.concentration );
                 std::normal_distribution< double > normal_dist(
                     law.mean, stddev );
-                auto theta = normal_dist( rand_gen_ );
-                // Wrap to [0, 2π)
-                return std::fmod( theta + 2.0 * M_PI, 2.0 * M_PI );
+                return wrap_to_two_pi( normal_dist( rand_gen_ ) );
             }
 
             // Best & Fisher (1979) rejection algorithm for moderate
@@ -293,11 +308,7 @@ namespace geode
                 }
             }
 
-            // Shift by mean and wrap to [0, 2π)
-            theta += law.mean;
-            theta = std::fmod( theta + 2.0 * M_PI, 2.0 * M_PI );
-
-            return theta;
+            return wrap_to_two_pi( theta + law.mean );
         }
 
         double sample_truncated_lognormal( const TruncatedLogNormal& law )

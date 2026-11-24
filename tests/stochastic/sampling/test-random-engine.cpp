@@ -501,6 +501,35 @@ namespace
             std::abs( empirical_median - median ) < 0.02 * median,
             "[PowerLaw] - Empirical median out of tolerance." );
     }
+
+    // Samples are wrapped in [0, 2pi[ whatever the mean, also a negative one
+    // or one beyond 2pi, and are centered on the mean direction.
+    void test_von_mises(
+        double mean, double kappa, geode::RandomEngine& engine )
+    {
+        geode::VonMises law;
+        law.mean = mean;
+        law.concentration = kappa;
+        constexpr geode::index_t NUMBER_OF_SAMPLES{ 5000 };
+        double sum_sin{ 0. };
+        double sum_cos{ 0. };
+        for( const auto count : geode::Range{ NUMBER_OF_SAMPLES } )
+        {
+            geode_unused( count );
+            const auto value = engine.sample_von_mises( law );
+            geode::OpenGeodeStochasticStochasticException::test(
+                value >= 0. && value < 2. * M_PI, "[VonMises] - mean ", mean,
+                ", kappa ", kappa, ": sample ", value, " out of [0, 2pi[." );
+            sum_sin += std::sin( value );
+            sum_cos += std::cos( value );
+        }
+        const auto difference = std::atan2( sum_sin, sum_cos ) - mean;
+        const auto gap = std::abs(
+            std::atan2( std::sin( difference ), std::cos( difference ) ) );
+        geode::OpenGeodeStochasticStochasticException::test( gap < 0.1,
+            "[VonMises] - mean ", mean, ", kappa ", kappa,
+            ": samples are centered ", gap, " away from the mean direction." );
+    }
 } // namespace
 int main()
 {
@@ -553,6 +582,14 @@ int main()
         test_unrepresentable_samples_are_rejected( random_engine );
         test_lognormal_tail( random_engine );
         geode::Logger::info( "TEST POWER LAW SAMPLING - SUCCESS" );
+
+        geode::Logger::info( "TEST VON MISES SAMPLING" );
+        for( const auto mean : { -10., -4., 0., 1., 7., 100. } )
+        {
+            test_von_mises( mean, 1., random_engine );
+            test_von_mises( mean, 5000., random_engine );
+        }
+        geode::Logger::info( "TEST VON MISES SAMPLING - SUCCESS" );
 
         geode::Logger::info( "TEST BERNOUILLI SAMPLING" );
         test_bernoulli( 0.5, random_engine );

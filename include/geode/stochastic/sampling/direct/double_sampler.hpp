@@ -115,11 +115,13 @@ namespace geode
          * Creates an angle distribution in radians from a description in
          * degrees. Bounds, mean and standard deviation are converted without
          * normalization: [-90, 90] gives [-pi/2, pi/2] and [0, 360] the full
-         * circle. Only the mean direction of a von Mises law is normalized in
-         * [0, 2pi[. The log-normal mean and standard deviation describe
-         * ln(x): the mean is shifted by ln(pi/180), the deviation is kept.
-         * Use UniformClosedOpen on [0, 360] to cover the circle
-         * without drawing both 0 and 2pi. Samples are not normalized: use
+         * circle. Only the mean of a von Mises law is normalized in [0, 2pi[:
+         * this law lives on the circle, so VonMises(mean + 2k pi) is the same
+         * law, and its samples are in [0, 2pi[. The log-normal mean and
+         * standard deviation describe ln(x): the mean is shifted by
+         * ln(pi/180), the deviation is kept. Use UniformClosedOpen on
+         * [0, 360] to cover the circle without drawing both 0 and 2pi.
+         * Samples of the other laws are not normalized: use
          * Angle::normalized_between_0_and_2pi() on them if needed.
          */
         static Distribution create_angle_distribution_from_degrees(

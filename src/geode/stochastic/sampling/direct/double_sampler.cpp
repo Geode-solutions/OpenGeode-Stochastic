@@ -193,8 +193,8 @@ namespace geode
     {
         // Degrees are converted to radians without normalization: 0-360
         // stays the full circle, -90-90 a range across 0, and a standard
-        // deviation keeps its value. Only the mean direction of a von Mises
-        // law is normalized in [0, 2pi[.
+        // deviation keeps its value. Only the mean of a von Mises law is
+        // normalized in [0, 2pi[: the law is the same modulo 2pi.
         const auto to_radians = []( std::optional< double >& value ) {
             if( value )
             {

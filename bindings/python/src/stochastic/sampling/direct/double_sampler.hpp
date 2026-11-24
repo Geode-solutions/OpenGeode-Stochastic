@@ -130,13 +130,14 @@ namespace geode
                 "Same as create_distribution for a law of an angle given in "
                 "degrees, created in radians. Bounds, mean and "
                 "standard_deviation are converted without normalization "
-                "([-90, 90] gives [-pi/2, pi/2]); only the mean direction of "
-                "a VonMises law is normalized to [0, 2*pi). For a "
+                "([-90, 90] gives [-pi/2, pi/2]); only the mean of a VonMises "
+                "law is normalized to [0, 2*pi), since this law is the same "
+                "modulo 2*pi and its samples are in [0, 2*pi). For a "
                 "TruncatedLogNormal, mean and standard_deviation describe "
                 "ln(x): the mean is shifted by ln(pi/180), the deviation is "
-                "kept. kappa and alpha are unchanged. Samples are not "
-                "normalized; UniformClosedOpen on [0, 360] covers the circle "
-                "once." )
+                "kept. kappa and alpha are unchanged. Samples of the other "
+                "laws are not normalized; UniformClosedOpen on [0, 360] "
+                "covers the circle once." )
             .def_static(
                 "create_rad_angle_distribution_from_degree",
                 []( const DoubleSampler::DistributionDescription &desc ) {
