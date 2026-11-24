@@ -52,7 +52,7 @@ namespace geode
                 return true;
             }
             geode::Logger::error(
-                "[Uniform Closed] - check range boundaries definintion [",
+                "[Uniform Closed] - check range boundaries definition [",
                 min_value, ",", max_value, "]." );
             return false;
         }
@@ -88,7 +88,7 @@ namespace geode
                 return true;
             }
             geode::Logger::error(
-                "[Uniform ClosedOpen] - check range boundaries definintion [",
+                "[Uniform ClosedOpen] - check range boundaries definition [",
                 min_value, ",", max_value, "]." );
             return false;
         }
@@ -172,7 +172,7 @@ namespace geode
             if( !( min < max ) )
             {
                 geode::Logger::error( "[Truncated Gaussian] - check "
-                                      "range boundaries definintion [",
+                                      "range boundaries definition [",
                     min, ",", max, "]." );
                 return false;
             }
@@ -282,9 +282,8 @@ namespace geode
             if( standard_deviation <= 0 || !std::isfinite( standard_deviation )
                 || !std::isfinite( mean ) )
             {
-                geode::Logger::error(
-                    "[Truncated TruncatedLogNormal] - check mean and "
-                    "standard deviation N(",
+                geode::Logger::error( "[TruncatedLogNormal] - check mean and "
+                                      "standard deviation N(",
                     mean, ",", standard_deviation, ")." );
                 return false;
             }
@@ -294,15 +293,15 @@ namespace geode
 
             if( min < 0. )
             {
-                geode::Logger::error( "[Truncated TruncatedLogNormal] - the "
+                geode::Logger::error( "[TruncatedLogNormal] - the "
                                       "lower bound cannot be negative: ",
                     min, "." );
                 return false;
             }
             if( !( min < max ) )
             {
-                geode::Logger::error( "[Truncated TruncatedLogNormal] - check "
-                                      "range boundaries definintion [",
+                geode::Logger::error( "[TruncatedLogNormal] - check "
+                                      "range boundaries definition [",
                     min, ",", max, "]." );
                 return false;
             }
