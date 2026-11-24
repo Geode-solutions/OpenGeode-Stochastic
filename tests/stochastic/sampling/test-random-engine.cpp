@@ -20,6 +20,7 @@
  * SOFTWARE.
  *
  */
+#include <array>
 #include <numeric>
 
 #include <geode/basic/assert.hpp>
@@ -64,6 +65,72 @@ namespace
             geode::Logger::info( "Test Reproducibility: ", seed, " SUCCESS " );
         }
         geode::Logger::info( "Test Reproducibility: SUCCESS " );
+    }
+
+    // A textual seed is hashed with FNV-1a 64 bits, which is stable across
+    // runs and platforms: seeding with the word or with its hash value must
+    // give the same sequence. Reference values from the FNV-1a specification
+    // ("", "a") and computed independently (others).
+    void test_textual_seed_hash()
+    {
+        const std::vector< std::pair< std::string_view, uint64_t > >
+            references = { { "", 0xcbf29ce484222325 },
+                { "a", 0xaf63dc4c8601ec8c },
+                { "same-seed", 0x7b87eb74217c1663 },
+                { "geode-solutions", 0x3ce1c85d8114d36c } };
+        geode::UniformClosed< int > dist;
+        dist.min_value = 0;
+        dist.max_value = 1000000000;
+        for( const auto& [word, hash] : references )
+        {
+            geode::RandomEngine word_engine;
+            word_engine.set_seed( word );
+            geode::RandomEngine hash_engine;
+            hash_engine.set_seed( hash );
+            for( const auto value : geode::Range{ 10 } )
+            {
+                geode_unused( value );
+                geode::OpenGeodeStochasticStochasticException::test(
+                    word_engine.sample_uniform( dist )
+                        == hash_engine.sample_uniform( dist ),
+                    "[TextualSeed] - Seed \"", word,
+                    "\" should be hashed to its FNV-1a 64 bits value." );
+            }
+        }
+        geode::Logger::info( "Test textual seed hash: SUCCESS " );
+    }
+
+    // A seeded engine must give the same sequence from one run to another:
+    // the expected values are hard-coded. They come from std::mt19937_64
+    // seeded by std::seed_seq (both specified by the C++ standard) and
+    // absl::Uniform, computed outside of RandomEngine.
+    void test_cross_run_reproducibility()
+    {
+        geode::UniformClosed< int > dist;
+        dist.min_value = 0;
+        dist.max_value = 1000000000;
+        const auto check = []( geode::RandomEngine& engine,
+                               const geode::UniformClosed< int >& law,
+                               const std::array< int, 5 >& expected,
+                               std::string_view seed ) {
+            for( const auto value : expected )
+            {
+                const auto sample = engine.sample_uniform( law );
+                geode::OpenGeodeStochasticStochasticException::test(
+                    sample == value, "[CrossRunReproducibility] - Seed ", seed,
+                    ": expected ", value, ", got ", sample );
+            }
+        };
+        geode::RandomEngine number_engine;
+        number_engine.set_seed( uint64_t{ 42 } );
+        check( number_engine, dist,
+            { 213580860, 705506416, 727284205, 46917137, 849020427 }, "42" );
+        geode::RandomEngine word_engine;
+        word_engine.set_seed( "same-seed" );
+        check( word_engine, dist,
+            { 487694039, 815218771, 864671017, 660062510, 339159719 },
+            "same-seed" );
+        geode::Logger::info( "Test cross run reproducibility: SUCCESS " );
     }
 
     template < typename T >
@@ -247,6 +314,8 @@ int main()
         geode::OpenGeodeStochasticStochasticLibrary::initialize();
         geode::RandomEngine random_engine;
         test_reproducibility();
+        test_textual_seed_hash();
+        test_cross_run_reproducibility();
 
         random_engine.set_seed( "@-test-radom-engine@" );
 

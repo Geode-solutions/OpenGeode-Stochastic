@@ -33,8 +33,8 @@
 #include <absl/random/uniform_int_distribution.h>
 #include <absl/random/uniform_real_distribution.h>
 
-#include <absl/hash/hash.h>
 #include <limits>
+#include <random>
 
 namespace
 {
@@ -119,10 +119,25 @@ namespace
         return std::seed_seq( seed_data.begin(), seed_data.end() );
     }
 
-    std::seed_seq create_seed_seq( std::string_view word )
+    // FNV-1a 64 bits hash: unlike absl::Hash, which is salted per process, it
+    // gives the same seed for the same word across runs and platforms.
+    uint64_t stable_hash( std::string_view word )
     {
-        uint64_t seed = absl::Hash< std::string_view >{}( word );
-        return create_seed_seq( seed );
+        constexpr uint64_t FNV_OFFSET_BASIS{ 0xcbf29ce484222325 };
+        constexpr uint64_t FNV_PRIME{ 0x100000001b3 };
+        uint64_t hash{ FNV_OFFSET_BASIS };
+        for( const auto character : word )
+        {
+            hash ^= static_cast< uint8_t >( character );
+            hash *= FNV_PRIME;
+        }
+        return hash;
+    }
+
+    uint64_t random_seed()
+    {
+        std::random_device device;
+        return ( static_cast< uint64_t >( device() ) << 32 ) | device();
     }
 } // namespace
 
@@ -133,12 +148,13 @@ namespace geode
     public:
         void set_seed( uint64_t number )
         {
-            rand_gen_ = absl::BitGen{ create_seed_seq( number ) };
+            auto seed_seq = create_seed_seq( number );
+            rand_gen_.seed( seed_seq );
         }
 
         void set_seed( std::string_view word )
         {
-            rand_gen_ = absl::BitGen{ create_seed_seq( word ) };
+            set_seed( stable_hash( word ) );
         }
 
         template < typename Type >
@@ -407,7 +423,11 @@ namespace geode
         }
 
     private:
-        absl::BitGen rand_gen_;
+        // std::mt19937_64 seeded by std::seed_seq: both are specified by the
+        // C++ standard, so a seed gives the same sequence on every run and
+        // platform (absl::BitGen salts its seed per process). Without seed,
+        // the engine is randomly initialized.
+        std::mt19937_64 rand_gen_{ random_seed() };
     };
 
     RandomEngine::RandomEngine() = default;
