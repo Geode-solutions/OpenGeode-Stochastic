@@ -49,7 +49,7 @@ namespace geode
         void def_description_property(
             pybind11::class_< SamplerConfig >& python_class,
             const char* name,
-            DoubleSampler::DistributionDescription SamplerConfig::*member,
+            DoubleSampler::DistributionDescription SamplerConfig::* member,
             const char* doc )
         {
             using Description = DoubleSampler::DistributionDescription;
