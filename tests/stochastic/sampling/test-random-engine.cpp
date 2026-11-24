@@ -542,7 +542,7 @@ namespace
     // values are drawn here from the same generator with the absl:: laws.
     void test_portable_distributions()
     {
-        constexpr uint64_t SEED{ 42 };
+        static constexpr uint64_t SEED{ 42 };
         const auto reference_generator = [] {
             std::vector< uint32_t > seed_data{ static_cast< uint32_t >(
                                                    SEED >> 32 ),
