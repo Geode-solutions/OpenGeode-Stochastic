@@ -59,19 +59,6 @@ namespace geode
     }
 
     template < typename ObjectType >
-    std::unique_ptr< ProposalKernel< ObjectType > > create_birth_death_kernel(
-        const uuid& set_id,
-        const ObjectSetSampler< ObjectType >& sampler,
-        double birth_prob )
-    {
-        auto kernel = std::make_unique< ProposalKernel< ObjectType > >();
-        kernel->add_move(
-            { set_id, std::make_unique< BirthDeathMove< ObjectType > >(
-                          sampler, 1., birth_prob ) } );
-        return kernel;
-    }
-
-    template < typename ObjectType >
     std::unique_ptr< ProposalKernel< ObjectType > >
         create_birth_death_change_kernel( const uuid& set_id,
             const ObjectSetSampler< ObjectType >& sampler,

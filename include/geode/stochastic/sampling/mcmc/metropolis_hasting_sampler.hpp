@@ -137,25 +137,6 @@ namespace geode
             beta_ = beta;
         }
 
-        [[nodiscard]] static double acceptance_prob_helper( double log_accept )
-        {
-            if( std::isnan( log_accept ) )
-            {
-                return 0.0;
-            }
-            if( log_accept >= 0.0 )
-            {
-                return 1.0;
-            }
-            // prevent exponential overflow
-            constexpr double LOG_MIN = -745.0;
-            if( log_accept < LOG_MIN )
-            {
-                return 0.0;
-            }
-            return std::exp( log_accept );
-        }
-
     private:
         [[nodiscard]] double compute_log_accept(
             double deltaU, const ProposalProbabilities& proposal_probas ) const

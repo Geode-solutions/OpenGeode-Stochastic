@@ -20,141 +20,177 @@
  * SOFTWARE.
  *
  */
+#include <cmath>
+
 #include <geode/geometry/point.hpp>
-#include <geode/stochastic/models/energy_term_collection.hpp>
-#include <geode/stochastic/models/energy_terms/density_term.hpp>
-#include <geode/stochastic/models/gibbs_energy.hpp>
-#include <geode/stochastic/sampling/direct/object_set_sampler/point_set_sampler.hpp>
+
+#include <geode/stochastic/applications/poisson_process.hpp>
+#include <geode/stochastic/inference/statistics_tools.hpp>
 #include <geode/stochastic/sampling/mcmc/metropolis_hasting_sampler.hpp>
-#include <geode/stochastic/sampling/mcmc/proposal/classical_proposals.hpp>
+#include <geode/stochastic/sampling/mcmc/simulation_runner.hpp>
+
 namespace
 {
-    void test_acceptance_prob_helper()
+    constexpr double DOMAIN_SIZE{ 10. };
+
+    geode::PoissonProcessBuilder< geode::Point2D > poisson_builder(
+        double lambda, std::optional< double > expected_count )
     {
+        geode::SpatialDomainConfig< 2 > domain;
+        domain.min_point = geode::Point2D{ { 0., 0. } };
+        domain.max_point = geode::Point2D{ { DOMAIN_SIZE, DOMAIN_SIZE } };
+        domain.buffer_size = 0.;
+        geode::PoissonProcessBuilder< geode::Point2D > poisson;
+        poisson.set_domain( domain );
+        auto& set = poisson.add_set( "points", lambda, expected_count );
         // NOLINTBEGIN(*-magic-numbers)
-
-        // log_accept >= 0 → prob = 1
-        geode::OpenGeodeStochasticStochasticException::test(
-            geode::MetropolisHastings< geode::Point2D >::acceptance_prob_helper(
-                0.5 )
-                == 1.0,
-            "[MH test] acceptance_prob_helper wrong for positive log_accept." );
-
-        // very negative → prob = 0
-        geode::OpenGeodeStochasticStochasticException::test(
-            geode::MetropolisHastings< geode::Point2D >::acceptance_prob_helper(
-                -800.0 )
-                == 0.0,
-            "[MH test] acceptance_prob_helper wrong for extreme negative." );
-
-        // moderate negative → exp(log_accept)
-        auto val =
-            geode::MetropolisHastings< geode::Point2D >::acceptance_prob_helper(
-                -1.0 );
-        geode::OpenGeodeStochasticStochasticException::test(
-            std::fabs( val - std::exp( -1.0 ) ) < geode::GLOBAL_EPSILON,
-            "[MH test] acceptance_prob_helper wrong for -1.0." );
+        set.fixed_objects = { geode::Point2D{ { 1., 1. } },
+            geode::Point2D{ { 5., 5. } } };
         // NOLINTEND(*-magic-numbers)
+        return poisson;
     }
 
-    void test_beta_setter( geode::MetropolisHastings< geode::Point2D >& mh_eng )
+    void test_beta_validation()
     {
+        geode::Logger::info( "TEST - MH BETA VALIDATION" );
         // NOLINTBEGIN(*-magic-numbers)
-        mh_eng.set_beta( 0.5 );
+        auto context =
+            poisson_builder( 0.5, std::nullopt ).build_simulation_context();
+        auto& mh = *context.mh_sampler;
         geode::OpenGeodeStochasticStochasticException::test(
-            mh_eng.beta() == 0.5, "[MH test] beta not set correctly." );
-
-        bool exception_thrown = false;
+            mh.beta() == 1., "[MH test] The default beta should be 1." );
+        mh.set_beta( 0.5 );
+        geode::OpenGeodeStochasticStochasticException::test(
+            mh.beta() == 0.5, "[MH test] beta not set." );
+        bool exception_thrown{ false };
         try
         {
-            mh_eng.set_beta( -1.0 );
+            mh.set_beta( -1. );
         }
-        catch( ... )
+        catch( const geode::OpenGeodeException& )
         {
             exception_thrown = true;
         }
         geode::OpenGeodeStochasticStochasticException::test(
-            exception_thrown, "[MH test] negative beta did not throw." );
+            exception_thrown && mh.beta() == 0.5,
+            "[MH test] A negative beta should be refused." );
         // NOLINTEND(*-magic-numbers)
+        geode::Logger::info( "--> SUCCESS!" );
     }
 
-    void test_steps( const geode::MetropolisHastings< geode::Point2D >& mh_eng,
-        geode::ObjectSets< geode::Point2D >& state )
+    // Each step result must match the change of the state: an accepted birth
+    // adds a free object, an accepted death removes one, a change or a
+    // rejection keeps the count, and the fixed objects are never touched.
+    void test_step_bookkeeping()
     {
-        // NOLINTBEGIN(*-magic-numbers)
+        geode::Logger::info( "TEST - MH STEP BOOKKEEPING" );
         geode::RandomEngine engine;
-
-        geode::index_t stat_sum{ 0 };
-        constexpr geode::index_t NUNBER_ITR{ 100000 };
-
-        geode::index_t accepted_birth{ 0 };
-        geode::index_t accepted_death{ 0 };
-        geode::index_t accepted_change{ 0 };
-        geode::index_t nb_accepted{ 0 };
-
-        for( const auto count : geode::Range{ NUNBER_ITR } )
+        engine.set_seed( "@mh-test-step-bookkeeping@" );
+        // NOLINTBEGIN(*-magic-numbers)
+        auto context =
+            poisson_builder( 0.5, std::nullopt ).build_simulation_context();
+        auto& state = *context.object_sets;
+        const auto& const_state = state;
+        const auto& set =
+            const_state.get_set( const_state.get_set_uuid( "points" ) );
+        const auto nb_fixed = set.nb_fixed_objects();
+        geode::index_t accepted[3]{ 0, 0, 0 };
+        for( const auto step : geode::Range{ 20000 } )
         {
-            auto result = mh_eng.step( state, engine );
-            // Invariant: fixed object must remain
-
+            geode_unused( step );
+            const auto nb_free_before = set.nb_free_objects();
+            const auto result = context.mh_sampler->step( state, engine );
+            const auto nb_free_after = set.nb_free_objects();
             geode::OpenGeodeStochasticStochasticException::test(
-                result.decision == geode::MH_DECISION::accepted
-                    || result.decision == geode::MH_DECISION::rejected,
-                "[MH test] decision should be accepted or rejected." );
-
-            // Log each step (optional: comment out if too verbose)
-            //            geode::Logger::info( "Step: ", count,
-            //                " move_type= ", static_cast< int >(
-            //                result.move_type ), " decision= ", result.decision
-            //                == geode::MH_DECISION::accepted ? "accepted"
-            //                                                               :
-            //                                                               "rejected",
-            //                " delta_log_energy = ", result.delta_log_energy,
-            //                " log_accept = ", result.log_accept,
-            //                " state_size = ", state.size() );
-
-            // Keep track of accepted moves by type
+                set.nb_fixed_objects() == nb_fixed,
+                "[MH test] The fixed objects should not change." );
+            if( result.move_type == geode::MOVE_TYPE::invalid )
+            {
+                // death proposed on a set without free object: nothing is
+                // decided and the state is unchanged
+                geode::OpenGeodeStochasticStochasticException::test(
+                    result.decision == geode::MH_DECISION::undecided
+                        && nb_free_before == 0 && nb_free_after == 0,
+                    "[MH test] An invalid move should only happen without "
+                    "free object, and change nothing." );
+                continue;
+            }
+            geode::OpenGeodeStochasticStochasticException::test(
+                result.decision != geode::MH_DECISION::undecided,
+                "[MH test] A valid move should be decided." );
+            geode::OpenGeodeStochasticStochasticException::test(
+                !std::isnan( result.log_accept ),
+                "[MH test] The acceptance should be a number." );
+            auto expected = nb_free_before;
             if( result.decision == geode::MH_DECISION::accepted )
             {
-                nb_accepted++;
-                switch( result.move_type )
+                if( result.move_type == geode::MOVE_TYPE::birth )
                 {
-                    case geode::MOVE_TYPE::Birth:
-                        accepted_birth++;
-                        break;
-                    case geode::MOVE_TYPE::death:
-                        accepted_death++;
-                        break;
-                    case geode::MOVE_TYPE::change:
-                        accepted_change++;
-                        break;
-                    default:
-                        break;
+                    expected++;
+                    accepted[0]++;
+                }
+                else if( result.move_type == geode::MOVE_TYPE::death )
+                {
+                    expected--;
+                    accepted[1]++;
+                }
+                else
+                {
+                    accepted[2]++;
                 }
             }
-            // should be change... only pone group here
-            stat_sum += state.nb_objects();
-
-            if( count % 1000 == 0 )
-            {
-                geode::Logger::info( "Progress: ", count, "  ", N,
-                    " Mean objects =  ",
-                    static_cast< double >( stat_sum )
-                        / static_cast< double >( count ),
-                    " nb accepted = ", nb_accepted, " accepted(B/D/C) = ",
-                    static_cast< double >( accepted_birth )
-                        / static_cast< double >( nb_accepted ),
-                    "  ",
-                    static_cast< double >( accepted_death )
-                        / static_cast< double >( nb_accepted ),
-                    "  ",
-                    static_cast< double >( accepted_change )
-                        / static_cast< double >( nb_accepted ) );
-            }
+            geode::OpenGeodeStochasticStochasticException::test(
+                nb_free_after == expected,
+                "[MH test] The number of free objects does not match the "
+                "step result." );
         }
+        geode::Logger::info( "Accepted moves: birth=", accepted[0],
+            " death=", accepted[1], " change=", accepted[2] );
+        geode::OpenGeodeStochasticStochasticException::test(
+            accepted[0] > 0 && accepted[1] > 0 && accepted[2] > 0,
+            "[MH test] Every move type should have been accepted." );
         // NOLINTEND(*-magic-numbers)
+        geode::Logger::info( "--> SUCCESS!" );
     }
 
+    // The tempered chain targets a density proportional to exp(-beta * U):
+    // for a Poisson process of intensity lambda, it is a Poisson process of
+    // intensity lambda^beta.
+    void test_beta_tempered_poisson()
+    {
+        geode::Logger::info( "TEST - MH TEMPERED POISSON" );
+        geode::RandomEngine engine;
+        engine.set_seed( "@mh-test-tempered-poisson@" );
+        // NOLINTBEGIN(*-magic-numbers)
+        constexpr double lambda{ 0.25 };
+        constexpr double nb_fixed{ 2. };
+        for( const double beta : { 0., 0.5, 1. } )
+        {
+            const auto expected_count =
+                std::pow( lambda, beta ) * DOMAIN_SIZE * DOMAIN_SIZE + nb_fixed;
+            auto poisson = poisson_builder( lambda, expected_count );
+            auto context = poisson.build_simulation_context();
+            context.mh_sampler->set_beta( beta );
+            geode::SimulationRunner< geode::Point2D > runner{ std::move(
+                context ) };
+            geode::SimulationConfigurator config;
+            config.realizations = 2000;
+            config.metropolis_hasting_steps = 100;
+            config.burn_in_steps = 2000;
+            const auto tracker = runner.run( engine, config );
+            const geode::TargetStatistics targets{ runner.model(),
+                poisson.expected_statistics() };
+            for( const auto& term_uuid : targets.active_terms() )
+            {
+                geode::Logger::info( "beta=", beta,
+                    " mean statistic=", tracker.mean( term_uuid ),
+                    " (target: ", targets.target( term_uuid ), ")" );
+            }
+            geode::statistics::validate( tracker, targets );
+        }
+        // NOLINTEND(*-magic-numbers)
+        geode::Logger::info( "--> SUCCESS!" );
+    }
 } // namespace
 
 int main()
@@ -162,51 +198,10 @@ int main()
     try
     {
         geode::OpenGeodeStochasticStochasticLibrary::initialize();
-        // NOLINTBEGIN(*-magic-numbers)
-        geode::Point2D min_point{ { 0., 0. } };
-        geode::Point2D max_point{ { 10., 10. } };
-
-        geode::BoundingBox2D box;
-        box.add_point( min_point );
-        box.add_point( max_point );
-        geode::SpatialDomain domain( box, 0. );
-
-        geode::ObjectSets< geode::Point2D > state;
-        const auto set_id = state.add_set( "default_name" );
-        geode::UniformPointSetSampler< 2 > sampler( domain );
-
-        double birth_prob = 0.3;
-        double death_prob = 0.1;
-        auto kernel = geode::create_birth_death_change_kernel< geode::Point2D >(
-            set_id, sampler, birth_prob, death_prob );
-
-        geode::EnergyTermCollection< geode::Point2D > energy_terms;
-
-        // Add intensity term
-        const auto term_id = energy_terms.add_energy_term(
-            std::make_unique< geode::DensityTerm< geode::Point2D > >(
-                "intensity", 0.5, std::vector< geode::uuid >{ set_id },
-                domain ) );
-        geode_unused( term_id );
-
-        geode::MetropolisHastings< geode::Point2D > mh_eng(
-            energy_terms, std::move( kernel ) );
-
-        state.add_object( geode::Point2D{ { 1., 1. } }, set_id, true );
-        state.add_object( geode::Point2D{ { 2., 2. } }, set_id, false );
-        state.add_object( geode::Point2D{ { 3., 3. } }, set_id, true );
-
-        test_steps( mh_eng, state );
-        // geode::OpenGeodeStochasticStochasticException::test( state.get_set(
-        // set_id ).nb_fixed_objects() == 2
-        // );
-
-        test_beta_setter( mh_eng );
-        test_acceptance_prob_helper();
-
-        geode::Logger::info( "MH TEST SUCCESS" );
+        test_beta_validation();
+        test_step_bookkeeping();
+        test_beta_tempered_poisson();
         return 0;
-        // NOLINTEND(*-magic-numbers)
     }
     catch( ... )
     {
