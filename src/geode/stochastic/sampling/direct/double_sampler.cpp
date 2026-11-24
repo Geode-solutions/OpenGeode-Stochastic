@@ -26,6 +26,8 @@
 
 #include <geode/stochastic/sampling/direct/double_sampler.hpp>
 
+#include <geode/basic/types.hpp>
+
 #include <geode/geometry/angle.hpp>
 
 #include <geode/stochastic/common.hpp>

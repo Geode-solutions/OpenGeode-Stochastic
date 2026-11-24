@@ -25,6 +25,7 @@
 
 #include <geode/basic/pimpl_impl.hpp>
 #include <geode/basic/range.hpp>
+#include <geode/basic/types.hpp>
 #include <geode/stochastic/common.hpp>
 
 #include <absl/random/bernoulli_distribution.h>
