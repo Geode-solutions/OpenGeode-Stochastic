@@ -223,8 +223,18 @@ namespace geode
     {
         VonMises() = default;
 
-        // 2D von Mises parameters
-        double mean{ 0.0 }; // mean direction in radians
+        // Von Mises law of an angle of period 2pi, sampled in [0, 2pi[.
+        //
+        // Validity for an axis (period pi), such as the azimuth of a fracture
+        // trace where theta and theta + pi are the same fracture: samples
+        // beyond +-pi/2 from the mean fall on the same axis as the mean. They
+        // are 22% of the samples for kappa = 1, 7.5% for kappa = 2, 0.2% for
+        // kappa = 5. The law is suited to concentrated families (kappa >= 5,
+        // angular spread 1/sqrt(kappa) below ~26 degrees); for more dispersed
+        // ones, the sampled axes are more concentrated than kappa suggests.
+        // An axial law (von Mises on the doubled angle, then halved) may be
+        // added later for them.
+        double mean{ 0.0 }; // mean angle in radians
         double concentration{ 1.0 }; // kappa (concentration parameter)
 
         [[nodiscard]] static DistributionType distribution_type_static()

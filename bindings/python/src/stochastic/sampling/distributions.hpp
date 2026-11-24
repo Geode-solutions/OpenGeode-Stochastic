@@ -217,9 +217,15 @@ namespace geode
         } );
 
         pybind11::class_< VonMises > von_mises( module, "VonMises",
-            "Von Mises law of an angle in radians: mean direction and "
-            "concentration kappa. Sampling requires a finite mean and a "
-            "concentration >= 0, and gives an angle in [0, 2*pi)." );
+            "Von Mises law of an angle in radians, of period 2*pi: mean "
+            "angle and concentration kappa. Sampling requires a finite mean "
+            "and a finite concentration >= 0, and gives an angle in "
+            "[0, 2*pi). For an axis (period pi, such as the azimuth of a "
+            "fracture trace), samples beyond +-pi/2 from the mean fall on "
+            "the same axis as the mean: 22% of them for kappa = 1, 7.5% for "
+            "kappa = 2, 0.2% for kappa = 5. The law suits concentrated "
+            "families (kappa >= 5); an axial law may be added later for "
+            "more dispersed ones." );
         von_mises.def(
             pybind11::init( []( std::optional< double > mean,
                                 std::optional< double > concentration ) {
@@ -232,12 +238,12 @@ namespace geode
             pybind11::arg( "concentration" ) = std::nullopt,
             "Create the law (defaults: mean 0, concentration 1)." );
         def_readwrite_named(
-            von_mises, "mean", &VonMises::mean, "Mean direction in radians." );
+            von_mises, "mean", &VonMises::mean, "Mean angle in radians." );
         def_readwrite_named( von_mises, "concentration",
             &VonMises::concentration, "Concentration parameter kappa (>= 0)." );
         detail::define_distribution_common( von_mises,
-            "Return True if the concentration is >= 0 and the mean is "
-            "finite." );
+            "Return True if the concentration is finite and >= 0 and the "
+            "mean is finite." );
         von_mises.def( "__repr__", []( const VonMises &law ) {
             return python_call_repr( "VonMises",
                 { "mean=" + python_repr( law.mean ),
