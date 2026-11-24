@@ -213,17 +213,20 @@ namespace geode
             {
                 desc_rad.mean.value() += std::log( M_PI / 180. );
             }
-            return create_distribution( desc_rad );
         }
-        to_radians( desc_rad.mean );
-        to_radians( desc_rad.standard_deviation );
-        if( desc_rad.mean
-            && desc_rad.distribution_type
-                   == VonMises::distribution_type_static() )
+        else
         {
-            desc_rad.mean = Angle::create_from_radians( desc_rad.mean.value() )
-                                .normalized_between_0_and_2pi()
-                                .radians();
+            to_radians( desc_rad.mean );
+            to_radians( desc_rad.standard_deviation );
+            if( desc_rad.mean
+                && desc_rad.distribution_type
+                       == VonMises::distribution_type_static() )
+            {
+                desc_rad.mean =
+                    Angle::create_from_radians( desc_rad.mean.value() )
+                        .normalized_between_0_and_2pi()
+                        .radians();
+            }
         }
         return create_distribution( desc_rad );
     }
