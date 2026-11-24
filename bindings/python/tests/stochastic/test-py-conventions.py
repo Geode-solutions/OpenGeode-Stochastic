@@ -99,7 +99,7 @@ def test_every_function_is_documented():
 
 
 def test_static_methods():
-    for name in ("create_distribution", "create_rad_angle_distribution_from_degree", "sample"):
+    for name in ("create_distribution", "create_angle_distribution_from_degrees", "sample"):
         check(
             isinstance(inspect.getattr_static(stochastic.DoubleSampler, name), staticmethod),
             "DoubleSampler.%s is not a static method" % name,
