@@ -20,7 +20,6 @@
 # SOFTWARE.
 
 import math
-import warnings
 
 import geode_test_env
 
@@ -242,18 +241,12 @@ def test_double_sampler_degrees():
     print("test_double_sampler_degrees: OK")
 
 
-def test_deprecated_degrees_name():
-    description = stochastic.DoubleDistributionDescription("UniformClosed", min_value=-90.0, max_value=90.0)
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        old = stochastic.DoubleSampler.create_rad_angle_distribution_from_degree(description)
+def test_old_degrees_name_is_removed():
     check(
-        any(issubclass(warning.category, DeprecationWarning) for warning in caught),
-        "create_rad_angle_distribution_from_degree does not warn it is deprecated",
+        not hasattr(stochastic.DoubleSampler, "create_rad_angle_distribution_from_degree"),
+        "create_rad_angle_distribution_from_degree is still defined",
     )
-    new = stochastic.DoubleSampler.create_angle_distribution_from_degrees(description)
-    check((old.min_value, old.max_value) == (new.min_value, new.max_value), "Deprecated name gives another law")
-    print("test_deprecated_degrees_name: OK")
+    print("test_old_degrees_name_is_removed: OK")
 
 
 def test_double_sampler_errors():
@@ -290,5 +283,5 @@ if __name__ == "__main__":
     test_is_valid()
     test_double_sampler()
     test_double_sampler_degrees()
-    test_deprecated_degrees_name()
+    test_old_degrees_name_is_removed()
     test_double_sampler_errors()

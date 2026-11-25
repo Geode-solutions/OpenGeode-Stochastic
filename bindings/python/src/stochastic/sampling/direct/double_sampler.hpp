@@ -142,23 +142,6 @@ namespace geode
                 "kept. kappa and alpha are unchanged. Samples of the other "
                 "laws are not normalized; UniformClosedOpen on [0, 360] "
                 "covers the circle once." )
-            .def_static(
-                "create_rad_angle_distribution_from_degree",
-                []( const DoubleSampler::DistributionDescription &desc ) {
-                    if( PyErr_WarnEx( PyExc_DeprecationWarning,
-                            "create_rad_angle_distribution_from_degree is "
-                            "deprecated, use "
-                            "create_angle_distribution_from_degrees",
-                            1 )
-                        != 0 )
-                    {
-                        throw pybind11::error_already_set();
-                    }
-                    return DoubleSampler::
-                        create_angle_distribution_from_degrees( desc );
-                },
-                pybind11::arg( "desc" ),
-                "Deprecated: use create_angle_distribution_from_degrees." )
             .def_static( "sample", &DoubleSampler::sample,
                 pybind11::arg( "engine" ), pybind11::arg( "dist" ),
                 "Sample a value of a law created by create_distribution, "

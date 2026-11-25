@@ -129,14 +129,6 @@ namespace geode
         static Distribution create_angle_distribution_from_degrees(
             const DistributionDescription& angle_desc_deg );
 
-        [[deprecated(
-            "Use create_angle_distribution_from_degrees" )]] static Distribution
-            create_rad_angle_distribution_from_degree(
-                const DistributionDescription& angle_desc_deg )
-        {
-            return create_angle_distribution_from_degrees( angle_desc_deg );
-        }
-
         static double sample( RandomEngine& engine, const Distribution& dist );
     };
 
