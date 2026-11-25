@@ -25,6 +25,8 @@
 
 #include <geode/stochastic/common.hpp>
 
+#include <geode/basic/range.hpp>
+
 #include <geode/geometry/basic_objects/segment.hpp>
 #include <geode/geometry/bounding_box.hpp>
 #include <geode/geometry/point.hpp>
@@ -115,39 +117,63 @@ namespace geode
         BoundingBox< dimension > extended_domain_;
     };
 
+    /// Share of an object counted in the domain, the statistic of
+    /// ObjectInDomainFeature. A point counts 1 if it is in the closed domain.
     template < typename ObjectType >
     struct SpatialDomainChecker
     {
-        static bool is_anchored_in_domain(
+        [[nodiscard]] static double count_inside_domain(
             const SpatialDomain< ObjectType::dim >& domain,
             const ObjectType& obj )
         {
-            return domain.contains( obj );
-        }
-
-        static bool intersects_domain(
-            const SpatialDomain< ObjectType::dim >& domain,
-            const ObjectType& obj )
-        {
-            return domain.contains( obj );
+            return domain.contains( obj ) ? 1. : 0.;
         }
     };
 
-    // Specialization for segment
+    /// A segment counts 1/2 per endpoint strictly inside the domain, farther
+    /// than GLOBAL_EPSILON from its boundary:
+    /// - the count does not depend on the endpoint which anchors the segment,
+    /// so observed traces need no orientation;
+    /// - a trace clipped by the domain ends on its boundary, at a cut point
+    /// which is not an endpoint of the fracture: it does not count;
+    /// - for a stationary process, the mean count is the mean number of
+    /// segments anchored in the domain: lambda * |D|, the density estimator of
+    /// Mauldon (1998). A segment crossing the domain without endpoint inside
+    /// counts 0: counting the segments hitting the domain would add a term
+    /// proportional to its perimeter and to the mean length, which estimates
+    /// the mean length, not the density.
     template <>
     struct SpatialDomainChecker< OwnerSegment2D >
     {
-        static bool is_anchored_in_domain(
+        [[nodiscard]] static double count_inside_domain(
             const SpatialDomain< 2 >& domain, const OwnerSegment2D& seg )
         {
-            const auto& v = seg.vertices();
-            return domain.contains( v[0] );
+            double count{ 0. };
+            for( const auto& vertex : seg.vertices() )
+            {
+                if( is_strictly_inside( domain.box(), vertex ) )
+                {
+                    count += 0.5;
+                }
+            }
+            return count;
         }
 
-        static bool intersects_domain(
-            const SpatialDomain< 2 >& domain, const OwnerSegment2D& seg )
+    private:
+        [[nodiscard]] static bool is_strictly_inside(
+            const BoundingBox2D& box, const Point2D& point )
         {
-            return domain.box().intersects( seg );
+            for( const auto axis : LRange{ 2 } )
+            {
+                if( point.value( axis )
+                        <= box.min().value( axis ) + GLOBAL_EPSILON
+                    || point.value( axis )
+                           >= box.max().value( axis ) - GLOBAL_EPSILON )
+                {
+                    return false;
+                }
+            }
+            return true;
         }
     };
 

@@ -41,8 +41,10 @@ namespace geode
         void set_domain( const SpatialDomainConfig< 2 >& domain_cfg );
 
         /// Fracture set with a density term (number of fractures per unit
-        /// area). Observed fractures can be added to the returned definition
-        /// fixed_objects.
+        /// area). Its statistic counts the fractures in the domain by their
+        /// endpoints (half the number of endpoints strictly inside), so it
+        /// does not depend on the endpoint which anchors a fracture. Observed
+        /// fractures can be added to the returned definition fixed_objects.
         [[nodiscard]] ObjectSetDefinition< Fracture >& add_fracture_set(
             std::string_view name,
             double p20,
