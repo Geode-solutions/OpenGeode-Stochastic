@@ -53,7 +53,8 @@ namespace geode
             double sum = 0.0;
             this->for_each_object_in_sets( state, this->impacted_set_ids(),
                 [&state, &sum, this]( const ObjectId& obj_id ) {
-                    sum += feature_->evaluate( state.get_object( obj_id ) );
+                    sum += feature_->evaluate(
+                        state.get_object( obj_id ), this->domain() );
                 } );
             return this->contribution( sum );
         }
@@ -67,7 +68,7 @@ namespace geode
                 return 0.0;
             }
             return this->contribution(
-                feature_->evaluate( new_object.object ) );
+                feature_->evaluate( new_object.object, this->domain() ) );
         }
 
         [[nodiscard]] double delta_log_remove(
@@ -78,8 +79,8 @@ namespace geode
             {
                 return 0.0;
             }
-            return this->contribution(
-                -feature_->evaluate( state.get_object( object_id ) ) );
+            return this->contribution( -feature_->evaluate(
+                state.get_object( object_id ), this->domain() ) );
         }
 
         [[nodiscard]] double delta_log_change(
@@ -92,8 +93,9 @@ namespace geode
                 return 0.0;
             }
             double delta =
-                feature_->evaluate( new_object.object )
-                - feature_->evaluate( state.get_object( old_object_id ) );
+                feature_->evaluate( new_object.object, this->domain() )
+                - feature_->evaluate(
+                    state.get_object( old_object_id ), this->domain() );
             return this->contribution( delta );
         }
 

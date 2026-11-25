@@ -36,9 +36,13 @@ namespace geode
         SingleObjectFeature() = default;
         virtual ~SingleObjectFeature() = default;
 
-        [[nodiscard]] virtual double evaluate(
-            const ObjectType& obj ) const = 0;
+        /// Contribution of the object to the energy, wherever it is in the
+        /// extended domain.
+        [[nodiscard]] virtual double evaluate( const ObjectType& obj,
+            const SpatialDomain< ObjectType::dim >& domain ) const = 0;
 
+        /// Contribution of the object to the statistic, observed in the
+        /// domain.
         [[nodiscard]] virtual double evaluate_inside_domain(
             const ObjectType& obj,
             const SpatialDomain< ObjectType::dim >& domain ) const = 0;
@@ -52,9 +56,9 @@ namespace geode
     class ObjectInDomainFeature : public SingleObjectFeature< ObjectType >
     {
     public:
-        [[nodiscard]] double evaluate( const ObjectType& obj ) const override
+        [[nodiscard]] double evaluate( const ObjectType& /*obj*/,
+            const SpatialDomain< ObjectType::dim >& /*domain*/ ) const override
         {
-            geode_unused( obj );
             return 1.;
         }
 

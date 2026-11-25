@@ -96,7 +96,7 @@ void check_feature(
             "[ObjectInDomainFeature] ", label, ": ", value, " instead of ",
             expected, " (reversed: ", seg == &reversed, ")" );
         geode::OpenGeodeStochasticStochasticException::test(
-            feature.evaluate( *seg ) == 1., "[ObjectInDomainFeature] ", label,
+            feature.evaluate( *seg, domain ) == 1., "[ObjectInDomainFeature] ", label,
             ": a segment should count 1 in the extended domain" );
     }
 }
