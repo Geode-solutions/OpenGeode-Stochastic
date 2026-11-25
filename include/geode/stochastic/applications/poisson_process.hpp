@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <geode/stochastic/applications/observed_intensity.hpp>
 #include <geode/stochastic/inference/target_statistics.hpp>
 
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_context.hpp>
@@ -36,10 +37,14 @@ namespace geode
         void set_domain(
             const SpatialDomainConfig< ObjectType::dim >& domain_cfg );
 
+        /// Object set with a density term. With IntensityScope::all_objects,
+        /// lambda counts the fixed objects too, and the expected mean of the
+        /// statistic is still lambda * |D|.
         [[nodiscard]] ObjectSetDefinition< ObjectType >& add_set(
             std::string_view name,
             double lambda,
-            std::optional< double > expected_count = std::nullopt );
+            std::optional< double > expected_count = std::nullopt,
+            IntensityScope scope = IntensityScope::free_objects );
 
         [[nodiscard]] SimulationContext< ObjectType >
             build_simulation_context() const;
@@ -50,6 +55,8 @@ namespace geode
     private:
         SimulationContextConfig< ObjectType > context_cfg_;
         std::vector< geode::TargetStatisticConfig > expected_stats_;
+        // sets in IntensityScope::all_objects, with their density
+        std::vector< std::pair< std::string, double > > all_objects_sets_;
     };
 
 } // namespace geode

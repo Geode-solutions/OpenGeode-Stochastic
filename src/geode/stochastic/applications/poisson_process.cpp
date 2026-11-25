@@ -36,8 +36,13 @@ namespace geode
     ObjectSetDefinition< ObjectType >&
         PoissonProcessBuilder< ObjectType >::add_set( std::string_view name,
             double lambda,
-            std::optional< double > expected_count )
+            std::optional< double > expected_count,
+            IntensityScope scope )
     {
+        if( scope == IntensityScope::all_objects )
+        {
+            all_objects_sets_.emplace_back( name, lambda );
+        }
         auto& object_set_cfg = context_cfg_.add_set( name );
 
         SingleObjectTermConfig density;
@@ -61,9 +66,12 @@ namespace geode
     SimulationContext< ObjectType >
         PoissonProcessBuilder< ObjectType >::build_simulation_context() const
     {
-        auto context =
-            geode::build_simulation_context< ObjectType >( context_cfg_ );
-        return context;
+        auto config = context_cfg_;
+        for( const auto& [set_name, lambda] : all_objects_sets_ )
+        {
+            add_observation_term( config, set_name, lambda );
+        }
+        return geode::build_simulation_context< ObjectType >( config );
     };
 
     template < typename ObjectType >

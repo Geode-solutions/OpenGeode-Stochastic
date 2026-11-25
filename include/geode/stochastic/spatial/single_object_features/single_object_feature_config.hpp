@@ -30,6 +30,10 @@ namespace geode
     {
     };
 
+    struct ObjectTouchingDomainFeatureConfig
+    {
+    };
+
     struct SegmentLengthInsideBoxFeatureConfig
     {
         double characteristic_length;
@@ -37,6 +41,7 @@ namespace geode
 
     using SingleObjectFeatureConfig = std::variant< std::monostate,
         ObjectInDomainFeatureConfig,
+        ObjectTouchingDomainFeatureConfig,
         SegmentLengthInsideBoxFeatureConfig >;
 
 } // namespace geode

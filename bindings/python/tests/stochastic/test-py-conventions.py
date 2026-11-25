@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import enum
 import inspect
 
 import geode_test_env
@@ -40,12 +41,20 @@ def check(condition, message):
         raise ValueError("[Test] " + message)
 
 
+def is_enum(python_class):
+    # as in OpenGeode: an enum (pybind11::native_enum, an enum.Enum) only
+    # needs a docstring, its members are generated
+    return issubclass(python_class, enum.Enum)
+
+
 def test_documentation_and_argument_names():
     check(stochastic.__doc__, "The module has no docstring")
     classes = public_classes()
     check(len(classes) >= 28, "Classes are missing: %d" % len(classes))
     for class_name, python_class in classes:
         check(python_class.__doc__, class_name + " has no docstring")
+        if is_enum(python_class):
+            continue
         for member_name, member in vars(python_class).items():
             if member_name.startswith("__") and member_name not in (
                 "__init__",
@@ -80,6 +89,8 @@ def test_documentation_and_argument_names():
 def test_every_function_is_documented():
     # a docstring has the signature, then the text
     for class_name, python_class in public_classes():
+        if is_enum(python_class):
+            continue
         for member_name, member in vars(python_class).items():
             if member_name.startswith("_") and member_name != "__init__":
                 continue

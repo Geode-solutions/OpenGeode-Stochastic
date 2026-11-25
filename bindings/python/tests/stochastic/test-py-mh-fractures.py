@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import enum
 import os
 import tempfile
 
@@ -162,6 +163,42 @@ def test_two_fracture_sets():
     print("--> SUCCESS!")
 
 
+def test_observed_fractures_in_density():
+    print("TEST - P20 COUNTING THE OBSERVED FRACTURES")
+
+    engine = stochastic.RandomEngine()
+    engine.set_seed("@py-mh-test-observed-in-density@")
+
+    fractures = stochastic.FractureProcessBuilder()
+    fractures.set_domain(fracture_domain())
+    if not issubclass(stochastic.IntensityScope, enum.Enum):
+        raise ValueError("[Test] IntensityScope should be an enum.Enum")
+    if [scope.name for scope in stochastic.IntensityScope] != ["free_objects", "all_objects"]:
+        raise ValueError("[Test] Wrong intensity scopes")
+    fset = fractures.add_fracture_set("fset_A", 0.05, scope=stochastic.IntensityScope.all_objects)
+    set_uniform_sampler(fset)
+    fset.add_fixed_segment(og.Point2D([1.0, 11.0]), og.Point2D([11.0, 20.0]))
+
+    runner = fractures.build_simulation_runner()
+    runner.run(engine, 100)
+    if runner.term_names() != ["fset_A_p20", "fset_A_observation"]:
+        raise ValueError("[Test] Missing observation term: " + str(runner.term_names()))
+
+    # more observed fractures than the density allows
+    dense = stochastic.FractureProcessBuilder()
+    dense.set_domain(fracture_domain())
+    fset = dense.add_fracture_set("fset_A", 0.001, scope=stochastic.IntensityScope.all_objects)
+    set_uniform_sampler(fset)
+    for i in range(5):
+        fset.add_fixed_segment(og.Point2D([1.0 + i, 5.0]), og.Point2D([1.5 + i, 5.5]))
+    try:
+        dense.build_simulation_runner()
+    except Exception:
+        print("--> SUCCESS!")
+        return
+    raise ValueError("[Test] A density lower than the observed fractures should be refused")
+
+
 def test_keyword_constructors():
     print("TEST - KEYWORD CONSTRUCTORS")
 
@@ -236,4 +273,5 @@ def test_keyword_constructors():
 if __name__ == "__main__":
     test_fracture_set()
     test_two_fracture_sets()
+    test_observed_fractures_in_density()
     test_keyword_constructors()

@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <geode/stochastic/applications/observed_intensity.hpp>
 #include <geode/stochastic/inference/target_statistics.hpp>
 #include <geode/stochastic/sampling/direct/object_set_sampler/segment_set_sampler.hpp>
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_context.hpp>
@@ -45,10 +46,19 @@ namespace geode
         /// endpoints (half the number of endpoints strictly inside), so it
         /// does not depend on the endpoint which anchors a fracture. Observed
         /// fractures can be added to the returned definition fixed_objects.
+        /// With IntensityScope::free_objects, p20 is the density of the
+        /// simulated fractures, which are added to the observed ones. With
+        /// IntensityScope::all_objects, p20 is the density of all the
+        /// fractures, observed ones included: the observed fractures are a
+        /// part of the fractures touching the domain, observed independently
+        /// of their size, and the expected mean of the statistic is still
+        /// p20 * |D|. This is exact without interaction terms on the set, and
+        /// an approximation with them.
         [[nodiscard]] ObjectSetDefinition< Fracture >& add_fracture_set(
             std::string_view name,
             double p20,
-            std::optional< double > expected_count = std::nullopt );
+            std::optional< double > expected_count = std::nullopt,
+            IntensityScope scope = IntensityScope::free_objects );
 
         /// Intensity term (fracture length per unit area) on a fracture set.
         void add_intensity( std::string_view set_name,
@@ -77,5 +87,7 @@ namespace geode
     private:
         SimulationContextConfig< Fracture > context_cfg_;
         std::vector< TargetStatisticConfig > expected_stats_;
+        // sets in IntensityScope::all_objects, with their p20
+        std::vector< std::pair< std::string, double > > all_objects_sets_;
     };
 } // namespace geode

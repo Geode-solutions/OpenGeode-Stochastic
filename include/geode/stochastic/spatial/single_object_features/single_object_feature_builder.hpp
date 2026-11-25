@@ -43,6 +43,14 @@ namespace geode
     template < typename ObjectType >
     std::unique_ptr< SingleObjectFeature< ObjectType > >
         build_single_object_feature_impl(
+            const ObjectTouchingDomainFeatureConfig& /*unused*/ )
+    {
+        return std::make_unique< ObjectTouchingDomainFeature< ObjectType > >();
+    };
+
+    template < typename ObjectType >
+    std::unique_ptr< SingleObjectFeature< ObjectType > >
+        build_single_object_feature_impl(
             const SegmentLengthInsideBoxFeatureConfig& cfg )
     {
         if constexpr( std::is_same_v< ObjectType, OwnerSegment2D > )

@@ -70,4 +70,28 @@ namespace geode
         }
     };
 
+    /// 1 if the object touches the domain (it could be observed there), 0
+    /// otherwise, as defined by SpatialDomainChecker::touches_domain, for the
+    /// energy and for the statistic. Used to lower the density of the free
+    /// objects which could have been observed (see IntensityScope).
+    template < typename ObjectType >
+    class ObjectTouchingDomainFeature : public SingleObjectFeature< ObjectType >
+    {
+    public:
+        [[nodiscard]] double evaluate( const ObjectType& obj,
+            const SpatialDomain< ObjectType::dim >& domain ) const override
+        {
+            return SpatialDomainChecker< ObjectType >::touches_domain(
+                       domain, obj )
+                       ? 1.
+                       : 0.;
+        }
+
+        [[nodiscard]] double evaluate_inside_domain( const ObjectType& obj,
+            const SpatialDomain< ObjectType::dim >& domain ) const override
+        {
+            return evaluate( obj, domain );
+        }
+    };
+
 } // namespace geode
