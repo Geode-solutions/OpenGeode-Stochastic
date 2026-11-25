@@ -25,6 +25,7 @@
 
 #include <geode/basic/pimpl_impl.hpp>
 #include <geode/basic/range.hpp>
+#include <geode/basic/types.hpp>
 #include <geode/stochastic/common.hpp>
 
 #include <absl/random/bernoulli_distribution.h>
@@ -33,11 +34,29 @@
 #include <absl/random/uniform_int_distribution.h>
 #include <absl/random/uniform_real_distribution.h>
 
+#include <algorithm>
 #include <limits>
 #include <random>
 
 namespace
 {
+    // Wraps an angle in [0, 2pi[, whatever its sign or its number of turns.
+    double wrap_to_two_pi( double angle )
+    {
+        constexpr auto TWO_PI = 2.0 * M_PI;
+        auto wrapped = std::fmod( angle, TWO_PI );
+        if( wrapped < 0.0 )
+        {
+            wrapped += TWO_PI;
+            // a tiny negative remainder rounds to 2pi
+            if( wrapped >= TWO_PI )
+            {
+                return 0.0;
+            }
+        }
+        return wrapped;
+    }
+
     double normal_cdf( double x )
     {
         return 0.5 * std::erfc( -x / std::sqrt( 2.0 ) );
@@ -134,6 +153,49 @@ namespace
         return hash;
     }
 
+    // Not named INFINITE: <windows.h> defines it as a macro
+    constexpr auto DOUBLE_INFINITY = std::numeric_limits< double >::infinity();
+
+    [[noreturn]] void throw_invalid_law( const std::string& law )
+    {
+        throw geode::OpenGeodeStochasticStochasticException{ nullptr,
+            geode::OpenGeodeException::TYPE::data,
+            "[RandomEngine] Cannot sample an invalid law: ", law };
+    }
+
+    // The rules of a law are in its is_valid(): they are not repeated here.
+    // The exception is built in another function to keep this check inlined
+    // in the sampling functions.
+    template < typename Law >
+    void check_law( const Law& law )
+    {
+        if( !law.is_valid() )
+        {
+            throw_invalid_law( law.string() );
+        }
+    }
+
+    [[noreturn]] void throw_unrepresentable_sample( const std::string& law )
+    {
+        throw geode::OpenGeodeStochasticStochasticException{ nullptr,
+            geode::OpenGeodeException::TYPE::data,
+            "[RandomEngine] The law gives a sample out of the double range: ",
+            law };
+    }
+
+    // A valid law can give values beyond the double range (huge mean or
+    // standard deviation, exponent close to 1): raise an error instead of
+    // returning inf or NaN.
+    template < typename Law >
+    double check_sample( double value, const Law& law )
+    {
+        if( !std::isfinite( value ) )
+        {
+            throw_unrepresentable_sample( law.string() );
+        }
+        return value;
+    }
+
     uint64_t random_seed()
     {
         std::random_device device;
@@ -160,11 +222,7 @@ namespace geode
         template < typename Type >
         Type sample_uniform( const UniformClosed< Type >& law )
         {
-            OpenGeodeStochasticStochasticException::check_exception(
-                law.min_value <= law.max_value, nullptr,
-                OpenGeodeException::TYPE::data,
-                "[RandomEngine] Uniform sampling with wrong range , ",
-                law.min_value, " is not <= than ", law.max_value, "." );
+            check_law( law );
             return absl::Uniform(
                 absl::IntervalClosed, rand_gen_, law.min_value, law.max_value );
         }
@@ -172,84 +230,37 @@ namespace geode
         template < typename Type >
         Type sample_uniform( const UniformClosedOpen< Type >& law )
         {
-            OpenGeodeStochasticStochasticException::check_exception(
-                law.min_value < law.max_value, nullptr,
-                OpenGeodeException::TYPE::data,
-                "[RandomEngine] Uniform sampling with wrong range, ",
-                law.min_value, " is not < than ", law.max_value, "." );
+            check_law( law );
             return absl::Uniform( absl::IntervalClosedOpen, rand_gen_,
                 law.min_value, law.max_value );
         }
 
         double sample_gaussian( const Gaussian& law )
         {
-            OpenGeodeStochasticStochasticException::check_exception(
-                law.standard_deviation > 0
-                    && std::isfinite( law.standard_deviation )
-                    && std::isfinite( law.mean ),
-                nullptr, OpenGeodeException::TYPE::data,
-                "[RandomEngine] Gaussian sampling with infinite "
-                "parameters or negative standard deviation N(",
-                law.mean, law.standard_deviation, ")." );
-            return absl::gaussian_distribution< double >(
-                law.mean, law.standard_deviation )( rand_gen_ );
+            check_law( law );
+            return check_sample(
+                absl::gaussian_distribution< double >(
+                    law.mean, law.standard_deviation )( rand_gen_ ),
+                law );
         }
 
         double sample_truncated_gaussian( const TruncatedGaussian& law )
         {
-            OpenGeodeStochasticStochasticException::check_exception(
-                law.standard_deviation > 0
-                    && std::isfinite( law.standard_deviation )
-                    && std::isfinite( law.mean ),
-                nullptr, OpenGeodeException::TYPE::data,
-                "[RandomEngine] Gaussian sampling with infinite "
-                "parameters or negative standard deviation N(",
-                law.mean, ",", law.standard_deviation, ")." );
-
-            const auto max = law.max_value.value_or(
-                std::numeric_limits< double >::infinity() );
-            const auto min = law.min_value.value_or(
-                -std::numeric_limits< double >::infinity() );
-
-            OpenGeodeStochasticStochasticException::check_exception( min < max,
-                nullptr, OpenGeodeException::TYPE::data,
-                "[RandomEngine] Gaussian sampling truncation with wrong "
-                "range, ",
-                min, " is not < than ", max, "." );
-
-            // Standardize bounds
-            const auto alpha = ( min - law.mean ) / law.standard_deviation;
-            const auto beta = ( max - law.mean ) / law.standard_deviation;
-
-            // Compute CDF of bounds, handling infinite alpha/beta
-            auto F_min = std::isfinite( alpha ) ? normal_cdf( alpha ) : 0.0;
-            auto F_max = std::isfinite( beta ) ? normal_cdf( beta ) : 1.0;
-
-            // Clamp to avoid exact 0 or 1 (normal_quantile cannot handle them)
-            F_min = std::max( F_min, geode::GLOBAL_EPSILON );
-            F_max = std::min( F_max, 1.0 - geode::GLOBAL_EPSILON );
-
-            OpenGeodeStochasticStochasticException::check_exception(
-                F_min < F_max, nullptr, OpenGeodeException::TYPE::data,
-                "[RandomEngine] Gaussian sampling truncation "
-                "range is extreme please check inputs" );
-
-            // Sample uniform in [F_min, F_max]
-            std::uniform_real_distribution< double > uniform( F_min, F_max );
-            const auto u = uniform( rand_gen_ );
-
-            // Map through inverse CDF
-            return law.mean + law.standard_deviation * normal_quantile( u );
+            check_law( law );
+            const auto min = law.min_value.value_or( -DOUBLE_INFINITY );
+            const auto max = law.max_value.value_or( DOUBLE_INFINITY );
+            const auto value =
+                law.mean
+                + law.standard_deviation
+                      * sample_truncated_standard_normal(
+                          ( min - law.mean ) / law.standard_deviation,
+                          ( max - law.mean ) / law.standard_deviation );
+            return check_sample( std::clamp( value, min, max ), law );
         }
 
         double sample_von_mises( const VonMises& law )
         {
-            OpenGeodeStochasticStochasticException::check_exception(
-                law.concentration >= 0.0 && std::isfinite( law.mean ), nullptr,
-                OpenGeodeException::TYPE::data,
-                "[RandomEngine] VonMises sampling with invalid parameters: "
-                "mean=",
-                law.mean, ", concentration=", law.concentration, "." );
+            check_law( law );
 
             // Uniform approximation for very small concentration (nearly
             // uniform)
@@ -266,11 +277,9 @@ namespace geode
             {
                 // Variance of approximate normal around mean
                 const auto stddev = 1.0 / std::sqrt( law.concentration );
-                std::normal_distribution< double > normal_dist(
+                absl::gaussian_distribution< double > normal_dist(
                     law.mean, stddev );
-                auto theta = normal_dist( rand_gen_ );
-                // Wrap to [0, 2π)
-                return std::fmod( theta + 2.0 * M_PI, 2.0 * M_PI );
+                return wrap_to_two_pi( normal_dist( rand_gen_ ) );
             }
 
             // Best & Fisher (1979) rejection algorithm for moderate
@@ -284,14 +293,13 @@ namespace geode
             const auto r = ( 1.0 + b * b ) / ( 2.0 * b );
 
             double theta;
-            UniformClosed< double > uniform_dist;
             while( true )
             {
-                auto u1 = sample_uniform( uniform_dist );
+                auto u1 = unit_closed_( rand_gen_ );
                 auto z = std::cos( M_PI * u1 );
                 auto f = ( 1.0 + r * std::fabs( z ) ) / ( r + std::fabs( z ) );
                 auto c = law.concentration * ( r - f );
-                auto u2 = sample_uniform( uniform_dist );
+                auto u2 = unit_closed_( rand_gen_ );
 
                 if( u2 < c * ( 2.0 - c ) || u2 <= c * std::exp( 1.0 - c ) )
                 {
@@ -302,107 +310,53 @@ namespace geode
                 }
             }
 
-            // Shift by mean and wrap to [0, 2π)
-            theta += law.mean;
-            theta = std::fmod( theta + 2.0 * M_PI, 2.0 * M_PI );
-
-            return theta;
+            return wrap_to_two_pi( theta + law.mean );
         }
 
         double sample_truncated_lognormal( const TruncatedLogNormal& law )
         {
-            // Basic sanity checks
-            OpenGeodeStochasticStochasticException::check_exception(
-                law.standard_deviation > 0
-                    && std::isfinite( law.standard_deviation )
-                    && std::isfinite( law.mean ),
-                nullptr, OpenGeodeException::TYPE::data,
-                "[RandomEngine] Truncated LogNormal sampling with infinite "
-                "parameters or negative standard deviation N(",
-                law.mean, ", ", law.standard_deviation, ")." );
-
-            // Determine min and max, respecting optional values
-            const auto min_val = law.min_value.value_or( 0.0 );
-            const auto max_val = law.max_value.value_or(
-                std::numeric_limits< double >::infinity() );
-
-            OpenGeodeStochasticStochasticException::check_exception(
-                min_val < max_val, nullptr, OpenGeodeException::TYPE::data,
-                "[RandomEngine] Truncated LogNormal sampling with wrong "
-                "truncation range ",
-                min_val, " is not < than ", max_val, "." );
-
-            // Transform to standard normal space
-            const auto zmin =
-                ( std::log( min_val ) - law.mean ) / law.standard_deviation;
-            const auto zmax =
-                ( std::isfinite( max_val )
-                        ? ( std::log( max_val ) - law.mean )
-                              / law.standard_deviation
-                        : std::numeric_limits< double >::infinity() );
-
-            // Compute CDF bounds, handling infinite zmin/zmax
-            auto F_min = std::max( normal_cdf( zmin ), geode::GLOBAL_EPSILON );
-            auto F_max =
-                std::min( normal_cdf( zmax ), 1.0 - geode::GLOBAL_EPSILON );
-
-            OpenGeodeStochasticStochasticException::check_exception(
-                F_min < F_max, nullptr, OpenGeodeException::TYPE::data,
-                "[RandomEngine] Truncated LogNormal sampling with extreme "
-                "truncation "
-                "range, please chack inputs" );
-
-            // Sample uniform in [Fmin, Fmax]
-            std::uniform_real_distribution< double > uniform( F_min, F_max );
-            const auto u = uniform( rand_gen_ );
-
-            // Map through inverse CDF and exponentiate
-            const auto z = normal_quantile( u );
-            return std::exp( law.mean + law.standard_deviation * z );
+            check_law( law );
+            const auto min = law.min_value.value_or( 0. );
+            const auto max = law.max_value.value_or( DOUBLE_INFINITY );
+            // log( 0 ) = -inf and log( inf ) = inf are valid bounds
+            const auto value =
+                std::exp( law.mean
+                          + law.standard_deviation
+                                * sample_truncated_standard_normal(
+                                    ( std::log( min ) - law.mean )
+                                        / law.standard_deviation,
+                                    ( std::log( max ) - law.mean )
+                                        / law.standard_deviation ) );
+            return check_sample( std::clamp( value, min, max ), law );
         }
 
         double sample_truncated_powerlaw( const TruncatedPowerLaw& law )
         {
-            OpenGeodeStochasticStochasticException::check_exception(
-                law.alpha > 0, nullptr, OpenGeodeException::TYPE::data,
-                "[RandomEngine] Power-law sampling with wrong exponent value "
-                "(alpha should be > 0), gets ",
-                law.alpha );
-
-            // Set bounds
-            const auto xmin = law.min_value.value_or(
-                geode::GLOBAL_EPSILON ); // default 1.0 if unspecified
-            const auto xmax = law.max_value.value_or(
-                std::numeric_limits< double >::infinity() );
-
-            OpenGeodeStochasticStochasticException::check_exception(
-                xmin < xmax, nullptr, OpenGeodeException::TYPE::data,
-                "[RandomEngine] Wrong power-law trucation, ", xmin,
-                "si not < than", xmax );
-
-            // Sample uniform
-            std::uniform_real_distribution< double > uniform( 0.0, 1.0 );
+            check_law( law );
+            const auto xmin = law.lower_bound();
+            const auto xmax = law.max_value.value_or( DOUBLE_INFINITY );
+            absl::uniform_real_distribution< double > uniform( 0.0, 1.0 );
             const auto u = uniform( rand_gen_ );
 
-            // Inverse CDF
-            if( std::fabs( law.alpha - 1.0 ) > geode::GLOBAL_EPSILON )
+            // Inverse CDF of the density proportional to x^-alpha on
+            // [xmin, xmax], written with the ratio x / xmin so that no power
+            // of xmin or xmax overflows. is_valid() ensures that xmax is
+            // finite when alpha <= 1.
+            if( std::fabs( law.alpha - 1.0 ) <= geode::GLOBAL_EPSILON
+                && std::isfinite( xmax ) )
             {
-                auto xmin_pow = std::pow( xmin, 1.0 - law.alpha );
-                auto xmax_pow = std::isfinite( xmax )
-                                    ? std::pow( xmax, 1.0 - law.alpha )
-                                    : std::numeric_limits< double >::infinity();
-                if( !std::isfinite( xmax_pow ) )
-                {
-                    return std::pow( xmin_pow + u, 1.0 / ( 1.0 - law.alpha ) );
-                }
-                return std::pow( u * ( xmax_pow - xmin_pow ) + xmin_pow,
-                    1.0 / ( 1.0 - law.alpha ) );
+                // bounded by the finite xmax: cannot overflow
+                return std::clamp(
+                    xmin * std::pow( xmax / xmin, u ), xmin, xmax );
             }
-
-            // alpha == 1
-            const auto xmax_eff =
-                std::isfinite( xmax ) ? xmax : xmin * geode::GLOBAL_EPSILON;
-            return xmin * std::pow( xmax_eff / xmin, u );
+            const auto exponent = 1.0 - law.alpha;
+            // with alpha > 1, an infinite xmax gives a null ratio
+            const auto ratio = std::pow( xmax / xmin, exponent );
+            return check_sample(
+                std::clamp(
+                    xmin * std::pow( 1.0 - u + u * ratio, 1.0 / exponent ),
+                    xmin, xmax ),
+                law );
         }
 
         double sample_log()
@@ -423,11 +377,47 @@ namespace geode
         }
 
     private:
+        // Samples the standard normal law truncated to [lower, upper] by
+        // inverting its CDF. A range above the mean is mirrored below it,
+        // where the CDF keeps its precision far in the tail.
+        double sample_truncated_standard_normal( double lower, double upper )
+        {
+            if( lower > 0. )
+            {
+                return -sample_truncated_standard_normal( -upper, -lower );
+            }
+            // normal_quantile cannot handle 0 or 1
+            const auto cdf_min =
+                lower == -DOUBLE_INFINITY
+                    ? std::numeric_limits< double >::min()
+                    : std::max( normal_cdf( lower ),
+                          std::numeric_limits< double >::min() );
+            const auto cdf_max =
+                upper == DOUBLE_INFINITY
+                    ? 1. - std::numeric_limits< double >::epsilon()
+                    : std::min( normal_cdf( upper ),
+                          1. - std::numeric_limits< double >::epsilon() );
+            OpenGeodeStochasticStochasticException::check_exception(
+                cdf_min < cdf_max, nullptr, OpenGeodeException::TYPE::data,
+                "[RandomEngine] Truncation range [", lower, ", ", upper,
+                "] (in standard deviations) is too far in the tail of the "
+                "normal law." );
+            absl::uniform_real_distribution< double > uniform(
+                cdf_min, cdf_max );
+            return normal_quantile( uniform( rand_gen_ ) );
+        }
+
         // std::mt19937_64 seeded by std::seed_seq: both are specified by the
         // C++ standard, so a seed gives the same sequence on every run and
         // platform (absl::BitGen salts its seed per process). Without seed,
-        // the engine is randomly initialized.
+        // the engine is randomly initialized. Values are drawn with the
+        // absl:: distributions: the algorithms of the std:: ones are not
+        // specified and differ between standard libraries.
         std::mt19937_64 rand_gen_{ random_seed() };
+        // Uniform law on [0,1], built once: the same draws as sample_uniform
+        // without validating the law nor computing nextafter( 1 ) each time.
+        absl::uniform_real_distribution< double > unit_closed_{ 0.0,
+            std::nextafter( 1.0, std::numeric_limits< double >::max() ) };
     };
 
     RandomEngine::RandomEngine() = default;

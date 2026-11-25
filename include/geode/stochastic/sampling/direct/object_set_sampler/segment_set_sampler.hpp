@@ -44,6 +44,10 @@ namespace geode
 
         DoubleSampler::DistributionDescription length{ "length" };
 
+        // Azimuth in radians, measured clockwise from the y axis (north):
+        // direction (sin(azimuth), cos(azimuth)). It is an axis: azimuth and
+        // azimuth + pi give the same family of segments. See VonMises for its
+        // validity on an axis.
         DoubleSampler::DistributionDescription azimuth{ "azimuth" };
     };
 

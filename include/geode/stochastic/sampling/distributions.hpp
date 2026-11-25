@@ -25,6 +25,8 @@
 
 #include <geode/stochastic/common.hpp>
 
+#include <cmath>
+#include <limits>
 #include <optional>
 
 #include <geode/basic/named_type.hpp>
@@ -43,19 +45,14 @@ namespace geode
         UniformClosed() = default;
         bool is_valid() const
         {
-            if( min_value < max_value )
+            // Equal bounds are valid: every sample is this value.
+            if( std::isfinite( min_value ) && std::isfinite( max_value )
+                && min_value <= max_value )
             {
-                return true;
-            }
-            if( min_value == max_value )
-            {
-                geode::Logger::warning(
-                    "[Uniform Closed] - check range boundaries definintion [",
-                    min_value, ",", max_value, "]." );
                 return true;
             }
             geode::Logger::error(
-                "[Uniform Closed] - check range boundaries definintion [",
+                "[Uniform Closed] - check range boundaries definition [",
                 min_value, ",", max_value, "]." );
             return false;
         }
@@ -74,8 +71,8 @@ namespace geode
         }
         std::string string() const
         {
-            return absl::StrCat(
-                distribution_type().get(), "[", min_value, max_value, "]" );
+            return absl::StrCat( distribution_type().get(), "[", min_value, ",",
+                max_value, "]" );
         }
     };
 
@@ -85,12 +82,13 @@ namespace geode
         UniformClosedOpen() = default;
         bool is_valid() const
         {
-            if( min_value < max_value )
+            if( std::isfinite( min_value ) && std::isfinite( max_value )
+                && min_value < max_value )
             {
                 return true;
             }
             geode::Logger::error(
-                "[Uniform ClosedOpen] - check range boundaries definintion [",
+                "[Uniform ClosedOpen] - check range boundaries definition [",
                 min_value, ",", max_value, "]." );
             return false;
         }
@@ -110,15 +108,26 @@ namespace geode
 
         std::string string() const
         {
-            return absl::StrCat(
-                distribution_type().get(), "[", min_value, max_value, "]" );
+            return absl::StrCat( distribution_type().get(), "[", min_value, ",",
+                max_value, ")" );
         }
     };
 
     struct opengeode_stochastic_stochastic_api Gaussian
     {
         Gaussian() = default;
-        bool is_valid() const;
+        bool is_valid() const
+        {
+            if( standard_deviation > 0 && std::isfinite( standard_deviation )
+                && std::isfinite( mean ) )
+            {
+                return true;
+            }
+            geode::Logger::error(
+                "[Gaussian] - check mean and standard deviation N(", mean, ",",
+                standard_deviation, ")." );
+            return false;
+        }
 
         double mean{ 0. };
         double standard_deviation{ 1. };
@@ -144,7 +153,41 @@ namespace geode
     {
         TruncatedGaussian() = default;
 
-        bool is_valid() const;
+        bool is_valid() const
+        {
+            if( standard_deviation <= 0 || !std::isfinite( standard_deviation )
+                || !std::isfinite( mean ) )
+            {
+                geode::Logger::error( "[Truncated Gaussian] - check mean and "
+                                      "standard deviation N(",
+                    mean, ",", standard_deviation, ")." );
+                return false;
+            }
+            const auto max =
+                max_value.value_or( std::numeric_limits< double >::infinity() );
+            const auto min = min_value.value_or(
+                -std::numeric_limits< double >::infinity() );
+
+            // written in positive form to reject NaN bounds
+            if( !( min < max ) )
+            {
+                geode::Logger::error( "[Truncated Gaussian] - check "
+                                      "range boundaries definition [",
+                    min, ",", max, "]." );
+                return false;
+            }
+
+            if( min > mean + 6.0 * standard_deviation
+                || max < mean - 6.0 * standard_deviation )
+            {
+                geode::Logger::error( "[Truncated Gaussian] - Truncation "
+                                      "range is too far from mean. N(",
+                    mean, ",", standard_deviation, ") is defined in [", min,
+                    ",", max, "]." );
+                return false;
+            }
+            return true;
+        }
 
         double mean{ 0. };
         double standard_deviation{ 1. };
@@ -171,7 +214,7 @@ namespace geode
             std::string max_str = max_value.has_value()
                                       ? std::to_string( max_value.value() )
                                       : "+inf";
-            return absl::StrCat( distribution_type().get(), "(", mean,
+            return absl::StrCat( distribution_type().get(), "(", mean, ",",
                 standard_deviation, ") in [", min_str, ",", max_str, "]" );
         }
     };
@@ -180,8 +223,18 @@ namespace geode
     {
         VonMises() = default;
 
-        // 2D von Mises parameters
-        double mean{ 0.0 }; // mean direction in radians
+        // Von Mises law of an angle of period 2pi, sampled in [0, 2pi[.
+        //
+        // Validity for an axis (period pi), such as the azimuth of a fracture
+        // trace where theta and theta + pi are the same fracture: samples
+        // beyond +-pi/2 from the mean fall on the same axis as the mean. They
+        // are 22% of the samples for kappa = 1, 7.5% for kappa = 2, 0.2% for
+        // kappa = 5. The law is suited to concentrated families (kappa >= 5,
+        // angular spread 1/sqrt(kappa) below ~26 degrees); for more dispersed
+        // ones, the sampled axes are more concentrated than kappa suggests.
+        // An axial law (von Mises on the doubled angle, then halved) may be
+        // added later for them.
+        double mean{ 0.0 }; // mean angle in radians
         double concentration{ 1.0 }; // kappa (concentration parameter)
 
         [[nodiscard]] static DistributionType distribution_type_static()
@@ -196,7 +249,14 @@ namespace geode
 
         [[nodiscard]] bool is_valid() const
         {
-            return concentration >= 0.0 && std::isfinite( mean );
+            if( concentration >= 0.0 && std::isfinite( concentration )
+                && std::isfinite( mean ) )
+            {
+                return true;
+            }
+            geode::Logger::error( "[VonMises] - check mean and concentration (",
+                mean, ",", concentration, ")." );
+            return false;
         }
 
         std::string string() const
@@ -232,9 +292,8 @@ namespace geode
             if( standard_deviation <= 0 || !std::isfinite( standard_deviation )
                 || !std::isfinite( mean ) )
             {
-                geode::Logger::error(
-                    "[Truncated TruncatedLogNormal] - check mean and "
-                    "standard deviation N(",
+                geode::Logger::error( "[TruncatedLogNormal] - check mean and "
+                                      "standard deviation N(",
                     mean, ",", standard_deviation, ")." );
                 return false;
             }
@@ -244,15 +303,15 @@ namespace geode
 
             if( min < 0. )
             {
-                geode::Logger::error( "[Truncated TruncatedLogNormal] - the "
+                geode::Logger::error( "[TruncatedLogNormal] - the "
                                       "lower bound cannot be negative: ",
                     min, "." );
                 return false;
             }
-            if( min >= max )
+            if( !( min < max ) )
             {
-                geode::Logger::error( "[Truncated TruncatedLogNormal] - check "
-                                      "range boundaries definintion [",
+                geode::Logger::error( "[TruncatedLogNormal] - check "
+                                      "range boundaries definition [",
                     min, ",", max, "]." );
                 return false;
             }
@@ -268,7 +327,7 @@ namespace geode
             std::string max_str = max_value.has_value()
                                       ? std::to_string( max_value.value() )
                                       : "+inf";
-            return absl::StrCat( distribution_type().get(), "(", mean,
+            return absl::StrCat( distribution_type().get(), "(", mean, ",",
                 standard_deviation, ") in [", min_str, ",", max_str, "]" );
         }
     };
@@ -294,6 +353,12 @@ namespace geode
             return distribution_type_static();
         }
 
+        // Lower bound used when min_value is not given
+        [[nodiscard]] double lower_bound() const
+        {
+            return min_value.value_or( GLOBAL_EPSILON );
+        }
+
         // Check if the parameters are valid
         bool is_valid() const
         {
@@ -305,8 +370,7 @@ namespace geode
                 return false;
             }
 
-            const double xmin =
-                min_value.value_or( std::numeric_limits< double >::min() );
+            const double xmin = lower_bound();
             const double xmax =
                 max_value.value_or( std::numeric_limits< double >::infinity() );
 
@@ -318,11 +382,19 @@ namespace geode
                 return false;
             }
 
-            if( xmin >= xmax )
+            if( !( xmin < xmax ) )
             {
                 geode::Logger::error(
-                    "[TruncatedPowerLaw] - min_value >= max_value: [", xmin,
-                    ",", xmax, "]" );
+                    "[TruncatedPowerLaw] - check range boundaries definition [",
+                    xmin, ",", xmax, "]" );
+                return false;
+            }
+
+            if( alpha <= 1.0 && !std::isfinite( xmax ) )
+            {
+                geode::Logger::error( "[TruncatedPowerLaw] - with alpha <= 1 "
+                                      "(here ",
+                    alpha, "), the law needs a finite max_value." );
                 return false;
             }
 

@@ -137,8 +137,11 @@ namespace geode
             &SamplerConfig::azimuth,
             "Distribution of the segment azimuths, in radians: the direction "
             "of a segment is (sin(azimuth), cos(azimuth)), i.e. the azimuth "
-            "is measured clockwise from the y axis. The values are not "
-            "converted from degrees." );
+            "is measured clockwise from the y axis (north). The values are "
+            "not converted from degrees. The azimuth is an axis: azimuth and "
+            "azimuth + pi give the same family of segments. A VonMises law "
+            "suits concentrated families (kappa >= 5); see VonMises for its "
+            "validity on an axis." );
         config.def( "__repr__", []( const SamplerConfig& self ) {
             return python_call_repr( "Segment2DSamplerConfig",
                 { "length=" + python_repr( self.length ),

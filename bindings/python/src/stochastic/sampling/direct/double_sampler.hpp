@@ -124,13 +124,37 @@ namespace geode
                 "standard_deviation, bounds optional) or TruncatedPowerLaw "
                 "(alpha, bounds optional). Raise an OpenGeodeDataError if the "
                 "type is unknown or a required parameter is missing." )
-            .def_static( "create_rad_angle_distribution_from_degree",
-                &DoubleSampler::create_rad_angle_distribution_from_degree,
+            .def_static( "create_angle_distribution_from_degrees",
+                &DoubleSampler::create_angle_distribution_from_degrees,
                 pybind11::arg( "desc" ),
                 "Same as create_distribution for a law of an angle given in "
-                "degrees: mean, standard_deviation, min_value and max_value "
-                "are converted to radians and normalized to [0, 2*pi) "
-                "(kappa and alpha are unchanged)." )
+                "degrees, created in radians. Bounds, mean and "
+                "standard_deviation are converted without normalization "
+                "([-90, 90] gives [-pi/2, pi/2]); only the mean of a VonMises "
+                "law is normalized to [0, 2*pi), since this law is the same "
+                "modulo 2*pi and its samples are in [0, 2*pi). For a "
+                "TruncatedLogNormal, mean and standard_deviation describe "
+                "ln(x): the mean is shifted by ln(pi/180), the deviation is "
+                "kept. kappa and alpha are unchanged. Samples of the other "
+                "laws are not normalized; UniformClosedOpen on [0, 360] "
+                "covers the circle once." )
+            .def_static(
+                "create_rad_angle_distribution_from_degree",
+                []( const DoubleSampler::DistributionDescription &desc ) {
+                    if( PyErr_WarnEx( PyExc_DeprecationWarning,
+                            "create_rad_angle_distribution_from_degree is "
+                            "deprecated, use "
+                            "create_angle_distribution_from_degrees",
+                            1 )
+                        != 0 )
+                    {
+                        throw pybind11::error_already_set();
+                    }
+                    return DoubleSampler::
+                        create_angle_distribution_from_degrees( desc );
+                },
+                pybind11::arg( "desc" ),
+                "Deprecated: use create_angle_distribution_from_degrees." )
             .def_static( "sample", &DoubleSampler::sample,
                 pybind11::arg( "engine" ), pybind11::arg( "dist" ),
                 "Sample a value of a law created by create_distribution, "

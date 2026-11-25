@@ -21,16 +21,19 @@
  *
  */
 
+#include <cmath>
 #include <limits>
 
 #include <geode/basic/logger.hpp>
 
+#include <geode/stochastic/sampling/direct/double_sampler.hpp>
 #include <geode/stochastic/sampling/distributions.hpp>
 
 // NOLINTBEGIN(*-magic-numbers)
 namespace
 {
     constexpr auto INF = std::numeric_limits< double >::infinity();
+    constexpr auto NaN = std::numeric_limits< double >::quiet_NaN();
 
     template < typename Law >
     void check_valid( const Law& law, bool expected, std::string_view message )
@@ -124,6 +127,131 @@ namespace
         law.mean = INF;
         check_valid( law, false, "[Test] Infinite mean" );
     }
+
+    void test_truncated_powerlaw()
+    {
+        geode::TruncatedPowerLaw law;
+        law.min_value = 1.;
+        check_valid( law, true, "[Test] Lower bounded power law is valid" );
+        law.max_value = 10.;
+        check_valid( law, true, "[Test] Bounded power law is valid" );
+        // x^-alpha with alpha <= 1 cannot be normalized up to infinity
+        for( const auto alpha : { 1., 0.5 } )
+        {
+            law.alpha = alpha;
+            law.max_value = 10.;
+            check_valid( law, true, "[Test] Bounded power law, alpha <= 1" );
+            law.max_value = std::nullopt;
+            check_valid( law, false, "[Test] Unbounded power law, alpha <= 1" );
+        }
+        law = {};
+        law.alpha = INF;
+        check_valid( law, false, "[Test] Infinite exponent" );
+        law = {};
+        law.min_value = -1.;
+        law.max_value = 2.;
+        check_valid( law, false, "[Test] Negative lower bound" );
+    }
+
+    void test_invalid_description_is_rejected()
+    {
+        // create_distribution applies is_valid(): an invalid law fails when
+        // the model is built, not at its first sample.
+        geode::DoubleSampler::DistributionDescription description{ "law" };
+        description.distribution_type =
+            geode::TruncatedPowerLaw::distribution_type_static();
+        description.alpha = 1.;
+        description.min_value = 1.;
+        bool rejected{ false };
+        try
+        {
+            geode_unused(
+                geode::DoubleSampler::create_distribution( description ) );
+        }
+        catch( const geode::OpenGeodeException& exception )
+        {
+            rejected =
+                exception.type() == geode::OpenGeodeException::TYPE::data;
+        }
+        geode::OpenGeodeStochasticStochasticException::test(
+            rejected, "[Test] Invalid description accepted" );
+        description.max_value = 10.;
+        geode_unused(
+            geode::DoubleSampler::create_distribution( description ) );
+    }
+
+    void test_uniform()
+    {
+        geode::UniformClosed< double > closed;
+        check_valid( closed, true, "[Test] Default uniform is valid" );
+        closed.max_value = 0.;
+        check_valid( closed, true, "[Test] Equal bounds are valid" );
+        closed.max_value = INF;
+        check_valid( closed, false, "[Test] Infinite upper bound" );
+        closed.min_value = -INF;
+        closed.max_value = 1.;
+        check_valid( closed, false, "[Test] Infinite lower bound" );
+        closed.min_value = 0.;
+        closed.max_value = NaN;
+        check_valid( closed, false, "[Test] NaN upper bound" );
+        geode::UniformClosedOpen< double > closed_open;
+        check_valid( closed_open, true, "[Test] Default uniform is valid" );
+        closed_open.max_value = INF;
+        check_valid( closed_open, false, "[Test] Infinite upper bound" );
+        closed_open.max_value = NaN;
+        check_valid( closed_open, false, "[Test] NaN upper bound" );
+        closed_open = {};
+        geode::OpenGeodeStochasticStochasticException::test(
+            closed_open.string() == "UniformClosedOpen[0,1)",
+            "[Test] Wrong closed open interval display: ",
+            closed_open.string() );
+        closed = {};
+        geode::OpenGeodeStochasticStochasticException::test(
+            closed.string() == "UniformClosed[0,1]",
+            "[Test] Wrong closed interval display: ", closed.string() );
+        geode::UniformClosed< geode::index_t > indices;
+        indices.max_value = std::numeric_limits< geode::index_t >::max();
+        check_valid( indices, true, "[Test] Integer uniform is valid" );
+    }
+
+    void test_nan_bounds()
+    {
+        // a comparison with NaN is always false: NaN bounds must be rejected
+        geode::TruncatedGaussian gaussian;
+        gaussian.min_value = NaN;
+        check_valid( gaussian, false, "[Test] Gaussian NaN lower bound" );
+        gaussian = {};
+        gaussian.max_value = NaN;
+        check_valid( gaussian, false, "[Test] Gaussian NaN upper bound" );
+        geode::TruncatedLogNormal lognormal;
+        lognormal.min_value = NaN;
+        check_valid( lognormal, false, "[Test] Log normal NaN lower bound" );
+        lognormal = {};
+        lognormal.max_value = NaN;
+        check_valid( lognormal, false, "[Test] Log normal NaN upper bound" );
+        geode::TruncatedPowerLaw power_law;
+        power_law.min_value = NaN;
+        power_law.max_value = 2.;
+        check_valid( power_law, false, "[Test] Power law NaN lower bound" );
+        power_law.min_value = 1.;
+        power_law.max_value = NaN;
+        check_valid( power_law, false, "[Test] Power law NaN upper bound" );
+    }
+
+    void test_von_mises()
+    {
+        geode::VonMises law;
+        check_valid( law, true, "[Test] Default von Mises is valid" );
+        law.concentration = 0.;
+        check_valid( law, true, "[Test] Null concentration is valid" );
+        law.concentration = INF;
+        check_valid( law, false, "[Test] Infinite concentration" );
+        law.concentration = -1.;
+        check_valid( law, false, "[Test] Negative concentration" );
+        law.concentration = 1.;
+        law.mean = NaN;
+        check_valid( law, false, "[Test] NaN mean" );
+    }
 } // namespace
 
 int main()
@@ -133,6 +261,11 @@ int main()
         geode::OpenGeodeStochasticStochasticLibrary::initialize();
         test_truncated_gaussian();
         test_truncated_lognormal();
+        test_truncated_powerlaw();
+        test_uniform();
+        test_nan_bounds();
+        test_von_mises();
+        test_invalid_description_is_rejected();
         geode::Logger::info( "TEST SUCCESS" );
         return 0;
     }

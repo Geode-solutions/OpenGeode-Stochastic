@@ -20,9 +20,13 @@
  * SOFTWARE.
  *
  */
+#include <cmath>
+
 #include <absl/container/flat_hash_map.h>
 
 #include <geode/stochastic/sampling/direct/double_sampler.hpp>
+
+#include <geode/basic/types.hpp>
 
 #include <geode/geometry/angle.hpp>
 
@@ -61,6 +65,13 @@ namespace geode
                         UniformClosed< double > dist;
                         dist.min_value = desc.min_value.value();
                         dist.max_value = desc.max_value.value();
+                        if( dist.min_value == dist.max_value )
+                        {
+                            Logger::warning( "[DoubleSampler] Uniform "
+                                             "distribution with equal bounds: "
+                                             "every sample is ",
+                                dist.min_value, "." );
+                        }
                         return dist;
                     } },
                 { UniformClosedOpen< double >::distribution_type_static(),
@@ -167,41 +178,58 @@ namespace geode
                 "[DoubleSampler] Unknown distribution type: ",
                 desc.distribution_type.get() };
         }
-        return it->second( desc );
+        auto distribution = it->second( desc );
+        std::visit(
+            [&desc]( const auto& law ) {
+                OpenGeodeStochasticStochasticException::check_exception(
+                    law.is_valid(), nullptr, OpenGeodeException::TYPE::data,
+                    "[DoubleSampler] Invalid distribution: ", desc.string() );
+            },
+            distribution );
+        return distribution;
     }
 
     DoubleSampler::Distribution
-        DoubleSampler::create_rad_angle_distribution_from_degree(
+        DoubleSampler::create_angle_distribution_from_degrees(
             const DistributionDescription& desc_deg )
     {
+        // Degrees are converted to radians without normalization: 0-360
+        // stays the full circle, -90-90 a range across 0, and a standard
+        // deviation keeps its value. Only the mean of a von Mises law is
+        // normalized in [0, 2pi[: the law is the same modulo 2pi.
+        const auto to_radians = []( std::optional< double >& value ) {
+            if( value )
+            {
+                value = Angle::create_from_degrees( value.value() ).radians();
+            }
+        };
         DistributionDescription desc_rad = desc_deg;
-        if( desc_rad.mean )
+        to_radians( desc_rad.min_value );
+        to_radians( desc_rad.max_value );
+        if( desc_rad.distribution_type
+            == TruncatedLogNormal::distribution_type_static() )
         {
-            auto mean_angle = Angle::create_from_degrees( *( desc_rad.mean ) );
-            desc_rad.mean = mean_angle.normalized_between_0_and_2pi().radians();
+            // The parameters describe ln(x): scaling x by pi/180 shifts the
+            // mean by ln(pi/180) and keeps the standard deviation.
+            if( desc_rad.mean )
+            {
+                desc_rad.mean.value() += std::log( M_PI / 180. );
+            }
         }
-        if( desc_rad.standard_deviation )
+        else
         {
-            auto std_angle =
-                Angle::create_from_degrees( *( desc_rad.standard_deviation ) );
-            desc_rad.standard_deviation =
-                std_angle.normalized_between_0_and_2pi().radians();
+            to_radians( desc_rad.mean );
+            to_radians( desc_rad.standard_deviation );
+            if( desc_rad.mean
+                && desc_rad.distribution_type
+                       == VonMises::distribution_type_static() )
+            {
+                desc_rad.mean =
+                    Angle::create_from_radians( desc_rad.mean.value() )
+                        .normalized_between_0_and_2pi()
+                        .radians();
+            }
         }
-        if( desc_rad.min_value )
-        {
-            auto min_angle =
-                Angle::create_from_degrees( *( desc_rad.min_value ) );
-            desc_rad.min_value =
-                min_angle.normalized_between_0_and_2pi().radians();
-        }
-        if( desc_rad.max_value )
-        {
-            auto max_angle =
-                Angle::create_from_degrees( *( desc_rad.max_value ) );
-            desc_rad.max_value =
-                max_angle.normalized_between_0_and_2pi().radians();
-        }
-        // Call the general create_distribution
         return create_distribution( desc_rad );
     }
 
