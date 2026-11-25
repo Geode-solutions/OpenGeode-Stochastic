@@ -257,7 +257,8 @@ namespace geode
             "same fracture): the doubled angle follows VonMises(2 * mean, "
             "concentration), the usual convention of structural geology, so "
             "kappa is the one estimated on measured axes from their doubled "
-            "angles. At equal kappa, the angular spread of the axis is about "
+            "angles (Mardia and Jupp, 2000). At equal kappa, the angular "
+            "spread of the axis is about "
             "1 / (2 * sqrt(kappa)), half the one of VonMises. Sampling "
             "requires a finite mean and a finite concentration >= 0, and "
             "gives an axis in [0, pi)." );

@@ -273,7 +273,8 @@ namespace geode
         // fracture trace where theta and theta + pi are the same fracture,
         // sampled in [0, pi[. The doubled angle follows VonMises(2 * mean,
         // concentration), the usual convention of structural geology: kappa
-        // is the one estimated on measured axes from their doubled angles.
+        // is the one estimated on measured axes from their doubled angles
+        // (Mardia and Jupp, 2000).
         // At equal kappa, the angular spread of the axis is about
         // 1 / (2 sqrt(kappa)), half the one of VonMises.
         double mean{ 0.0 }; // mean axis in radians, any value modulo pi
