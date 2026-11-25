@@ -224,8 +224,8 @@ namespace geode
             "fracture trace), samples beyond +-pi/2 from the mean fall on "
             "the same axis as the mean: 22% of them for kappa = 1, 7.5% for "
             "kappa = 2, 0.2% for kappa = 5. The law suits concentrated "
-            "families (kappa >= 5); an axial law may be added later for "
-            "more dispersed ones." );
+            "families (kappa >= 5); use AxialVonMises for more dispersed "
+            "ones." );
         von_mises.def(
             pybind11::init( []( std::optional< double > mean,
                                 std::optional< double > concentration ) {
@@ -246,6 +246,42 @@ namespace geode
             "mean is finite." );
         von_mises.def( "__repr__", []( const VonMises &law ) {
             return python_call_repr( "VonMises",
+                { "mean=" + python_repr( law.mean ),
+                    "concentration=" + python_repr( law.concentration ) } );
+        } );
+
+        pybind11::class_< AxialVonMises > axial_von_mises( module,
+            "AxialVonMises",
+            "Von Mises law of an axis in radians, of period pi, such as the "
+            "azimuth of a fracture trace (azimuth and azimuth + pi are the "
+            "same fracture): the doubled angle follows VonMises(2 * mean, "
+            "concentration), the usual convention of structural geology, so "
+            "kappa is the one estimated on measured axes from their doubled "
+            "angles. At equal kappa, the angular spread of the axis is about "
+            "1 / (2 * sqrt(kappa)), half the one of VonMises. Sampling "
+            "requires a finite mean and a finite concentration >= 0, and "
+            "gives an axis in [0, pi)." );
+        axial_von_mises.def(
+            pybind11::init( []( std::optional< double > mean,
+                                std::optional< double > concentration ) {
+                AxialVonMises law;
+                detail::set_if_given( law.mean, mean );
+                detail::set_if_given( law.concentration, concentration );
+                return law;
+            } ),
+            pybind11::kw_only(), pybind11::arg( "mean" ) = std::nullopt,
+            pybind11::arg( "concentration" ) = std::nullopt,
+            "Create the law (defaults: mean 0, concentration 1)." );
+        def_readwrite_named( axial_von_mises, "mean", &AxialVonMises::mean,
+            "Mean axis in radians, any value modulo pi." );
+        def_readwrite_named( axial_von_mises, "concentration",
+            &AxialVonMises::concentration,
+            "Concentration parameter kappa (>= 0) of the doubled angle." );
+        detail::define_distribution_common( axial_von_mises,
+            "Return True if the concentration is finite and >= 0 and the "
+            "mean is finite." );
+        axial_von_mises.def( "__repr__", []( const AxialVonMises &law ) {
+            return python_call_repr( "AxialVonMises",
                 { "mean=" + python_repr( law.mean ),
                     "concentration=" + python_repr( law.concentration ) } );
         } );

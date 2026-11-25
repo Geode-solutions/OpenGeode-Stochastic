@@ -81,6 +81,10 @@ namespace geode
                 pybind11::arg( "law" ),
                 "Sample an angle in radians, in [0, 2*pi), of the Von Mises "
                 "law." )
+            .def( "sample_axial_von_mises",
+                &RandomEngine::sample_axial_von_mises, pybind11::arg( "law" ),
+                "Sample an axis in radians, in [0, pi), of the axial Von "
+                "Mises law." )
             .def( "sample_truncated_lognormal",
                 &RandomEngine::sample_truncated_lognormal,
                 pybind11::arg( "law" ),

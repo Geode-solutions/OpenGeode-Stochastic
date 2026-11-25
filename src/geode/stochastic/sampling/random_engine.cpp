@@ -315,6 +315,16 @@ namespace geode
             return wrap_to_two_pi( theta + law.mean );
         }
 
+        double sample_axial_von_mises( const AxialVonMises& law )
+        {
+            check_law( law );
+            VonMises doubled;
+            doubled.mean = 2.0 * law.mean;
+            doubled.concentration = law.concentration;
+            // halving an angle of [0, 2pi[ gives an axis of [0, pi[
+            return sample_von_mises( doubled ) / 2.0;
+        }
+
         double sample_truncated_lognormal( const TruncatedLogNormal& law )
         {
             check_law( law );
@@ -483,6 +493,10 @@ namespace geode
     double RandomEngine::sample_von_mises( const VonMises& law )
     {
         return impl_->sample_von_mises( law );
+    }
+    double RandomEngine::sample_axial_von_mises( const AxialVonMises& law )
+    {
+        return impl_->sample_axial_von_mises( law );
     }
     double RandomEngine::sample_truncated_lognormal(
         const TruncatedLogNormal& law )

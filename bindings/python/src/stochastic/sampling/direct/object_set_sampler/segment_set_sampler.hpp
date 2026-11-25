@@ -49,7 +49,7 @@ namespace geode
         void def_description_property(
             pybind11::class_< SamplerConfig >& python_class,
             const char* name,
-            DoubleSampler::DistributionDescription SamplerConfig::* member,
+            DoubleSampler::DistributionDescription SamplerConfig::*member,
             const char* doc )
         {
             using Description = DoubleSampler::DistributionDescription;
@@ -139,9 +139,14 @@ namespace geode
             "of a segment is (sin(azimuth), cos(azimuth)), i.e. the azimuth "
             "is measured clockwise from the y axis (north). The values are "
             "not converted from degrees. The azimuth is an axis: azimuth and "
-            "azimuth + pi give the same family of segments. A VonMises law "
-            "suits concentrated families (kappa >= 5); see VonMises for its "
-            "validity on an axis." );
+            "azimuth + pi give the same family of segments. AxialVonMises "
+            "is the law of an axis; a VonMises law suits only concentrated "
+            "families (kappa >= 5), see VonMises. A segment goes from its "
+            "anchor, the first vertex, to anchor + length * direction, and "
+            "is in the domain if its anchor is. With an axis law in [0, pi), "
+            "the anchor is the west end (the south end of a north-south "
+            "segment): orient observed segments the same way so that their "
+            "statistics are counted with the same rule." );
         config.def( "__repr__", []( const SamplerConfig& self ) {
             return python_call_repr( "Segment2DSamplerConfig",
                 { "length=" + python_repr( self.length ),
