@@ -297,7 +297,9 @@ namespace geode
             {
                 auto u1 = unit_closed_( rand_gen_ );
                 auto z = std::cos( M_PI * u1 );
-                auto f = ( 1.0 + r * std::fabs( z ) ) / ( r + std::fabs( z ) );
+                // z spans [-1, 1]: with |z|, f stayed positive and the
+                // samples within +-pi/2 of the mean
+                auto f = ( 1.0 + r * z ) / ( r + z );
                 auto c = law.concentration * ( r - f );
                 auto u2 = unit_closed_( rand_gen_ );
 

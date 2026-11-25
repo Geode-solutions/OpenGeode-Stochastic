@@ -508,8 +508,21 @@ namespace
             "[PowerLaw] - Empirical median out of tolerance." );
     }
 
+    // Mean resultant length of a von Mises law, I1(kappa) / I0(kappa). The
+    // Bessel functions overflow beyond kappa ~ 700: the asymptotic expansion
+    // is used there, exact to 1e-9 from kappa = 500.
+    double von_mises_resultant_length( double kappa )
+    {
+        if( kappa > 500. )
+        {
+            return 1. - 1. / ( 2. * kappa ) - 1. / ( 8. * kappa * kappa );
+        }
+        return std::cyl_bessel_i( 1., kappa ) / std::cyl_bessel_i( 0., kappa );
+    }
+
     // Samples are wrapped in [0, 2pi[ whatever the mean, also a negative one
-    // or one beyond 2pi, and are centered on the mean direction.
+    // or one beyond 2pi, are centered on the mean direction, and their mean
+    // resultant length is I1(kappa) / I0(kappa).
     void test_von_mises(
         double mean, double kappa, geode::RandomEngine& engine )
     {
@@ -535,6 +548,14 @@ namespace
         geode::OpenGeodeStochasticStochasticException::test( gap < 0.1,
             "[VonMises] - mean ", mean, ", kappa ", kappa,
             ": samples are centered ", gap, " away from the mean direction." );
+        const auto resultant_length =
+            std::hypot( sum_sin, sum_cos ) / NUMBER_OF_SAMPLES;
+        const auto expected_length = von_mises_resultant_length( kappa );
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::abs( resultant_length - expected_length ) < 0.03,
+            "[VonMises] - mean ", mean, ", kappa ", kappa,
+            ": mean resultant length ", resultant_length, " instead of ",
+            expected_length, "." );
     }
     // The algorithms of the std:: distributions are not specified by the
     // standard (libstdc++ and MSVC differ): the engine must draw through the
@@ -671,6 +692,11 @@ int main()
         {
             test_von_mises( mean, 1., random_engine );
             test_von_mises( mean, 5000., random_engine );
+        }
+        // dispersion over the range of the rejection algorithm
+        for( const auto kappa : { 2., 5., 50. } )
+        {
+            test_von_mises( 1., kappa, random_engine );
         }
         geode::Logger::info( "TEST VON MISES SAMPLING - SUCCESS" );
 
