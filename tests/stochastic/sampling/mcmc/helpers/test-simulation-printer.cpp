@@ -165,7 +165,7 @@ namespace
     // A new printer restarts the statistics file, and a summary replaces the
     // previous one: SimulationRunner::run starts a new series, with a new
     // printer, so two runs in the same folder do not mix their outputs.
-    // Extending a series is a separate feature (T17 of the analysis).
+    // Appending to the files of a previous series is not supported.
     void test_files_are_rewritten( const geode::Model< geode::Point2D >& model,
         const geode::SimulationPrinterConfigurator& config )
     {

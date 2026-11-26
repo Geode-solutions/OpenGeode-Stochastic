@@ -33,9 +33,11 @@
 #include <algorithm>
 #include <chrono>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <absl/strings/match.h>
+#include <absl/strings/str_cat.h>
 
 #include <geode/geometry/point.hpp>
 
@@ -105,13 +107,12 @@ namespace
         std::sort( steps_per_second.begin(), steps_per_second.end() );
         const auto acceptance =
             static_cast< double >( accepted ) / ( REPETITIONS * TIMED_STEPS );
-        const auto& final_state = state;
         geode::index_t nb_free{ 0 };
-        for( const auto& set_name : final_state.set_names() )
+        for( const auto& set_name : state.set_names() )
         {
-            nb_free +=
-                final_state.get_set( final_state.get_set_uuid( set_name ) )
-                    .nb_free_objects();
+            nb_free += std::as_const( state )
+                           .get_set( state.get_set_uuid( set_name ) )
+                           .nb_free_objects();
         }
         geode::Logger::info( name, ": ",
             static_cast< int >( steps_per_second.back() ), " steps/s (median ",
