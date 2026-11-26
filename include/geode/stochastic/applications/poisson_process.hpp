@@ -55,8 +55,9 @@ namespace geode
     private:
         SimulationContextConfig< ObjectType > context_cfg_;
         std::vector< geode::TargetStatisticConfig > expected_stats_;
-        // sets in IntensityScope::all_objects, with their density
-        std::vector< std::pair< std::string, double > > all_objects_sets_;
+        // indices in sets of the sets in IntensityScope::all_objects, with
+        // their density
+        std::vector< std::pair< index_t, double > > all_objects_sets_;
     };
 
 } // namespace geode

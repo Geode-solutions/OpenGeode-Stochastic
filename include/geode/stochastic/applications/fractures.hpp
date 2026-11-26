@@ -87,7 +87,8 @@ namespace geode
     private:
         SimulationContextConfig< Fracture > context_cfg_;
         std::vector< TargetStatisticConfig > expected_stats_;
-        // sets in IntensityScope::all_objects, with their p20
-        std::vector< std::pair< std::string, double > > all_objects_sets_;
+        // indices in sets of the sets in IntensityScope::all_objects, with
+        // their p20
+        std::vector< std::pair< index_t, double > > all_objects_sets_;
     };
 } // namespace geode

@@ -154,7 +154,8 @@ namespace
         const geode::SpatialDomain< 2 >& domain )
     {
         constexpr geode::index_t nb_realizations{ 2000 };
-        runner.run( engine, 5000 );
+        const auto& burn_in_state = runner.run( engine, 5000 );
+        geode_unused( burn_in_state );
         FreeCounts counts;
         for( const auto realization : geode::Range{ nb_realizations } )
         {

@@ -37,22 +37,6 @@ namespace
     constexpr geode::index_t NB_MARK_SAMPLES{ 100'000 };
     constexpr std::string_view AREA_SEED{ "touching-domain-area" };
 
-    template < typename ObjectType >
-    const geode::ObjectSetDefinition< ObjectType >& find_set(
-        const geode::SimulationContextConfig< ObjectType >& config,
-        std::string_view set_name )
-    {
-        for( const auto& set : config.sets )
-        {
-            if( set.name == set_name )
-            {
-                return set;
-            }
-        }
-        throw geode::OpenGeodeStochasticStochasticException{ nullptr,
-            geode::OpenGeodeException::TYPE::data,
-            "[IntensityScope] Unknown object set '", set_name, "'." };
-    }
 } // namespace
 
 namespace geode
@@ -103,10 +87,10 @@ namespace geode
 
     template < typename ObjectType >
     void add_observation_term( SimulationContextConfig< ObjectType >& config,
-        std::string_view set_name,
+        index_t set_index,
         double lambda )
     {
-        const auto& set = find_set( config, set_name );
+        const auto& set = config.sets[set_index];
         const auto domain = build_spatial_domain( config.domain );
         double nb_fixed{ 0 };
         for( const auto& object : set.fixed_objects )
@@ -122,12 +106,12 @@ namespace geode
         OpenGeodeStochasticStochasticException::check_exception(
             nb_expected - nb_fixed >= -GLOBAL_EPSILON, nullptr,
             OpenGeodeException::TYPE::data, "[IntensityScope] Object set '",
-            set_name, "': lambda = ", lambda, " gives ", nb_expected,
+            set.name, "': lambda = ", lambda, " gives ", nb_expected,
             " objects expected to touch the domain, fewer than its ", nb_fixed,
             " fixed objects touching it: lambda is underestimated." );
         const auto observed_ratio =
             nb_expected > 0. ? std::min( nb_fixed / nb_expected, 1. ) : 0.;
-        Logger::info( "[IntensityScope] Object set '", set_name,
+        Logger::info( "[IntensityScope] Object set '", set.name,
             "': ", nb_fixed, " fixed objects touch the domain, out of ",
             nb_expected,
             " expected: free objects touching the domain have the density ",
@@ -135,8 +119,8 @@ namespace geode
 
         SingleObjectTermConfig observation;
         observation.term_name = config.model.unique_term_name(
-            absl::StrCat( set_name, "_observation" ) );
-        observation.object_set_names = { std::string( set_name ) };
+            absl::StrCat( set.name, "_observation" ) );
+        observation.object_set_names = { set.name };
         observation.lambda = 1. - observed_ratio;
         observation.object_feature = ObjectTouchingDomainFeatureConfig{};
         config.model.terms.emplace_back( std::move( observation ) );
@@ -151,9 +135,9 @@ namespace geode
         const ObjectSamplerConfig< OwnerSegment2D >& );
 
     template opengeode_stochastic_stochastic_api void add_observation_term(
-        SimulationContextConfig< Point2D >&, std::string_view, double );
+        SimulationContextConfig< Point2D >&, index_t, double );
     template opengeode_stochastic_stochastic_api void add_observation_term(
-        SimulationContextConfig< Point3D >&, std::string_view, double );
+        SimulationContextConfig< Point3D >&, index_t, double );
     template opengeode_stochastic_stochastic_api void add_observation_term(
-        SimulationContextConfig< OwnerSegment2D >&, std::string_view, double );
+        SimulationContextConfig< OwnerSegment2D >&, index_t, double );
 } // namespace geode

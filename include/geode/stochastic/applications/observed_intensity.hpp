@@ -23,8 +23,6 @@
 
 #pragma once
 
-#include <string_view>
-
 #include <geode/stochastic/sampling/mcmc/helpers/simulation_context.hpp>
 
 namespace geode
@@ -66,7 +64,8 @@ namespace geode
         const SpatialDomain< ObjectType::dim >& domain,
         const ObjectSamplerConfig< ObjectType >& sampler_config );
 
-    /// Adds to the model the observation term of a set whose density lambda
+    /// Adds to the model the observation term of the set at set_index in
+    /// config.sets, whose density lambda
     /// counts all the objects (IntensityScope::all_objects): a single object
     /// term with parameter 1 - p on the objects touching the domain
     /// (ObjectTouchingDomainFeature). Throws if lambda * A is lower than the
@@ -74,6 +73,6 @@ namespace geode
     /// free objects cannot touch the domain.
     template < typename ObjectType >
     void add_observation_term( SimulationContextConfig< ObjectType >& config,
-        std::string_view set_name,
+        index_t set_index,
         double lambda );
 } // namespace geode

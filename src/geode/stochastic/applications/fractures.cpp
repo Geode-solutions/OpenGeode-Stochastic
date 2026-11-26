@@ -62,11 +62,11 @@ namespace geode
         std::optional< double > expected_count,
         IntensityScope scope )
     {
+        auto& fset_cfg = context_cfg_.add_set( name );
         if( scope == IntensityScope::all_objects )
         {
-            all_objects_sets_.emplace_back( name, p20 );
+            all_objects_sets_.emplace_back( context_cfg_.sets.size() - 1, p20 );
         }
-        auto& fset_cfg = context_cfg_.add_set( name );
 
         FractureDensityDescription density;
         density.term_name =
@@ -159,9 +159,9 @@ namespace geode
         FractureProcessBuilder::build_simulation_context() const
     {
         auto config = context_cfg_;
-        for( const auto& [set_name, p20] : all_objects_sets_ )
+        for( const auto& [set_index, p20] : all_objects_sets_ )
         {
-            add_observation_term( config, set_name, p20 );
+            add_observation_term( config, set_index, p20 );
         }
         return geode::build_simulation_context< Fracture >( config );
     }
