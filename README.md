@@ -44,6 +44,7 @@ https://gitlab.univ-lorraine.fr/labos/iecl/drlib
 ### References
  * Chiu SN, Stoyan D, Kendall WS, Mecke J (2013) Stochastic geometry and its applications, 3rd edn. Wiley,Chichester.https://doi.org/10.1002/9781118658222
  * Illian J, Penttinen A, Stoyan H, Stoyan D (2008) Statistical analysis and modelling of spatial point patterns.Wiley, Chichester.https://doi.org/10.1002/9780470725160
+ * Mardia KV, Jupp PE (2000) Directional statistics. Wiley, Chichester. https://doi.org/10.1002/9780470316979
  * Stoica RS (2025) Random patterns and structures in spatial data. Chapman & Hall, CRC Press, Boca Raton.https://doi.org/10.1201/9781003380382
  * Van Lieshout MNM (2000) Markov point processes and their applications. Imperial College Press, London.https://doi.org/10.1142/p060
 

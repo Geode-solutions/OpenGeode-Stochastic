@@ -27,7 +27,7 @@ Sampling
     >>> 2.0 <= stochastic.DoubleSampler.sample(engine, uniform) <= 3.0
     True
 
-Angles are in radians (VonMises, azimuth of the segments);
+Angles are in radians (VonMises, AxialVonMises, azimuth of the segments);
 DoubleSampler.create_angle_distribution_from_degrees converts a description
 given in degrees. An invalid law raises opengeode.OpenGeodeDataError when it is
 sampled (an OpenGeodeError, which is a RuntimeError).

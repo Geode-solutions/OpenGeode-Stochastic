@@ -508,8 +508,21 @@ namespace
             "[PowerLaw] - Empirical median out of tolerance." );
     }
 
+    // Mean resultant length of a von Mises law, I1(kappa) / I0(kappa). The
+    // Bessel functions overflow beyond kappa ~ 700: the asymptotic expansion
+    // is used there, exact to 1e-9 from kappa = 500.
+    double von_mises_resultant_length( double kappa )
+    {
+        if( kappa > 500. )
+        {
+            return 1. - 1. / ( 2. * kappa ) - 1. / ( 8. * kappa * kappa );
+        }
+        return std::cyl_bessel_i( 1., kappa ) / std::cyl_bessel_i( 0., kappa );
+    }
+
     // Samples are wrapped in [0, 2pi[ whatever the mean, also a negative one
-    // or one beyond 2pi, and are centered on the mean direction.
+    // or one beyond 2pi, are centered on the mean direction, and their mean
+    // resultant length is I1(kappa) / I0(kappa).
     void test_von_mises(
         double mean, double kappa, geode::RandomEngine& engine )
     {
@@ -535,6 +548,56 @@ namespace
         geode::OpenGeodeStochasticStochasticException::test( gap < 0.1,
             "[VonMises] - mean ", mean, ", kappa ", kappa,
             ": samples are centered ", gap, " away from the mean direction." );
+        const auto resultant_length =
+            std::hypot( sum_sin, sum_cos ) / NUMBER_OF_SAMPLES;
+        const auto expected_length = von_mises_resultant_length( kappa );
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::abs( resultant_length - expected_length ) < 0.03,
+            "[VonMises] - mean ", mean, ", kappa ", kappa,
+            ": mean resultant length ", resultant_length, " instead of ",
+            expected_length, "." );
+    }
+
+    // An axis has period pi: samples are in [0, pi[ whatever the mean, and
+    // their doubled angles follow a von Mises law of mean 2 * mean and
+    // concentration kappa. The mean axis is then half the circular mean of
+    // the doubled angles, and the mean resultant length of the doubled
+    // angles is I1(kappa) / I0(kappa). Sampling the von Mises law of period
+    // 2pi and folding it on [0, pi[ gives a larger resultant length.
+    void test_axial_von_mises(
+        double mean, double kappa, geode::RandomEngine& engine )
+    {
+        geode::AxialVonMises law;
+        law.mean = mean;
+        law.concentration = kappa;
+        constexpr geode::index_t NUMBER_OF_SAMPLES{ 20000 };
+        double sum_sin{ 0. };
+        double sum_cos{ 0. };
+        for( const auto count : geode::Range{ NUMBER_OF_SAMPLES } )
+        {
+            geode_unused( count );
+            const auto value = engine.sample_axial_von_mises( law );
+            geode::OpenGeodeStochasticStochasticException::test(
+                value >= 0. && value < M_PI, "[AxialVonMises] - mean ", mean,
+                ", kappa ", kappa, ": sample ", value, " out of [0, pi[." );
+            sum_sin += std::sin( 2. * value );
+            sum_cos += std::cos( 2. * value );
+        }
+        const auto difference = std::atan2( sum_sin, sum_cos ) - 2. * mean;
+        const auto axis_gap = std::abs( std::atan2( std::sin( difference ),
+                                  std::cos( difference ) ) )
+                              / 2.;
+        geode::OpenGeodeStochasticStochasticException::test( axis_gap < 0.05,
+            "[AxialVonMises] - mean ", mean, ", kappa ", kappa,
+            ": samples are centered ", axis_gap, " away from the mean axis." );
+        const auto resultant_length =
+            std::hypot( sum_sin, sum_cos ) / NUMBER_OF_SAMPLES;
+        const auto expected_length = von_mises_resultant_length( kappa );
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::abs( resultant_length - expected_length ) < 0.02,
+            "[AxialVonMises] - mean ", mean, ", kappa ", kappa,
+            ": mean resultant length of the doubled angles ", resultant_length,
+            " instead of ", expected_length, "." );
     }
     // The algorithms of the std:: distributions are not specified by the
     // standard (libstdc++ and MSVC differ): the engine must draw through the
@@ -672,7 +735,24 @@ int main()
             test_von_mises( mean, 1., random_engine );
             test_von_mises( mean, 5000., random_engine );
         }
+        // dispersion over the range of the rejection algorithm
+        for( const auto kappa : { 2., 5., 50. } )
+        {
+            test_von_mises( 1., kappa, random_engine );
+        }
         geode::Logger::info( "TEST VON MISES SAMPLING - SUCCESS" );
+
+        geode::Logger::info( "TEST AXIAL VON MISES SAMPLING" );
+        // means around 0, negative, beyond pi and of several turns
+        for( const auto mean : { -10., -1., 0., 0.05, 3.1, 4., 100. } )
+        {
+            test_axial_von_mises( mean, 1., random_engine );
+            test_axial_von_mises( mean, 5., random_engine );
+            test_axial_von_mises( mean, 5000., random_engine );
+        }
+        test_axial_von_mises( 1., 0.5, random_engine );
+        test_axial_von_mises( 1., 2., random_engine );
+        geode::Logger::info( "TEST AXIAL VON MISES SAMPLING - SUCCESS" );
 
         geode::Logger::info( "TEST BERNOUILLI SAMPLING" );
         test_bernoulli( 0.5, random_engine );
