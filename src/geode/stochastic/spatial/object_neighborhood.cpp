@@ -23,6 +23,15 @@
 
 #include <geode/stochastic/spatial/object_neighborhood.hpp>
 
+#include <algorithm>
+#include <array>
+
+#include <geode/basic/pimpl_impl.hpp>
+
+#include <geode/geometry/bounding_box.hpp>
+
+#include <geode/stochastic/spatial/internal/rtree.hpp>
+
 namespace
 {
     template < geode::index_t dimension >
@@ -47,23 +56,71 @@ namespace
 namespace geode
 {
     template < index_t dimension >
-    ObjectNeighborhood< dimension >::ObjectNeighborhood() : tree_{}
+    class ObjectNeighborhood< dimension >::Impl
     {
-    }
+    public:
+        void add( const BoundingBox< dimension >& box, const ObjectId& id )
+        {
+            auto [min_bound, max_bound] =
+                bounding_box_bounds< dimension >( box );
+            tree_.Insert( min_bound.data(), max_bound.data(), id );
+        }
+
+        void remove( const BoundingBox< dimension >& box, const ObjectId& id )
+        {
+            auto [min_bound, max_bound] =
+                bounding_box_bounds< dimension >( box );
+            tree_.Remove( min_bound.data(), max_bound.data(), id );
+        }
+
+        std::vector< ObjectId > get_all_neighbor_ids(
+            const BoundingBox< dimension >& box,
+            const std::vector< uuid >& targeted_set_ids,
+            const std::optional< ObjectId >& exclude_self_id ) const
+        {
+            auto [min_bound, max_bound] =
+                bounding_box_bounds< dimension >( box );
+            std::vector< ObjectId > res;
+            tree_.Search( min_bound.data(), max_bound.data(),
+                [&res, &exclude_self_id, &targeted_set_ids](
+                    const ObjectId& cur_id ) -> bool {
+                    if( !std::binary_search( targeted_set_ids.begin(),
+                            targeted_set_ids.end(), cur_id.set_id ) )
+                    {
+                        return true;
+                    }
+                    if( exclude_self_id && exclude_self_id.value() == cur_id )
+                    {
+                        return true;
+                    }
+                    res.push_back( cur_id );
+                    return true;
+                } );
+            return res;
+        }
+
+    private:
+        RTree< ObjectId, double, dimension > tree_;
+    };
+
+    template < index_t dimension >
+    ObjectNeighborhood< dimension >::ObjectNeighborhood() = default;
+
+    template < index_t dimension >
+    ObjectNeighborhood< dimension >::~ObjectNeighborhood() = default;
+
     template < index_t dimension >
     void ObjectNeighborhood< dimension >::add(
         const BoundingBox< dimension >& box, const ObjectId& id )
     {
-        auto [min_bound, max_bound] = bounding_box_bounds< dimension >( box );
-        tree_.Insert( min_bound.data(), max_bound.data(), id );
+        impl_->add( box, id );
     }
 
     template < index_t dimension >
     void ObjectNeighborhood< dimension >::remove(
         const BoundingBox< dimension >& box, const ObjectId& id )
     {
-        auto [min_bound, max_bound] = bounding_box_bounds< dimension >( box );
-        tree_.Remove( min_bound.data(), max_bound.data(), id );
+        impl_->remove( box, id );
     }
 
     template < index_t dimension >
@@ -72,8 +129,8 @@ namespace geode
         const BoundingBox< dimension >& new_box,
         const ObjectId& id )
     {
-        remove( old_box, id );
-        add( new_box, id );
+        impl_->remove( old_box, id );
+        impl_->add( new_box, id );
     }
 
     template < index_t dimension >
@@ -82,8 +139,8 @@ namespace geode
         const ObjectId& old_id,
         const ObjectId& new_id )
     {
-        remove( box, old_id );
-        add( box, new_id );
+        impl_->remove( box, old_id );
+        impl_->add( box, new_id );
     }
 
     template < index_t dimension >
@@ -93,24 +150,8 @@ namespace geode
             const std::vector< uuid >& targeted_set_ids,
             std::optional< ObjectId > exclude_self_id ) const
     {
-        auto [min_bound, max_bound] = bounding_box_bounds< dimension >( box );
-        std::vector< ObjectId > res;
-        tree_.Search( min_bound.data(), max_bound.data(),
-            [&res, &exclude_self_id, &targeted_set_ids](
-                const ObjectId& cur_id ) -> bool {
-                if( !std::binary_search( targeted_set_ids.begin(),
-                        targeted_set_ids.end(), cur_id.set_id ) )
-                {
-                    return true;
-                }
-                if( exclude_self_id && exclude_self_id.value() == cur_id )
-                {
-                    return true;
-                }
-                res.push_back( cur_id );
-                return true;
-            } );
-        return res;
+        return impl_->get_all_neighbor_ids(
+            box, targeted_set_ids, exclude_self_id );
     }
 
     template class opengeode_stochastic_stochastic_api ObjectNeighborhood< 2 >;

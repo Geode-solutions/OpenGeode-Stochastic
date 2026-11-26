@@ -23,15 +23,17 @@
 
 #pragma once
 
-#include <geode/stochastic/common.hpp>
-
-#include <geode/stochastic/spatial/details/RTree.hpp>
 #include <optional>
+#include <vector>
+
+#include <geode/basic/pimpl.hpp>
+#include <geode/basic/uuid.hpp>
+
+#include <geode/stochastic/common.hpp>
 
 namespace geode
 {
     FORWARD_DECLARATION_DIMENSION_CLASS( BoundingBox );
-    struct uuid;
 } // namespace geode
 
 namespace geode
@@ -75,7 +77,7 @@ namespace geode
 
     public:
         ObjectNeighborhood();
-        ~ObjectNeighborhood() = default;
+        ~ObjectNeighborhood();
 
         void add( const BoundingBox< dimension >& box, const ObjectId& obj_id );
         void update( const BoundingBox< dimension >& old_box,
@@ -93,7 +95,7 @@ namespace geode
             std::optional< ObjectId > exclude_self_id ) const;
 
     private:
-        RTree< ObjectId, double, dimension > tree_;
+        IMPLEMENTATION_MEMBER( impl_ );
     };
 
 } // namespace geode

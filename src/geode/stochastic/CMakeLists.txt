@@ -64,7 +64,6 @@ add_geode_library(
         "spatial/pairwise_interactions/pairwise_interactions.hpp"
         "spatial/pairwise_interactions/distance_cutoff.hpp"
         "spatial/spatial_domain.hpp"
-        "spatial/details/RTree.hpp"
         "sampling/direct/object_set_sampler/object_set_sampler.hpp"
         "sampling/direct/object_set_sampler/point_set_sampler.hpp"
         "sampling/direct/object_set_sampler/segment_set_sampler.hpp"
@@ -92,6 +91,8 @@ add_geode_library(
         "sampling/distributions.hpp"
         "sampling/random_engine.hpp"
         "common.hpp"
+    INTERNAL_HEADERS
+        "spatial/internal/rtree.hpp"
     PRIVATE_DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry
