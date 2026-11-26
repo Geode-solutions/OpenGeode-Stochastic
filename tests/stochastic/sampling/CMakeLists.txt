@@ -57,21 +57,13 @@ add_geode_test(
         ${PROJECT_NAME}::stochastic
 )
 
-#add_geode_test(
-#    SOURCE "mcmc/helpers/test-simulation_printer.cpp"
-#    DEPENDENCIES
-#        OpenGeode::basic
-#        OpenGeode::geometry
-#        ${PROJECT_NAME}::stochastic
-#)
-
-#add_geode_test(
-#    SOURCE "mcmc/helpers/test-simulation_monitor.cpp"
-#    DEPENDENCIES
-#        OpenGeode::basic
-#        OpenGeode::geometry
-#        ${PROJECT_NAME}::stochastic
-#)
+add_geode_test(
+    SOURCE "mcmc/helpers/test-simulation-printer.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
 
 add_geode_test(
     SOURCE "mcmc/proposal/test-change-move-symmetry.cpp"
