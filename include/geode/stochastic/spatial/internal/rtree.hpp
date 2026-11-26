@@ -129,7 +129,7 @@ namespace geode
                 // Reinsert the entries of the underfull nodes, last eliminated
                 // first
                 for( auto node = eliminated_nodes.rbegin();
-                     node != eliminated_nodes.rend(); ++node )
+                    node != eliminated_nodes.rend(); ++node )
                 {
                     for( const auto b : Range{ ( *node )->count } )
                     {
