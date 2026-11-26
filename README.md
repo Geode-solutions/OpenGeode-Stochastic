@@ -46,6 +46,7 @@ https://gitlab.univ-lorraine.fr/labos/iecl/drlib
  * Best DJ, Fisher NI (1979) Efficient simulation of the von Mises distribution. Applied Statistics 28(2):152–157. https://doi.org/10.2307/2346732
  * Chiu SN, Stoyan D, Kendall WS, Mecke J (2013) Stochastic geometry and its applications, 3rd edn. Wiley,Chichester.https://doi.org/10.1002/9781118658222
  * Illian J, Penttinen A, Stoyan H, Stoyan D (2008) Statistical analysis and modelling of spatial point patterns.Wiley, Chichester.https://doi.org/10.1002/9780470725160
+ * Mardia KV, Jupp PE (2000) Directional statistics. Wiley, Chichester. https://doi.org/10.1002/9780470316979
  * Mauldon M (1998) Estimating mean fracture trace length and density from observations in convex windows. Rock Mechanics and Rock Engineering 31(4):201–216. https://doi.org/10.1007/s006030050021
  * Stoica RS (2025) Random patterns and structures in spatial data. Chapman & Hall, CRC Press, Boca Raton.https://doi.org/10.1201/9781003380382
  * Van Lieshout MNM (2000) Markov point processes and their applications. Imperial College Press, London.https://doi.org/10.1142/p060

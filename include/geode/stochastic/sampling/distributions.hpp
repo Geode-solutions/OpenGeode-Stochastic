@@ -231,9 +231,8 @@ namespace geode
         // are 22% of the samples for kappa = 1, 7.5% for kappa = 2, 0.2% for
         // kappa = 5. The law is suited to concentrated families (kappa >= 5,
         // angular spread 1/sqrt(kappa) below ~26 degrees); for more dispersed
-        // ones, the sampled axes are more concentrated than kappa suggests.
-        // An axial law (von Mises on the doubled angle, then halved) may be
-        // added later for them.
+        // ones, the sampled axes are more concentrated than kappa suggests:
+        // use AxialVonMises for them.
         double mean{ 0.0 }; // mean angle in radians
         double concentration{ 1.0 }; // kappa (concentration parameter)
 
@@ -255,6 +254,51 @@ namespace geode
                 return true;
             }
             geode::Logger::error( "[VonMises] - check mean and concentration (",
+                mean, ",", concentration, ")." );
+            return false;
+        }
+
+        std::string string() const
+        {
+            return absl::StrCat( distribution_type().get(), "(mean=", mean,
+                ", kappa=", concentration, ")" );
+        }
+    };
+
+    struct opengeode_stochastic_stochastic_api AxialVonMises
+    {
+        AxialVonMises() = default;
+
+        // Von Mises law of an axis (period pi), such as the azimuth of a
+        // fracture trace where theta and theta + pi are the same fracture,
+        // sampled in [0, pi[. The doubled angle follows VonMises(2 * mean,
+        // concentration), the usual convention of structural geology: kappa
+        // is the one estimated on measured axes from their doubled angles
+        // (Mardia and Jupp, 2000).
+        // At equal kappa, the angular spread of the axis is about
+        // 1 / (2 sqrt(kappa)), half the one of VonMises.
+        double mean{ 0.0 }; // mean axis in radians, any value modulo pi
+        double concentration{ 1.0 }; // kappa of the doubled angle
+
+        [[nodiscard]] static DistributionType distribution_type_static()
+        {
+            return DistributionType{ "AxialVonMises" };
+        }
+
+        [[nodiscard]] DistributionType distribution_type() const
+        {
+            return distribution_type_static();
+        }
+
+        [[nodiscard]] bool is_valid() const
+        {
+            if( concentration >= 0.0 && std::isfinite( concentration )
+                && std::isfinite( mean ) )
+            {
+                return true;
+            }
+            geode::Logger::error( "[AxialVonMises] - check mean and "
+                                  "concentration (",
                 mean, ",", concentration, ")." );
             return false;
         }

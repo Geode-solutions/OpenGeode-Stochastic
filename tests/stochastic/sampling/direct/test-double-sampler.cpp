@@ -111,6 +111,43 @@ void test_create_truncated_gaussian( geode::RandomEngine& engine )
     }
 }
 
+// An axial von Mises law is created from a description with mean and kappa,
+// and samples an axis in [0, pi[
+void test_create_axial_von_mises( geode::RandomEngine& engine )
+{
+    geode::DoubleSampler::DistributionDescription desc;
+    desc.name = "axial_von_mises";
+    desc.distribution_type = geode::AxialVonMises::distribution_type_static();
+    desc.mean = -0.5;
+    desc.kappa = 2.;
+
+    const auto dist = geode::DoubleSampler::create_distribution( desc );
+    const auto& law = std::get< geode::AxialVonMises >( dist );
+    geode::OpenGeodeStochasticStochasticException::test(
+        law.mean == -0.5 && law.concentration == 2.,
+        "[AxialVonMises] - description parameters not transmitted" );
+    for( int i = 0; i < 100; ++i )
+    {
+        const auto value = geode::DoubleSampler::sample( engine, dist );
+        geode::OpenGeodeStochasticStochasticException::test(
+            value >= 0. && value < M_PI,
+            "[AxialVonMises] - value out of [0, pi[" );
+    }
+
+    desc.kappa.reset();
+    bool rejected{ false };
+    try
+    {
+        geode::DoubleSampler::create_distribution( desc );
+    }
+    catch( const geode::OpenGeodeException& )
+    {
+        rejected = true;
+    }
+    geode::OpenGeodeStochasticStochasticException::test(
+        rejected, "[AxialVonMises] - description without kappa accepted" );
+}
+
 geode::DoubleSampler::Distribution angle_distribution(
     const geode::DistributionType& type,
     std::optional< double > min_value,
@@ -217,6 +254,21 @@ void test_angle_from_degrees( geode::RandomEngine& engine )
         is_close( direction.mean, M_PI / 2. ) && direction.concentration == 1.,
         "[Angle] - von Mises mean of 450 degrees became ", direction.mean );
 
+    // the mean axis of an axial von Mises law is normalized in [0, pi[
+    for( const auto& [degrees, expected] :
+        { std::pair{ 190., 10. }, std::pair{ -30., 150. }, std::pair{ 0., 0. },
+            std::pair{ 370., 10. } } )
+    {
+        const auto axis = std::get< geode::AxialVonMises >( angle_distribution(
+            geode::AxialVonMises::distribution_type_static(), std::nullopt,
+            std::nullopt, degrees, std::nullopt ) );
+        geode::OpenGeodeStochasticStochasticException::test(
+            is_close( axis.mean, expected * M_PI / 180. )
+                && axis.concentration == 1.,
+            "[Angle] - axial von Mises mean of ", degrees, " degrees became ",
+            axis.mean );
+    }
+
     // the log-normal parameters describe ln(x): converting x to radians
     // shifts the mean by ln(pi/180) and keeps the standard deviation
     const auto log_normal =
@@ -243,6 +295,7 @@ int main()
 
         test_create_uniform_closed( random_engine );
         test_create_truncated_gaussian( random_engine );
+        test_create_axial_von_mises( random_engine );
         test_angle_from_degrees( random_engine );
 
         geode::Logger::info( "TEST SUCCESS" );
