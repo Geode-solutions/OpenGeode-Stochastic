@@ -42,7 +42,7 @@ namespace geode
             m2_.resize( model.nb_terms(), 0.0 );
         }
 
-        [[nodiscard]] index_t statiscal_count() const
+        [[nodiscard]] index_t nb_realizations() const
         {
             return count_;
         }

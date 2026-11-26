@@ -60,7 +60,7 @@ namespace
         const auto& model = *context.model;
         geode::StatisticsTracker< geode::Point2D > tracker{ model };
         geode::OpenGeodeStochasticStochasticException::test(
-            tracker.statiscal_count() == 0 && tracker.variances()[0] == 0.,
+            tracker.nb_realizations() == 0 && tracker.variances()[0] == 0.,
             "[StatisticsTracker] An empty tracker should have no realization "
             "and a zero variance." );
 
@@ -74,7 +74,7 @@ namespace
         tracker.add_realization( { 3., 7. } );
 
         geode::OpenGeodeStochasticStochasticException::test(
-            tracker.statiscal_count() == 3,
+            tracker.nb_realizations() == 3,
             "[StatisticsTracker] Wrong number of realizations." );
         const auto& means = tracker.means();
         const auto variances = tracker.variances();
@@ -156,7 +156,7 @@ namespace
                 " values should be refused for 2 terms." );
         }
         geode::OpenGeodeStochasticStochasticException::test(
-            tracker.statiscal_count() == 1 && tracker.means()[0] == 1.
+            tracker.nb_realizations() == 1 && tracker.means()[0] == 1.
                 && tracker.means()[1] == 2.,
             "[StatisticsTracker] A refused realization should not change the "
             "tracker." );

@@ -42,7 +42,7 @@ namespace geode
             "Mean and variance of the statistics of the model terms over the "
             "realizations of a simulation. It refers to the model of the "
             "runner that created it (it keeps the runner alive)." )
-            .def( "statiscal_count", &Tracker::statiscal_count,
+            .def( "nb_realizations", &Tracker::nb_realizations,
                 "Return the number of realizations recorded." )
 
             .def( "means", &Tracker::means, pybind11::return_value_policy::copy,
@@ -92,8 +92,8 @@ namespace geode
 
             .def( "__repr__", [pyclass_name]( const Tracker& tracker ) {
                 return python_call_repr( pyclass_name,
-                    { "statiscal_count="
-                            + std::to_string( tracker.statiscal_count() ),
+                    { "nb_realizations="
+                            + std::to_string( tracker.nb_realizations() ),
                         "nb_terms="
                             + std::to_string( tracker.means().size() ) } );
             } );
