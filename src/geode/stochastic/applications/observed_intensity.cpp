@@ -39,7 +39,8 @@ namespace
 
     // A fixed object outside the support of the length law of the set (all
     // the objects above a cutoff length are observed) is not a part of the
-    // sampled population: it is added to it, as with free_objects.
+    // sampled population: it stays fixed but is not deducted from the
+    // density, as with free_objects.
     template < typename ObjectType >
     bool is_in_sampled_population( const ObjectType& object,
         const geode::ObjectSamplerConfig< ObjectType >& sampler_config )
@@ -139,8 +140,8 @@ namespace geode
         {
             Logger::info( "[IntensityScope] Object set '", set.name,
                 "': ", nb_outside_law,
-                " fixed objects outside the length law are added to the "
-                "simulated ones, not counted as observed ones" );
+                " fixed objects outside the length law are not deducted from "
+                "the density" );
         }
         const auto nb_expected =
             lambda * touching_domain_area( *domain, set.sampler );

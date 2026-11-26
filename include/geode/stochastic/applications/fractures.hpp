@@ -51,15 +51,15 @@ namespace geode
         /// definition. Set the length law, p20 and scope from what was
         /// observed in the domain:
         /// - a sample of the fractures of all lengths: length law and p20 of
-        /// all the fractures, IntensityScope::all_objects;
+        ///   all the fractures, IntensityScope::all_objects;
         /// - all the fractures longer than a cutoff L_obs, none shorter:
-        /// length law cut at L_obs (max_value = L_obs), p20 of the fractures
-        /// shorter than L_obs, IntensityScope::all_objects;
+        ///   length law cut at L_obs (max_value = L_obs), p20 of the
+        ///   fractures shorter than L_obs, IntensityScope::all_objects;
         /// - all the fractures longer than L_obs and a sample of the shorter
-        /// ones: same settings as above.
+        ///   ones: same settings as above.
         /// With all_objects, the observed fractures within the length law are
         /// a part of p20, and only the missing ones are simulated; the observed
-        /// fractures outside it (longer than L_obs) are added as they are.
+        /// fractures outside it (longer than L_obs) are kept on top of p20.
         /// This is exact without interaction terms on the set, and an
         /// approximation with them. In all the cases, the observed fractures
         /// act on the simulated ones through the interaction terms of the
@@ -68,9 +68,10 @@ namespace geode
         /// simulated fractures only, and all the observed ones are added.
         ///
         /// expected_count, if given, is the expected mean of the statistic:
-        /// p20 * |D| with all_objects, plus the count of the observed
-        /// fractures outside the length law (or of all of them with
-        /// free_objects).
+        /// p20 * |D|, plus the statistic of the observed fractures outside the
+        /// length law with all_objects (of all of them with free_objects),
+        /// i.e. half their number of endpoints strictly inside the domain: a
+        /// fracture crossing the whole domain adds nothing.
         [[nodiscard]] ObjectSetDefinition< Fracture >& add_fracture_set(
             std::string_view name,
             double p20,

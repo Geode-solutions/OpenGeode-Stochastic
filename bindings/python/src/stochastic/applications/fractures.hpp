@@ -85,18 +85,19 @@ namespace geode
                 "ones: same settings as (2). With all_objects, the observed "
                 "fractures within the length law are a part of p20 and only "
                 "the missing ones are simulated; the observed fractures "
-                "outside it (longer than L_obs) are added as they are; this is "
-                "exact without interaction terms on the set, an approximation "
-                "with them. The observed fractures act on the simulated ones "
-                "through the interaction terms of the set. With free_objects, "
-                "p20 "
-                "is the density of the simulated fractures only. "
-                "expected_count, if given, is the expected mean of the "
-                "statistic of the term (the number of fractures in the "
-                "domain, counted by endpoints: half the number of endpoints "
-                "strictly inside the domain): p20 times the domain area with "
-                "all_objects, plus the count of the observed fractures outside "
-                "the length law (or of all of them with free_objects)." )
+                "outside it (longer than L_obs) are kept on top of p20; this "
+                "is exact without interaction terms on the set, an "
+                "approximation with them. The observed fractures act on the "
+                "simulated ones through the interaction terms of the set. "
+                "With free_objects, p20 is the density of the simulated "
+                "fractures only. expected_count, if given, is the expected "
+                "mean of the statistic of the term (the number of fractures "
+                "in the domain, counted by endpoints: half the number of "
+                "endpoints strictly inside the domain): p20 times the domain "
+                "area, plus the statistic of the observed fractures outside "
+                "the length law with all_objects (of all of them with "
+                "free_objects); a fracture crossing the whole domain adds "
+                "nothing." )
             .def( "add_intensity", &FractureProcessBuilder::add_intensity,
                 pybind11::arg( "set_name" ), pybind11::arg( "p21" ),
                 pybind11::arg( "expected_total_length" ) = std::nullopt,

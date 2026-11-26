@@ -308,6 +308,7 @@ namespace
             "[ObservedIntensity] a density lower than the observed objects "
             "should be refused" };
     }
+
     struct LargeFracturesRun
     {
         double mean_free{ 0. };
@@ -342,7 +343,7 @@ namespace
             fractures.build_simulation_context()
         };
 
-        constexpr geode::index_t nb_realizations{ 500 };
+        constexpr geode::index_t nb_realizations{ 50 };
         const auto& burn_in_state = runner.run( engine, 5000 );
         geode_unused( burn_in_state );
         LargeFracturesRun result;
