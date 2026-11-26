@@ -28,23 +28,33 @@
 namespace geode
 {
     /// Meaning of the density given to an object set with fixed (observed)
-    /// objects.
+    /// objects. Three observation cases, with lambda the density of the
+    /// objects of the length law of the set:
+    /// 1. a sample of the objects of all sizes: the length law of all the
+    /// objects, all_objects;
+    /// 2. all the objects longer than a cutoff L_obs, none shorter: a length
+    /// law cut at L_obs, all_objects or free_objects (identical here);
+    /// 3. all the objects longer than L_obs and a sample of the shorter ones:
+    /// a length law cut at L_obs, all_objects.
+    /// In cases 2 and 3, the fixed objects longer than L_obs act on the
+    /// simulated ones through the interaction terms of the set.
     enum class IntensityScope
     {
         /// Density of the free objects only: the fixed objects are added to
         /// them, without changing their law.
         free_objects,
         /// Density of all the objects, fixed ones included. The fixed objects
-        /// are a part of the objects touching the domain, observed
-        /// independently of their size and position: an independent thinning
-        /// of the Poisson process (Chiu et al., 2013). The objects which were
-        /// not observed are then a Poisson process of density
-        /// lambda * (1 - p) on the objects touching the domain, and lambda on
-        /// the others, with p = F / (lambda * A): F fixed objects touch the
-        /// domain, and lambda * A objects are expected to touch it (see
-        /// touching_domain_area). Fixed objects not touching the domain are
-        /// added to the free ones, as with free_objects (observations are
-        /// expected in the domain). This is exact for a Poisson process; with
+        /// within the length law are a part of the objects touching the
+        /// domain, observed independently of their size and position: an
+        /// independent thinning of the Poisson process (Chiu et al., 2013).
+        /// The objects which were not observed are then a Poisson process of
+        /// density lambda * (1 - p) on the objects touching the domain, and
+        /// lambda on the others, with p = F / (lambda * A): F fixed objects
+        /// within the length law touch the domain, and lambda * A objects
+        /// are expected to touch it (see touching_domain_area). Fixed objects
+        /// outside the length law (longer than an observation cutoff, all
+        /// observed) or not touching the domain are added to the free ones,
+        /// as with free_objects. This is exact for a Poisson process; with
         /// interaction terms on the set, it is only an approximation, whose
         /// parameters should rather be inferred.
         all_objects
@@ -69,8 +79,8 @@ namespace geode
     /// counts all the objects (IntensityScope::all_objects): a single object
     /// term with parameter 1 - p on the objects touching the domain
     /// (ObjectTouchingDomainFeature). Throws if lambda * A is lower than the
-    /// number of fixed objects touching the domain. If they are equal, the
-    /// free objects cannot touch the domain.
+    /// number of fixed objects within the length law touching the domain. If
+    /// they are equal, the free objects cannot touch the domain.
     template < typename ObjectType >
     void add_observation_term( SimulationContextConfig< ObjectType >& config,
         index_t set_index,

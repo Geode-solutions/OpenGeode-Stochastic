@@ -38,14 +38,23 @@ namespace geode
             "fractures. free_objects: density of the simulated fractures "
             "only, added to the observed ones. all_objects: density of all "
             "the fractures, observed ones included; the observed fractures "
-            "are a part of the fractures touching the domain, observed "
-            "independently of their size and position, so the simulated "
-            "fractures touching the domain get the lowered density "
-            "p20 * (1 - p), p being the observed proportion, and the others "
-            "keep p20. Exact without interaction terms on the set, an "
-            "approximation with them. Fixed fractures not touching the "
-            "domain are added to the simulated ones; if there are many, the "
-            "domain should be enlarged to the whole mapped area." )
+            "within the length law are a part of the fractures touching the "
+            "domain, observed independently of their size and position, so "
+            "the simulated fractures touching the domain get the lowered "
+            "density p20 * (1 - p), p being the observed proportion, and the "
+            "others keep p20. Exact without interaction terms on the set, an "
+            "approximation with them. Observed fractures outside the length "
+            "law or not touching the domain are added to the simulated ones; "
+            "if many do not touch the domain, it should be enlarged to the "
+            "whole mapped area. "
+            "Three observation cases: (1) a sample of all sizes: length law of "
+            "all the fractures, all_objects; (2) all the fractures longer than "
+            "a cutoff L_obs, none shorter: length law cut at L_obs, "
+            "all_objects or free_objects (identical); (3) all the fractures "
+            "longer than L_obs and a sample of the shorter ones: length law "
+            "cut at L_obs, all_objects. In cases 2 and 3, the long observed "
+            "fractures act on the simulated ones through the interaction "
+            "terms of the set." )
             .value( "free_objects", IntensityScope::free_objects )
             .value( "all_objects", IntensityScope::all_objects )
             .finalize();

@@ -37,6 +37,34 @@ namespace
     constexpr geode::index_t NB_MARK_SAMPLES{ 100'000 };
     constexpr std::string_view AREA_SEED{ "touching-domain-area" };
 
+    // A fixed object outside the support of the length law of the set (all
+    // the objects above a cutoff length are observed) is not a part of the
+    // sampled population: it is added to it, as with free_objects.
+    template < typename ObjectType >
+    bool is_in_sampled_population( const ObjectType& object,
+        const geode::ObjectSamplerConfig< ObjectType >& sampler_config )
+    {
+        if constexpr( !std::is_same_v< ObjectType, geode::OwnerSegment2D > )
+        {
+            geode_unused( object );
+            geode_unused( sampler_config );
+            return true;
+        }
+        else
+        {
+            const auto& length_law = sampler_config.length;
+            const auto length = object.length();
+            if( length_law.max_value
+                && length
+                       > length_law.max_value.value() + geode::GLOBAL_EPSILON )
+            {
+                return false;
+            }
+            return !length_law.min_value
+                   || length >= length_law.min_value.value()
+                                    - geode::GLOBAL_EPSILON;
+        }
+    }
 } // namespace
 
 namespace geode
@@ -93,13 +121,26 @@ namespace geode
         const auto& set = config.sets[set_index];
         const auto domain = build_spatial_domain( config.domain );
         double nb_fixed{ 0 };
+        index_t nb_outside_law{ 0 };
         for( const auto& object : set.fixed_objects )
         {
+            if( !is_in_sampled_population( object, set.sampler ) )
+            {
+                nb_outside_law++;
+                continue;
+            }
             if( SpatialDomainChecker< ObjectType >::touches_domain(
                     *domain, object ) )
             {
                 nb_fixed++;
             }
+        }
+        if( nb_outside_law > 0 )
+        {
+            Logger::info( "[IntensityScope] Object set '", set.name,
+                "': ", nb_outside_law,
+                " fixed objects outside the length law are added to the "
+                "simulated ones, not counted as observed ones" );
         }
         const auto nb_expected =
             lambda * touching_domain_area( *domain, set.sampler );
