@@ -24,34 +24,10 @@
 #include <geode/stochastic/spatial/object_neighborhood.hpp>
 
 #include <algorithm>
-#include <array>
 
 #include <geode/basic/pimpl_impl.hpp>
 
-#include <geode/geometry/bounding_box.hpp>
-
 #include <geode/stochastic/spatial/internal/rtree.hpp>
-
-namespace
-{
-    template < geode::index_t dimension >
-    std::pair< std::array< double, dimension >,
-        std::array< double, dimension > >
-        bounding_box_bounds( const geode::BoundingBox< dimension >& box )
-    {
-        std::pair< std::array< double, dimension >,
-            std::array< double, dimension > >
-            min_max_arrays;
-        const auto& min = box.min();
-        const auto& max = box.max();
-        for( const auto dim_id : geode::LRange{ dimension } )
-        {
-            min_max_arrays.first[dim_id] = min.value( dim_id );
-            min_max_arrays.second[dim_id] = max.value( dim_id );
-        }
-        return min_max_arrays;
-    }
-} // namespace
 
 namespace geode
 {
@@ -61,16 +37,12 @@ namespace geode
     public:
         void add( const BoundingBox< dimension >& box, const ObjectId& id )
         {
-            auto [min_bound, max_bound] =
-                bounding_box_bounds< dimension >( box );
-            tree_.Insert( min_bound.data(), max_bound.data(), id );
+            tree_.insert( box, id );
         }
 
         void remove( const BoundingBox< dimension >& box, const ObjectId& id )
         {
-            auto [min_bound, max_bound] =
-                bounding_box_bounds< dimension >( box );
-            tree_.Remove( min_bound.data(), max_bound.data(), id );
+            tree_.remove( box, id );
         }
 
         std::vector< ObjectId > get_all_neighbor_ids(
@@ -78,29 +50,26 @@ namespace geode
             const std::vector< uuid >& targeted_set_ids,
             const std::optional< ObjectId >& exclude_self_id ) const
         {
-            auto [min_bound, max_bound] =
-                bounding_box_bounds< dimension >( box );
             std::vector< ObjectId > res;
-            tree_.Search( min_bound.data(), max_bound.data(),
-                [&res, &exclude_self_id, &targeted_set_ids](
-                    const ObjectId& cur_id ) -> bool {
-                    if( !std::binary_search( targeted_set_ids.begin(),
-                            targeted_set_ids.end(), cur_id.set_id ) )
-                    {
-                        return true;
-                    }
-                    if( exclude_self_id && exclude_self_id.value() == cur_id )
-                    {
-                        return true;
-                    }
-                    res.push_back( cur_id );
+            tree_.search( box, [&res, &exclude_self_id, &targeted_set_ids](
+                                   const ObjectId& cur_id ) {
+                if( !std::binary_search( targeted_set_ids.begin(),
+                        targeted_set_ids.end(), cur_id.set_id ) )
+                {
                     return true;
-                } );
+                }
+                if( exclude_self_id && exclude_self_id.value() == cur_id )
+                {
+                    return true;
+                }
+                res.push_back( cur_id );
+                return true;
+            } );
             return res;
         }
 
     private:
-        RTree< ObjectId, double, dimension > tree_;
+        internal::RTree< ObjectId, dimension > tree_;
     };
 
     template < index_t dimension >
