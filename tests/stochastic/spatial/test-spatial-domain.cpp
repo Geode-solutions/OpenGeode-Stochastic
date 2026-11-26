@@ -96,8 +96,8 @@ void check_feature(
             "[ObjectInDomainFeature] ", label, ": ", value, " instead of ",
             expected, " (reversed: ", seg == &reversed, ")" );
         geode::OpenGeodeStochasticStochasticException::test(
-            feature.evaluate( *seg ) == 1., "[ObjectInDomainFeature] ", label,
-            ": a segment should count 1 in the extended domain" );
+            feature.evaluate( *seg, domain ) == 1., "[ObjectInDomainFeature] ",
+            label, ": a segment should count 1 in the extended domain" );
     }
 }
 
@@ -145,6 +145,43 @@ void test_segment_in_domain_feature()
     // NOLINTEND(*-magic-numbers)
 }
 
+// A segment touches the domain if it intersects it, wherever its endpoints are
+void test_segment_touches_domain()
+{
+    const auto domain = init_domain();
+    // NOLINTBEGIN(*-magic-numbers)
+    const auto check = [&domain]( const geode::Point2D& point1,
+                           const geode::Point2D& point2, bool expected,
+                           std::string_view label ) {
+        for( const auto& segment : { geode::OwnerSegment2D{ point1, point2 },
+                 geode::OwnerSegment2D{ point2, point1 } } )
+        {
+            geode::OpenGeodeStochasticStochasticException::test(
+                geode::SpatialDomainChecker<
+                    geode::OwnerSegment2D >::touches_domain( domain, segment )
+                    == expected,
+                "[touches_domain] ", label );
+        }
+    };
+    check( geode::Point2D{ { 0.1, 0.1 } }, geode::Point2D{ { 0.9, 0.9 } }, true,
+        "inside" );
+    check( geode::Point2D{ { 0.9, 0.9 } }, geode::Point2D{ { 1.4, 1.4 } }, true,
+        "one endpoint inside" );
+    check( geode::Point2D{ { -0.4, 0.5 } }, geode::Point2D{ { 1.4, 0.5 } },
+        true, "crossing without endpoint inside" );
+    check( geode::Point2D{ { 1.2, 1.2 } }, geode::Point2D{ { 1.4, 1.4 } },
+        false, "outside" );
+    check( geode::Point2D{ { -0.4, 0.8 } }, geode::Point2D{ { 0.2, 1.4 } },
+        false, "outside, near a corner" );
+    // NOLINTEND(*-magic-numbers)
+    geode::OpenGeodeStochasticStochasticException::test(
+        geode::SpatialDomainChecker< geode::Point2D >::touches_domain(
+            domain, geode::Point2D{ { 0.5, 0.5 } } )
+            && !geode::SpatialDomainChecker< geode::Point2D >::touches_domain(
+                domain, geode::Point2D{ { 1.4, 1.4 } } ),
+        "[touches_domain] points" );
+}
+
 int main()
 {
     try
@@ -154,6 +191,7 @@ int main()
 
         test_spatial_domain_2D();
         test_segment_in_domain_feature();
+        test_segment_touches_domain();
 
         geode::Logger::info( "TEST SpatialDomain SUCCESS" );
         return 0;

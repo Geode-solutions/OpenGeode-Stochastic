@@ -128,6 +128,15 @@ namespace geode
         {
             return domain.contains( obj ) ? 1. : 0.;
         }
+
+        /// True if the object could be observed in the domain: a point is in
+        /// the closed domain.
+        [[nodiscard]] static bool touches_domain(
+            const SpatialDomain< ObjectType::dim >& domain,
+            const ObjectType& obj )
+        {
+            return domain.contains( obj );
+        }
     };
 
     /// A segment counts 1/2 per endpoint strictly inside the domain, farther
@@ -157,6 +166,14 @@ namespace geode
                 }
             }
             return count;
+        }
+
+        /// True if the segment could be observed in the domain: it intersects
+        /// the closed domain, wherever its endpoints are.
+        [[nodiscard]] static bool touches_domain(
+            const SpatialDomain< 2 >& domain, const OwnerSegment2D& seg )
+        {
+            return domain.box().intersects( seg );
         }
 
     private:
