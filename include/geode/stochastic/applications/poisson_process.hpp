@@ -38,8 +38,10 @@ namespace geode
             const SpatialDomainConfig< ObjectType::dim >& domain_cfg );
 
         /// Object set with a density term. With IntensityScope::all_objects,
-        /// lambda counts the fixed objects too, and the expected mean of the
-        /// statistic is still lambda * |D|.
+        /// lambda counts the fixed objects too (for segments, those within
+        /// the length law; the others are added), and the expected mean of the
+        /// statistic is lambda * |D|, plus the count of the fixed segments
+        /// outside the length law.
         [[nodiscard]] ObjectSetDefinition< ObjectType >& add_set(
             std::string_view name,
             double lambda,
