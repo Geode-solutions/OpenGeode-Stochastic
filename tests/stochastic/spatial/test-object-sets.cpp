@@ -153,6 +153,30 @@ namespace
             "[TestObjectSets] - Expected 2 neighbors near query object" );
     }
 
+    void test_neighbors_within_searching_distance()
+    {
+        ObjectSets< geode::Point2D > sets;
+        const auto set_id = sets.add_set( "default_name" );
+
+        const auto inside =
+            sets.add_object( geode::Point2D{ { 0.9, 0.0 } }, set_id, false );
+        sets.add_object( geode::Point2D{ { 1.1, 0.0 } }, set_id, false );
+        sets.add_object( geode::Point2D{ { 0.0, 1.5 } }, set_id, false );
+
+        const geode::Point2D query{ { 0.0, 0.0 } };
+        std::vector< uuid > targeted_set_ids{ set_id };
+        const auto nearby =
+            sets.neighbors( query, targeted_set_ids, 1.0, std::nullopt );
+
+        geode::OpenGeodeStochasticStochasticException::test( nearby.size() == 1,
+            "[TestObjectSets] - Expected only the object within the searching "
+            "distance, got ",
+            nearby.size(), " neighbors" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            nearby[0] == inside,
+            "[TestObjectSets] - Wrong neighbor within the searching distance" );
+    }
+
     void test_string_representation()
     {
         ObjectSets< geode::Point2D > sets;
@@ -181,6 +205,7 @@ int main()
         test_get_all_objects();
         test_neighbors_by_object_id();
         test_neighbors_by_object_value();
+        test_neighbors_within_searching_distance();
         test_string_representation();
 
         geode::Logger::info( "TEST ObjectSets SUCCESS" );
