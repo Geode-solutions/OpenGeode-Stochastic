@@ -44,6 +44,10 @@ namespace geode
             const SpatialDomain< ObjectType::dim >& domain ) const = 0;
     };
 
+    /// Counts the objects: 1 per object in the extended domain (energy), and
+    /// the share of each object inside the domain (statistic), as defined by
+    /// SpatialDomainChecker::count_inside_domain. For segments, this share is
+    /// counted by endpoints and does not depend on the anchor.
     template < typename ObjectType >
     class ObjectInDomainFeature : public SingleObjectFeature< ObjectType >
     {
@@ -57,10 +61,8 @@ namespace geode
         [[nodiscard]] double evaluate_inside_domain( const ObjectType& obj,
             const SpatialDomain< ObjectType::dim >& domain ) const override
         {
-            return SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
-                       domain, obj )
-                       ? 1.0
-                       : 0.0;
+            return SpatialDomainChecker< ObjectType >::count_inside_domain(
+                domain, obj );
         }
     };
 

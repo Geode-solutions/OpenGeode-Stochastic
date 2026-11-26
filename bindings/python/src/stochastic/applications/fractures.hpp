@@ -56,7 +56,9 @@ namespace geode
                 "return its Segment2DSetDefinition, in which the sampling "
                 "and the fixed fractures are set. expected_count, if given, "
                 "is the expected mean of the statistic of the term (the "
-                "number of fractures in the domain)." )
+                "number of fractures in the domain, counted by endpoints: "
+                "half the number of fracture endpoints strictly inside the "
+                "domain, whichever endpoint anchors the fracture)." )
             .def( "add_intensity", &FractureProcessBuilder::add_intensity,
                 pybind11::arg( "set_name" ), pybind11::arg( "p21" ),
                 pybind11::arg( "expected_total_length" ) = std::nullopt,

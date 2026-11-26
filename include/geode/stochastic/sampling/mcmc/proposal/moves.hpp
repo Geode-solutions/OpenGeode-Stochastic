@@ -228,6 +228,8 @@ namespace geode
             auto& new_obj = birth.new_object.value();
             birth.proposal_probabilities.log_forward_prob =
                 log_p_birth_ + this->sampler().log_pdf( new_obj );
+            // Reverse move: death of the new object among the free ones
+            // (birth-death kernel, Van Lieshout, 2000)
             birth.proposal_probabilities.log_backward_prob =
                 log_p_death_ - std::log( set.nb_free_objects() + 1.0 );
             return birth;

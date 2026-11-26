@@ -167,6 +167,8 @@ namespace geode
     /// Throws if the model is not well defined (not integrable): an attractive
     /// pairwise term (gamma > 1) requires each of its object sets to have an
     /// intra-set hard-core (gamma = 0) at a strictly positive distance.
+    /// Without it, the Strauss model with gamma > 1 is not integrable
+    /// (Baddeley, Rubak and Turner, 2015).
     opengeode_stochastic_stochastic_api void check_model_integrability(
         const ModelConfig& config );
 
