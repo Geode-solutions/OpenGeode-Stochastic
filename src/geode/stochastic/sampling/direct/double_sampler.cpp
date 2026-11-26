@@ -132,6 +132,19 @@ namespace geode
                         dist.concentration = desc.kappa.value();
                         return dist;
                     } },
+                { AxialVonMises::distribution_type_static(),
+                    []( const DoubleSampler::DistributionDescription& desc ) {
+                        OpenGeodeStochasticStochasticException::check_exception(
+                            desc.mean && desc.kappa, nullptr,
+                            OpenGeodeException::TYPE::data,
+                            "[DoubleSampler] Incomplete description for "
+                            "Axial Von Mises distribution need at least mean "
+                            "and concentration (kappa) values" );
+                        AxialVonMises dist;
+                        dist.mean = desc.mean.value();
+                        dist.concentration = desc.kappa.value();
+                        return dist;
+                    } },
                 { TruncatedLogNormal::distribution_type_static(),
                     []( const DoubleSampler::DistributionDescription& desc ) {
                         OpenGeodeStochasticStochasticException::check_exception(
@@ -196,7 +209,8 @@ namespace geode
         // Degrees are converted to radians without normalization: 0-360
         // stays the full circle, -90-90 a range across 0, and a standard
         // deviation keeps its value. Only the mean of a von Mises law is
-        // normalized in [0, 2pi[: the law is the same modulo 2pi.
+        // normalized in [0, 2pi[: the law is the same modulo 2pi. The mean of
+        // an axial von Mises law is normalized in [0, pi[, its period.
         const auto to_radians = []( std::optional< double >& value ) {
             if( value )
             {
@@ -229,6 +243,15 @@ namespace geode
                         .normalized_between_0_and_2pi()
                         .radians();
             }
+            if( desc_rad.mean
+                && desc_rad.distribution_type
+                       == AxialVonMises::distribution_type_static() )
+            {
+                desc_rad.mean =
+                    Angle::create_from_radians( desc_rad.mean.value() )
+                        .normalized_between_0_and_pi()
+                        .radians();
+            }
         }
         return create_distribution( desc_rad );
     }
@@ -258,6 +281,10 @@ namespace geode
                 if constexpr( std::is_same_v< D, VonMises > )
                 {
                     return engine.sample_von_mises( cur_dist );
+                }
+                if constexpr( std::is_same_v< D, AxialVonMises > )
+                {
+                    return engine.sample_axial_von_mises( cur_dist );
                 }
                 if constexpr( std::is_same_v< D, TruncatedLogNormal > )
                 {

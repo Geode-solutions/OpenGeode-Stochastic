@@ -297,7 +297,9 @@ namespace geode
             {
                 auto u1 = unit_closed_( rand_gen_ );
                 auto z = std::cos( M_PI * u1 );
-                auto f = ( 1.0 + r * std::fabs( z ) ) / ( r + std::fabs( z ) );
+                // z spans [-1, 1]: with |z|, f stayed positive and the
+                // samples within +-pi/2 of the mean
+                auto f = ( 1.0 + r * z ) / ( r + z );
                 auto c = law.concentration * ( r - f );
                 auto u2 = unit_closed_( rand_gen_ );
 
@@ -311,6 +313,16 @@ namespace geode
             }
 
             return wrap_to_two_pi( theta + law.mean );
+        }
+
+        double sample_axial_von_mises( const AxialVonMises& law )
+        {
+            check_law( law );
+            VonMises doubled;
+            doubled.mean = 2.0 * law.mean;
+            doubled.concentration = law.concentration;
+            // halving an angle of [0, 2pi[ gives an axis of [0, pi[
+            return sample_von_mises( doubled ) / 2.0;
         }
 
         double sample_truncated_lognormal( const TruncatedLogNormal& law )
@@ -481,6 +493,10 @@ namespace geode
     double RandomEngine::sample_von_mises( const VonMises& law )
     {
         return impl_->sample_von_mises( law );
+    }
+    double RandomEngine::sample_axial_von_mises( const AxialVonMises& law )
+    {
+        return impl_->sample_axial_von_mises( law );
     }
     double RandomEngine::sample_truncated_lognormal(
         const TruncatedLogNormal& law )

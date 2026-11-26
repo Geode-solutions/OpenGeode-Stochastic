@@ -43,6 +43,7 @@ namespace geode
             Gaussian,
             TruncatedGaussian,
             VonMises,
+            AxialVonMises,
             TruncatedLogNormal,
             TruncatedPowerLaw >;
 
@@ -63,7 +64,7 @@ namespace geode
             std::optional< double > mean;
             std::optional< double > standard_deviation;
             std::optional< double >
-                kappa; // concentration parameter for VonMises distribution
+                kappa; // concentration of VonMises and AxialVonMises laws
             std::optional< double >
                 alpha; // exponent parameter for power law distribution
 
@@ -117,7 +118,8 @@ namespace geode
          * normalization: [-90, 90] gives [-pi/2, pi/2] and [0, 360] the full
          * circle. Only the mean of a von Mises law is normalized in [0, 2pi[:
          * this law lives on the circle, so VonMises(mean + 2k pi) is the same
-         * law, and its samples are in [0, 2pi[. The log-normal mean and
+         * law, and its samples are in [0, 2pi[. Likewise, the mean of an
+         * axial von Mises law is normalized in [0, pi[. The log-normal mean and
          * standard deviation describe ln(x): the mean is shifted by
          * ln(pi/180), the deviation is kept. Use UniformClosedOpen on
          * [0, 360] to cover the circle without drawing both 0 and 2pi.
@@ -126,14 +128,6 @@ namespace geode
          */
         static Distribution create_angle_distribution_from_degrees(
             const DistributionDescription& angle_desc_deg );
-
-        [[deprecated(
-            "Use create_angle_distribution_from_degrees" )]] static Distribution
-            create_rad_angle_distribution_from_degree(
-                const DistributionDescription& angle_desc_deg )
-        {
-            return create_angle_distribution_from_degrees( angle_desc_deg );
-        }
 
         static double sample( RandomEngine& engine, const Distribution& dist );
     };

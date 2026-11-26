@@ -78,20 +78,22 @@ namespace geode
             &Description::distribution_type,
             "Type of the law: \"UniformClosed\", \"UniformClosedOpen\", "
             "\"Gaussian\", \"TruncatedGaussian\", \"VonMises\", "
-            "\"TruncatedLogNormal\" or \"TruncatedPowerLaw\"." );
+            "\"AxialVonMises\", \"TruncatedLogNormal\" or "
+            "\"TruncatedPowerLaw\"." );
         def_readwrite_named( description, "min_value", &Description::min_value,
             "Lower bound (uniform and truncated laws)." );
         def_readwrite_named( description, "max_value", &Description::max_value,
             "Upper bound (uniform and truncated laws)." );
         def_readwrite_named( description, "mean", &Description::mean,
-            "Mean (Gaussian, TruncatedGaussian, VonMises, "
+            "Mean (Gaussian, TruncatedGaussian, VonMises, AxialVonMises, "
             "TruncatedLogNormal)." );
         def_readwrite_named( description, "standard_deviation",
             &Description::standard_deviation,
             "Standard deviation (Gaussian, TruncatedGaussian, "
             "TruncatedLogNormal)." );
         def_readwrite_named( description, "kappa", &Description::kappa,
-            "Concentration parameter of the VonMises law." );
+            "Concentration parameter of the VonMises and AxialVonMises "
+            "laws." );
         def_readwrite_named( description, "alpha", &Description::alpha,
             "Exponent of the TruncatedPowerLaw law." );
         description
@@ -120,7 +122,8 @@ namespace geode
                 "UniformClosedOpen (min_value and max_value required), "
                 "Gaussian (mean and standard_deviation), TruncatedGaussian "
                 "(mean and standard_deviation, bounds optional), VonMises "
-                "(mean and kappa), TruncatedLogNormal (mean and "
+                "or AxialVonMises (mean and kappa), TruncatedLogNormal (mean "
+                "and "
                 "standard_deviation, bounds optional) or TruncatedPowerLaw "
                 "(alpha, bounds optional). Raise an OpenGeodeDataError if the "
                 "type is unknown or a required parameter is missing." )
@@ -132,29 +135,13 @@ namespace geode
                 "standard_deviation are converted without normalization "
                 "([-90, 90] gives [-pi/2, pi/2]); only the mean of a VonMises "
                 "law is normalized to [0, 2*pi), since this law is the same "
-                "modulo 2*pi and its samples are in [0, 2*pi). For a "
+                "modulo 2*pi and its samples are in [0, 2*pi), and the mean "
+                "of an AxialVonMises law to [0, pi). For a "
                 "TruncatedLogNormal, mean and standard_deviation describe "
                 "ln(x): the mean is shifted by ln(pi/180), the deviation is "
                 "kept. kappa and alpha are unchanged. Samples of the other "
                 "laws are not normalized; UniformClosedOpen on [0, 360] "
                 "covers the circle once." )
-            .def_static(
-                "create_rad_angle_distribution_from_degree",
-                []( const DoubleSampler::DistributionDescription &desc ) {
-                    if( PyErr_WarnEx( PyExc_DeprecationWarning,
-                            "create_rad_angle_distribution_from_degree is "
-                            "deprecated, use "
-                            "create_angle_distribution_from_degrees",
-                            1 )
-                        != 0 )
-                    {
-                        throw pybind11::error_already_set();
-                    }
-                    return DoubleSampler::
-                        create_angle_distribution_from_degrees( desc );
-                },
-                pybind11::arg( "desc" ),
-                "Deprecated: use create_angle_distribution_from_degrees." )
             .def_static( "sample", &DoubleSampler::sample,
                 pybind11::arg( "engine" ), pybind11::arg( "dist" ),
                 "Sample a value of a law created by create_distribution, "
