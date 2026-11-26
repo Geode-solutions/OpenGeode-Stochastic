@@ -128,6 +128,42 @@ namespace
 
         geode::Logger::info( "--> SUCCESS!" );
     }
+
+    // A realization with more or fewer values than the model terms is
+    // refused, and leaves the tracker unchanged.
+    void test_wrong_number_of_values()
+    {
+        geode::Logger::info(
+            "TEST - STATISTICS TRACKER WRONG NUMBER OF VALUES" );
+        const auto context = two_term_context();
+        geode::StatisticsTracker< geode::Point2D > tracker{ *context.model };
+        // NOLINTBEGIN(*-magic-numbers)
+        tracker.add_realization( { 1., 2. } );
+        for( const auto& values :
+            std::vector< std::vector< double > >{ { 1. }, { 1., 2., 3. }, {} } )
+        {
+            bool rejected{ false };
+            try
+            {
+                tracker.add_realization( values );
+            }
+            catch( const geode::OpenGeodeException& )
+            {
+                rejected = true;
+            }
+            geode::OpenGeodeStochasticStochasticException::test( rejected,
+                "[StatisticsTracker] A realization with ", values.size(),
+                " values should be refused for 2 terms." );
+        }
+        geode::OpenGeodeStochasticStochasticException::test(
+            tracker.statiscal_count() == 1 && tracker.means()[0] == 1.
+                && tracker.means()[1] == 2.,
+            "[StatisticsTracker] A refused realization should not change the "
+            "tracker." );
+        // NOLINTEND(*-magic-numbers)
+
+        geode::Logger::info( "--> SUCCESS!" );
+    }
 } // namespace
 
 int main()
@@ -137,6 +173,7 @@ int main()
         geode::OpenGeodeStochasticStochasticLibrary::initialize();
         test_means_and_variances();
         test_large_mean_variance();
+        test_wrong_number_of_values();
         return 0;
     }
     catch( ... )
