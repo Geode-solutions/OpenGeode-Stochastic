@@ -49,6 +49,13 @@ namespace geode
             return compute( object_a, object_b );
         }
 
+        /*!
+         * Distance beyond which two objects never interact: the neighbors are
+         * searched among the objects whose bounding box intersects the
+         * bounding box of the object extended by this distance.
+         * An interaction whose range is not bounded by a distance between the
+         * objects (e.g. relative to their size) must account for it here.
+         */
         [[nodiscard]] virtual double
             neighborhood_searching_distance() const = 0;
 
