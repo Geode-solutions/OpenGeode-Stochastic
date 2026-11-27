@@ -38,6 +38,8 @@
 #include <utility>
 #include <vector>
 
+#include <geode/basic/types.hpp>
+
 #include <geode/geometry/bounding_box.hpp>
 #include <geode/geometry/point.hpp>
 
@@ -65,6 +67,8 @@ namespace geode
 
             static constexpr index_t MIN_NODES = max_nodes / 2;
             static constexpr index_t NOT_TAKEN = NO_ID;
+            static constexpr double UNIT_SPHERE_VOLUME =
+                dimension == 2 ? M_PI : 4. / 3. * M_PI;
 
             struct Rect
             {
@@ -548,11 +552,6 @@ namespace geode
                 }
                 return true;
             }
-
-        private:
-            static constexpr double PI = 3.14159265358979323846;
-            static constexpr double UNIT_SPHERE_VOLUME =
-                dimension == 2 ? PI : 4. / 3. * PI;
 
             std::unique_ptr< Node > root_;
         };
