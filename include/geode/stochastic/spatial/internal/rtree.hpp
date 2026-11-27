@@ -32,7 +32,6 @@
 #pragma once
 
 #include <array>
-#include <cassert>
 #include <cmath>
 #include <memory>
 #include <utility>
@@ -170,7 +169,10 @@ namespace geode
                 {
                     rect.min[d] = box.min().value( d );
                     rect.max[d] = box.max().value( d );
-                    assert( rect.min[d] <= rect.max[d] );
+                    OpenGeodeStochasticStochasticException::check_assertion(
+                        rect.min[d] <= rect.max[d],
+                        "[RTree::to_rect] Box minimum greater than its "
+                        "maximum" );
                 }
                 return rect;
             }
@@ -235,7 +237,9 @@ namespace geode
             /// its subtree root otherwise. Grow the tree if the root splits.
             void insert_branch( Branch branch, index_t level )
             {
-                assert( level <= root_->level );
+                OpenGeodeStochasticStochasticException::check_assertion(
+                    level <= root_->level,
+                    "[RTree::insert_branch] Level above the root" );
                 auto new_node =
                     insert_rec( std::move( branch ), *root_, level );
                 if( !new_node )
@@ -259,7 +263,9 @@ namespace geode
             std::unique_ptr< Node > insert_rec(
                 Branch branch, Node& node, index_t level )
             {
-                assert( level <= node.level );
+                OpenGeodeStochasticStochasticException::check_assertion(
+                    level <= node.level,
+                    "[RTree::insert_rec] Level above the node" );
                 if( node.level == level )
                 {
                     return add_branch( std::move( branch ), node );
@@ -324,7 +330,9 @@ namespace geode
             /// @return the new node
             std::unique_ptr< Node > split_node( Branch branch, Node& node )
             {
-                assert( node.count == max_nodes );
+                OpenGeodeStochasticStochasticException::check_assertion(
+                    node.count == max_nodes,
+                    "[RTree::split_node] Node to split is not full" );
                 Partition partition;
                 for( const auto b : Range{ max_nodes } )
                 {
@@ -344,7 +352,9 @@ namespace geode
                         std::move( partition.branches[b] );
                     target.count++;
                 }
-                assert( node.count + new_node->count == max_nodes + 1 );
+                OpenGeodeStochasticStochasticException::check_assertion(
+                    node.count + new_node->count == max_nodes + 1,
+                    "[RTree::split_node] Branches lost by the split" );
                 return new_node;
             }
 
@@ -417,8 +427,10 @@ namespace geode
                         }
                     }
                 }
-                assert( partition.count[0] >= MIN_NODES
-                        && partition.count[1] >= MIN_NODES );
+                OpenGeodeStochasticStochasticException::check_assertion(
+                    partition.count[0] >= MIN_NODES
+                        && partition.count[1] >= MIN_NODES,
+                    "[RTree::choose_partition] Underfull group" );
             }
 
             static void pick_seeds( Partition& partition )
@@ -457,7 +469,9 @@ namespace geode
             static void classify(
                 index_t branch, index_t group, Partition& partition )
             {
-                assert( partition.group[branch] == NOT_TAKEN );
+                OpenGeodeStochasticStochasticException::check_assertion(
+                    partition.group[branch] == NOT_TAKEN,
+                    "[RTree::classify] Branch already classified" );
                 partition.group[branch] = group;
                 const auto& rect = partition.branches[branch].rect;
                 partition.cover[group] =
@@ -471,7 +485,9 @@ namespace geode
             /// Replace the branch by the last one of the node
             static void disconnect_branch( Node& node, index_t index )
             {
-                assert( index < node.count );
+                OpenGeodeStochasticStochasticException::check_assertion(
+                    index < node.count,
+                    "[RTree::disconnect_branch] Branch index out of range" );
                 node.count--;
                 if( index != node.count )
                 {
