@@ -176,7 +176,7 @@ def test_validation():
     runner = builder.build_simulation_runner()
     config = stochastic.SimulationConfigurator(realizations=10, metropolis_hasting_steps=20, burn_in_steps=50)
     tracker = runner.run(engine, config)
-    check(tracker.statiscal_count() == 10, "Wrong count: %d" % tracker.statiscal_count())
+    check(tracker.nb_realizations() == 10, "Wrong count: %d" % tracker.nb_realizations())
     # the expected value is far from the mean: result error
     far = [stochastic.TargetStatisticConfig("fset_p20", 1.0e6)]
     exception = raises(og.OpenGeodeResultError, lambda: runner.validate_statistics(tracker, far), "No result error")

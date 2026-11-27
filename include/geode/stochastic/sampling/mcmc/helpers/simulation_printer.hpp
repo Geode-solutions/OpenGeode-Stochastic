@@ -132,7 +132,7 @@ namespace geode
             std::ofstream file =
                 open_file_with_dirs( summary_path, std::ios::app );
             file << absl::StrCat(
-                "# Count:\n", tracker.statiscal_count(), "\n" );
+                "# Count:\n", tracker.nb_realizations(), "\n" );
             file << absl::StrCat(
                 "# Means:\n", absl::StrJoin( tracker.means(), " ; " ), "\n" );
             file << absl::StrCat( "# Variances:\n",
