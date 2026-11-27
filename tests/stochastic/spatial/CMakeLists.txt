@@ -51,6 +51,14 @@ add_geode_test(
 )
 
 add_geode_test(
+    SOURCE "test-pairwise-neighbors.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
     SOURCE "test-spatial-domain.cpp"
     DEPENDENCIES
         OpenGeode::basic
