@@ -23,23 +23,35 @@
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include <optional>
 #include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
+#include <absl/container/flat_hash_map.h>
+
+#include <geode/geometry/bounding_box.hpp>
 #include <geode/geometry/point.hpp>
 
+#include <geode/stochastic/models/energy_terms/pairwise_term.hpp>
 #include <geode/stochastic/sampling/random_engine.hpp>
 #include <geode/stochastic/spatial/object_helpers.hpp>
 #include <geode/stochastic/spatial/object_sets.hpp>
 #include <geode/stochastic/spatial/pairwise_interactions/distance_cutoff.hpp>
+#include <geode/stochastic/spatial/spatial_domain.hpp>
 
-// Neighbor search in the contexts of the pairwise terms: every pair of objects
-// whose interaction is not null must be found by ObjectSets::neighbors with
-// the searching distance of the interaction, for the objects of the state and
-// for proposed objects, along random additions, moves and removals.
+// Neighbor search in the contexts of the pairwise terms, compared to a brute
+// force over all the pairs of objects, along random additions, moves and
+// removals:
+// - every pair whose interaction is not null is found by
+//   ObjectSets::neighbors, for the objects of the state and for proposed
+//   objects;
+// - the PairwiseTerm counts each interacting pair once: total_log, statistic
+//   and the deltas of the operations match the brute force counts.
+// The first set interacts with both sets, the second set does not interact
+// with itself.
 namespace
 {
     constexpr geode::index_t NB_INITIAL_OBJECTS{ 150 };
@@ -47,8 +59,10 @@ namespace
     constexpr geode::index_t STATE_CHECK_PERIOD{ 40 };
     constexpr geode::index_t FIXED_OBJECT_PERIOD{ 7 };
     constexpr double DOMAIN_SIZE{ 6. };
+    constexpr double VOI_MARGIN{ 1. };
     constexpr double MAX_SEGMENT_EXTENT{ 1. };
     constexpr double GRID_STEP{ 0.1 };
+    constexpr double GAMMA{ 0.5 };
 
     double random_value( geode::RandomEngine& engine, double max_value )
     {
@@ -68,11 +82,29 @@ namespace
             std::floor( engine.sample_uniform( law ) ) );
     }
 
-    template < typename Type, typename Interaction >
-    class NeighborSearchChecker
+    template < geode::index_t dimension >
+    geode::SpatialDomain< dimension > create_domain()
     {
+        geode::Point< dimension > min;
+        geode::Point< dimension > max;
+        for( const auto d : geode::LRange{ dimension } )
+        {
+            min.set_value( d, VOI_MARGIN );
+            max.set_value( d, DOMAIN_SIZE - VOI_MARGIN );
+        }
+        geode::BoundingBox< dimension > box;
+        box.add_point( min );
+        box.add_point( max );
+        return geode::SpatialDomain< dimension >{ box, VOI_MARGIN };
+    }
+
+    template < typename Type, typename Interaction >
+    class PairwiseNeighborsChecker
+    {
+        using Term = geode::PairwiseTerm< Type >;
+
     public:
-        NeighborSearchChecker( geode::RandomEngine& engine,
+        PairwiseNeighborsChecker( geode::RandomEngine& engine,
             double cutoff,
             bool on_grid,
             std::string_view name )
@@ -80,11 +112,21 @@ namespace
               interaction_{ cutoff },
               on_grid_{ on_grid },
               name_{ name },
-              cutoff_{ cutoff }
+              cutoff_{ cutoff },
+              domain_{ create_domain< Type::dim >() }
         {
             set_ids_.push_back( sets_.add_set( "first" ) );
             set_ids_.push_back( sets_.add_set( "second" ) );
-            std::sort( set_ids_.begin(), set_ids_.end() );
+            auto both_sets = set_ids_;
+            std::sort( both_sets.begin(), both_sets.end() );
+            adjacency_.emplace( set_ids_[0], both_sets );
+            adjacency_.emplace(
+                set_ids_[1], std::vector< geode::uuid >{ set_ids_[0] } );
+            auto adjacency = adjacency_;
+            auto impacted_set_ids = set_ids_;
+            term_ = std::make_unique< Term >( "pairwise", GAMMA,
+                std::move( impacted_set_ids ), domain_, std::move( adjacency ),
+                std::make_unique< Interaction >( cutoff ) );
         }
 
         void run()
@@ -98,7 +140,6 @@ namespace
             for( const auto o : geode::Range{ NB_OPERATIONS } )
             {
                 apply_random_operation();
-                check_proposed_object();
                 if( o % STATE_CHECK_PERIOD == 0 )
                 {
                     check_state();
@@ -159,30 +200,88 @@ namespace
             }
         }
 
+        /// Check the delta of the operation before applying it
         void apply_random_operation()
         {
             const auto& set_id = set_ids_[random_index( engine_, 2 )];
             const auto nb_free_objects =
                 std::as_const( sets_ ).get_set( set_id ).nb_free_objects();
             const auto operation = random_index( engine_, 3 );
+            auto object = random_object();
+            const geode::ObjectRef< Type > object_ref{ object, set_id };
+            check_missed_pairs( object_ref, std::nullopt );
             if( operation == 0 || nb_free_objects == 0 )
             {
-                sets_.add_object( random_object(), set_id, false );
+                check_value( "delta_log_add",
+                    term_->delta_log_add( sets_, object_ref ),
+                    term_->contribution(
+                        count_interactions( object_ref, std::nullopt ) ) );
+                sets_.add_object( std::move( object ), set_id, false );
                 return;
             }
             const geode::ObjectId object_id{
                 random_index( engine_, nb_free_objects ), false, set_id
             };
+            const geode::ObjectRef< Type > old_object_ref{
+                sets_.get_object( object_id ), set_id
+            };
+            const auto old_count =
+                count_interactions( old_object_ref, object_id );
             if( operation == 1 )
             {
-                sets_.update_free_object( object_id, random_object() );
+                const auto new_count =
+                    count_interactions( object_ref, object_id );
+                check_value( "delta_log_change",
+                    term_->delta_log_change( sets_, object_id, object_ref ),
+                    term_->contribution( new_count - old_count ) );
+                sets_.update_free_object( object_id, std::move( object ) );
                 return;
             }
+            check_value( "delta_log_remove",
+                term_->delta_log_remove( sets_, object_id ),
+                term_->contribution( -old_count ) );
             sets_.remove_free_object( object_id );
         }
 
+        [[nodiscard]] bool are_adjacent(
+            const geode::uuid& set_a, const geode::uuid& set_b ) const
+        {
+            const auto& adjacent_sets = adjacency_.at( set_a );
+            return std::binary_search(
+                adjacent_sets.begin(), adjacent_sets.end(), set_b );
+        }
+
+        /// Brute force count of the objects of the adjacent sets interacting
+        /// with the given one
+        [[nodiscard]] double count_interactions(
+            const geode::ObjectRef< Type >& object_ref,
+            const std::optional< geode::ObjectId >& excluded_id ) const
+        {
+            double count{ 0. };
+            for( const auto& other_id : sets_.get_all_object() )
+            {
+                if( ( excluded_id && excluded_id.value() == other_id )
+                    || !are_adjacent( object_ref.set_id, other_id.set_id ) )
+                {
+                    continue;
+                }
+                count += interaction_.evaluate( object_ref,
+                    { sets_.get_object( other_id ), other_id.set_id } );
+            }
+            return count;
+        }
+
+        void check_value(
+            std::string_view function, double value, double expected ) const
+        {
+            geode::OpenGeodeStochasticStochasticException::test(
+                value == expected, "[TestPairwiseNeighbors] ", name_,
+                " with cutoff ", cutoff_, ( on_grid_ ? " on grid" : "" ), ": ",
+                function, " gives ", value, " instead of ", expected );
+        }
+
         /// Count the interacting objects missed by the neighbors search
-        void check_object( const geode::ObjectRef< Type >& object_ref,
+        void check_missed_pairs( const geode::ObjectRef< Type >& object_ref,
             const std::optional< geode::ObjectId >& object_id )
         {
             auto neighbors = sets_.neighbors( object_ref.object, set_ids_,
@@ -210,22 +309,40 @@ namespace
             }
         }
 
-        /// As PairwiseTerm on the objects of the state
+        /// Neighbors of each object, total_log and statistic of the state
         void check_state()
         {
-            for( const auto& object_id : sets_.get_all_object() )
+            const auto object_ids = sets_.get_all_object();
+            double nb_pairs{ 0. };
+            double nb_pairs_in_domain{ 0. };
+            for( const auto a : geode::Indices{ object_ids } )
             {
-                check_object(
-                    { sets_.get_object( object_id ), object_id.set_id },
-                    object_id );
+                const geode::ObjectRef< Type > object_a{
+                    sets_.get_object( object_ids[a] ), object_ids[a].set_id
+                };
+                check_missed_pairs( object_a, object_ids[a] );
+                for( const auto b : geode::Range{ a + 1, object_ids.size() } )
+                {
+                    const geode::ObjectRef< Type > object_b{
+                        sets_.get_object( object_ids[b] ), object_ids[b].set_id
+                    };
+                    if( !are_adjacent( object_a.set_id, object_b.set_id )
+                        || interaction_.evaluate( object_a, object_b ) <= 0. )
+                    {
+                        continue;
+                    }
+                    nb_pairs++;
+                    if( domain_.contains(
+                            interaction_.location( object_a, object_b ) ) )
+                    {
+                        nb_pairs_in_domain++;
+                    }
+                }
             }
-        }
-
-        /// As PairwiseTerm on an object proposed by the sampler
-        void check_proposed_object()
-        {
-            const auto object = random_object();
-            check_object( { object, set_ids_[0] }, std::nullopt );
+            check_value( "total_log", term_->total_log( sets_ ),
+                term_->contribution( nb_pairs ) );
+            check_value(
+                "statistic", term_->statistic( sets_ ), nb_pairs_in_domain );
         }
 
     private:
@@ -234,8 +351,12 @@ namespace
         bool on_grid_;
         std::string_view name_;
         double cutoff_;
+        geode::SpatialDomain< Type::dim > domain_;
         geode::ObjectSets< Type > sets_;
         std::vector< geode::uuid > set_ids_;
+        absl::flat_hash_map< geode::uuid, std::vector< geode::uuid > >
+            adjacency_;
+        std::unique_ptr< Term > term_;
         geode::index_t nb_interacting_pairs_{ 0 };
         geode::index_t nb_missed_pairs_{ 0 };
     };
@@ -249,7 +370,7 @@ namespace
         {
             for( const auto cutoff : { 0.3, 0.7, 1.0 } )
             {
-                NeighborSearchChecker< Type, Interaction > checker{ engine,
+                PairwiseNeighborsChecker< Type, Interaction > checker{ engine,
                     cutoff, on_grid, name };
                 checker.run();
             }
