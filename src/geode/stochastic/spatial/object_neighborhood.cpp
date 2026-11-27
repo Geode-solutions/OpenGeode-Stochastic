@@ -42,7 +42,11 @@ namespace geode
 
         void remove( const BoundingBox< dimension >& box, const ObjectId& id )
         {
-            tree_.remove( box, id );
+            const auto removed = tree_.remove( box, id );
+            OpenGeodeStochasticStochasticException::check_assertion( removed,
+                "[ObjectNeighborhood::remove] No object ", id.index,
+                ( id.fixed ? " (fixed)" : " (free)" ), " of set ",
+                id.set_id.string(), " in the given box" );
         }
 
         std::vector< ObjectId > get_all_neighbor_ids(
