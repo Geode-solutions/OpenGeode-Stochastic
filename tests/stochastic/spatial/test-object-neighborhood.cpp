@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 #include <vector>
 
 #include <geode/geometry/bounding_box.hpp>
