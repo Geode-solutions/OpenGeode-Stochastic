@@ -26,6 +26,9 @@
 #include <geode/basic/logger.hpp>
 #include <geode/basic/range.hpp>
 
+#include <geode/geometry/basic_objects/segment.hpp>
+#include <geode/geometry/distance.hpp>
+
 #include <geode/stochastic/applications/fractures.hpp>
 #include <geode/stochastic/applications/observed_intensity.hpp>
 #include <geode/stochastic/applications/poisson_process.hpp>
@@ -305,6 +308,202 @@ namespace
             "[ObservedIntensity] a density lower than the observed objects "
             "should be refused" };
     }
+
+    struct LargeFracturesRun
+    {
+        double mean_free{ 0. };
+        geode::index_t nb_crossings{ 0 };
+    };
+
+    // Large observed fractures, longer than the buffer and crossing each
+    // other, fixed in the set of the small simulated ones.
+    LargeFracturesRun run_with_large_fractures(
+        std::string_view seed, bool forbid_intersections )
+    {
+        geode::RandomEngine engine;
+        engine.set_seed( seed );
+        geode::FractureProcessBuilder fractures;
+        fractures.set_domain( square_domain( 20., 5. ) );
+        auto& fset = fractures.add_fracture_set( "fset", 0.05 );
+        // the length law of the simulated fractures is cut at L_obs = 4
+        set_sampler( fset, 1., 4., 0., M_PI );
+        std::vector< geode::Fracture > large;
+        large.emplace_back(
+            geode::Point2D{ { -10., 7. } }, geode::Point2D{ { 30., 7. } } );
+        large.emplace_back(
+            geode::Point2D{ { -10., 14. } }, geode::Point2D{ { 30., 14. } } );
+        large.emplace_back(
+            geode::Point2D{ { -8., -8. } }, geode::Point2D{ { 28., 28. } } );
+        fset.fixed_objects = large;
+        if( forbid_intersections )
+        {
+            fractures.add_minimal_spacing( "fset", 0. );
+        }
+        geode::FractureSimulationRunner runner{
+            fractures.build_simulation_context()
+        };
+
+        constexpr geode::index_t nb_realizations{ 50 };
+        const auto& burn_in_state = runner.run( engine, 5000 );
+        geode_unused( burn_in_state );
+        LargeFracturesRun result;
+        for( const auto realization : geode::Range{ nb_realizations } )
+        {
+            geode_unused( realization );
+            const auto& state = runner.run( engine, 200 );
+            const auto& set = state.get_set( state.get_set_uuid( "fset" ) );
+            geode::OpenGeodeStochasticStochasticException::test(
+                set.nb_fixed_objects() == large.size(),
+                "[ObservedIntensity] the large fractures changed" );
+            for( const auto fixed_id : geode::Range{ large.size() } )
+            {
+                const auto& fixed = set.get_fixed_object( fixed_id );
+                geode::OpenGeodeStochasticStochasticException::test(
+                    fixed.vertices() == large[fixed_id].vertices(),
+                    "[ObservedIntensity] a large fracture moved" );
+            }
+            result.mean_free += set.nb_free_objects();
+            for( const auto id : geode::Range{ set.nb_free_objects() } )
+            {
+                const geode::Segment2D small{ set.get_free_object( id ) };
+                for( const auto& fixed : large )
+                {
+                    if( std::get< 0 >( geode::segment_segment_distance(
+                            small, geode::Segment2D{ fixed } ) )
+                        < geode::GLOBAL_EPSILON )
+                    {
+                        result.nb_crossings++;
+                    }
+                }
+            }
+        }
+        result.mean_free /= nb_realizations;
+        return result;
+    }
+
+    // The large fractures are observed and fixed in the set of the small
+    // simulated ones, which see them through the interaction terms of the set
+    // (here no intersection), even if they are longer than the buffer.
+    void test_large_fractures_interaction()
+    {
+        geode::Logger::info( "TEST - LARGE OBSERVED FRACTURES, INTERACTION" );
+        const auto free_run =
+            run_with_large_fractures( "@large-fractures-free@", false );
+        geode::Logger::info( "Without interaction: ", free_run.mean_free,
+            " simulated fractures, ", free_run.nb_crossings,
+            " crossing a large one" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            free_run.nb_crossings > 0, "[ObservedIntensity] no small fracture "
+                                       "crosses a large one without "
+                                       "interaction" );
+
+        const auto spacing_run =
+            run_with_large_fractures( "@large-fractures-spacing@", true );
+        geode::Logger::info( "Without intersection: ", spacing_run.mean_free,
+            " simulated fractures, ", spacing_run.nb_crossings,
+            " crossing a large one" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            spacing_run.nb_crossings == 0,
+            "[ObservedIntensity] small fractures cross the large ones despite "
+            "the minimal spacing" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            spacing_run.mean_free > 0.,
+            "[ObservedIntensity] no small fracture simulated" );
+        geode::Logger::info( "--> SUCCESS!" );
+    }
+
+    void check_free_counts( const FreeCounts& counts,
+        const FreeCounts& expected,
+        std::string_view label )
+    {
+        geode::Logger::info( label,
+            ": free fractures touching the domain: ", counts.touching,
+            " (expected: ", expected.touching,
+            "), not touching: ", counts.not_touching,
+            " (expected: ", expected.not_touching, ")" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::abs( counts.touching - expected.touching )
+                < 0.05 * expected.touching,
+            "[ObservedIntensity] ", label,
+            ": wrong number of free fractures touching the domain" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            std::abs( counts.not_touching - expected.not_touching )
+                < 0.05 * expected.not_touching,
+            "[ObservedIntensity] ", label,
+            ": wrong number of free fractures not touching the domain" );
+    }
+
+    // One fracture network, p20 = 0.1 with lengths uniform in [1, 8],
+    // observed in three ways. Large fractures are longer than L_obs = 4.
+    // 1. A sample of all sizes: length law of all the fractures.
+    // 2. All the large fractures, no small one: length law cut at L_obs,
+    // p20 of the small fractures (0.1 * 3 / 7); no large fracture counts
+    // as observed (F = 0), as with free_objects.
+    // 3. All the large fractures and a sample of the small ones: only the
+    // small observed fractures count in F.
+    void test_three_observation_cases()
+    {
+        geode::Logger::info( "TEST - THREE OBSERVATION CASES" );
+        constexpr double p20{ 0.1 };
+        constexpr double l_obs{ 4. };
+        const auto small_p20 = p20 * ( l_obs - 1. ) / ( 8. - 1. );
+        const auto domain_cfg = square_domain( 20., 8. );
+        const auto domain = geode::build_spatial_domain( domain_cfg );
+        const auto extended_area = domain->extended_n_volume();
+
+        // observed small fractures (length 3) and large ones (lengths 6,
+        // and 30, longer than the buffer), all touching the domain
+        std::vector< geode::Fracture > small_observed;
+        for( const auto i : geode::Range{ 4 } )
+        {
+            small_observed.emplace_back( geode::Point2D{ { 2. + 4. * i, 3. } },
+                geode::Point2D{ { 2. + 4. * i, 6. } } );
+        }
+        std::vector< geode::Fracture > large_observed;
+        large_observed.emplace_back(
+            geode::Point2D{ { 3., 10. } }, geode::Point2D{ { 9., 10. } } );
+        large_observed.emplace_back(
+            geode::Point2D{ { -5., 15. } }, geode::Point2D{ { 25., 15. } } );
+
+        const auto run_case = [&]( std::string_view seed, double density,
+                                  double max_length,
+                                  const std::vector< geode::Fracture >& fixed,
+                                  std::string_view label, double nb_observed ) {
+            geode::RandomEngine engine;
+            engine.set_seed( seed );
+            geode::FractureProcessBuilder fractures;
+            fractures.set_domain( domain_cfg );
+            auto& fset = fractures.add_fracture_set( "fset", density,
+                std::nullopt, geode::IntensityScope::all_objects );
+            set_sampler( fset, 1., max_length, 0., M_PI );
+            fset.fixed_objects = fixed;
+            const auto area =
+                geode::touching_domain_area( *domain, fset.sampler );
+            geode::FractureSimulationRunner runner{
+                fractures.build_simulation_context()
+            };
+            check_free_counts( mean_free_counts( engine, runner, *domain ),
+                { density * area - nb_observed,
+                    density * ( extended_area - area ) },
+                label );
+        };
+
+        // 1. the sample mixes small and large fractures
+        auto sample = small_observed;
+        sample.push_back( large_observed.front() );
+        run_case( "@observation-case-1@", p20, 8., sample, "1. sample", 5. );
+
+        // 2. all the large fractures, no small one
+        run_case( "@observation-case-2@", small_p20, l_obs, large_observed,
+            "2. all large", 0. );
+
+        // 3. all the large fractures and a sample of the small ones
+        auto both = large_observed;
+        both.insert( both.end(), small_observed.begin(), small_observed.end() );
+        run_case( "@observation-case-3@", small_p20, l_obs, both,
+            "3. all large and small sample", 4. );
+        geode::Logger::info( "--> SUCCESS!" );
+    }
     // NOLINTEND(*-magic-numbers)
 } // namespace
 
@@ -318,6 +517,8 @@ int main()
         test_all_objects_observed();
         test_points_all_objects();
         test_fractures_all_objects();
+        test_three_observation_cases();
+        test_large_fractures_interaction();
         return 0;
     }
     catch( ... )
