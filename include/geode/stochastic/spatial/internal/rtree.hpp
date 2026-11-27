@@ -52,8 +52,8 @@ namespace geode
          * box, with the quadratic split and the spherical volume of the
          * original implementation.
          * Removing an entry requires its bounding box at insertion time.
-         * @tparam Data copyable and equality comparable identifier of the
-         * indexed objects.
+         * @tparam Data default constructible, copyable and equality comparable
+         * identifier of the indexed objects.
          */
         template < typename Data, index_t dimension, index_t max_nodes = 8 >
         class RTree
