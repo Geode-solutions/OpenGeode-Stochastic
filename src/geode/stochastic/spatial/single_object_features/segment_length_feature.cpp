@@ -105,7 +105,8 @@ namespace geode
     }
 
     double SegmentLengthInsideBoxFeature::evaluate(
-        const OwnerSegment2D& segment ) const
+        const OwnerSegment2D& segment,
+        const SpatialDomain< 2 >& /*domain*/ ) const
     {
         const auto length = segment.length();
         return inv_length_ * length;

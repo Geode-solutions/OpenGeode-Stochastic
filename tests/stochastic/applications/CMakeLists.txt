@@ -44,6 +44,14 @@ add_geode_test(
 )
 
 add_geode_test(
+    SOURCE "test-observed-intensity.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
       SOURCE "test-poisson-process.cpp"
       DEPENDENCIES
           OpenGeode::basic

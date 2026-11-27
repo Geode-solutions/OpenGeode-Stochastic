@@ -20,7 +20,6 @@
 # SOFTWARE.
 
 import math
-import warnings
 
 import geode_test_env
 
@@ -81,6 +80,11 @@ def test_direct_sampling():
     angles = [engine.sample_von_mises(von_mises) for _ in range(count)]
     check(all(0.0 <= angle < 2 * math.pi for angle in angles), "VonMises range")
     check(abs(math.atan2(sum(map(math.sin, angles)), sum(map(math.cos, angles))) - 1.0) < 0.2, "VonMises mean direction")
+    axial = stochastic.AxialVonMises(mean=-0.5, concentration=5.0)
+    axes = [engine.sample_axial_von_mises(axial) for _ in range(count)]
+    check(all(0.0 <= axis < math.pi for axis in axes), "AxialVonMises range")
+    doubled_mean = math.atan2(sum(math.sin(2 * a) for a in axes), sum(math.cos(2 * a) for a in axes))
+    check(abs(doubled_mean / 2 % math.pi - (math.pi - 0.5)) < 0.1, "AxialVonMises mean axis")
     lognormal = stochastic.TruncatedLogNormal(mean=0.0, standard_deviation=0.5, min_value=0.5, max_value=3.0)
     check(all(0.5 <= engine.sample_truncated_lognormal(lognormal) <= 3.0 for _ in range(count)), "TruncatedLogNormal range")
     power = stochastic.TruncatedPowerLaw(alpha=2.0, min_value=1.0, max_value=10.0)
@@ -102,6 +106,7 @@ def test_sampling_errors():
         lambda: engine.sample_gaussian(stochastic.Gaussian(mean=float("inf"))),
         lambda: engine.sample_truncated_gaussian(stochastic.TruncatedGaussian(min_value=2.0, max_value=1.0)),
         lambda: engine.sample_von_mises(stochastic.VonMises(concentration=-1.0)),
+        lambda: engine.sample_axial_von_mises(stochastic.AxialVonMises(concentration=-1.0)),
         lambda: engine.sample_truncated_lognormal(stochastic.TruncatedLogNormal(standard_deviation=-1.0)),
         lambda: engine.sample_truncated_powerlaw(stochastic.TruncatedPowerLaw(alpha=0.0)),
         lambda: engine.sample_bernoulli(1.5),
@@ -125,6 +130,8 @@ def test_is_valid():
     check(not stochastic.Gaussian(mean=float("nan")).is_valid(), "NaN mean")
     check(stochastic.VonMises().is_valid(), "VonMises")
     check(not stochastic.VonMises(concentration=-0.5).is_valid(), "Negative concentration")
+    check(stochastic.AxialVonMises().is_valid(), "AxialVonMises")
+    check(not stochastic.AxialVonMises(concentration=-0.5).is_valid(), "Negative axial concentration")
     check(stochastic.TruncatedPowerLaw(min_value=1.0, max_value=2.0).is_valid(), "Power law")
     check(not stochastic.TruncatedPowerLaw(alpha=-1.0, min_value=1.0).is_valid(), "Negative exponent")
     check(not stochastic.TruncatedPowerLaw(min_value=3.0, max_value=2.0).is_valid(), "Inverted power law bounds")
@@ -165,6 +172,7 @@ def test_double_sampler():
         "Gaussian": (stochastic.Gaussian, dict(mean=0.0, standard_deviation=1.0)),
         "TruncatedGaussian": (stochastic.TruncatedGaussian, dict(mean=0.0, standard_deviation=1.0, max_value=3.0)),
         "VonMises": (stochastic.VonMises, dict(mean=0.5, kappa=2.0)),
+        "AxialVonMises": (stochastic.AxialVonMises, dict(mean=0.5, kappa=2.0)),
         "TruncatedLogNormal": (stochastic.TruncatedLogNormal, dict(mean=0.0, standard_deviation=1.0)),
         "TruncatedPowerLaw": (stochastic.TruncatedPowerLaw, dict(alpha=2.0, min_value=1.0, max_value=5.0)),
     }
@@ -212,6 +220,12 @@ def test_double_sampler_degrees():
         stochastic.DoubleDistributionDescription("VonMises", mean=450.0, kappa=1.0)
     )
     check(abs(wrapped.mean - math.pi / 2) < 1e-9, "Angle not normalized: %r" % wrapped.mean)
+    axis = stochastic.DoubleSampler.create_angle_distribution_from_degrees(
+        stochastic.DoubleDistributionDescription("AxialVonMises", mean=190.0, kappa=4.0)
+    )
+    check(isinstance(axis, stochastic.AxialVonMises), "Axial law type: %r" % type(axis))
+    check(abs(axis.mean - math.radians(10.0)) < 1e-9, "Axis not normalized in [0, pi): %r" % axis.mean)
+    check(axis.concentration == 4.0, "Axial kappa is not an angle")
     # log-normal parameters describe ln(x): the mean is shifted, the deviation kept
     log_normal = stochastic.DoubleSampler.create_angle_distribution_from_degrees(
         stochastic.DoubleDistributionDescription(
@@ -227,18 +241,12 @@ def test_double_sampler_degrees():
     print("test_double_sampler_degrees: OK")
 
 
-def test_deprecated_degrees_name():
-    description = stochastic.DoubleDistributionDescription("UniformClosed", min_value=-90.0, max_value=90.0)
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        old = stochastic.DoubleSampler.create_rad_angle_distribution_from_degree(description)
+def test_old_degrees_name_is_removed():
     check(
-        any(issubclass(warning.category, DeprecationWarning) for warning in caught),
-        "create_rad_angle_distribution_from_degree does not warn it is deprecated",
+        not hasattr(stochastic.DoubleSampler, "create_rad_angle_distribution_from_degree"),
+        "create_rad_angle_distribution_from_degree is still defined",
     )
-    new = stochastic.DoubleSampler.create_angle_distribution_from_degrees(description)
-    check((old.min_value, old.max_value) == (new.min_value, new.max_value), "Deprecated name gives another law")
-    print("test_deprecated_degrees_name: OK")
+    print("test_old_degrees_name_is_removed: OK")
 
 
 def test_double_sampler_errors():
@@ -252,6 +260,7 @@ def test_double_sampler_errors():
         lambda: create(Description("Gaussian", mean=0.0)),
         lambda: create(Description("TruncatedGaussian", standard_deviation=1.0)),
         lambda: create(Description("VonMises", mean=0.0)),
+        lambda: create(Description("AxialVonMises", mean=0.0)),
         lambda: create(Description("TruncatedLogNormal", mean=0.0)),
         lambda: create(Description("TruncatedPowerLaw")),
         lambda: stochastic.DoubleSampler.create_angle_distribution_from_degrees(Description("VonMises", kappa=1.0)),
@@ -274,5 +283,5 @@ if __name__ == "__main__":
     test_is_valid()
     test_double_sampler()
     test_double_sampler_degrees()
-    test_deprecated_degrees_name()
+    test_old_degrees_name_is_removed()
     test_double_sampler_errors()

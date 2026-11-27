@@ -25,6 +25,7 @@
 #include <geode/basic/assert.hpp>
 #include <geode/geometry/bounding_box.hpp>
 #include <geode/geometry/point.hpp>
+#include <geode/stochastic/spatial/single_object_features/single_object_feature.hpp>
 #include <geode/stochastic/spatial/spatial_domain.hpp>
 
 geode::SpatialDomain< 2 > init_domain()
@@ -64,66 +65,121 @@ void test_spatial_domain_2D()
         domain.extended_contains( outside ),
         "Point outside original but in buffer should be contained." );
 
-    // Test SpatialDomainChecker for points
+    // Test SpatialDomainChecker for points: the closed domain
     geode::OpenGeodeStochasticStochasticException::test(
-        SpatialDomainChecker< Point2D >::is_anchored_in_domain(
-            domain, inside ),
-        "anchored_in_domain failed for inside point" );
+        SpatialDomainChecker< Point2D >::count_inside_domain( domain, inside )
+            == 1.,
+        "count_inside_domain failed for inside point" );
     geode::OpenGeodeStochasticStochasticException::test(
-        !SpatialDomainChecker< Point2D >::is_anchored_in_domain(
-            domain, outside ),
-        "anchored_in_domain failed for outside point" );
+        SpatialDomainChecker< Point2D >::count_inside_domain( domain, boundary )
+            == 1.,
+        "count_inside_domain failed for boundary point" );
     geode::OpenGeodeStochasticStochasticException::test(
-        SpatialDomainChecker< Point2D >::intersects_domain( domain, boundary ),
-        "intersects_domain failed for boundary point" );
+        SpatialDomainChecker< Point2D >::count_inside_domain( domain, outside )
+            == 0.,
+        "count_inside_domain failed for outside point" );
+}
 
-    // Test segments
-    geode::OwnerSegment2D seg_inside{ geode::Point2D{ { 0.1, 0.1 } },
-        geode::Point2D{ { 0.9, 0.9 } } };
-    geode::OwnerSegment2D seg_partial_anchored{ geode::Point2D{ { 0.9, 0.9 } },
-        geode::Point2D{ { 1.6, 1.6 } } };
-    geode::OwnerSegment2D seg_partial{ geode::Point2D{ { -0.5, 0.9 } },
-        geode::Point2D{ { 0.6, 0.6 } } };
-    geode::OwnerSegment2D seg_outside{ geode::Point2D{ { 1.7, 1.7 } },
-        geode::Point2D{ { 2.0, 2.0 } } };
-    geode::OwnerSegment2D seg_cross{ geode::Point2D{ { -0.5, 0.5 } },
-        geode::Point2D{ { 1.5, 0.5 } } };
+void check_feature(
+    const geode::ObjectInDomainFeature< geode::OwnerSegment2D >& feature,
+    const geode::SpatialDomain< 2 >& domain,
+    const geode::OwnerSegment2D& segment,
+    double expected,
+    std::string_view label )
+{
+    const geode::OwnerSegment2D reversed{ segment.vertices()[1],
+        segment.vertices()[0] };
+    for( const auto* seg : { &segment, &reversed } )
+    {
+        const auto value = feature.evaluate_inside_domain( *seg, domain );
+        geode::OpenGeodeStochasticStochasticException::test( value == expected,
+            "[ObjectInDomainFeature] ", label, ": ", value, " instead of ",
+            expected, " (reversed: ", seg == &reversed, ")" );
+        geode::OpenGeodeStochasticStochasticException::test(
+            feature.evaluate( *seg, domain ) == 1., "[ObjectInDomainFeature] ",
+            label, ": a segment should count 1 in the extended domain" );
+    }
+}
 
-    geode::OpenGeodeStochasticStochasticException::test(
-        SpatialDomainChecker< OwnerSegment2D >::is_anchored_in_domain(
-            domain, seg_inside ),
-        "Segment inside VOI should be anchored." );
-    geode::OpenGeodeStochasticStochasticException::test(
-        SpatialDomainChecker< OwnerSegment2D >::is_anchored_in_domain(
-            domain, seg_partial_anchored ),
-        "Segment with lower left extremity inside VOI should be "
-        "anchored." );
-    geode::OpenGeodeStochasticStochasticException::test(
-        !SpatialDomainChecker< OwnerSegment2D >::is_anchored_in_domain(
-            domain, seg_partial ),
-        "Segment with lower left extremity outside VOI is not anchored "
-        "by definition." );
-    geode::OpenGeodeStochasticStochasticException::test(
-        !SpatialDomainChecker< OwnerSegment2D >::is_anchored_in_domain(
-            domain, seg_outside ),
-        "Segment completely outside should not be anchored." );
+// A segment is counted in the domain by its endpoints: each endpoint strictly
+// inside counts 1/2, whichever is the anchor (point1).
+void test_segment_in_domain_feature()
+{
+    const auto domain = init_domain();
+    const geode::ObjectInDomainFeature< geode::OwnerSegment2D > feature;
+    // NOLINTBEGIN(*-magic-numbers)
+    check_feature( feature, domain,
+        geode::OwnerSegment2D{
+            geode::Point2D{ { 0.1, 0.1 } }, geode::Point2D{ { 0.9, 0.9 } } },
+        1., "both endpoints inside" );
+    check_feature( feature, domain,
+        geode::OwnerSegment2D{
+            geode::Point2D{ { 0.9, 0.9 } }, geode::Point2D{ { 1.4, 1.4 } } },
+        0.5, "one endpoint inside" );
+    check_feature( feature, domain,
+        geode::OwnerSegment2D{
+            geode::Point2D{ { -0.4, 0.9 } }, geode::Point2D{ { 0.6, 0.6 } } },
+        0.5, "one endpoint inside, the other in the buffer" );
+    check_feature( feature, domain,
+        geode::OwnerSegment2D{
+            geode::Point2D{ { -0.4, 0.5 } }, geode::Point2D{ { 1.4, 0.5 } } },
+        0., "crossing the domain, no endpoint inside" );
+    check_feature( feature, domain,
+        geode::OwnerSegment2D{
+            geode::Point2D{ { 1.2, 1.2 } }, geode::Point2D{ { 1.4, 1.4 } } },
+        0., "outside" );
+    // A trace clipped by the window ends on its boundary: this cut point is
+    // not an endpoint of the fracture, even with a rounding error.
+    check_feature( feature, domain,
+        geode::OwnerSegment2D{
+            geode::Point2D{ { 1., 0.5 } }, geode::Point2D{ { 0.5, 0.5 } } },
+        0.5, "endpoint on the boundary" );
+    check_feature( feature, domain,
+        geode::OwnerSegment2D{ geode::Point2D{ { 1. - 1e-12, 0.5 } },
+            geode::Point2D{ { 0.5, 0.5 } } },
+        0.5, "endpoint on the boundary up to rounding" );
+    check_feature( feature, domain,
+        geode::OwnerSegment2D{
+            geode::Point2D{ { 0., 0. } }, geode::Point2D{ { 1., 1. } } },
+        0., "diagonal clipped by the window" );
+    // NOLINTEND(*-magic-numbers)
+}
 
+// A segment touches the domain if it intersects it, wherever its endpoints are
+void test_segment_touches_domain()
+{
+    const auto domain = init_domain();
+    // NOLINTBEGIN(*-magic-numbers)
+    const auto check = [&domain]( const geode::Point2D& point1,
+                           const geode::Point2D& point2, bool expected,
+                           std::string_view label ) {
+        for( const auto& segment : { geode::OwnerSegment2D{ point1, point2 },
+                 geode::OwnerSegment2D{ point2, point1 } } )
+        {
+            geode::OpenGeodeStochasticStochasticException::test(
+                geode::SpatialDomainChecker<
+                    geode::OwnerSegment2D >::touches_domain( domain, segment )
+                    == expected,
+                "[touches_domain] ", label );
+        }
+    };
+    check( geode::Point2D{ { 0.1, 0.1 } }, geode::Point2D{ { 0.9, 0.9 } }, true,
+        "inside" );
+    check( geode::Point2D{ { 0.9, 0.9 } }, geode::Point2D{ { 1.4, 1.4 } }, true,
+        "one endpoint inside" );
+    check( geode::Point2D{ { -0.4, 0.5 } }, geode::Point2D{ { 1.4, 0.5 } },
+        true, "crossing without endpoint inside" );
+    check( geode::Point2D{ { 1.2, 1.2 } }, geode::Point2D{ { 1.4, 1.4 } },
+        false, "outside" );
+    check( geode::Point2D{ { -0.4, 0.8 } }, geode::Point2D{ { 0.2, 1.4 } },
+        false, "outside, near a corner" );
+    // NOLINTEND(*-magic-numbers)
     geode::OpenGeodeStochasticStochasticException::test(
-        SpatialDomainChecker< OwnerSegment2D >::intersects_domain(
-            domain, seg_inside ),
-        "Segment inside VOI should intersect." );
-    geode::OpenGeodeStochasticStochasticException::test(
-        SpatialDomainChecker< OwnerSegment2D >::intersects_domain(
-            domain, seg_partial ),
-        "Segment partially in VOI should intersect." );
-    geode::OpenGeodeStochasticStochasticException::test(
-        !SpatialDomainChecker< OwnerSegment2D >::intersects_domain(
-            domain, seg_outside ),
-        "Segment completely outside should not intersect." );
-    geode::OpenGeodeStochasticStochasticException::test(
-        SpatialDomainChecker< OwnerSegment2D >::intersects_domain(
-            domain, seg_cross ),
-        "Segment crossing the voi should intersect." );
+        geode::SpatialDomainChecker< geode::Point2D >::touches_domain(
+            domain, geode::Point2D{ { 0.5, 0.5 } } )
+            && !geode::SpatialDomainChecker< geode::Point2D >::touches_domain(
+                domain, geode::Point2D{ { 1.4, 1.4 } } ),
+        "[touches_domain] points" );
 }
 
 int main()
@@ -134,6 +190,8 @@ int main()
         geode::Logger::set_level( geode::Logger::LEVEL::debug );
 
         test_spatial_domain_2D();
+        test_segment_in_domain_feature();
+        test_segment_touches_domain();
 
         geode::Logger::info( "TEST SpatialDomain SUCCESS" );
         return 0;

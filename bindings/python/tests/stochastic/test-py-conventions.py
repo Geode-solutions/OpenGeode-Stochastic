@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import enum
 import inspect
 
 import geode_test_env
@@ -40,12 +41,20 @@ def check(condition, message):
         raise ValueError("[Test] " + message)
 
 
+def is_enum(python_class):
+    # as in OpenGeode: an enum (pybind11::native_enum, an enum.Enum) only
+    # needs a docstring, its members are generated
+    return issubclass(python_class, enum.Enum)
+
+
 def test_documentation_and_argument_names():
     check(stochastic.__doc__, "The module has no docstring")
     classes = public_classes()
     check(len(classes) >= 28, "Classes are missing: %d" % len(classes))
     for class_name, python_class in classes:
         check(python_class.__doc__, class_name + " has no docstring")
+        if is_enum(python_class):
+            continue
         for member_name, member in vars(python_class).items():
             if member_name.startswith("__") and member_name not in (
                 "__init__",
@@ -80,6 +89,8 @@ def test_documentation_and_argument_names():
 def test_every_function_is_documented():
     # a docstring has the signature, then the text
     for class_name, python_class in public_classes():
+        if is_enum(python_class):
+            continue
         for member_name, member in vars(python_class).items():
             if member_name.startswith("_") and member_name != "__init__":
                 continue
@@ -117,6 +128,7 @@ def test_static_methods():
         "Gaussian",
         "TruncatedGaussian",
         "VonMises",
+        "AxialVonMises",
         "TruncatedLogNormal",
         "TruncatedPowerLaw",
     ):
@@ -189,6 +201,7 @@ def test_repr_is_evaluable():
         stochastic.TruncatedGaussian(mean=1.5, min_value=-3.0),
         stochastic.TruncatedGaussian(),
         stochastic.VonMises(mean=0.25, concentration=7.0),
+        stochastic.AxialVonMises(mean=0.25, concentration=7.0),
         stochastic.TruncatedLogNormal(standard_deviation=0.3, min_value=1.0, max_value=9.0),
         stochastic.TruncatedPowerLaw(alpha=1.5, min_value=0.5),
         description,
@@ -253,6 +266,8 @@ def test_keyword_constructor_defaults():
     check((law.mean, law.standard_deviation) == (0.0, 1.0), "Gaussian defaults")
     law = stochastic.VonMises()
     check((law.mean, law.concentration) == (0.0, 1.0), "VonMises defaults")
+    law = stochastic.AxialVonMises()
+    check((law.mean, law.concentration) == (0.0, 1.0), "AxialVonMises defaults")
     law = stochastic.TruncatedPowerLaw()
     check((law.alpha, law.min_value, law.max_value) == (2.0, None, None), "Power law defaults")
     law = stochastic.TruncatedGaussian(mean=2.0, max_value=3.0)

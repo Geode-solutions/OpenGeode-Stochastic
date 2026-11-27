@@ -24,12 +24,31 @@
 #pragma once
 
 #include "../../common.hpp"
+
 #include <geode/stochastic/applications/fractures.hpp>
+#include <pybind11/native_enum.h>
 
 namespace geode
 {
     void define_fracture_process_builder( pybind11::module& module )
     {
+        pybind11::native_enum< IntensityScope >( module, "IntensityScope",
+            "enum.Enum",
+            "Meaning of the density of a fracture set with fixed (observed) "
+            "fractures. free_objects: density of the simulated fractures "
+            "only, added to the observed ones. all_objects: density of all "
+            "the fractures, observed ones included; the observed fractures "
+            "are a part of the fractures touching the domain, observed "
+            "independently of their size and position, so the simulated "
+            "fractures touching the domain get the lowered density "
+            "p20 * (1 - p), p being the observed proportion, and the others "
+            "keep p20. Exact without interaction terms on the set, an "
+            "approximation with them. Fixed fractures not touching the "
+            "domain are added to the simulated ones; if there are many, the "
+            "domain should be enlarged to the whole mapped area." )
+            .value( "free_objects", IntensityScope::free_objects )
+            .value( "all_objects", IntensityScope::all_objects )
+            .finalize();
         pybind11::class_< FractureProcessBuilder >( module,
             "FractureProcessBuilder",
             "Builder of a fracture network simulation: a 2D domain, fracture "
@@ -50,13 +69,20 @@ namespace geode
             .def( "add_fracture_set", &FractureProcessBuilder::add_fracture_set,
                 pybind11::arg( "name" ), pybind11::arg( "p20" ),
                 pybind11::arg( "expected_count" ) = std::nullopt,
+                pybind11::arg_v( "scope", IntensityScope::free_objects,
+                    "IntensityScope.free_objects" ),
                 pybind11::return_value_policy::reference_internal,
                 "Add a fracture set with a density term named name + "
                 "\"_p20\" (p20: number of fractures per unit area) and "
                 "return its Segment2DSetDefinition, in which the sampling "
                 "and the fixed fractures are set. expected_count, if given, "
                 "is the expected mean of the statistic of the term (the "
-                "number of fractures in the domain)." )
+                "number of fractures in the domain, counted by endpoints: "
+                "half the number of fracture endpoints strictly inside the "
+                "domain, whichever endpoint anchors the fracture). scope "
+                "(IntensityScope) says whether p20 counts the fixed "
+                "fractures; with all_objects, the expected count is still "
+                "p20 times the domain area." )
             .def( "add_intensity", &FractureProcessBuilder::add_intensity,
                 pybind11::arg( "set_name" ), pybind11::arg( "p21" ),
                 pybind11::arg( "expected_total_length" ) = std::nullopt,

@@ -36,31 +36,61 @@ namespace geode
         SingleObjectFeature() = default;
         virtual ~SingleObjectFeature() = default;
 
-        [[nodiscard]] virtual double evaluate(
-            const ObjectType& obj ) const = 0;
+        /// Contribution of the object to the energy, wherever it is in the
+        /// extended domain.
+        [[nodiscard]] virtual double evaluate( const ObjectType& obj,
+            const SpatialDomain< ObjectType::dim >& domain ) const = 0;
 
+        /// Contribution of the object to the statistic, observed in the
+        /// domain.
         [[nodiscard]] virtual double evaluate_inside_domain(
             const ObjectType& obj,
             const SpatialDomain< ObjectType::dim >& domain ) const = 0;
     };
 
+    /// Counts the objects: 1 per object in the extended domain (energy), and
+    /// the share of each object inside the domain (statistic), as defined by
+    /// SpatialDomainChecker::count_inside_domain. For segments, this share is
+    /// counted by endpoints and does not depend on the anchor.
     template < typename ObjectType >
     class ObjectInDomainFeature : public SingleObjectFeature< ObjectType >
     {
     public:
-        [[nodiscard]] double evaluate( const ObjectType& obj ) const override
+        [[nodiscard]] double evaluate( const ObjectType& /*obj*/,
+            const SpatialDomain< ObjectType::dim >& /*domain*/ ) const override
         {
-            geode_unused( obj );
             return 1.;
         }
 
         [[nodiscard]] double evaluate_inside_domain( const ObjectType& obj,
             const SpatialDomain< ObjectType::dim >& domain ) const override
         {
-            return SpatialDomainChecker< ObjectType >::is_anchored_in_domain(
+            return SpatialDomainChecker< ObjectType >::count_inside_domain(
+                domain, obj );
+        }
+    };
+
+    /// 1 if the object touches the domain (it could be observed there), 0
+    /// otherwise, as defined by SpatialDomainChecker::touches_domain, for the
+    /// energy and for the statistic. Used to lower the density of the free
+    /// objects which could have been observed (see IntensityScope).
+    template < typename ObjectType >
+    class ObjectTouchingDomainFeature : public SingleObjectFeature< ObjectType >
+    {
+    public:
+        [[nodiscard]] double evaluate( const ObjectType& obj,
+            const SpatialDomain< ObjectType::dim >& domain ) const override
+        {
+            return SpatialDomainChecker< ObjectType >::touches_domain(
                        domain, obj )
-                       ? 1.0
-                       : 0.0;
+                       ? 1.
+                       : 0.;
+        }
+
+        [[nodiscard]] double evaluate_inside_domain( const ObjectType& obj,
+            const SpatialDomain< ObjectType::dim >& domain ) const override
+        {
+            return evaluate( obj, domain );
         }
     };
 

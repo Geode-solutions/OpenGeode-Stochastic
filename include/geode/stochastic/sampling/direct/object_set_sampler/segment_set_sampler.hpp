@@ -46,8 +46,13 @@ namespace geode
 
         // Azimuth in radians, measured clockwise from the y axis (north):
         // direction (sin(azimuth), cos(azimuth)). It is an axis: azimuth and
-        // azimuth + pi give the same family of segments. See VonMises for its
-        // validity on an axis.
+        // azimuth + pi give the same family of segments. AxialVonMises is the
+        // law of an axis; VonMises suits only concentrated families (see
+        // VonMises). A segment goes from its anchor, the first vertex, to
+        // anchor + length * direction, and is in the domain if its anchor is.
+        // With an axis law in [0, pi[, the anchor is the west end (the south
+        // end of a north-south segment): orient observed segments the same
+        // way so that their statistics are counted with the same rule.
         DoubleSampler::DistributionDescription azimuth{ "azimuth" };
     };
 

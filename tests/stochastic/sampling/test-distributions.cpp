@@ -252,6 +252,21 @@ namespace
         law.mean = NaN;
         check_valid( law, false, "[Test] NaN mean" );
     }
+
+    void test_axial_von_mises()
+    {
+        geode::AxialVonMises law;
+        check_valid( law, true, "[Test] Default axial von Mises is valid" );
+        law.concentration = 0.;
+        check_valid( law, true, "[Test] Null axial concentration is valid" );
+        law.concentration = INF;
+        check_valid( law, false, "[Test] Infinite axial concentration" );
+        law.concentration = -1.;
+        check_valid( law, false, "[Test] Negative axial concentration" );
+        law.concentration = 1.;
+        law.mean = NaN;
+        check_valid( law, false, "[Test] NaN axial mean" );
+    }
 } // namespace
 
 int main()
@@ -265,6 +280,7 @@ int main()
         test_uniform();
         test_nan_bounds();
         test_von_mises();
+        test_axial_von_mises();
         test_invalid_description_is_rejected();
         geode::Logger::info( "TEST SUCCESS" );
         return 0;
