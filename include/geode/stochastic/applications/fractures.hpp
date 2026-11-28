@@ -41,19 +41,37 @@ namespace geode
     public:
         void set_domain( const SpatialDomainConfig< 2 >& domain_cfg );
 
-        /// Fracture set with a density term (number of fractures per unit
-        /// area). Its statistic counts the fractures in the domain by their
-        /// endpoints (half the number of endpoints strictly inside), so it
-        /// does not depend on the endpoint which anchors a fracture. Observed
-        /// fractures can be added to the returned definition fixed_objects.
+        /// Fracture set with a density term: p20 is the number per unit area
+        /// of the fractures whose length follows the length law of the set
+        /// (sampler.length). Its statistic counts the fractures in the domain
+        /// by their endpoints (half the number of endpoints strictly inside),
+        /// whichever endpoint anchors a fracture.
+        ///
+        /// Observed fractures go to the fixed_objects of the returned
+        /// definition. Set the length law, p20 and scope from what was
+        /// observed in the domain:
+        /// - a sample of the fractures of all lengths: length law and p20 of
+        ///   all the fractures, IntensityScope::all_objects;
+        /// - all the fractures longer than a cutoff L_obs, none shorter:
+        ///   length law cut at L_obs (max_value = L_obs), p20 of the
+        ///   fractures shorter than L_obs, IntensityScope::all_objects;
+        /// - all the fractures longer than L_obs and a sample of the shorter
+        ///   ones: same settings as above.
+        /// With all_objects, the observed fractures within the length law are
+        /// a part of p20, and only the missing ones are simulated; the observed
+        /// fractures outside it (longer than L_obs) are kept on top of p20.
+        /// This is exact without interaction terms on the set, and an
+        /// approximation with them. In all the cases, the observed fractures
+        /// act on the simulated ones through the interaction terms of the
+        /// set.
         /// With IntensityScope::free_objects, p20 is the density of the
-        /// simulated fractures, which are added to the observed ones. With
-        /// IntensityScope::all_objects, p20 is the density of all the
-        /// fractures, observed ones included: the observed fractures are a
-        /// part of the fractures touching the domain, observed independently
-        /// of their size, and the expected mean of the statistic is still
-        /// p20 * |D|. This is exact without interaction terms on the set, and
-        /// an approximation with them.
+        /// simulated fractures only, and all the observed ones are added.
+        ///
+        /// expected_count, if given, is the expected mean of the statistic:
+        /// p20 * |D|, plus the statistic of the observed fractures outside the
+        /// length law with all_objects (of all of them with free_objects),
+        /// i.e. half their number of endpoints strictly inside the domain: a
+        /// fracture crossing the whole domain adds nothing.
         [[nodiscard]] ObjectSetDefinition< Fracture >& add_fracture_set(
             std::string_view name,
             double p20,

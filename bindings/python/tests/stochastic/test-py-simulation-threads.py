@@ -67,7 +67,7 @@ def test_run_releases_the_gil():
     tracker = geode_test_env.assert_gil_released(
         lambda: runner.run(engine, config), name="run(engine, config)"
     )
-    check(tracker.statiscal_count() == 5, "Wrong number of realizations")
+    check(tracker.nb_realizations() == 5, "Wrong number of realizations")
     # the class docstring warns about everything a run uses without the GIL
     doc = type(runner).__doc__
     check("release the GIL" in doc and "RandomEngine" in doc, "The GIL warning is incomplete: " + doc)
@@ -108,7 +108,7 @@ def test_results_keep_the_runner_alive():
     gc.collect()
     check(tracker.term_names() == ["fset_p20"], "The tracker lost its runner")
     check(list(tracker.means_by_term()) == ["fset_p20"], "means_by_term")
-    check(tracker.statiscal_count() == 5, "count")
+    check(tracker.nb_realizations() == 5, "count")
     check(len(tracker.variances()) == 1 and len(tracker.means()) == 1, "variances and means")
 
     runner = make_builder().build_simulation_runner()

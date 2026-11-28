@@ -42,13 +42,21 @@ namespace geode
             m2_.resize( model.nb_terms(), 0.0 );
         }
 
-        [[nodiscard]] index_t statiscal_count() const
+        [[nodiscard]] index_t nb_realizations() const
         {
             return count_;
         }
 
+        /// values: one statistic per term of the model, in the order of the
+        /// model terms.
         void add_realization( const std::vector< double >& values )
         {
+            OpenGeodeStochasticStochasticException::check_exception(
+                values.size() == means_.size(), nullptr,
+                OpenGeodeException::TYPE::data,
+                "[StatisticsTracker] A realization should have one value per "
+                "model term: ",
+                values.size(), " values for ", means_.size(), " terms." );
             ++count_;
             for( const auto value_id : geode::Range{ values.size() } )
             {
