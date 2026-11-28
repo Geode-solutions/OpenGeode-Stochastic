@@ -76,6 +76,11 @@ namespace geode
         void update_free_object( const ObjectId& object_id, Type&& object );
         void remove_free_object( const ObjectId& object_id );
 
+        /*!
+         * Objects of the targeted sets whose bounding box intersects the
+         * bounding box of the given object extended by the searching distance
+         * (plus GLOBAL_EPSILON against rounding errors).
+         */
         [[nodiscard]] std::vector< ObjectId > neighbors( const Type& object,
             const std::vector< uuid >& targeted_set_ids,
             double searching_distance,

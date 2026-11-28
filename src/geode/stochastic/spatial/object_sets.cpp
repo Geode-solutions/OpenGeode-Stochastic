@@ -215,8 +215,9 @@ namespace geode
         std::optional< ObjectId > excluded_id ) const
     {
         auto box = object_bounding_box( object );
-        constexpr double STRETCHING_COEFFICIENT = 2.0;
-        box.extends( searching_distance * STRETCHING_COEFFICIENT );
+        // The margin keeps the objects at exactly the searching distance,
+        // whose box may be missed by rounding errors
+        box.extends( searching_distance + GLOBAL_EPSILON );
         return neighborhood_.get_all_neighbor_ids(
             box, targeted_set_ids, excluded_id );
     }

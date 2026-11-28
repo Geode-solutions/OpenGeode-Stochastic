@@ -27,6 +27,14 @@ add_geode_test(
 )
 
 add_geode_test(
+    SOURCE "test-object-neighborhood.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
     SOURCE "test-object-sets.cpp"
     DEPENDENCIES
         OpenGeode::basic
@@ -36,6 +44,14 @@ add_geode_test(
 
 add_geode_test(
     SOURCE "test-pairwise-interactions.cpp"
+    DEPENDENCIES
+        OpenGeode::basic
+        OpenGeode::geometry
+        ${PROJECT_NAME}::stochastic
+)
+
+add_geode_test(
+    SOURCE "test-pairwise-neighbors.cpp"
     DEPENDENCIES
         OpenGeode::basic
         OpenGeode::geometry
